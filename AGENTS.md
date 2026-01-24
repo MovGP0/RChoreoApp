@@ -11,6 +11,21 @@
 - use [rspec](https://github.com/rust-rspec/rspec) for BDD testing
 - use [material-color-utilities](https://github.com/deminearchiver/material-color-utilities-rust) for material colors
 - use [nject](https://github.com/nicolascotton/nject) for dependency injection
+- use [rodio](https://docs.rs/rodio/latest/rodio/) for audio playback
+
+## MaterialDesignThemes to Slint (Material) replacement list
+
+- App root: `MaterialWindow` for themed root window.
+- Buttons: `FilledButton`, `ElevatedButton`, `OutlineButton`, `TonalButton`, `TextButton`, `FloatingActionButton`, `SegmentedButton`, `IconButton`, `OutlineIconButton`, `TonalIconButton`.
+- Cards: `FilledCard`, `OutlinedCard`, `ElevatedCard`.
+- Text input: `TextField` (use for TextBox/SmartHint-like input), `DropDownMenu` for ComboBox-style selections.
+- Selection: `CheckBox`, `CheckBoxTile`, `RadioButton`, `Switch`.
+- Chips: `ActionChip`, `InputChip`, `FilterChip`.
+- Navigation & app bars: `NavigationBar`, `NavigationRail`, `NavigationDrawer`, `ModalNavigationDrawer`, `ModalDrawer`, `BottomAppBar`, `LargeAppBar`, `SmallAppBar`, `SearchBar`.
+- Dialogs: `Dialog`, `FullscreenDialog` (modal flows).
+- Progress: `LinearProgressIndicator`, `CircularProgressIndicator`.
+- Feedback: `SnackBar`, `ToolTip`, `HorizontalDivider`, `VerticalDivider`.
+- Existing but no direct Slint Material component (custom Slint component): `AutoSuggestBox`, `Badged`, `Calendar/DatePicker`, `Clock/TimePicker`, `ColorPicker/ColorZone`, `DataGrid`, `Expander`, `Flipper`, `HamburgerToggleButton`, `Menu/MenuItem`, `PopupBox`, `RatingBar`, `Ripple`, `ScrollViewer/ScrollBar`, `SliderWithTicks`, `SplitButton`, `TabView`, `TreeView/TreeListView`, `Underline`.
 
 ## Linting
 
@@ -33,6 +48,23 @@
   [profile.dev]
   panic = "abort"
   ```
+
+## Check progress
+After making changes, YOU MUST do the following:
+
+Check if the changed project builds
+```sh
+cargo build -p PROJECTNAME
+```
+Check if the linter finds any errors
+```sh
+cargo clippy -p PROJECTNAME --all-targets --all-features -- -D warnings
+```
+Check if the unit tests work
+```sh
+cargo test -p PROJECTNAME
+```
+Only when the changes are verified, you can close the bd ticket.
 
 ## Rust Common Mistakes to Avoid
 
@@ -86,3 +118,11 @@ bd sync               # Sync with git
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
+
+# Lessons Learned
+
+If you encounter a compile error after a code change you did, keep a note here how to avoid the problem in the future:
+
+- `rspec::describe` requires an explicit environment argument (use `()` when none), and the suite type is `rspec::block::Suite<T>` with `Report` imported for `is_success()`.
+- When using `rspec` in tests, set `exit_on_failure(false)` in `ConfigurationBuilder` to avoid aborting the whole test process and to surface failures in `SuiteReport`.
+- Clippy denies range loops used only for indexing; prefer iterators with `enumerate()` and direct `contains()` for sentinel checks.

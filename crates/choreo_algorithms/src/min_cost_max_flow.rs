@@ -263,28 +263,28 @@ where
 
     let mut solver = MinCostMaxFlowSolver::new(node_count)?;
 
-    for initial_index in 0..point_count {
+    for (initial_index, _) in initial_points.iter().enumerate() {
         let initial_node = first_initial_node + initial_index;
         solver.add_edge(source_node, initial_node, 1, 0.0f32)?;
     }
 
-    for initial_index in 0..point_count {
+    for (initial_index, initial_point) in initial_points.iter().enumerate() {
         let initial_node = first_initial_node + initial_index;
 
-        for target_index in 0..point_count {
+        for (target_index, target_point) in target_points.iter().enumerate() {
             if !is_allowed_pair(initial_index, target_index) {
                 continue;
             }
 
             let target_node = first_target_node + target_index;
-            let distance = initial_points[initial_index].distance_to(target_points[target_index]);
+            let distance = initial_point.distance_to(*target_point);
             let cost = cost_func(distance);
 
             solver.add_edge(initial_node, target_node, 1, cost)?;
         }
     }
 
-    for target_index in 0..point_count {
+    for (target_index, _) in target_points.iter().enumerate() {
         let target_node = first_target_node + target_index;
         solver.add_edge(target_node, sink_node, 1, 0.0f32)?;
     }
@@ -314,7 +314,7 @@ where
         }
     }
 
-    if assignment.iter().any(|&value| value == usize::MAX) {
+    if assignment.contains(&usize::MAX) {
         return Err(AlgorithmError::NoPerfectAssignment(
             "Assignment decoding failed.",
         ));
@@ -389,28 +389,26 @@ where
 
     let mut solver = MinCostMaxFlowSolver::new(node_count)?;
 
-    for start_index in 0..count {
+    for (start_index, _) in scene_a.iter().enumerate() {
         let start_node = first_start_node + start_index;
         solver.add_edge(source_node, start_node, 1, 0.0f32)?;
     }
 
-    for start_index in 0..count {
+    for (start_index, (start, end)) in scene_a.iter().zip(scene_c).enumerate() {
         let start_node = first_start_node + start_index;
-        let start = scene_a[start_index];
-        let end = scene_c[start_index];
 
-        for mid_index in 0..count {
+        for (mid_index, mid) in scene_b.iter().enumerate() {
             if !is_allowed_pair(start_index, mid_index) {
                 continue;
             }
 
             let mid_node = first_mid_node + mid_index;
-            let cost = cost_func(start, scene_b[mid_index], end);
+            let cost = cost_func(*start, *mid, *end);
             solver.add_edge(start_node, mid_node, 1, cost)?;
         }
     }
 
-    for mid_index in 0..count {
+    for (mid_index, _) in scene_b.iter().enumerate() {
         let mid_node = first_mid_node + mid_index;
         solver.add_edge(mid_node, sink_node, 1, 0.0f32)?;
     }
@@ -440,7 +438,7 @@ where
         }
     }
 
-    if assignment.iter().any(|&value| value == usize::MAX) {
+    if assignment.contains(&usize::MAX) {
         return Err(AlgorithmError::NoPerfectAssignment(
             "Assignment decoding failed.",
         ));

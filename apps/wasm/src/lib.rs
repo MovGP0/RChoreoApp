@@ -6,6 +6,8 @@
 #![deny(elided_lifetimes_in_paths)]
 #![deny(clippy::all)]
 
+use slint::ComponentHandle;
+
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 

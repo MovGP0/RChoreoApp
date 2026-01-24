@@ -7,7 +7,7 @@
 #![deny(clippy::all)]
 
 use std::fmt::Debug;
-use thiserror::Error;
+use nject::{inject, injectable};
 
 pub trait GlobalStateModel: Debug {}
 
@@ -368,6 +368,12 @@ impl StateTransition {
     }
 }
 
+#[injectable]
+#[inject(|global_state: Box<dyn GlobalStateModel>, transitions: Vec<StateTransition>| Self {
+    global_state,
+    transitions,
+    state: Box::new(ViewSceneState),
+})]
 pub struct ApplicationStateMachine {
     global_state: Box<dyn GlobalStateModel>,
     transitions: Vec<StateTransition>,
@@ -383,11 +389,8 @@ impl ApplicationStateMachine {
         }
     }
 
-    pub fn with_default_transitions(
-        global_state: Box<dyn GlobalStateModel>,
-    ) -> Result<Self, StateMachineError> {
-        let transitions = default_transitions()?;
-        Ok(Self::new(global_state, transitions))
+    pub fn with_default_transitions(global_state: Box<dyn GlobalStateModel>) -> Self {
+        Self::new(global_state, default_transitions())
     }
 
     pub fn state(&self) -> &dyn ApplicationState {
@@ -417,79 +420,152 @@ impl ApplicationStateMachine {
     }
 }
 
-#[derive(Debug, Error)]
-pub enum StateMachineError {
-    #[error("unknown state name: {0}")]
-    UnknownState(String),
-    #[error("unknown trigger name: {0}")]
-    UnknownTrigger(String),
-    #[error("invalid transition matrix header")]
-    InvalidHeader,
+pub fn default_transitions() -> Vec<StateTransition> {
+    let transitions = vec![
+        transition(StateKind::ViewSceneState, TriggerKind::PanStartedTrigger, StateKind::ViewScenePanState),
+        transition(StateKind::ViewScenePanState, TriggerKind::PanCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::ViewSceneState, TriggerKind::ZoomStartedTrigger, StateKind::ViewSceneZoomState),
+        transition(StateKind::ViewSceneZoomState, TriggerKind::ZoomCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::ViewScenePanState, TriggerKind::ZoomStartedTrigger, StateKind::ViewSceneZoomState),
+        transition(StateKind::ViewSceneZoomState, TriggerKind::PanStartedTrigger, StateKind::ViewScenePanState),
+        transition(StateKind::ViewSceneState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::ViewScenePanState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::ViewSceneZoomState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::ViewSceneState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ViewScenePanState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ViewSceneZoomState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ViewSceneState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::ViewScenePanState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::ViewSceneZoomState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::ViewSceneState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::ViewScenePanState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::ViewSceneZoomState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::MovePositionsState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::MovePositionsSelectionState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::MovePositionsDragState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::MovePositionsState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::MovePositionsSelectionState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::MovePositionsDragState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::MovePositionsState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::MovePositionsSelectionState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::MovePositionsDragState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::MovePositionsState, TriggerKind::MovePositionsCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::MovePositionsSelectionState, TriggerKind::MovePositionsCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::MovePositionsDragState, TriggerKind::MovePositionsCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::MovePositionsState, TriggerKind::MovePositionsSelectionStartedTrigger, StateKind::MovePositionsSelectionState),
+        transition(StateKind::MovePositionsSelectionState, TriggerKind::MovePositionsSelectionCompletedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::MovePositionsSelectionState, TriggerKind::MovePositionsSelectionStartedTrigger, StateKind::MovePositionsSelectionState),
+        transition(StateKind::MovePositionsSelectionState, TriggerKind::MovePositionsDragStartedTrigger, StateKind::MovePositionsDragState),
+        transition(StateKind::MovePositionsDragState, TriggerKind::MovePositionsDragCompletedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::MovePositionsDragState, TriggerKind::MovePositionsDragStartedTrigger, StateKind::MovePositionsDragState),
+        transition(StateKind::RotateAroundCenterState, TriggerKind::RotateAroundCenterCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::RotateAroundCenterSelectionStartState, TriggerKind::RotateAroundCenterCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::RotateAroundCenterSelectionEndState, TriggerKind::RotateAroundCenterCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::RotateAroundCenterRotationStartState, TriggerKind::RotateAroundCenterCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::RotateAroundCenterRotationEndState, TriggerKind::RotateAroundCenterCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::RotateAroundCenterState, TriggerKind::RotateAroundCenterSelectionStartedTrigger, StateKind::RotateAroundCenterSelectionStartState),
+        transition(StateKind::RotateAroundCenterSelectionStartState, TriggerKind::RotateAroundCenterSelectionCompletedTrigger, StateKind::RotateAroundCenterSelectionEndState),
+        transition(StateKind::RotateAroundCenterSelectionEndState, TriggerKind::RotateAroundCenterSelectionStartedTrigger, StateKind::RotateAroundCenterSelectionStartState),
+        transition(StateKind::RotateAroundCenterSelectionStartState, TriggerKind::RotateAroundCenterRotationStartedTrigger, StateKind::RotateAroundCenterRotationStartState),
+        transition(StateKind::RotateAroundCenterRotationStartState, TriggerKind::RotateAroundCenterRotationCompletedTrigger, StateKind::RotateAroundCenterRotationEndState),
+        transition(StateKind::RotateAroundCenterRotationEndState, TriggerKind::RotateAroundCenterRotationStartedTrigger, StateKind::RotateAroundCenterRotationStartState),
+        transition(StateKind::RotateAroundCenterSelectionEndState, TriggerKind::RotateAroundCenterRotationStartedTrigger, StateKind::RotateAroundCenterRotationStartState),
+        transition(StateKind::RotateAroundCenterRotationStartState, TriggerKind::RotateAroundCenterSelectionStartedTrigger, StateKind::RotateAroundCenterSelectionStartState),
+        transition(StateKind::ScaleAroundDancerState, TriggerKind::ScaleAroundDancerCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::ScaleAroundDancerSelectionStartState, TriggerKind::ScaleAroundDancerCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::ScaleAroundDancerSelectionEndState, TriggerKind::ScaleAroundDancerCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::ScaleAroundDancerDragStartState, TriggerKind::ScaleAroundDancerCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::ScaleAroundDancerDragEndState, TriggerKind::ScaleAroundDancerCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::ScaleAroundDancerState, TriggerKind::ScaleAroundDancerSelectionStartedTrigger, StateKind::ScaleAroundDancerSelectionStartState),
+        transition(StateKind::ScaleAroundDancerSelectionStartState, TriggerKind::ScaleAroundDancerSelectionCompletedTrigger, StateKind::ScaleAroundDancerSelectionEndState),
+        transition(StateKind::ScaleAroundDancerSelectionEndState, TriggerKind::ScaleAroundDancerSelectionStartedTrigger, StateKind::ScaleAroundDancerSelectionStartState),
+        transition(StateKind::ScaleAroundDancerSelectionStartState, TriggerKind::ScaleAroundDancerDragStartedTrigger, StateKind::ScaleAroundDancerDragStartState),
+        transition(StateKind::ScaleAroundDancerDragStartState, TriggerKind::ScaleAroundDancerDragCompletedTrigger, StateKind::ScaleAroundDancerDragEndState),
+        transition(StateKind::ScaleAroundDancerDragEndState, TriggerKind::ScaleAroundDancerDragStartedTrigger, StateKind::ScaleAroundDancerDragStartState),
+        transition(StateKind::ScaleAroundDancerSelectionEndState, TriggerKind::ScaleAroundDancerDragStartedTrigger, StateKind::ScaleAroundDancerDragStartState),
+        transition(StateKind::ScaleAroundDancerDragStartState, TriggerKind::ScaleAroundDancerSelectionStartedTrigger, StateKind::ScaleAroundDancerSelectionStartState),
+        transition(StateKind::ScalePositionsState, TriggerKind::ScalePositionsCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::ScalePositionsSelectionStartState, TriggerKind::ScalePositionsCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::ScalePositionsSelectionEndState, TriggerKind::ScalePositionsCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::ScalePositionsDragStartState, TriggerKind::ScalePositionsCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::ScalePositionsDragEndState, TriggerKind::ScalePositionsCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::ScalePositionsState, TriggerKind::ScalePositionsSelectionStartedTrigger, StateKind::ScalePositionsSelectionStartState),
+        transition(StateKind::ScalePositionsSelectionStartState, TriggerKind::ScalePositionsSelectionCompletedTrigger, StateKind::ScalePositionsSelectionEndState),
+        transition(StateKind::ScalePositionsSelectionEndState, TriggerKind::ScalePositionsSelectionStartedTrigger, StateKind::ScalePositionsSelectionStartState),
+        transition(StateKind::ScalePositionsSelectionStartState, TriggerKind::ScalePositionsDragStartedTrigger, StateKind::ScalePositionsDragStartState),
+        transition(StateKind::ScalePositionsDragStartState, TriggerKind::ScalePositionsDragCompletedTrigger, StateKind::ScalePositionsDragEndState),
+        transition(StateKind::ScalePositionsDragEndState, TriggerKind::ScalePositionsDragStartedTrigger, StateKind::ScalePositionsDragStartState),
+        transition(StateKind::ScalePositionsSelectionEndState, TriggerKind::ScalePositionsDragStartedTrigger, StateKind::ScalePositionsDragStartState),
+        transition(StateKind::ScalePositionsDragStartState, TriggerKind::ScalePositionsSelectionStartedTrigger, StateKind::ScalePositionsSelectionStartState),
+        transition(StateKind::RotateAroundCenterState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::RotateAroundCenterSelectionStartState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::RotateAroundCenterSelectionEndState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::RotateAroundCenterRotationStartState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::RotateAroundCenterRotationEndState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::RotateAroundCenterState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::RotateAroundCenterSelectionStartState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::RotateAroundCenterSelectionEndState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::RotateAroundCenterRotationStartState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::RotateAroundCenterRotationEndState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::RotateAroundCenterState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::RotateAroundCenterSelectionStartState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::RotateAroundCenterSelectionEndState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::RotateAroundCenterRotationStartState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::RotateAroundCenterRotationEndState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::RotateAroundCenterState, TriggerKind::RotateAroundCenterSelectionStartedTrigger, StateKind::RotateAroundCenterSelectionStartState),
+        transition(StateKind::RotateAroundCenterSelectionEndState, TriggerKind::RotateAroundCenterSelectionStartedTrigger, StateKind::RotateAroundCenterSelectionStartState),
+        transition(StateKind::RotateAroundCenterRotationEndState, TriggerKind::RotateAroundCenterRotationStartedTrigger, StateKind::RotateAroundCenterRotationStartState),
+        transition(StateKind::RotateAroundCenterSelectionEndState, TriggerKind::RotateAroundCenterRotationStartedTrigger, StateKind::RotateAroundCenterRotationStartState),
+        transition(StateKind::RotateAroundCenterRotationStartState, TriggerKind::RotateAroundCenterSelectionStartedTrigger, StateKind::RotateAroundCenterSelectionStartState),
+        transition(StateKind::RotateAroundCenterRotationEndState, TriggerKind::RotateAroundCenterSelectionStartedTrigger, StateKind::RotateAroundCenterSelectionStartState),
+        transition(StateKind::RotateAroundCenterSelectionStartState, TriggerKind::RotateAroundCenterRotationStartedTrigger, StateKind::RotateAroundCenterRotationStartState),
+        transition(StateKind::RotateAroundCenterRotationStartState, TriggerKind::RotateAroundCenterSelectionStartedTrigger, StateKind::RotateAroundCenterSelectionStartState),
+        transition(StateKind::ScalePositionsState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::ScalePositionsSelectionStartState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::ScalePositionsSelectionEndState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::ScalePositionsDragStartState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::ScalePositionsDragEndState, TriggerKind::MovePositionsStartedTrigger, StateKind::MovePositionsState),
+        transition(StateKind::ScalePositionsState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ScalePositionsSelectionStartState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ScalePositionsSelectionEndState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ScalePositionsDragStartState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ScalePositionsDragEndState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ScalePositionsState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::ScalePositionsSelectionStartState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::ScalePositionsSelectionEndState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::ScalePositionsDragStartState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::ScalePositionsDragEndState, TriggerKind::ScaleAroundDancerStartedTrigger, StateKind::ScaleAroundDancerState),
+        transition(StateKind::ScaleAroundDancerState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ScaleAroundDancerSelectionStartState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ScaleAroundDancerSelectionEndState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ScaleAroundDancerDragStartState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ScaleAroundDancerDragEndState, TriggerKind::RotateAroundCenterStartedTrigger, StateKind::RotateAroundCenterState),
+        transition(StateKind::ScaleAroundDancerState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::ScaleAroundDancerSelectionStartState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::ScaleAroundDancerSelectionEndState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::ScaleAroundDancerDragStartState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::ScaleAroundDancerDragEndState, TriggerKind::ScalePositionsStartedTrigger, StateKind::ScalePositionsState),
+        transition(StateKind::ViewSceneState, TriggerKind::PlacePositionsStartedTrigger, StateKind::PlacePositionsState),
+        transition(StateKind::ViewScenePanState, TriggerKind::PlacePositionsStartedTrigger, StateKind::PlacePositionsState),
+        transition(StateKind::ViewSceneZoomState, TriggerKind::PlacePositionsStartedTrigger, StateKind::PlacePositionsState),
+        transition(StateKind::PlacePositionsState, TriggerKind::PlacePositionsCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::PlacePositionsPanState, TriggerKind::PlacePositionsCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::PlacePositionsZoomState, TriggerKind::PlacePositionsCompletedTrigger, StateKind::ViewSceneState),
+        transition(StateKind::PlacePositionsState, TriggerKind::PlacePositionsCanceledTrigger, StateKind::ViewSceneState),
+        transition(StateKind::PlacePositionsPanState, TriggerKind::PlacePositionsCanceledTrigger, StateKind::ViewSceneState),
+        transition(StateKind::PlacePositionsZoomState, TriggerKind::PlacePositionsCanceledTrigger, StateKind::ViewSceneState),
+        transition(StateKind::PlacePositionsState, TriggerKind::PanStartedTrigger, StateKind::PlacePositionsPanState),
+        transition(StateKind::PlacePositionsPanState, TriggerKind::PanCompletedTrigger, StateKind::PlacePositionsState),
+        transition(StateKind::PlacePositionsState, TriggerKind::ZoomStartedTrigger, StateKind::PlacePositionsZoomState),
+        transition(StateKind::PlacePositionsZoomState, TriggerKind::ZoomCompletedTrigger, StateKind::PlacePositionsState),
+        transition(StateKind::PlacePositionsPanState, TriggerKind::ZoomStartedTrigger, StateKind::PlacePositionsZoomState),
+        transition(StateKind::PlacePositionsZoomState, TriggerKind::PanStartedTrigger, StateKind::PlacePositionsPanState),
+    ];
+
+    transitions
 }
 
-pub fn default_transitions() -> Result<Vec<StateTransition>, StateMachineError> {
-    let csv = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/data/StateMachine_TransitionMatrix.csv"
-    ));
-    parse_transition_matrix(csv)
-}
-
-fn parse_transition_matrix(csv: &str) -> Result<Vec<StateTransition>, StateMachineError> {
-    let mut lines = csv.lines();
-    let header = lines.next().ok_or(StateMachineError::InvalidHeader)?;
-    let header_parts: Vec<&str> = header.split(',').collect();
-    if header_parts.len() < 2 {
-        return Err(StateMachineError::InvalidHeader);
-    }
-
-    let to_states: Vec<StateKind> = header_parts
-        .iter()
-        .skip(1)
-        .map(|name| state_kind_from_name(name.trim()))
-        .collect::<Result<_, _>>()?;
-
-    let mut transitions = Vec::new();
-
-    for line in lines {
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
-
-        let parts: Vec<&str> = line.split(',').collect();
-        if parts.is_empty() {
-            continue;
-        }
-
-        let from_state = state_kind_from_name(parts[0].trim())?;
-        for (index, cell) in parts.iter().enumerate().skip(1) {
-            let cell = cell.trim();
-            if cell.is_empty() {
-                continue;
-            }
-
-            let to_state = to_states
-                .get(index - 1)
-                .copied()
-                .ok_or(StateMachineError::InvalidHeader)?;
-
-            for trigger_name in cell.split(';') {
-                let trigger_name = trigger_name.trim();
-                if trigger_name.is_empty() {
-                    continue;
-                }
-
-                let trigger = trigger_kind_from_name(trigger_name)?;
-                transitions.push(default_transition(from_state, trigger, to_state));
-            }
-        }
-    }
-
-    Ok(transitions)
-}
-
-fn default_transition(from_state: StateKind, trigger: TriggerKind, to_state: StateKind) -> StateTransition {
+fn transition(from_state: StateKind, trigger: TriggerKind, to_state: StateKind) -> StateTransition {
     StateTransition {
         from_state,
         trigger,
@@ -527,89 +603,5 @@ fn create_state(kind: StateKind) -> Box<dyn ApplicationState> {
         StateKind::ScaleAroundDancerSelectionEndState => Box::new(ScaleAroundDancerSelectionEndState),
         StateKind::ScaleAroundDancerDragStartState => Box::new(ScaleAroundDancerDragStartState),
         StateKind::ScaleAroundDancerDragEndState => Box::new(ScaleAroundDancerDragEndState),
-    }
-}
-
-fn state_kind_from_name(name: &str) -> Result<StateKind, StateMachineError> {
-    match name {
-        "InitialApplicationState" => Ok(StateKind::InitialApplicationState),
-        "ViewSceneState" => Ok(StateKind::ViewSceneState),
-        "ViewScenePanState" => Ok(StateKind::ViewScenePanState),
-        "ViewSceneZoomState" => Ok(StateKind::ViewSceneZoomState),
-        "PlacePositionsState" => Ok(StateKind::PlacePositionsState),
-        "PlacePositionsPanState" => Ok(StateKind::PlacePositionsPanState),
-        "PlacePositionsZoomState" => Ok(StateKind::PlacePositionsZoomState),
-        "MovePositionsState" => Ok(StateKind::MovePositionsState),
-        "MovePositionsSelectionState" => Ok(StateKind::MovePositionsSelectionState),
-        "MovePositionsDragState" => Ok(StateKind::MovePositionsDragState),
-        "RotateAroundCenterState" => Ok(StateKind::RotateAroundCenterState),
-        "RotateAroundCenterSelectionStartState" => Ok(StateKind::RotateAroundCenterSelectionStartState),
-        "RotateAroundCenterSelectionEndState" => Ok(StateKind::RotateAroundCenterSelectionEndState),
-        "RotateAroundCenterRotationStartState" => Ok(StateKind::RotateAroundCenterRotationStartState),
-        "RotateAroundCenterRotationEndState" => Ok(StateKind::RotateAroundCenterRotationEndState),
-        "ScalePositionsState" => Ok(StateKind::ScalePositionsState),
-        "ScalePositionsSelectionStartState" => Ok(StateKind::ScalePositionsSelectionStartState),
-        "ScalePositionsSelectionEndState" => Ok(StateKind::ScalePositionsSelectionEndState),
-        "ScalePositionsDragStartState" => Ok(StateKind::ScalePositionsDragStartState),
-        "ScalePositionsDragEndState" => Ok(StateKind::ScalePositionsDragEndState),
-        "ScaleAroundDancerState" => Ok(StateKind::ScaleAroundDancerState),
-        "ScaleAroundDancerSelectionStartState" => Ok(StateKind::ScaleAroundDancerSelectionStartState),
-        "ScaleAroundDancerSelectionEndState" => Ok(StateKind::ScaleAroundDancerSelectionEndState),
-        "ScaleAroundDancerDragStartState" => Ok(StateKind::ScaleAroundDancerDragStartState),
-        "ScaleAroundDancerDragEndState" => Ok(StateKind::ScaleAroundDancerDragEndState),
-        _ => Err(StateMachineError::UnknownState(name.to_string())),
-    }
-}
-
-fn trigger_kind_from_name(name: &str) -> Result<TriggerKind, StateMachineError> {
-    match name {
-        "MovePositionsCompletedTrigger" => Ok(TriggerKind::MovePositionsCompletedTrigger),
-        "MovePositionsDragCompletedTrigger" => Ok(TriggerKind::MovePositionsDragCompletedTrigger),
-        "MovePositionsDragStartedTrigger" => Ok(TriggerKind::MovePositionsDragStartedTrigger),
-        "MovePositionsSelectionCompletedTrigger" => Ok(TriggerKind::MovePositionsSelectionCompletedTrigger),
-        "MovePositionsSelectionStartedTrigger" => Ok(TriggerKind::MovePositionsSelectionStartedTrigger),
-        "MovePositionsStartedTrigger" => Ok(TriggerKind::MovePositionsStartedTrigger),
-        "PanCompletedTrigger" => Ok(TriggerKind::PanCompletedTrigger),
-        "PanStartedTrigger" => Ok(TriggerKind::PanStartedTrigger),
-        "PlacePositionsCanceledTrigger" => Ok(TriggerKind::PlacePositionsCanceledTrigger),
-        "PlacePositionsCompletedTrigger" => Ok(TriggerKind::PlacePositionsCompletedTrigger),
-        "PlacePositionsStartedTrigger" => Ok(TriggerKind::PlacePositionsStartedTrigger),
-        "RotateAroundCenterCompletedTrigger" => Ok(TriggerKind::RotateAroundCenterCompletedTrigger),
-        "RotateAroundCenterRotationCompletedTrigger" => {
-            Ok(TriggerKind::RotateAroundCenterRotationCompletedTrigger)
-        }
-        "RotateAroundCenterRotationStartedTrigger" => {
-            Ok(TriggerKind::RotateAroundCenterRotationStartedTrigger)
-        }
-        "RotateAroundCenterSelectionCompletedTrigger" => {
-            Ok(TriggerKind::RotateAroundCenterSelectionCompletedTrigger)
-        }
-        "RotateAroundCenterSelectionStartedTrigger" => {
-            Ok(TriggerKind::RotateAroundCenterSelectionStartedTrigger)
-        }
-        "RotateAroundCenterStartedTrigger" => Ok(TriggerKind::RotateAroundCenterStartedTrigger),
-        "ScaleAroundDancerCompletedTrigger" => Ok(TriggerKind::ScaleAroundDancerCompletedTrigger),
-        "ScaleAroundDancerDragCompletedTrigger" => {
-            Ok(TriggerKind::ScaleAroundDancerDragCompletedTrigger)
-        }
-        "ScaleAroundDancerDragStartedTrigger" => Ok(TriggerKind::ScaleAroundDancerDragStartedTrigger),
-        "ScaleAroundDancerSelectionCompletedTrigger" => {
-            Ok(TriggerKind::ScaleAroundDancerSelectionCompletedTrigger)
-        }
-        "ScaleAroundDancerSelectionStartedTrigger" => {
-            Ok(TriggerKind::ScaleAroundDancerSelectionStartedTrigger)
-        }
-        "ScaleAroundDancerStartedTrigger" => Ok(TriggerKind::ScaleAroundDancerStartedTrigger),
-        "ScalePositionsCompletedTrigger" => Ok(TriggerKind::ScalePositionsCompletedTrigger),
-        "ScalePositionsDragCompletedTrigger" => Ok(TriggerKind::ScalePositionsDragCompletedTrigger),
-        "ScalePositionsDragStartedTrigger" => Ok(TriggerKind::ScalePositionsDragStartedTrigger),
-        "ScalePositionsSelectionCompletedTrigger" => {
-            Ok(TriggerKind::ScalePositionsSelectionCompletedTrigger)
-        }
-        "ScalePositionsSelectionStartedTrigger" => Ok(TriggerKind::ScalePositionsSelectionStartedTrigger),
-        "ScalePositionsStartedTrigger" => Ok(TriggerKind::ScalePositionsStartedTrigger),
-        "ZoomCompletedTrigger" => Ok(TriggerKind::ZoomCompletedTrigger),
-        "ZoomStartedTrigger" => Ok(TriggerKind::ZoomStartedTrigger),
-        _ => Err(StateMachineError::UnknownTrigger(name.to_string())),
     }
 }

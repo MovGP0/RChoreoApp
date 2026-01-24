@@ -94,10 +94,9 @@ pub fn compute_sigma_vector(cost_matrix: &[Vec<f32>]) -> Result<Vec<usize>, Algo
     }
 
     let mut result = vec![0usize; n];
-    for j in 1..=n {
-        let i = p[j];
-        if i > 0 {
-            result[i - 1] = j - 1;
+    for (j, &assigned) in p.iter().enumerate().skip(1) {
+        if assigned > 0 {
+            result[assigned - 1] = j - 1;
         }
     }
 

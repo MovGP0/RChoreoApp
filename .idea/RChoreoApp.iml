@@ -8,6 +8,11 @@
       <sourceFolder url="file://$MODULE_DIR$/crates/shared/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/choreo_master_mobile_json/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/choreo_master_mobile_json/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/choreo_state_machine/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/choreo_algorithms/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/choreo_algorithms/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/choreo_i18n/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

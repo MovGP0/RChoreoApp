@@ -8,6 +8,7 @@
 
 #[allow(unsafe_code)]
 #[unsafe(no_mangle)]
+#[cfg(target_os = "android")]
 fn android_main(app: slint::android::AndroidApp) {
     if let Err(err) = slint::android::init(app) {
         eprintln!("failed to init Slint Android backend: {err}");
@@ -24,4 +25,10 @@ fn android_main(app: slint::android::AndroidApp) {
     if let Err(err) = ui.run() {
         eprintln!("failed to run UI: {err}");
     }
+}
+
+#[cfg(not(target_os = "android"))]
+#[allow(dead_code)]
+fn android_main(_: ()) {
+    // Non-Android builds should not attempt to use the Android backend.
 }

@@ -1,0 +1,9 @@
+[package]
+name = "choreo_models"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+choreo_master_mobile_json = { path = "../choreo_master_mobile_json" }
+crossbeam-channel = "0.5"
+time = { version = "0.3", features = ["formatting", "parsing"] }

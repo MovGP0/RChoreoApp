@@ -1,20 +1,28 @@
 use choreo_algorithms::hungarian::compute_mid_scene_assignment;
 use choreo_algorithms::min_cost_max_flow::solve_three_scene_assignment;
 use choreo_algorithms::{AlgorithmError, Vector2};
-use rspec::{ConfigurationBuilder, Runner};
+use rspec::{ConfigurationBuilder, Logger, Runner};
+use rspec::report::Report;
 use serde_json::Value;
+use std::io;
+use std::sync::Arc;
 
-fn run_suite(suite: &rspec::Suite) -> rspec::report::SuiteReport {
+fn run_suite<T>(suite: &rspec::block::Suite<T>) -> rspec::report::SuiteReport
+where
+    T: Clone + Send + Sync + std::fmt::Debug,
+{
     let configuration = ConfigurationBuilder::default()
+        .exit_on_failure(false)
         .build()
         .expect("rspec configuration should build");
-    let runner = Runner::new(configuration, Vec::new());
+    let logger = Arc::new(Logger::new(io::stdout()));
+    let runner = Runner::new(configuration, vec![logger]);
     runner.run(suite)
 }
 
 #[test]
 fn three_scene_assignment_spec() {
-    let suite = rspec::describe("three scene assignment", |spec| {
+    let suite = rspec::describe("three scene assignment", (), |spec| {
         spec.it("chooses non-crossing mapping when midpoints are swapped", |_| {
             let scene_a = vec![Vector2::new(0.0, 0.0), Vector2::new(2.0, 0.0)];
             let scene_b = vec![Vector2::new(2.0, 1.0), Vector2::new(0.0, 1.0)];
