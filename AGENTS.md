@@ -10,6 +10,41 @@
 - use [Slint](https://slint.dev/) as UI layer
 - use [rspec](https://github.com/rust-rspec/rspec) for BDD testing
 
+## Linting
+
+- Run: `cargo clippy --all-targets --all-features -- -D warnings`
+- Add to crate roots where applicable:
+  ```rust
+  #![deny(warnings)]
+  #![deny(unsafe_code)]
+  #![deny(rust_2018_idioms)]
+  #![deny(unused_must_use)]
+  #![deny(unreachable_pub)]
+  #![deny(elided_lifetimes_in_paths)]
+  #![deny(clippy::all)]
+  ```
+- Set panic abort in `Cargo.toml`:
+  ```toml
+  [profile.release]
+  panic = "abort"
+
+  [profile.dev]
+  panic = "abort"
+  ```
+
+## Rust Common Mistakes to Avoid
+
+- Avoid `&String` when `&str` is sufficient; prefer slices in APIs.
+- Avoid `Rc`/`RefCell` unless shared mutable ownership is required; prefer ownership/borrows.
+- Avoid slice indexing; use iterators or `array_windows()` to prevent off-by-one bugs.
+- Use correct integer types for domain values; avoid lossy or overflowing casts.
+- Avoid sentinel values (`-1`, `""`, `null`); use `Option<T>`.
+- Prefer enums over magic strings for state/roles.
+- Use proper error propagation (`?`) and implement `std::error::Error` for custom errors.
+- Implement standard traits where appropriate to integrate with the ecosystem.
+- Prefer standard library macros/helpers over hand-rolled versions.
+- Use tooling: `cargo fmt` and `cargo clippy`.
+
 # Issue Tracking
 
 This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
@@ -49,4 +84,3 @@ bd sync               # Sync with git
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
-
