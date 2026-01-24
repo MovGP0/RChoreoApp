@@ -22,7 +22,8 @@ cargo install wasm-pack
 wasm-pack build --release --target web apps/wasm
 ```
 
-Serve the `apps/wasm/index.html` over a local web server (the Slint runtime uses ES modules and won’t load from `file://`).
+Serve the `apps/wasm/index.html` over a local web server
+(the Slint runtime uses ES modules and won’t load from `file://`).
 
 ```sh
 python -m http.server
@@ -30,7 +31,10 @@ python -m http.server
 
 ## Android
 
-Install the Android SDK/NDK and set `ANDROID_HOME`, `ANDROID_NDK_ROOT`, and optionally `JAVA_HOME`. Then build the `rchoreo_android` crate as a `cdylib` using your preferred Android tooling (for example `cargo-apk` or `cargo-ndk`) and target an Android ABI such as `aarch64-linux-android`.
+Install the Android SDK/NDK and set `ANDROID_HOME`, `ANDROID_NDK_ROOT`, and optionally `JAVA_HOME`.
+Then build the `rchoreo_android` crate as a `cdylib`
+using your preferred Android tooling (for example `cargo-apk` or `cargo-ndk`)
+and target an Android ABI such as `aarch64-linux-android`.
 
 Example with `cargo-apk`:
 
@@ -41,7 +45,9 @@ cargo apk run --target aarch64-linux-android --lib -p rchoreo_android
 
 ## iOS
 
-Slint supports iOS via the Winit backend and Skia renderer, and requires macOS + Xcode/Xcodegen. Add the iOS Rust targets, then cross-compile the `rchoreo_desktop` crate and wire it into an Xcode project as described in the Slint iOS guide:
+Slint supports iOS via the Winit backend and Skia renderer, and requires macOS + Xcode/Xcodegen.
+Add the iOS Rust targets, then cross-compile the `rchoreo_desktop` crate
+and wire it into an Xcode project as described in the Slint iOS guide:
 
 ```sh
 rustup target add aarch64-apple-ios

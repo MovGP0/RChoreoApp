@@ -6,6 +6,12 @@
 #![deny(elided_lifetimes_in_paths)]
 #![deny(clippy::all)]
 
+slint::include_modules!();
+
 pub fn hello_text() -> &'static str {
     "Hello from RChoreoApp"
+}
+
+pub fn create_main_window() -> Result<MainWindow, slint::PlatformError> {
+    MainWindow::new()
 }

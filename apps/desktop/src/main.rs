@@ -6,24 +6,10 @@
 #![deny(elided_lifetimes_in_paths)]
 #![deny(clippy::all)]
 
-slint::slint! {
-    export component MainWindow inherits Window {
-        in property<string> message;
-        width: 360px;
-        height: 240px;
-
-        Text {
-            text: message;
-            color: #0f5132;
-            font-size: 20px;
-            horizontal-alignment: center;
-            vertical-alignment: center;
-        }
-    }
-}
+use slint::ComponentHandle;
 
 fn main() -> Result<(), slint::PlatformError> {
-    let ui = MainWindow::new()?;
+    let ui = shared::create_main_window()?;
     ui.set_message(shared::hello_text().into());
     ui.run()
 }

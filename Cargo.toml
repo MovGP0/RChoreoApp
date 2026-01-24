@@ -1,12 +1,14 @@
 [workspace]
 members = [
     "crates/shared",
+    "crates/choreo_master_mobile_json",
     "apps/desktop",
     "apps/android",
     "apps/wasm",
 ]
 default-members = [
     "apps/desktop",
+    "crates/shared",
 ]
 resolver = "2"
 

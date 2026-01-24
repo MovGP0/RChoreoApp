@@ -5,6 +5,9 @@
   </component>
   <component name="CargoProjects">
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml">
+      <package file="$PROJECT_DIR$/crates/choreo_master_mobile_json">
+        <feature name="default" enabled="true" />
+      </package>
       <package file="$PROJECT_DIR$/apps/android">
         <feature name="default" enabled="true" />
       </package>
@@ -21,13 +24,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/crates/choreo_master_mobile_json/Cargo.toml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/choreo_master_mobile_json/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/choreo_master_mobile_json/src/lib.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/choreo_master_mobile_json/tests/import_export.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/shared/build.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/shared/ui/main_window.slint" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.beads/issues.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/.beads/issues.jsonl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/RChoreoApp.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/RChoreoApp.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/android/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/android/src/lib.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/desktop/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/desktop/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/wasm/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/wasm/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/shared/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/shared/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/shared/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/shared/src/lib.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -53,34 +66,35 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.rust.reset.selective.auto.import&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/RChoreoApp&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
-    &quot;org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon&quot;: &quot;&quot;,
-    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.rust.reset.selective.auto.import": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "D:/RChoreoApp",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
+    "org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon": "",
+    "org.rust.first.attach.projects": "true",
+    "settings.editor.selected.configurable": "com.intellij.mcpserver.settings",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Cargo.Run RChoreoApp">
     <configuration name="Run RChoreoApp" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="buildProfileId" value="dev" />
-      <option name="command" value="run --package RChoreoApp --bin RChoreoApp" />
+      <option name="command" value="run -p rchoreo_desktop --bin rchoreo_desktop" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <envs />
       <option name="emulateTerminal" value="true" />
@@ -113,6 +127,10 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="Cargo.Run RChoreoApp" />
+      <item itemvalue="Cargo.Test RChoreoApp" />
+    </list>
   </component>
   <component name="RustProjectSettings">
     <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
@@ -126,6 +144,8 @@
       <updated>1769272125332</updated>
       <workItem from="1769272132897" duration="2139000" />
       <workItem from="1769274715450" duration="112000" />
+      <workItem from="1769275813767" duration="1910000" />
+      <workItem from="1769277827550" duration="2444000" />
     </task>
     <servers />
   </component>
