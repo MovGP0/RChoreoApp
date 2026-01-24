@@ -2,6 +2,8 @@
 members = [
     "crates/shared",
     "crates/choreo_master_mobile_json",
+    "crates/choreo_state_machine",
+    "crates/choreo_algorithms",
     "apps/desktop",
     "apps/android",
     "apps/wasm",
