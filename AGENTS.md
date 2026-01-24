@@ -16,17 +16,23 @@
 
 ## MaterialDesignThemes to Slint (Material) replacement list
 
-- App root: `MaterialWindow` for themed root window.
-- Buttons: `FilledButton`, `ElevatedButton`, `OutlineButton`, `TonalButton`, `TextButton`, `FloatingActionButton`, `SegmentedButton`, `IconButton`, `OutlineIconButton`, `TonalIconButton`.
-- Cards: `FilledCard`, `OutlinedCard`, `ElevatedCard`.
-- Text input: `TextField` (use for TextBox/SmartHint-like input), `DropDownMenu` for ComboBox-style selections.
-- Selection: `CheckBox`, `CheckBoxTile`, `RadioButton`, `Switch`.
-- Chips: `ActionChip`, `InputChip`, `FilterChip`.
-- Navigation & app bars: `NavigationBar`, `NavigationRail`, `NavigationDrawer`, `ModalNavigationDrawer`, `ModalDrawer`, `BottomAppBar`, `LargeAppBar`, `SmallAppBar`, `SearchBar`.
-- Dialogs: `Dialog`, `FullscreenDialog` (modal flows).
-- Progress: `LinearProgressIndicator`, `CircularProgressIndicator`.
-- Feedback: `SnackBar`, `ToolTip`, `HorizontalDivider`, `VerticalDivider`.
-- Existing but no direct Slint Material component (custom Slint component): `AutoSuggestBox`, `Badged`, `Calendar/DatePicker`, `Clock/TimePicker`, `ColorPicker/ColorZone`, `DataGrid`, `Expander`, `Flipper`, `HamburgerToggleButton`, `Menu/MenuItem`, `PopupBox`, `RatingBar`, `Ripple`, `ScrollViewer/ScrollBar`, `SliderWithTicks`, `SplitButton`, `TabView`, `TreeView/TreeListView`, `Underline`.
+- App root: `material_window.slint` (MaterialWindow).
+- Buttons: `filled_button.slint`, `elevated_button.slint`, `outline_button.slint`, `tonal_button.slint`, `text_button.slint`, `floating_action_button.slint`, `segmented_button.slint`, `icon_button.slint`, `outline_icon_button.slint`, `tonal_icon_button.slint`.
+- Cards: `card.slint` (filled/outlined/elevated variants).
+- Text input: `text_field.slint`, `drop_down_menu.slint`.
+- Selection: `check_box.slint`, `radio_button.slint`, `switch.slint`.
+- Chips: `chip.slint` (action/input/filter).
+- Navigation & app bars: `app_bar.slint`, `bottom_app_bar.slint`, `navigation_bar.slint`, `navigation_rail.slint`, `navigation_drawer.slint`, `drawer.slint`, `search_bar.slint`.
+- Dialogs/sheets: `dialog.slint`, `bottom_sheet.slint`, `modal.slint`.
+- Progress: `progress_indicator.slint` (linear/circular).
+- Feedback: `snack_bar.slint`, `tooltip.slint`, `divider.slint`.
+- Other available: `date_picker.slint`, `time_picker.slint`, `menu.slint`, `tab_bar.slint`, `slider.slint`, `scroll_view.slint`, `badge.slint`, `list.slint`, `list_view.slint`, `icon.slint`.
+- Still custom (no direct material.slint component): `AutoSuggestBox`, `ColorPicker/ColorZone`, `DataGrid`, `Expander`, `Flipper`, `HamburgerToggleButton`, `PopupBox`, `RatingBar`, `Ripple`, `SliderWithTicks`, `SplitButton`, `TreeView/TreeListView`, `Underline`.
+
+Tips:
+- Clone https://github.com/slint-ui/slint.git to .temp/ to inspect the source code.
+- Clone https://github.com/slint-ui/material-rust-template.git to .temp/ folder for an example project.
+- The material themed controls are located in `ui-libraries/material/src/ui` folder
 
 ## Linting
 
@@ -127,3 +133,7 @@ If you encounter a compile error after a code change you did, keep a note here h
 - `rspec::describe` requires an explicit environment argument (use `()` when none), and the suite type is `rspec::block::Suite<T>` with `Report` imported for `is_success()`.
 - When using `rspec` in tests, set `exit_on_failure(false)` in `ConfigurationBuilder` to avoid aborting the whole test process and to surface failures in `SuiteReport`.
 - Clippy denies range loops used only for indexing; prefer iterators with `enumerate()` and direct `contains()` for sentinel checks.
+- In Slint, callbacks should be declared as `callback name(type);` (or `name(param: type)`), not `callback name(type param);` to avoid parser errors.
+- If Slint widgets like `Slider` are missing, import them from `std-widgets.slint` (e.g., `import { Slider } from "std-widgets.slint";`).
+- Material components do not implicitly import std widgets; add explicit `std-widgets.slint` imports for shared controls like `Text`, `CheckBox`, and `Slider`.
+- For Material components, wire a `material` library alias in `build.rs` and import from `@material` (e.g., `import { FilledButton } from "@material";`).

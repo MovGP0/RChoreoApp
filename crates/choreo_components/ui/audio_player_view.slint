@@ -1,0 +1,74 @@
+import { Horizontal, MaterialText, Slider, TextButton } from "@material";
+
+export component AudioPlayerView inherits Rectangle {
+    in property <float> speed;
+    in property <float> minimum_speed;
+    in property <float> maximum_speed;
+    in property <float> position;
+    in property <float> duration;
+    in property <string> tick_values;
+    in property <bool> can_seek;
+    in property <bool> can_link_scene_to_position;
+    in property <bool> is_playing;
+    in property <string> speed_label;
+    in property <string> duration_label;
+    in property <color> surface_color;
+    in property <color> outline_color;
+    in property <color> on_surface_variant_color;
+
+    callback speed_changed(float);
+    callback position_changed(float);
+    callback link_scene_to_position();
+    callback toggle_play_pause();
+
+    background: surface_color;
+    border-width: 1px;
+    border-color: outline_color;
+    border-radius: 8px;
+    padding: 12px;
+
+    Horizontal {
+        spacing: 12px;
+
+        Slider {
+            minimum: minimum_speed;
+            maximum: maximum_speed;
+            value: speed;
+            width: 240px;
+            changed => { speed_changed(self.value); }
+        }
+
+        MaterialText {
+            text: speed_label;
+            color: on_surface_variant_color;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+
+        Slider {
+            minimum: 0;
+            maximum: duration;
+            value: position;
+            enabled: can_seek;
+            changed => { position_changed(self.value); }
+        }
+
+        MaterialText {
+            text: duration_label;
+            color: on_surface_variant_color;
+            width: 64px;
+            vertical-alignment: center;
+        }
+
+        TextButton {
+            text: "link";
+            enabled: can_link_scene_to_position;
+            clicked => { link_scene_to_position(); }
+        }
+
+        TextButton {
+            text: is_playing ? "pause" : "play";
+            clicked => { toggle_play_pause(); }
+        }
+    }
+}

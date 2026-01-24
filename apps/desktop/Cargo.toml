@@ -5,4 +5,9 @@ edition = "2024"
 
 [dependencies]
 slint = "1.14"
+choreo_algorithms = { path = "../../crates/choreo_algorithms", package = "choreo_algorithms" }
+choreo_i18n = { path = "../../crates/choreo_i18n", package = "choreo_i18n" }
+choreo_master_mobile_json = { path = "../../crates/choreo_master_mobile_json", package = "choreo_master_mobile_json" }
+choreo_models = { path="../../crates/choreo_models", package = "choreo_models" }
+choreo_state_machine = { path="../../crates/choreo_state_machine", package = "choreo_state_machine" }
 shared = { path = "../../crates/shared", package = "rchoreo_shared" }

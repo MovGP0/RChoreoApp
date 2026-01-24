@@ -875,11 +875,15 @@ dependencies = [
 name = "choreo_components"
 version = "0.1.0"
 dependencies = [
+ "choreo_i18n",
  "choreo_master_mobile_json",
  "choreo_models",
+ "crossbeam-channel",
  "env_logger",
  "log",
  "rodio",
+ "slint",
+ "slint-build",
 ]
 
 [[package]]
@@ -4285,6 +4289,11 @@ dependencies = [
 name = "rchoreo_desktop"
 version = "0.1.0"
 dependencies = [
+ "choreo_algorithms",
+ "choreo_i18n",
+ "choreo_master_mobile_json",
+ "choreo_models",
+ "choreo_state_machine",
  "rchoreo_shared",
  "slint",
 ]

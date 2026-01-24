@@ -1,0 +1,96 @@
+import { ListView, MaterialText, TextButton, TextField, Vertical } from "@material";
+
+export component DancerSettingsPage inherits Rectangle {
+    in property <[string]> dancer_names;
+    in property <int> selected_dancer_index;
+    in property <[string]> role_names;
+    in property <int> selected_role_index;
+    in property <string> dancer_name;
+    in property <string> dancer_shortcut;
+    in property <string> dancer_icon_name;
+    in property <bool> can_delete_dancer;
+    in property <bool> can_swap_dancers;
+    in property <string> title_text;
+    in property <string> swap_title_text;
+    in property <string> save_text;
+    in property <string> cancel_text;
+
+    callback select_dancer(int);
+    callback add_dancer();
+    callback delete_dancer();
+    callback select_role(int);
+    callback update_dancer_name(string);
+    callback update_dancer_shortcut(string);
+    callback update_dancer_icon(string);
+    callback swap_dancers();
+    callback save();
+    callback cancel();
+
+    background: #f2f2f2;
+    padding: 8px;
+
+    Vertical {
+        spacing: 12px;
+
+        Rectangle {
+            background: #ffffff;
+            border-width: 1px;
+            border-color: #dddddd;
+            border-radius: 8px;
+            padding: 12px;
+
+            Vertical {
+                spacing: 6px;
+                MaterialText { text: title_text; font-size: 18px; }
+                ListView {
+                    for name in dancer_names: MaterialText { text: name; }
+                }
+                TextButton { text: "+"; clicked => { add_dancer(); } }
+                TextButton { text: "-"; enabled: can_delete_dancer; clicked => { delete_dancer(); } }
+            }
+        }
+
+        Rectangle {
+            background: #ffffff;
+            border-width: 1px;
+            border-color: #dddddd;
+            border-radius: 8px;
+            padding: 12px;
+
+            Vertical {
+                spacing: 6px;
+                TextField { label: "Name"; text: dancer_name; edited(v) => { update_dancer_name(v); } }
+                TextField { label: "Shortcut"; text: dancer_shortcut; edited(v) => { update_dancer_shortcut(v); } }
+                TextField { label: "Icon"; text: dancer_icon_name; edited(v) => { update_dancer_icon(v); } }
+            }
+        }
+
+        Rectangle {
+            background: #ffffff;
+            border-width: 1px;
+            border-color: #dddddd;
+            border-radius: 8px;
+            padding: 12px;
+
+            Vertical {
+                spacing: 6px;
+                MaterialText { text: swap_title_text; }
+                TextButton { text: "Swap"; enabled: can_swap_dancers; clicked => { swap_dancers(); } }
+            }
+        }
+
+        Rectangle {
+            background: #ffffff;
+            border-width: 1px;
+            border-color: #dddddd;
+            border-radius: 8px;
+            padding: 12px;
+
+            Vertical {
+                spacing: 6px;
+                TextButton { text: cancel_text; clicked => { cancel(); } }
+                TextButton { text: save_text; clicked => { save(); } }
+            }
+        }
+    }
+}

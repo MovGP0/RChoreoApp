@@ -8,7 +8,11 @@
 
 pub mod global;
 pub mod scenes;
+pub mod preferences;
 pub mod settings;
 pub mod behavior;
 pub mod logging;
 pub mod audio_player;
+pub mod dancers;
+pub mod choreography_settings;
+pub mod floor;

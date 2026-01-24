@@ -1,0 +1,174 @@
+import { CheckBox, MaterialText, Slider, TextField, Vertical } from "@material";
+
+export component ChoreographySettingsView inherits Rectangle {
+    in property <bool> has_selected_scene;
+    in property <string> scene_name;
+    in property <string> scene_text;
+    in property <bool> scene_fixed_positions;
+    in property <bool> scene_has_timestamp;
+    in property <int> scene_timestamp_minutes;
+    in property <int> scene_timestamp_seconds;
+    in property <int> scene_timestamp_millis;
+
+    in property <string> comment;
+    in property <string> name;
+    in property <string> subtitle;
+    in property <string> date;
+    in property <string> variation;
+    in property <string> author;
+    in property <string> description;
+
+    in property <bool> positions_at_side;
+    in property <bool> grid_lines;
+    in property <bool> snap_to_grid;
+    in property <bool> show_timestamps;
+    in property <bool> show_legend;
+    in property <float> transparency;
+
+    in property <[int]> floor_size_options;
+    in property <int> floor_front;
+    in property <int> floor_back;
+    in property <int> floor_left;
+    in property <int> floor_right;
+
+    in property <[string]> grid_size_options;
+    in property <int> grid_resolution_index;
+
+    callback update_scene_name(string);
+    callback update_scene_text(string);
+    callback update_scene_fixed_positions(bool);
+    callback update_scene_has_timestamp(bool);
+    callback update_scene_timestamp_parts(int, int, int);
+
+    callback update_comment(string);
+    callback update_name(string);
+    callback update_subtitle(string);
+    callback update_date(string);
+    callback update_variation(string);
+    callback update_author(string);
+    callback update_description(string);
+
+    callback update_positions_at_side(bool);
+    callback update_grid_lines(bool);
+    callback update_snap_to_grid(bool);
+    callback update_show_timestamps(bool);
+    callback update_show_legend(bool);
+    callback update_transparency(float);
+
+    callback update_floor_front(int);
+    callback update_floor_back(int);
+    callback update_floor_left(int);
+    callback update_floor_right(int);
+    callback update_grid_resolution(int);
+
+    background: #f2f2f2;
+    padding: 8px;
+
+    Vertical {
+        spacing: 12px;
+
+        Rectangle {
+            background: #ffffff;
+            border-width: 1px;
+            border-color: #dddddd;
+            border-radius: 8px;
+            padding: 12px;
+
+            Vertical {
+                spacing: 8px;
+                MaterialText {
+                    text: "Scene";
+                    font-size: 18px;
+                }
+                TextField {
+                    label: "Name";
+                    text: scene_name;
+                    enabled: has_selected_scene;
+                    edited(new_value) => { update_scene_name(new_value); }
+                }
+                TextField {
+                    label: "Text";
+                    text: scene_text;
+                    enabled: has_selected_scene;
+                    edited(new_value) => { update_scene_text(new_value); }
+                }
+                CheckBox {
+                    text: "Fixed positions";
+                    checked: scene_fixed_positions;
+                    enabled: has_selected_scene;
+                    toggled => { update_scene_fixed_positions(self.checked); }
+                }
+                CheckBox {
+                    text: "Timestamp";
+                    checked: scene_has_timestamp;
+                    enabled: has_selected_scene;
+                    toggled => { update_scene_has_timestamp(self.checked); }
+                }
+            }
+        }
+
+        Rectangle {
+            background: #ffffff;
+            border-width: 1px;
+            border-color: #dddddd;
+            border-radius: 8px;
+            padding: 12px;
+
+            Vertical {
+                spacing: 8px;
+                MaterialText { text: "Choreography"; font-size: 18px; }
+                TextField { label: "Name"; text: name; edited(v) => { update_name(v); } }
+                TextField { label: "Subtitle"; text: subtitle; edited(v) => { update_subtitle(v); } }
+                TextField { label: "Date"; text: date; edited(v) => { update_date(v); } }
+                TextField { label: "Variation"; text: variation; edited(v) => { update_variation(v); } }
+                TextField { label: "Author"; text: author; edited(v) => { update_author(v); } }
+                TextField { label: "Comment"; text: comment; edited(v) => { update_comment(v); } }
+                TextField { label: "Description"; text: description; edited(v) => { update_description(v); } }
+            }
+        }
+
+        Rectangle {
+            background: #ffffff;
+            border-width: 1px;
+            border-color: #dddddd;
+            border-radius: 8px;
+            padding: 12px;
+
+            Vertical {
+                spacing: 8px;
+                MaterialText { text: "Floor"; font-size: 18px; }
+                CheckBox {
+                    text: "Positions at side";
+                    checked: positions_at_side;
+                    toggled => { update_positions_at_side(self.checked); }
+                }
+                CheckBox {
+                    text: "Grid lines";
+                    checked: grid_lines;
+                    toggled => { update_grid_lines(self.checked); }
+                }
+                CheckBox {
+                    text: "Snap to grid";
+                    checked: snap_to_grid;
+                    toggled => { update_snap_to_grid(self.checked); }
+                }
+                CheckBox {
+                    text: "Show timestamps";
+                    checked: show_timestamps;
+                    toggled => { update_show_timestamps(self.checked); }
+                }
+                CheckBox {
+                    text: "Show legend";
+                    checked: show_legend;
+                    toggled => { update_show_legend(self.checked); }
+                }
+                Slider {
+                    minimum: 0;
+                    maximum: 1;
+                    value: transparency;
+                    changed => { update_transparency(self.value); }
+                }
+            }
+        }
+    }
+}

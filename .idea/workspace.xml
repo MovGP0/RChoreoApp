@@ -7,6 +7,11 @@
     <option name="queryHistory">
       <list>
         <option value="status:open" />
+        <option value="status:ready" />
+        <option value="status:open and priority:0-1" />
+        <option value="(status:open and priority:0-1)" />
+        <option value="status:open and priority:1" />
+        <option value="status:open and priority:0" />
         <option value="status:open and priority()" />
         <option value="status:open and priority" />
       </list>
@@ -16,6 +21,12 @@
         <entry key="LIST" value="status:open" />
       </map>
     </option>
+  </component>
+  <component name="BeadsViewerThemeState">
+    <option name="currentThemeMode" value="DARK" />
+  </component>
+  <component name="BeadsViewerViewModeState">
+    <option name="currentViewMode" value="KANBAN" />
   </component>
   <component name="CargoProjects">
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml">
@@ -52,19 +63,25 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="adding notes in DI">
+    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="starting porting components">
+      <change afterPath="$PROJECT_DIR$/crates/choreo_components/build.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/choreo_components/src/preferences.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/choreo_components/ui/audio_player_view.slint" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/choreo_components/ui/main.slint" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/choreo_models/tests/choreography_model_mapper_tests.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.beads/issues.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/.beads/issues.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/RChoreoApp.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/RChoreoApp.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_i18n/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_i18n/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_master_mobile_json/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_master_mobile_json/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_master_mobile_json/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_master_mobile_json/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_models/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_models/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_state_machine/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_state_machine/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_state_machine/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_state_machine/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/desktop/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/apps/desktop/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_algorithms/tests/three_scene_assignment_spec.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_algorithms/tests/three_scene_assignment_spec.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/settings.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/settings.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -91,7 +108,8 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
-    &quot;Cargo.Run RChoreoApp.executor&quot;: &quot;Debug&quot;,
+    &quot;Cargo.Run RChoreoApp.executor&quot;: &quot;Run&quot;,
+    &quot;Cargo.Run Web.executor&quot;: &quot;Run&quot;,
     &quot;Cargo.Test RChoreoApp.executor&quot;: &quot;Debug&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
@@ -113,7 +131,8 @@
     &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;com.intellij.mcpserver.settings&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;,
+    &quot;wasm-pack.Build.executor&quot;: &quot;Run&quot;
   }
 }</component>
   <component name="RunManager" selected="Cargo.Run RChoreoApp">
@@ -153,9 +172,19 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Build" type="WasmPackCommandRunConfiguration" factoryName="wasm-pack" nameIsGenerated="true">
+      <option name="command" value="build --release --target web apps/wasm" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <envs />
+      <option name="emulateTerminal" value="true" />
+      <method v="2">
+        <option name="WASM_PACK.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
     <list>
       <item itemvalue="Cargo.Run RChoreoApp" />
       <item itemvalue="Cargo.Test RChoreoApp" />
+      <item itemvalue="wasm-pack.Build" />
     </list>
   </component>
   <component name="RustProjectSettings">
@@ -171,7 +200,7 @@
       <workItem from="1769272132897" duration="2139000" />
       <workItem from="1769274715450" duration="112000" />
       <workItem from="1769275813767" duration="1910000" />
-      <workItem from="1769277827550" duration="9683000" />
+      <workItem from="1769277827550" duration="15385000" />
     </task>
     <task id="LOCAL-00001" summary="implementing json parsing">
       <option name="closed" value="true" />
@@ -197,7 +226,23 @@
       <option name="project" value="LOCAL" />
       <updated>1769281771247</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="starting porting components">
+      <option name="closed" value="true" />
+      <created>1769287779076</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1769287779076</updated>
+    </task>
+    <task id="LOCAL-00005" summary="starting porting components">
+      <option name="closed" value="true" />
+      <created>1769287909682</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1769287909682</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -206,7 +251,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="implementing json parsing" />
     <MESSAGE value="adding notes in DI" />
-    <option name="LAST_COMMIT_MESSAGE" value="adding notes in DI" />
+    <MESSAGE value="starting porting components" />
+    <option name="LAST_COMMIT_MESSAGE" value="starting porting components" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

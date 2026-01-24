@@ -1,0 +1,31 @@
+import { MaterialText, TextButton, Vertical } from "@material";
+
+export component SwapDancersDialogView inherits Rectangle {
+    in property <string> title_text;
+    in property <string> message_text;
+    in property <string> confirm_text;
+    in property <string> cancel_text;
+    in property <color> first_color;
+    in property <color> second_color;
+    in property <string> first_name;
+    in property <string> second_name;
+
+    callback confirm();
+    callback cancel();
+
+    background: #ffffff;
+    border-width: 1px;
+    border-color: #dddddd;
+    border-radius: 8px;
+    padding: 16px;
+
+    Vertical {
+        spacing: 8px;
+        MaterialText { text: title_text; font-size: 18px; }
+        MaterialText { text: first_name; }
+        MaterialText { text: second_name; }
+        MaterialText { text: message_text; }
+        TextButton { text: cancel_text; clicked => { cancel(); } }
+        TextButton { text: confirm_text; clicked => { confirm(); } }
+    }
+}

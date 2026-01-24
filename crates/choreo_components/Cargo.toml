@@ -6,6 +6,12 @@ edition = "2024"
 [dependencies]
 choreo_models = { path = "../choreo_models" }
 choreo_master_mobile_json = { path = "../choreo_master_mobile_json" }
+choreo_i18n = { path = "../choreo_i18n" }
+crossbeam-channel = "0.5"
 env_logger = "0.11"
 log = "0.4"
 rodio = "0.21.1"
+slint = "1.14.1"
+
+[build-dependencies]
+slint-build = "1.14.1"
