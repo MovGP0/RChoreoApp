@@ -9,6 +9,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::collections::HashMap;
+use std::fmt;
 use std::fs;
 use std::path::Path;
 use thiserror::Error;
@@ -48,6 +49,12 @@ pub struct Color {
     pub b: u8,
 }
 
+impl Default for Color {
+    fn default() -> Self {
+        Self::transparent()
+    }
+}
+
 impl Color {
     pub fn transparent() -> Self {
         Self {
@@ -77,12 +84,101 @@ impl Color {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FrontPosition {
     Top,
     Right,
     Bottom,
     Left,
+}
+
+impl FrontPosition {
+    fn from_i32(value: i32) -> Option<Self> {
+        match value {
+            0 => Some(Self::Top),
+            1 => Some(Self::Right),
+            2 => Some(Self::Bottom),
+            3 => Some(Self::Left),
+            _ => None,
+        }
+    }
+
+    fn to_i32(self) -> i32 {
+        match self {
+            Self::Top => 0,
+            Self::Right => 1,
+            Self::Bottom => 2,
+            Self::Left => 3,
+        }
+    }
+}
+
+impl Serialize for FrontPosition {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_i32(self.to_i32())
+    }
+}
+
+impl<'de> Deserialize<'de> for FrontPosition {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct FrontPositionVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for FrontPositionVisitor {
+            type Value = FrontPosition;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("an integer 0..=3 or a string front position")
+            }
+
+            fn visit_i64<E>(self, value: i64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                let value = i32::try_from(value)
+                    .map_err(|_| E::custom("front position out of range"))?;
+                FrontPosition::from_i32(value)
+                    .ok_or_else(|| E::custom("front position out of range"))
+            }
+
+            fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                let value = i32::try_from(value)
+                    .map_err(|_| E::custom("front position out of range"))?;
+                FrontPosition::from_i32(value)
+                    .ok_or_else(|| E::custom("front position out of range"))
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                match value.to_ascii_lowercase().as_str() {
+                    "top" => Ok(FrontPosition::Top),
+                    "right" => Ok(FrontPosition::Right),
+                    "bottom" => Ok(FrontPosition::Bottom),
+                    "left" => Ok(FrontPosition::Left),
+                    _ => Err(E::custom("unknown front position string")),
+                }
+            }
+
+            fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                self.visit_str(&value)
+            }
+        }
+
+        deserializer.deserialize_any(FrontPositionVisitor)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -124,9 +220,9 @@ pub struct Settings {
     pub positions_at_side: bool,
     #[serde(rename = "GridLines")]
     pub grid_lines: bool,
-    #[serde(rename = "SnapToGrid")]
+    #[serde(rename = "SnapToGrid", default = "default_snap_to_grid")]
     pub snap_to_grid: bool,
-    #[serde(rename = "FloorColor", skip_serializing)]
+    #[serde(rename = "FloorColor", skip_serializing, skip_deserializing)]
     pub floor_color: Color,
     #[serde(rename = "DancerSize")]
     pub dancer_size: f64,
@@ -136,6 +232,10 @@ pub struct Settings {
     pub music_path_absolute: Option<String>,
     #[serde(rename = "MusicPathRelative")]
     pub music_path_relative: Option<String>,
+}
+
+fn default_snap_to_grid() -> bool {
+    true
 }
 
 impl Default for Settings {
@@ -164,7 +264,7 @@ pub struct Role {
     pub z_index: i32,
     #[serde(rename = "Name")]
     pub name: String,
-    #[serde(rename = "Color", skip_serializing)]
+    #[serde(rename = "Color", skip_serializing, skip_deserializing)]
     pub color: Color,
 }
 
@@ -182,13 +282,13 @@ impl Default for Role {
 pub struct Dancer {
     #[serde(skip)]
     pub dancer_id: DancerId,
-    #[serde(rename = "Role", skip_serializing)]
+    #[serde(rename = "Role", skip_serializing, skip_deserializing)]
     pub role: Role,
     #[serde(rename = "Name")]
     pub name: String,
     #[serde(rename = "Shortcut")]
     pub shortcut: String,
-    #[serde(rename = "Color", skip_serializing)]
+    #[serde(rename = "Color", skip_serializing, skip_deserializing)]
     pub color: Color,
     #[serde(rename = "Icon")]
     pub icon: Option<String>,
@@ -209,7 +309,7 @@ impl Default for Dancer {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Position {
-    #[serde(rename = "Dancer", skip_serializing)]
+    #[serde(rename = "Dancer", skip_serializing, skip_deserializing)]
     pub dancer: Option<Dancer>,
     #[serde(rename = "O", skip_serializing_if = "Option::is_none")]
     pub orientation: Option<f64>,
@@ -258,7 +358,7 @@ impl Default for Position {
 pub struct Scene {
     #[serde(skip)]
     pub scene_id: SceneId,
-    #[serde(rename = "Positions")]
+    #[serde(rename = "Positions", skip_deserializing)]
     pub positions: Option<Vec<Position>>,
     #[serde(rename = "Name")]
     pub name: String,
@@ -268,13 +368,13 @@ pub struct Scene {
     pub fixed_positions: bool,
     #[serde(rename = "Timestamp", skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<String>,
-    #[serde(rename = "VariationDepth")]
+    #[serde(rename = "VariationDepth", default)]
     pub variation_depth: i32,
-    #[serde(rename = "Variations")]
+    #[serde(rename = "Variations", skip_deserializing)]
     pub variations: Option<Vec<Vec<Scene>>>,
-    #[serde(rename = "CurrentVariation")]
+    #[serde(rename = "CurrentVariation", skip_deserializing)]
     pub current_variation: Option<Vec<Scene>>,
-    #[serde(rename = "Color", skip_serializing)]
+    #[serde(rename = "Color", skip_serializing, skip_deserializing)]
     pub color: Color,
 }
 
@@ -381,9 +481,10 @@ fn from_value(value: &Value) -> Result<Choreography, ChoreoJsonError> {
     let variation = get_string(root, "Variation")?;
     let author = get_string(root, "Author")?;
     let description = get_string(root, "Description")?;
-    let last_save_date = get_string(root, "LastSaveDate")
-        .and_then(|value| value)
-        .and_then(|value| OffsetDateTime::parse(&value, &time::format_description::well_known::Rfc3339).ok())
+    let last_save_date = get_string(root, "LastSaveDate")?
+        .and_then(|value| {
+            OffsetDateTime::parse(&value, &time::format_description::well_known::Rfc3339).ok()
+        })
         .unwrap_or_else(OffsetDateTime::now_utc);
 
     let settings_value = root
