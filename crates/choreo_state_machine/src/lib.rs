@@ -7,7 +7,8 @@
 #![deny(clippy::all)]
 
 use std::fmt::Debug;
-use nject::{inject, injectable};
+use std::sync::Once;
+use nject::injectable;
 
 pub trait GlobalStateModel: Debug {}
 
@@ -380,6 +381,14 @@ pub struct ApplicationStateMachine {
     state: Box<dyn ApplicationState>,
 }
 
+fn ensure_logger() {
+    static LOGGER_INIT: Once = Once::new();
+
+    LOGGER_INIT.call_once(|| {
+        let _ = env_logger::builder().is_test(cfg!(test)).try_init();
+    });
+}
+
 impl ApplicationStateMachine {
     pub fn new(global_state: Box<dyn GlobalStateModel>, transitions: Vec<StateTransition>) -> Self {
         Self {
@@ -412,7 +421,20 @@ impl ApplicationStateMachine {
                 continue;
             }
 
-            self.state = (transition.apply)(self.global_state.as_ref(), self.state.as_ref(), trigger);
+            let next_state = (transition.apply)(self.global_state.as_ref(), self.state.as_ref(), trigger);
+            let next_kind = next_state.kind();
+
+            if next_kind != state_kind {
+                ensure_logger();
+                log::info!(
+                    "ApplicationStateMachine transition: {:?} -> {:?} (trigger: {:?})",
+                    state_kind,
+                    next_kind,
+                    trigger_kind
+                );
+            }
+
+            self.state = next_state;
             return true;
         }
 
