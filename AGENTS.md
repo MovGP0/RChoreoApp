@@ -12,6 +12,7 @@
 - use [material-color-utilities](https://github.com/deminearchiver/material-color-utilities-rust) for material colors
 - use [nject](https://github.com/nicolascotton/nject) for dependency injection
 - use [rodio](https://docs.rs/rodio/latest/rodio/) for audio playback
+- use [log](https://crates.io/crates/log) and [env_logger](https://crates.io/crates/env_logger) for logging
 
 ## MaterialDesignThemes to Slint (Material) replacement list
 

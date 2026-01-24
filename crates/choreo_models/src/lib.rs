@@ -122,7 +122,7 @@ impl Colors {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct FloorModel {
     pub size_front: i32,
     pub size_back: i32,
@@ -324,6 +324,26 @@ impl SettingsModel {
     }
 }
 
+impl Default for SettingsModel {
+    fn default() -> Self {
+        Self {
+            animation_milliseconds: 0,
+            front_position: FrontPosition::Top,
+            dancer_position: FrontPosition::Top,
+            resolution: 0,
+            transparency: 0.0,
+            positions_at_side: false,
+            grid_lines: false,
+            snap_to_grid: true,
+            floor_color: Color::transparent(),
+            dancer_size: 0.0,
+            show_timestamps: false,
+            music_path_absolute: None,
+            music_path_relative: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct ChoreographyModel {
     pub comment: Option<String>,
@@ -383,6 +403,26 @@ impl ChoreographyModel {
             author: self.author.clone(),
             description: self.description.clone(),
             last_save_date: self.last_save_date,
+        }
+    }
+}
+
+impl Default for ChoreographyModel {
+    fn default() -> Self {
+        Self {
+            comment: None,
+            settings: SettingsModel::default(),
+            floor: FloorModel::default(),
+            roles: Vec::new(),
+            dancers: Vec::new(),
+            scenes: Vec::new(),
+            name: String::new(),
+            subtitle: None,
+            date: None,
+            variation: None,
+            author: None,
+            description: None,
+            last_save_date: OffsetDateTime::now_utc(),
         }
     }
 }
@@ -679,7 +719,10 @@ fn map_position_to_model(
         if dancer.dancer_id.0 != 0 {
             dancers_by_id.get(&dancer.dancer_id).cloned()
         } else {
-            dancers.iter().find(|candidate| **candidate == *dancer).cloned()
+            dancers
+                .iter()
+                .find(|candidate| dancer_matches_model(candidate, dancer))
+                .cloned()
         }
     });
 
@@ -697,6 +740,19 @@ fn map_position_to_model(
         movement2_x: source.movement2_x,
         movement2_y: source.movement2_y,
     }
+}
+
+fn dancer_matches_model(candidate: &Rc<DancerModel>, dancer: &Dancer) -> bool {
+    candidate.dancer_id == dancer.dancer_id
+        && candidate.name == dancer.name
+        && candidate.shortcut == dancer.shortcut
+        && candidate.color == dancer.color
+        && candidate.icon == dancer.icon
+        && role_matches_model(&candidate.role, &dancer.role)
+}
+
+fn role_matches_model(candidate: &Rc<RoleModel>, role: &Role) -> bool {
+    candidate.z_index == role.z_index && candidate.name == role.name && candidate.color == role.color
 }
 
 fn map_position_from_model(

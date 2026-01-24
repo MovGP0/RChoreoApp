@@ -181,7 +181,7 @@ impl<'de> Deserialize<'de> for FrontPosition {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Floor {
     #[serde(rename = "SizeFront")]
     pub size_front: i32,
@@ -191,17 +191,6 @@ pub struct Floor {
     pub size_left: i32,
     #[serde(rename = "SizeRight")]
     pub size_right: i32,
-}
-
-impl Default for Floor {
-    fn default() -> Self {
-        Self {
-            size_front: 0,
-            size_back: 0,
-            size_left: 0,
-            size_right: 0,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -258,7 +247,7 @@ impl Default for Settings {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Role {
     #[serde(rename = "ZIndex")]
     pub z_index: i32,
@@ -268,17 +257,7 @@ pub struct Role {
     pub color: Color,
 }
 
-impl Default for Role {
-    fn default() -> Self {
-        Self {
-            z_index: 0,
-            name: String::new(),
-            color: Color::transparent(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Dancer {
     #[serde(skip)]
     pub dancer_id: DancerId,
@@ -294,20 +273,7 @@ pub struct Dancer {
     pub icon: Option<String>,
 }
 
-impl Default for Dancer {
-    fn default() -> Self {
-        Self {
-            dancer_id: DancerId::default(),
-            role: Role::default(),
-            name: String::new(),
-            shortcut: String::new(),
-            color: Color::transparent(),
-            icon: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Position {
     #[serde(rename = "Dancer", skip_serializing, skip_deserializing)]
     pub dancer: Option<Dancer>,
@@ -335,26 +301,7 @@ pub struct Position {
     pub movement2_y: Option<f64>,
 }
 
-impl Default for Position {
-    fn default() -> Self {
-        Self {
-            dancer: None,
-            orientation: None,
-            x: 0.0,
-            y: 0.0,
-            curve1_x: None,
-            curve1_y: None,
-            curve2_x: None,
-            curve2_y: None,
-            movement1_x: None,
-            movement1_y: None,
-            movement2_x: None,
-            movement2_y: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Scene {
     #[serde(skip)]
     pub scene_id: SceneId,
@@ -376,23 +323,6 @@ pub struct Scene {
     pub current_variation: Option<Vec<Scene>>,
     #[serde(rename = "Color", skip_serializing, skip_deserializing)]
     pub color: Color,
-}
-
-impl Default for Scene {
-    fn default() -> Self {
-        Self {
-            scene_id: SceneId::default(),
-            positions: None,
-            name: String::new(),
-            text: None,
-            fixed_positions: false,
-            timestamp: None,
-            variation_depth: 0,
-            variations: None,
-            current_variation: None,
-            color: Color::transparent(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -677,10 +607,10 @@ fn parse_scene(value: &Value, dancers_by_id: &HashMap<String, Dancer>) -> Result
         scene.color = Color::from_hex(color).unwrap_or_else(Color::transparent);
     }
 
-    if let Some(id) = obj.get("$id").and_then(|v| v.as_str()) {
-        if let Ok(parsed) = id.parse::<i32>() {
-            scene.scene_id = SceneId(parsed);
-        }
+    if let Some(id) = obj.get("$id").and_then(|v| v.as_str())
+        && let Ok(parsed) = id.parse::<i32>()
+    {
+        scene.scene_id = SceneId(parsed);
     }
 
     if let Some(positions_value) = obj.get("Positions") {
@@ -889,10 +819,10 @@ fn export_positions(
     let mut list = Vec::with_capacity(positions.len());
     for position in positions {
         let mut map = serde_json::to_value(position)?.as_object().cloned().unwrap_or_default();
-        if let Some(dancer) = &position.dancer {
-            if let Some(ref_id) = dancer_ids.get(&dancer.dancer_id) {
-                map.insert("Dancer".to_string(), Value::Object(ref_map("$ref", ref_id)));
-            }
+        if let Some(dancer) = &position.dancer
+            && let Some(ref_id) = dancer_ids.get(&dancer.dancer_id)
+        {
+            map.insert("Dancer".to_string(), Value::Object(ref_map("$ref", ref_id)));
         }
         list.push(Value::Object(map));
     }

@@ -12,7 +12,10 @@
       <sourceFolder url="file://$MODULE_DIR$/crates/choreo_state_machine/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/choreo_algorithms/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/choreo_algorithms/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/choreo_components/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/choreo_i18n/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/choreo_models/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/choreo_models/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

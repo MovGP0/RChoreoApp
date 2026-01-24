@@ -3,15 +3,35 @@
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="ALL" />
   </component>
+  <component name="BeadsViewerQueryState">
+    <option name="queryHistory">
+      <list>
+        <option value="status:open" />
+        <option value="status:open and priority()" />
+        <option value="status:open and priority" />
+      </list>
+    </option>
+    <option name="viewQueries">
+      <map>
+        <entry key="LIST" value="status:open" />
+      </map>
+    </option>
+  </component>
   <component name="CargoProjects">
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml">
       <package file="$PROJECT_DIR$/crates/choreo_algorithms">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/choreo_components">
         <feature name="default" enabled="true" />
       </package>
       <package file="$PROJECT_DIR$/crates/choreo_i18n">
         <feature name="default" enabled="true" />
       </package>
       <package file="$PROJECT_DIR$/crates/choreo_master_mobile_json">
+        <feature name="default" enabled="true" />
+      </package>
+      <package file="$PROJECT_DIR$/crates/choreo_models">
         <feature name="default" enabled="true" />
       </package>
       <package file="$PROJECT_DIR$/crates/choreo_state_machine">
@@ -33,20 +53,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="adding notes in DI">
-      <change afterPath="$PROJECT_DIR$/.temp/port_i18n.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.beads/issues.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/.beads/issues.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/RChoreoApp.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/RChoreoApp.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/android/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/android/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/wasm/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/wasm/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_algorithms/src/hungarian.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_algorithms/src/hungarian.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_algorithms/src/min_cost_max_flow.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_algorithms/src/min_cost_max_flow.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_algorithms/tests/three_scene_assignment_spec.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_algorithms/tests/three_scene_assignment_spec.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_i18n/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_i18n/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_master_mobile_json/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_master_mobile_json/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_master_mobile_json/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_master_mobile_json/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_models/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_models/src/lib.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/choreo_state_machine/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_state_machine/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_state_machine/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_state_machine/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/choreo_state_machine/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_state_machine/src/lib.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -154,7 +171,7 @@
       <workItem from="1769272132897" duration="2139000" />
       <workItem from="1769274715450" duration="112000" />
       <workItem from="1769275813767" duration="1910000" />
-      <workItem from="1769277827550" duration="7653000" />
+      <workItem from="1769277827550" duration="9683000" />
     </task>
     <task id="LOCAL-00001" summary="implementing json parsing">
       <option name="closed" value="true" />
