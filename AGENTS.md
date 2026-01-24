@@ -10,6 +10,7 @@
 - use [Slint](https://slint.dev/) as UI layer
 - use [rspec](https://github.com/rust-rspec/rspec) for BDD testing
 - use [material-color-utilities](https://github.com/deminearchiver/material-color-utilities-rust) for material colors
+- use [nject](https://github.com/nicolascotton/nject) for dependency injection
 
 ## Linting
 
