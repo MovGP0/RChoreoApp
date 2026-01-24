@@ -1,0 +1,8 @@
+[package]
+name = "rchoreo_desktop"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+slint = "1.14"
+shared = { path = "../../crates/shared", package = "rchoreo_shared" }

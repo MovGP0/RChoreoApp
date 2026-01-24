@@ -1,0 +1,11 @@
+[package]
+name = "rchoreo_android"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+slint = { version = "1.14", features = ["backend-android-activity-06"] }
+shared = { path = "../../crates/shared", package = "rchoreo_shared" }

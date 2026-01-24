@@ -1,6 +1,11 @@
-[package]
-name = "RChoreoApp"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
+[workspace]
+members = [
+    "crates/shared",
+    "apps/desktop",
+    "apps/android",
+    "apps/wasm",
+]
+default-members = [
+    "apps/desktop",
+]
+resolver = "2"

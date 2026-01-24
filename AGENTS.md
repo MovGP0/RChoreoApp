@@ -2,7 +2,8 @@
 
 - This project is a Rust port of the .NET project in https://github.com/MovGP0/ChoreoApp.git
 - You may clone the project in the `.temp/` folder for reference
-- We need the project to execute in Windows, MacOS, Linux, Android, and iOS
+- We need the project to execute in Windows, MacOS, Linux, Android, iOS, and Web (WASM)
+- Consider a dedicated project for each build target
 
 ## Crates
 
