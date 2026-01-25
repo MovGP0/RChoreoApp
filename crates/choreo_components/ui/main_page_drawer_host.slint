@@ -1,0 +1,90 @@
+import { MaterialAnimations, MaterialPalette } from "@material";
+import { ChoreographySettingsView } from "choreography_settings_view.slint";
+import { ScenesPaneView } from "scenes_pane_view.slint";
+
+export component MainPageDrawerHost inherits Rectangle {
+    in property <length> left_drawer_width: 320px;
+    in property <length> right_drawer_width: 320px;
+    in property <bool> inline_left: false;
+    in-out property <bool> is_left_open: false;
+    in-out property <bool> is_right_open: false;
+    in property <bool> left_close_on_click_away: true;
+    in property <bool> right_close_on_click_away: true;
+    in property <color> overlay_color: #66000000;
+    in property <color> drawer_background: MaterialPalette.surface_container_low;
+
+    callback overlay_clicked();
+
+    property <length> inline_left_width: root.inline_left && root.is_left_open
+        ? root.left_drawer_width
+        : 0px;
+    property <bool> overlay_visible: (root.is_left_open && !root.inline_left && root.left_close_on_click_away)
+        || (root.is_right_open && root.right_close_on_click_away);
+
+    clip: true;
+
+    content := Rectangle {
+        x: root.inline_left_width;
+        y: 0px;
+        width: parent.width - root.inline_left_width;
+        height: parent.height;
+        background: transparent;
+
+        @children
+    }
+
+    overlay := TouchArea {
+        visible: root.overlay_visible;
+        enabled: root.overlay_visible;
+        width: parent.width;
+        height: parent.height;
+
+        Rectangle {
+            width: parent.width;
+            height: parent.height;
+            background: root.overlay_color;
+        }
+
+        clicked => {
+            if (root.left_close_on_click_away) {
+                root.is_left_open = false;
+            }
+            if (root.right_close_on_click_away) {
+                root.is_right_open = false;
+            }
+            root.overlay_clicked();
+        }
+    }
+
+    left_panel := Rectangle {
+        visible: root.inline_left || root.is_left_open;
+        x: root.inline_left ? 0px : (root.is_left_open ? 0px : -self.width);
+        y: 0px;
+        width: root.left_drawer_width;
+        height: parent.height;
+        background: root.drawer_background;
+
+        animate x {
+            duration: MaterialAnimations.standard_decelerate_duration;
+            easing: MaterialAnimations.standard_easing;
+        }
+
+        ScenesPaneView { }
+    }
+
+    right_panel := Rectangle {
+        visible: root.is_right_open;
+        x: root.is_right_open ? parent.width - root.right_drawer_width : parent.width;
+        y: 0px;
+        width: root.right_drawer_width;
+        height: parent.height;
+        background: root.drawer_background;
+
+        animate x {
+            duration: MaterialAnimations.standard_decelerate_duration;
+            easing: MaterialAnimations.standard_easing;
+        }
+
+        ChoreographySettingsView { }
+    }
+}

@@ -1,0 +1,115 @@
+import { MaterialAnimations, MaterialPalette } from "@material";
+
+export component HamburgerToggleButton inherits Rectangle {
+    in-out property <bool> checked: false;
+    in property <bool> enabled: true;
+    in property <bool> toggle_on_click: true;
+    in property <length> content_padding: 8px;
+    in property <length> corner_radius: 8px;
+    in property <color> bar_color: MaterialPalette.on_surface;
+    in property <color> checked_bar_color: bar_color;
+    in property <color> disabled_bar_color: MaterialPalette.on_surface_variant;
+    in property <color> background_checked_color: transparent;
+    in property <float> pressed_opacity: 0.85;
+    in property <duration> animation_duration: MaterialAnimations.emphasized_duration;
+
+    callback clicked();
+    callback toggled(bool);
+
+    border-radius: corner_radius;
+    background: root.checked ? root.background_checked_color : transparent;
+    opacity: root.enabled ? (touch_area.pressed ? root.pressed_opacity : 1) : 0.38;
+
+    property <float> content_width_px: Math.max(0.0, (root.width - root.content_padding * 2) / 1px);
+    property <float> content_height_px: Math.max(0.0, (root.height - root.content_padding * 2) / 1px);
+    property <length> content_width: content_width_px * 1px;
+    property <length> content_height: content_height_px * 1px;
+    property <float> bar_thickness_px: Math.max(1.0, Math.min(content_width_px, content_height_px) * 0.08);
+    property <length> bar_thickness: bar_thickness_px * 1px;
+    property <float> bar_inset_px: Math.max(1.0, bar_thickness_px);
+    property <length> bar_inset: bar_inset_px * 1px;
+    property <float> bar_spacing_px: Math.max(
+        0.0,
+        Math.min((content_height_px - 2 * bar_inset_px) / 4, content_height_px * 0.2)
+    );
+    property <length> bar_spacing: bar_spacing_px * 1px;
+    property <length> bar_full_width: Math.max(0.0, content_width_px - bar_inset_px * 2) * 1px;
+    property <length> bar_half_width: bar_full_width / 2;
+    property <length> bar_mid_y: root.content_padding + content_height / 2 - bar_thickness / 2;
+
+    property <color> effective_bar_color: root.enabled
+        ? (root.checked ? root.checked_bar_color : root.bar_color)
+        : root.disabled_bar_color;
+
+    bar1 := Rectangle {
+        x: root.content_padding + root.bar_inset;
+        y: root.bar_mid_y - root.bar_spacing;
+        width: root.bar_full_width;
+        height: root.bar_thickness;
+        background: root.effective_bar_color;
+        border-radius: root.bar_thickness / 2;
+        transform-rotation: 0deg;
+
+        animate x { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+        animate y { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+        animate width { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+        animate transform-rotation { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+    }
+
+    bar2 := Rectangle {
+        x: root.content_padding + root.bar_inset;
+        y: root.bar_mid_y;
+        width: root.bar_full_width;
+        height: root.bar_thickness;
+        background: root.effective_bar_color;
+        border-radius: root.bar_thickness / 2;
+
+        animate x { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+        animate y { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+        animate width { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+    }
+
+    bar3 := Rectangle {
+        x: root.content_padding + root.bar_inset;
+        y: root.bar_mid_y + root.bar_spacing;
+        width: root.bar_full_width;
+        height: root.bar_thickness;
+        background: root.effective_bar_color;
+        border-radius: root.bar_thickness / 2;
+        transform-rotation: 0deg;
+
+        animate x { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+        animate y { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+        animate width { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+        animate transform-rotation { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+    }
+
+    states [
+        checked when root.checked: {
+            bar1.y: root.bar_mid_y;
+            bar1.width: root.bar_half_width;
+            bar1.transform-rotation: -35deg;
+            bar2.width: root.bar_full_width;
+            bar3.y: root.bar_mid_y;
+            bar3.width: root.bar_half_width;
+            bar3.transform-rotation: 35deg;
+        }
+    ]
+
+    touch_area := TouchArea {
+        width: parent.width;
+        height: parent.height;
+        enabled: root.enabled;
+
+        clicked => {
+            root.clicked();
+            if (root.toggle_on_click) {
+                root.checked = !root.checked;
+            }
+        }
+    }
+
+    changed checked => {
+        root.toggled(root.checked);
+    }
+}

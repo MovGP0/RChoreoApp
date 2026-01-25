@@ -1,45 +1,125 @@
-import { Horizontal, MaterialText, TextButton, Vertical } from "@material";
+import {
+    DropDownMenu,
+    IconButton,
+    MaterialPalette,
+    MaterialText,
+    MenuItem,
+    Vertical
+} from "@material";
+import { AudioPlayerView } from "audio_player_view.slint";
+import { DialogHost } from "dialog_host.slint";
 import { FloorCanvasView } from "floor_canvas_view.slint";
+import { HamburgerToggleButton } from "hamburger_toggle_button.slint";
+import { MainPageDrawerHost } from "main_page_drawer_host.slint";
 
 export component MainPage inherits Rectangle {
     in property <string> title_text;
-    in property <bool> is_audio_open;
-    in property <bool> is_settings_open;
+    in property <[MenuItem]> mode_items;
+    in-out property <int> selected_mode_index: -1;
+    in property <bool> is_mode_selection_enabled: true;
+    in-out property <length> nav_width: 280px;
+    in-out property <bool> is_nav_open: true;
+    in-out property <bool> is_choreography_settings_open: false;
+    in-out property <bool> is_audio_player_open: false;
+    in-out property <bool> is_dialog_open: false;
+    in property <component-factory> dialog_content;
 
     callback toggle_nav();
     callback open_settings();
     callback open_image();
     callback open_audio();
+    callback select_mode(int);
+    callback close_dialog();
 
-    background: #f2f2f2;
+    background: MaterialPalette.surface_container_low;
 
     Vertical {
-        spacing: 8px;
+        spacing: 0px;
 
         Rectangle {
-            height: 48px;
-            background: #ffffff;
-            Horizontal {
-                spacing: 8px;
-                TextButton { text: "≡"; clicked => { toggle_nav(); } }
-                MaterialText { text: title_text; }
-                TextButton { text: "Settings"; clicked => { open_settings(); } }
-                TextButton { text: "Image"; clicked => { open_image(); } }
-                TextButton { text: "Audio"; clicked => { open_audio(); } }
+            height: 80px;
+            background: MaterialPalette.surface;
+
+            HorizontalLayout {
+                padding: 8px;
+                spacing: 12px;
+
+                HamburgerToggleButton {
+                    width: 48px;
+                    height: 48px;
+                    checked: root.is_nav_open;
+                    toggle_on_click: false;
+                    clicked => { root.toggle_nav(); }
+                }
+
+                MaterialText {
+                    text: root.title_text;
+                    vertical-alignment: center;
+                }
+
+                Rectangle {
+                    horizontal-stretch: 1;
+                    background: transparent;
+                }
+
+                DropDownMenu {
+                    enabled: root.is_mode_selection_enabled;
+                    items: root.mode_items;
+                    current_index: root.selected_mode_index;
+                    height: 56px;
+                    width: 180px;
+                    selected(index) => { root.select_mode(index); }
+                }
+
+                IconButton {
+                    icon: @image-url("icons/Pen.svg");
+                    tooltip: "Choreography settings";
+                    clicked => { root.open_settings(); }
+                }
+
+                IconButton {
+                    icon: @image-url("icons/Svg.svg");
+                    tooltip: "Open floor plan";
+                    clicked => { root.open_image(); }
+                }
+
+                IconButton {
+                    icon: @image-url("icons/PlayCircle.svg");
+                    tooltip: "Open audio file";
+                    clicked => { root.open_audio(); }
+                }
             }
         }
 
-        Rectangle {
+        DialogHost {
             vertical-stretch: 1;
-            FloorCanvasView { }
-        }
+            is_open: root.is_dialog_open;
+            close_on_click_away: true;
+            dialog_content: root.dialog_content;
+            close_requested => { root.close_dialog(); }
 
-        Rectangle {
-            height: is_audio_open ? 64px : 0px;
-            visible: is_audio_open;
-            background: #ffffff;
+            Vertical {
+                spacing: 0px;
+
+                MainPageDrawerHost {
+                    vertical-stretch: 1;
+                    inline_left: root.width >= 900px;
+                    left_drawer_width: root.nav_width;
+                    right_drawer_width: 480px;
+                    drawer_background: MaterialPalette.surface_variant;
+                    is_left_open: root.is_nav_open;
+                    is_right_open: root.is_choreography_settings_open;
+                    left_close_on_click_away: true;
+                    right_close_on_click_away: true;
+
+                    FloorCanvasView { }
+                }
+
+                AudioPlayerView {
+                    visible: root.is_audio_player_open;
+                    height: root.is_audio_player_open ? 80px : 0px;
+                }
+            }
         }
     }
 }
-
-
