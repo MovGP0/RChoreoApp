@@ -7,11 +7,13 @@ edition = "2024"
 choreo_models = { path = "../choreo_models" }
 choreo_master_mobile_json = { path = "../choreo_master_mobile_json" }
 choreo_i18n = { path = "../choreo_i18n" }
+choreo_state_machine = { path = "../choreo_state_machine" }
 crossbeam-channel = "0.5"
 env_logger = "0.11"
 log = "0.4"
 rodio = "0.21.1"
 slint = "1.14.1"
+material-color-utilities = "1.0.0-dev.18"
 
 [build-dependencies]
 slint-build = "1.14.1"

@@ -1,0 +1,91 @@
+import { MaterialPalette, MaterialText, TextButton, TextField, Vertical, Horizontal, ListView } from "@material";
+import { SceneItemView } from "scene_item_view.slint";
+
+export struct SceneListItem {
+    name: string,
+    timestamp_text: string,
+    color: color,
+    is_selected: bool,
+}
+
+export component ScenesPaneView inherits Rectangle {
+    in property <[SceneListItem]> scenes;
+    in property <string> search_text;
+    in property <bool> show_timestamps;
+    in property <bool> can_save_choreo;
+    in property <bool> can_delete_scene;
+    in property <bool> can_navigate_to_settings;
+    in property <bool> can_navigate_to_dancer_settings;
+    in property <string> search_placeholder;
+    in property <string> add_before_text;
+    in property <string> add_after_text;
+    in property <string> delete_text;
+    in property <string> open_text;
+    in property <string> save_text;
+    in property <string> settings_text;
+    in property <string> dancers_text;
+
+    callback select_scene(int);
+    callback update_search_text(string);
+    callback add_scene_before();
+    callback add_scene_after();
+    callback delete_scene();
+    callback open_choreo();
+    callback save_choreo();
+    callback navigate_to_settings();
+    callback navigate_to_dancer_settings();
+
+    background: MaterialPalette.surface;
+    padding: 12px;
+
+    Vertical {
+        spacing: 12px;
+
+        Rectangle {
+            background: MaterialPalette.surface_container;
+            border-radius: 12px;
+            padding: 8px;
+            vertical-stretch: 1;
+
+            ListView {
+                for scene[index] in scenes: SceneItemView {
+                    scene_name: scene.name;
+                    timestamp_text: scene.timestamp_text;
+                    scene_color: scene.color;
+                    show_timestamps: root.show_timestamps;
+                    is_selected: scene.is_selected;
+                    select_scene => { root.select_scene(index); }
+                }
+            }
+        }
+
+        Rectangle {
+            background: MaterialPalette.surface_container;
+            border-radius: 12px;
+            padding: 8px;
+
+            TextField {
+                label: search_placeholder;
+                text: search_text;
+                edited(value) => { update_search_text(value); }
+            }
+        }
+
+        Horizontal {
+            spacing: 8px;
+
+            TextButton { text: add_before_text; clicked => { add_scene_before(); } }
+            TextButton { text: add_after_text; clicked => { add_scene_after(); } }
+            TextButton { text: delete_text; enabled: can_delete_scene; clicked => { delete_scene(); } }
+        }
+
+        Horizontal {
+            spacing: 8px;
+
+            TextButton { text: open_text; clicked => { open_choreo(); } }
+            TextButton { text: save_text; enabled: can_save_choreo; clicked => { save_choreo(); } }
+            TextButton { text: settings_text; enabled: can_navigate_to_settings; clicked => { navigate_to_settings(); } }
+            TextButton { text: dancers_text; enabled: can_navigate_to_dancer_settings; clicked => { navigate_to_dancer_settings(); } }
+        }
+    }
+}

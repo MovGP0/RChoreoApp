@@ -1,0 +1,34 @@
+import { ElevatedCard, MaterialText, TextButton, Vertical, Horizontal } from "@material";
+
+export component CopyScenePositionsDialogView inherits Rectangle {
+    in property <string> title_text;
+    in property <string> scene_name;
+    in property <string> message_text;
+    in property <color> scene_color;
+    in property <string> confirm_text;
+    in property <string> cancel_text;
+
+    callback confirm_copy();
+    callback decline_copy();
+
+    ElevatedCard {
+        padding: 16px;
+        Vertical {
+            spacing: 12px;
+            MaterialText { text: title_text; font-size: 18px; }
+            Horizontal {
+                spacing: 8px;
+                Rectangle { width: 12px; height: 12px; border-radius: 6px; background: scene_color; }
+                MaterialText { text: scene_name; }
+            }
+            MaterialText { text: message_text; }
+            Horizontal {
+                spacing: 8px;
+                TextButton { text: cancel_text; clicked => { decline_copy(); } }
+                TextButton { text: confirm_text; clicked => { confirm_copy(); } }
+            }
+        }
+    }
+}
+
+

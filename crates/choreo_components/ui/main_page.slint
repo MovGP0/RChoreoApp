@@ -1,0 +1,45 @@
+import { Horizontal, MaterialText, TextButton, Vertical } from "@material";
+import { FloorCanvasView } from "floor_canvas_view.slint";
+
+export component MainPage inherits Rectangle {
+    in property <string> title_text;
+    in property <bool> is_audio_open;
+    in property <bool> is_settings_open;
+
+    callback toggle_nav();
+    callback open_settings();
+    callback open_image();
+    callback open_audio();
+
+    background: #f2f2f2;
+
+    Vertical {
+        spacing: 8px;
+
+        Rectangle {
+            height: 48px;
+            background: #ffffff;
+            Horizontal {
+                spacing: 8px;
+                TextButton { text: "≡"; clicked => { toggle_nav(); } }
+                MaterialText { text: title_text; }
+                TextButton { text: "Settings"; clicked => { open_settings(); } }
+                TextButton { text: "Image"; clicked => { open_image(); } }
+                TextButton { text: "Audio"; clicked => { open_audio(); } }
+            }
+        }
+
+        Rectangle {
+            vertical-stretch: 1;
+            FloorCanvasView { }
+        }
+
+        Rectangle {
+            height: is_audio_open ? 64px : 0px;
+            visible: is_audio_open;
+            background: #ffffff;
+        }
+    }
+}
+
+

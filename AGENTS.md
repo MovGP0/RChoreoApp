@@ -31,8 +31,7 @@
 
 Tips:
 - Clone https://github.com/slint-ui/slint.git to .temp/ to inspect the source code.
-- Clone https://github.com/slint-ui/material-rust-template.git to .temp/ folder for an example project.
-- The material themed controls are located in `ui-libraries/material/src/ui` folder
+- The material themed controls are located in `D:\RChoreoApp\.temp\slint\ui-libraries\material\src\`.
 
 ## Linting
 
@@ -133,7 +132,10 @@ If you encounter a compile error after a code change you did, keep a note here h
 - `rspec::describe` requires an explicit environment argument (use `()` when none), and the suite type is `rspec::block::Suite<T>` with `Report` imported for `is_success()`.
 - When using `rspec` in tests, set `exit_on_failure(false)` in `ConfigurationBuilder` to avoid aborting the whole test process and to surface failures in `SuiteReport`.
 - Clippy denies range loops used only for indexing; prefer iterators with `enumerate()` and direct `contains()` for sentinel checks.
-- In Slint, callbacks should be declared as `callback name(type);` (or `name(param: type)`), not `callback name(type param);` to avoid parser errors.
-- If Slint widgets like `Slider` are missing, import them from `std-widgets.slint` (e.g., `import { Slider } from "std-widgets.slint";`).
-- Material components do not implicitly import std widgets; add explicit `std-widgets.slint` imports for shared controls like `Text`, `CheckBox`, and `Slider`.
+- In Slint, callbacks can be declared as `callback name(type);` or `callback name(arg: type);` (named args are ok); `callback name(type arg);` is invalid.
 - For Material components, wire a `material` library alias in `build.rs` and import from `@material` (e.g., `import { FilledButton } from "@material";`).
+- If Material widgets like `Slider` are missing, ensure the import is from `@material` and that the `material` library path points to `material.slint`.
+- Material `CheckBox` has no `text`/`checked`/`toggled`; use `CheckBoxTile` with `check_state` and `checked_state_changed`.
+- Material `Slider` emits `value_changed(value)` (not `changed`).
+- If `material-1.0` mismatches the Slint version (e.g., `radio-button` accessibility role errors), sync to the template’s `material-1.0` or patch the role to `checkbox`.
+- Keep `material-1.0` synced with the Slint tag in use (`v1.14.1` from `.temp/slint`); do not edit `material-1.0` directly.

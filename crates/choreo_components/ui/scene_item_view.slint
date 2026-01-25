@@ -1,0 +1,54 @@
+import { MaterialPalette, MaterialText, Vertical, Horizontal } from "@material";
+
+export component SceneItemView inherits Rectangle {
+    in property <string> scene_name;
+    in property <string> timestamp_text;
+    in property <color> scene_color;
+    in property <bool> show_timestamps;
+    in property <bool> is_selected;
+    in property <color> selected_background: MaterialPalette.primary_container;
+    in property <color> unselected_background: MaterialPalette.surface;
+    in property <color> selected_stroke: MaterialPalette.primary;
+    in property <color> unselected_stroke: MaterialPalette.outline_variant;
+    in property <color> selected_text: MaterialPalette.on_primary_container;
+    in property <color> unselected_text: MaterialPalette.on_surface;
+    in property <color> selected_timestamp_text: MaterialPalette.on_primary_container;
+    in property <color> unselected_timestamp_text: MaterialPalette.on_surface_variant;
+
+    callback select_scene();
+
+    background: is_selected ? selected_background : unselected_background;
+    border-width: is_selected ? 2px : 1px;
+    border-color: is_selected ? selected_stroke : unselected_stroke;
+    border-radius: 6px;
+    padding: 8px;
+
+    Vertical {
+        spacing: 4px;
+        Horizontal {
+            spacing: 6px;
+            Rectangle {
+                width: 12px;
+                height: 12px;
+                border-radius: 3px;
+                background: scene_color;
+            }
+            MaterialText {
+                text: scene_name;
+                color: is_selected ? selected_text : unselected_text;
+            }
+        }
+        if show_timestamps : MaterialText {
+            text: timestamp_text;
+            color: is_selected ? selected_timestamp_text : unselected_timestamp_text;
+        }
+    }
+
+    TouchArea {
+        width: parent.width;
+        height: parent.height;
+        clicked => { select_scene(); }
+    }
+}
+
+

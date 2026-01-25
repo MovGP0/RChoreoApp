@@ -1,4 +1,4 @@
-import { CheckBox, MaterialText, Slider, TextField, Vertical } from "@material";
+import { CheckBoxTile, CheckState, MaterialText, Slider, TextField, Vertical } from "@material";
 
 export component ChoreographySettingsView inherits Rectangle {
     in property <bool> has_selected_scene;
@@ -92,17 +92,21 @@ export component ChoreographySettingsView inherits Rectangle {
                     enabled: has_selected_scene;
                     edited(new_value) => { update_scene_text(new_value); }
                 }
-                CheckBox {
+                CheckBoxTile {
                     text: "Fixed positions";
-                    checked: scene_fixed_positions;
+                    check_state: scene_fixed_positions ? CheckState.checked : CheckState.unchecked;
                     enabled: has_selected_scene;
-                    toggled => { update_scene_fixed_positions(self.checked); }
+                    checked_state_changed(state) => {
+                        update_scene_fixed_positions(state == CheckState.checked);
+                    }
                 }
-                CheckBox {
+                CheckBoxTile {
                     text: "Timestamp";
-                    checked: scene_has_timestamp;
+                    check_state: scene_has_timestamp ? CheckState.checked : CheckState.unchecked;
                     enabled: has_selected_scene;
-                    toggled => { update_scene_has_timestamp(self.checked); }
+                    checked_state_changed(state) => {
+                        update_scene_has_timestamp(state == CheckState.checked);
+                    }
                 }
             }
         }
@@ -137,38 +141,50 @@ export component ChoreographySettingsView inherits Rectangle {
             Vertical {
                 spacing: 8px;
                 MaterialText { text: "Floor"; font-size: 18px; }
-                CheckBox {
+                CheckBoxTile {
                     text: "Positions at side";
-                    checked: positions_at_side;
-                    toggled => { update_positions_at_side(self.checked); }
+                    check_state: positions_at_side ? CheckState.checked : CheckState.unchecked;
+                    checked_state_changed(state) => {
+                        update_positions_at_side(state == CheckState.checked);
+                    }
                 }
-                CheckBox {
+                CheckBoxTile {
                     text: "Grid lines";
-                    checked: grid_lines;
-                    toggled => { update_grid_lines(self.checked); }
+                    check_state: grid_lines ? CheckState.checked : CheckState.unchecked;
+                    checked_state_changed(state) => {
+                        update_grid_lines(state == CheckState.checked);
+                    }
                 }
-                CheckBox {
+                CheckBoxTile {
                     text: "Snap to grid";
-                    checked: snap_to_grid;
-                    toggled => { update_snap_to_grid(self.checked); }
+                    check_state: snap_to_grid ? CheckState.checked : CheckState.unchecked;
+                    checked_state_changed(state) => {
+                        update_snap_to_grid(state == CheckState.checked);
+                    }
                 }
-                CheckBox {
+                CheckBoxTile {
                     text: "Show timestamps";
-                    checked: show_timestamps;
-                    toggled => { update_show_timestamps(self.checked); }
+                    check_state: show_timestamps ? CheckState.checked : CheckState.unchecked;
+                    checked_state_changed(state) => {
+                        update_show_timestamps(state == CheckState.checked);
+                    }
                 }
-                CheckBox {
+                CheckBoxTile {
                     text: "Show legend";
-                    checked: show_legend;
-                    toggled => { update_show_legend(self.checked); }
+                    check_state: show_legend ? CheckState.checked : CheckState.unchecked;
+                    checked_state_changed(state) => {
+                        update_show_legend(state == CheckState.checked);
+                    }
                 }
                 Slider {
                     minimum: 0;
                     maximum: 1;
                     value: transparency;
-                    changed => { update_transparency(self.value); }
+                    value_changed(value) => { update_transparency(value); }
                 }
             }
         }
     }
 }
+
+

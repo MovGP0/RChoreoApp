@@ -1125,6 +1125,9 @@ impl UpdateSelectedSceneBehavior {
         }
         let mut global_state = self.global_state.borrow_mut();
         let scene_id = global_state.selected_scene.as_ref().map(|scene| scene.scene_id);
+        if let Some(scene) = global_state.selected_scene.as_mut() {
+            scene.text = view_model.scene_text.clone();
+        }
         if let Some(model_scene) = find_scene_mut(&mut global_state.choreography, scene_id) {
             model_scene.text = normalize_text(&view_model.scene_text);
         }
@@ -1136,6 +1139,9 @@ impl UpdateSelectedSceneBehavior {
         }
         let mut global_state = self.global_state.borrow_mut();
         let scene_id = global_state.selected_scene.as_ref().map(|scene| scene.scene_id);
+        if let Some(scene) = global_state.selected_scene.as_mut() {
+            scene.fixed_positions = view_model.scene_fixed_positions;
+        }
         if let Some(model_scene) = find_scene_mut(&mut global_state.choreography, scene_id) {
             model_scene.fixed_positions = view_model.scene_fixed_positions;
         }
@@ -1147,6 +1153,9 @@ impl UpdateSelectedSceneBehavior {
         }
         let mut global_state = self.global_state.borrow_mut();
         let scene_id = global_state.selected_scene.as_ref().map(|scene| scene.scene_id);
+        if let Some(scene) = global_state.selected_scene.as_mut() {
+            scene.color = view_model.scene_color.clone();
+        }
         if let Some(model_scene) = find_scene_mut(&mut global_state.choreography, scene_id) {
             model_scene.color = view_model.scene_color.clone();
         }

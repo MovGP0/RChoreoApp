@@ -35,7 +35,7 @@ export component AudioPlayerView inherits Rectangle {
             maximum: maximum_speed;
             value: speed;
             width: 240px;
-            changed => { speed_changed(self.value); }
+            value_changed(value) => { speed_changed(value); }
         }
 
         MaterialText {
@@ -50,7 +50,7 @@ export component AudioPlayerView inherits Rectangle {
             maximum: duration;
             value: position;
             enabled: can_seek;
-            changed => { position_changed(self.value); }
+            value_changed(value) => { position_changed(value); }
         }
 
         MaterialText {
@@ -72,3 +72,5 @@ export component AudioPlayerView inherits Rectangle {
         }
     }
 }
+
+
