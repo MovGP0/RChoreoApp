@@ -353,25 +353,9 @@ export component FloorCanvasView inherits Rectangle {
                         y: parent.viewbox-height / 2 - curve.start_y * content.scale;
                     }
 
-                    if !curve.has_control1 : LineTo {
+                    LineTo {
                         x: parent.viewbox-width / 2 + curve.end_x * content.scale;
                         y: parent.viewbox-height / 2 - curve.end_y * content.scale;
-                    }
-
-                    if curve.has_control1 && !curve.has_control2 : QuadraticTo {
-                        x: parent.viewbox-width / 2 + curve.end_x * content.scale;
-                        y: parent.viewbox-height / 2 - curve.end_y * content.scale;
-                        control-x: parent.viewbox-width / 2 + curve.control1_x * content.scale;
-                        control-y: parent.viewbox-height / 2 - curve.control1_y * content.scale;
-                    }
-
-                    if curve.has_control1 && curve.has_control2 : CubicTo {
-                        x: parent.viewbox-width / 2 + curve.end_x * content.scale;
-                        y: parent.viewbox-height / 2 - curve.end_y * content.scale;
-                        control-1-x: parent.viewbox-width / 2 + curve.control1_x * content.scale;
-                        control-1-y: parent.viewbox-height / 2 - curve.control1_y * content.scale;
-                        control-2-x: parent.viewbox-width / 2 + curve.control2_x * content.scale;
-                        control-2-y: parent.viewbox-height / 2 - curve.control2_y * content.scale;
                     }
                 }
 

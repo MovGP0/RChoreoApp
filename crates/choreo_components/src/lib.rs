@@ -21,4 +21,9 @@ pub mod time;
 pub mod color_picker;
 pub mod shell;
 
-slint::include_modules!();
+mod ui {
+    #![allow(unreachable_pub)]
+    slint::include_modules!();
+}
+
+pub use ui::*;
