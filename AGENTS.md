@@ -14,6 +14,11 @@
 - use [rodio](https://docs.rs/rodio/latest/rodio/) for audio playback
 - use [log](https://crates.io/crates/log) and [env_logger](https://crates.io/crates/env_logger) for logging
 
+## Dependency Injection
+- use nject for dependency injection
+- All ViewModels and Behaviors need to be injectable
+- Behaviors are always transient
+
 ## MaterialDesignThemes to Slint (Material) replacement list
 
 - App root: `material_window.slint` (MaterialWindow).
