@@ -2,6 +2,9 @@ use choreo_master_mobile_json::{Color, SceneId};
 use choreo_models::{ChoreographyModel, SceneModel};
 
 use crate::scenes::SceneViewModel;
+use crate::time::parse_timestamp_seconds;
+
+pub(crate) use crate::time::format_seconds;
 
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
 
@@ -120,41 +123,4 @@ pub(crate) fn find_scene_mut(
         .find(|scene| scene.scene_id == scene_id)
 }
 
-pub(crate) fn format_seconds(value: f64) -> String {
-    let mut text = format!("{value:.3}");
-    if let Some(dot) = text.find('.') {
-        while text.ends_with('0') {
-            text.pop();
-        }
-        if text.ends_with('.') {
-            text.pop();
-        }
-        if text.len() == dot {
-            text.push('0');
-        }
-    }
-    text
-}
-
-fn parse_timestamp_seconds(value: &str) -> Option<f64> {
-    let value = value.trim();
-    if value.is_empty() {
-        return None;
-    }
-
-    let mut parts = value.split(':').collect::<Vec<_>>();
-    if parts.len() > 3 {
-        return None;
-    }
-
-    let seconds_part = parts.pop()?;
-    let minutes_part = parts.pop().unwrap_or("0");
-    let hours_part = parts.pop().unwrap_or("0");
-
-    let seconds = seconds_part.parse::<f64>().ok()?;
-    let minutes = minutes_part.parse::<f64>().ok()?;
-    let hours = hours_part.parse::<f64>().ok()?;
-
-    Some(hours * 3600.0 + minutes * 60.0 + seconds)
-}
 

@@ -17,3 +17,4 @@ pub mod dancers;
 pub mod choreography_settings;
 pub mod floor;
 pub mod choreo_main;
+pub mod time;

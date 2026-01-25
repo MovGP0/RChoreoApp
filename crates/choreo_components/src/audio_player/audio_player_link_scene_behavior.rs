@@ -2,6 +2,7 @@ use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateModel;
 use crate::logging::BehaviorLog;
 use crate::scenes::SceneViewModel;
+use crate::time::format_seconds;
 
 use super::audio_player_view_model::AudioPlayerViewModel;
 
@@ -116,18 +117,3 @@ fn round_to_100_millis(seconds: f64) -> f64 {
     rounded / 1000.0
 }
 
-pub(crate) fn format_seconds(value: f64) -> String {
-    let mut text = format!("{value:.3}");
-    if let Some(dot) = text.find('.') {
-        while text.ends_with('0') {
-            text.pop();
-        }
-        if text.ends_with('.') {
-            text.pop();
-        }
-        if text.len() == dot {
-            text.push('0');
-        }
-    }
-    text
-}
