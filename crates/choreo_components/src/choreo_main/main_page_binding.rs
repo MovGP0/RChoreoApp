@@ -1,9 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::time::Duration;
-
 use crossbeam_channel::{Receiver, Sender};
-use slint::{ComponentFactory, ComponentHandle, ModelRc, SharedString, Timer, TimerMode, VecModel};
+use slint::{ComponentFactory, ComponentHandle, ModelRc, SharedString, VecModel};
 
 use choreo_state_machine::ApplicationStateMachine;
 
@@ -24,6 +22,7 @@ use super::{
     MainBehaviorDependencies,
     MainBehaviors,
     MainDependencies,
+    MainViewModelActions,
     MainViewModel,
     OpenSvgFileCommand,
     ShowDialogCommand,
@@ -53,7 +52,6 @@ pub struct MainPageBinding<P: Preferences> {
     view: ShellHost,
     view_model: Rc<RefCell<MainViewModel>>,
     behaviors: Rc<MainBehaviors<P>>,
-    _timer: Timer,
 }
 
 impl<P: Preferences + 'static> MainPageBinding<P> {
@@ -63,6 +61,7 @@ impl<P: Preferences + 'static> MainPageBinding<P> {
             state_machine: deps.state_machine.clone(),
             audio_player: deps.audio_player,
             haptic_feedback: deps.haptic_feedback,
+            actions: MainViewModelActions::default(),
         })));
 
         let behaviors = Rc::new(build_main_behaviors(MainBehaviorDependencies {
@@ -76,77 +75,90 @@ impl<P: Preferences + 'static> MainPageBinding<P> {
             preferences: deps.preferences,
         }));
 
-        apply_view_model(&view, &view_model.borrow());
-
         let actions = deps.actions;
         let view_weak = view.as_weak();
 
         {
             let view_model = Rc::clone(&view_model);
             let view_weak = view_weak.clone();
+            let view_model_for_change = Rc::clone(&view_model);
+            let on_change = Rc::new(move || {
+                if let Some(view) = view_weak.upgrade() {
+                    let view_model = view_model_for_change.borrow();
+                    apply_view_model(&view, &view_model);
+                }
+            });
+            view_model.borrow_mut().set_on_change(Some(on_change));
+        }
+
+        {
+            let view_model = Rc::clone(&view_model);
+            let actions_for_audio = actions.clone();
+            let actions_for_image = actions.clone();
+            let behaviors_for_audio = Rc::clone(&behaviors);
+            let behaviors_for_image = Rc::clone(&behaviors);
+            let behaviors_for_mode = Rc::clone(&behaviors);
+            let actions = MainViewModelActions {
+                open_audio_requested: Some(Rc::new(move || {
+                    if let Some(picker) = actions_for_audio.pick_audio_path.as_ref()
+                        && let Some(path) = picker()
+                    {
+                        behaviors_for_audio.open_audio.open_audio(path);
+                        return true;
+                    }
+                    false
+                })),
+                open_image_requested: Some(Rc::new(move || {
+                    if let Some(picker) = actions_for_image.pick_image_path.as_ref()
+                        && let Some(path) = picker()
+                    {
+                        behaviors_for_image.open_image.open_svg(path);
+                    }
+                })),
+                interaction_mode_changed: Some(Rc::new(move |mode| {
+                    behaviors_for_mode.apply_interaction_mode.apply_mode(mode);
+                })),
+            };
+
+            view_model.borrow_mut().set_actions(actions);
+        }
+
+        apply_view_model(&view, &view_model.borrow());
+
+        {
+            let view_model = Rc::clone(&view_model);
             view.on_toggle_nav(move || {
                 let mut view_model = view_model.borrow_mut();
                 view_model.toggle_navigation();
-                if let Some(view) = view_weak.upgrade() {
-                    apply_view_model(&view, &view_model);
-                }
             });
         }
 
         {
             let view_model = Rc::clone(&view_model);
-            let behaviors = Rc::clone(&behaviors);
-            let view_weak = view_weak.clone();
-            let actions = actions.clone();
             view.on_open_audio(move || {
                 let mut view_model = view_model.borrow_mut();
                 view_model.open_audio();
-                if let Some(picker) = actions.pick_audio_path.as_ref()
-                    && let Some(path) = picker()
-                {
-                    behaviors.open_audio.open_audio(&mut view_model, path);
-                }
-                if let Some(view) = view_weak.upgrade() {
-                    apply_view_model(&view, &view_model);
-                }
             });
         }
 
         {
             let view_model = Rc::clone(&view_model);
-            let behaviors = Rc::clone(&behaviors);
-            let view_weak = view_weak.clone();
-            let actions = actions.clone();
             view.on_open_image(move || {
-                let view_model = view_model.borrow();
+                let view_model = view_model.borrow_mut();
                 view_model.open_image();
-                if let Some(picker) = actions.pick_image_path.as_ref()
-                    && let Some(path) = picker()
-                {
-                    behaviors.open_image.open_svg(path);
-                }
-                if let Some(view) = view_weak.upgrade() {
-                    apply_view_model(&view, &view_model);
-                }
             });
         }
 
         {
             let view_model = Rc::clone(&view_model);
-            let view_weak = view_weak.clone();
             view.on_open_settings(move || {
                 let mut view_model = view_model.borrow_mut();
                 view_model.open_choreography_settings();
-                if let Some(view) = view_weak.upgrade() {
-                    apply_view_model(&view, &view_model);
-                }
             });
         }
 
         {
             let view_model = Rc::clone(&view_model);
-            let behaviors = Rc::clone(&behaviors);
-            let view_weak = view_weak.clone();
             view.on_select_mode(move |index| {
                 let mut view_model = view_model.borrow_mut();
                 let Some(option) = view_model.mode_options.get(index as usize).cloned() else {
@@ -154,53 +166,14 @@ impl<P: Preferences + 'static> MainPageBinding<P> {
                 };
 
                 view_model.set_selected_mode(option.clone());
-                behaviors.apply_interaction_mode.apply_mode(option.mode);
-
-                if let Some(view) = view_weak.upgrade() {
-                    apply_view_model(&view, &view_model);
-                }
             });
         }
 
         {
             let view_model = Rc::clone(&view_model);
-            let view_weak = view_weak.clone();
             view.on_close_dialog(move || {
                 let mut view_model = view_model.borrow_mut();
-                view_model.is_dialog_open = false;
-                view_model.dialog_content = None;
-                if let Some(view) = view_weak.upgrade() {
-                    apply_view_model(&view, &view_model);
-                }
-            });
-        }
-
-        let timer = Timer::default();
-        {
-            let view_model = Rc::clone(&view_model);
-            let behaviors = Rc::clone(&behaviors);
-            let view_weak = view_weak.clone();
-            timer.start(TimerMode::Repeated, Duration::from_millis(50), move || {
-                let mut view_model = view_model.borrow_mut();
-                let mut needs_update = false;
-
-                if behaviors.show_dialog.try_handle(&mut view_model) {
-                    needs_update = true;
-                }
-
-                if behaviors.hide_dialog.try_handle(&mut view_model) {
-                    needs_update = true;
-                }
-
-                if behaviors.open_svg_file.try_handle() {
-                    needs_update = true;
-                }
-
-                if needs_update
-                    && let Some(view) = view_weak.upgrade()
-                {
-                    apply_view_model(&view, &view_model);
-                }
+                view_model.hide_dialog();
             });
         }
 
@@ -208,7 +181,6 @@ impl<P: Preferences + 'static> MainPageBinding<P> {
             view,
             view_model,
             behaviors,
-            _timer: timer,
         }
     }
 

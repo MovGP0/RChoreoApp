@@ -8,6 +8,13 @@ use crate::audio_player::{AudioPlayerViewModel, HapticFeedback};
 use crate::global::{GlobalStateModel, InteractionMode};
 use crate::scenes::SceneViewModel;
 
+#[derive(Clone, Default)]
+pub struct MainViewModelActions {
+    pub open_audio_requested: Option<Rc<dyn Fn() -> bool>>,
+    pub open_image_requested: Option<Rc<dyn Fn()>>,
+    pub interaction_mode_changed: Option<Rc<dyn Fn(InteractionMode)>>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InteractionModeOption {
     pub mode: InteractionMode,
@@ -18,6 +25,8 @@ pub struct MainViewModel {
     global_state: Rc<RefCell<GlobalStateModel>>,
     _state_machine: Rc<RefCell<ApplicationStateMachine>>,
     haptic_feedback: Option<Box<dyn HapticFeedback>>,
+    actions: MainViewModelActions,
+    on_change: Option<Rc<dyn Fn()>>,
     pub audio_player: AudioPlayerViewModel,
     pub mode_options: Vec<InteractionModeOption>,
     pub selected_mode_option: InteractionModeOption,
@@ -38,6 +47,7 @@ impl MainViewModel {
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
         audio_player: AudioPlayerViewModel,
         haptic_feedback: Option<Box<dyn HapticFeedback>>,
+        actions: MainViewModelActions,
     ) -> Self {
         let mode_options = build_mode_options();
         let selected_mode_option = mode_options
@@ -50,6 +60,8 @@ impl MainViewModel {
             global_state,
             _state_machine: state_machine,
             haptic_feedback,
+            actions,
+            on_change: None,
             audio_player,
             mode_options,
             selected_mode_option,
@@ -63,17 +75,32 @@ impl MainViewModel {
         }
     }
 
-    pub fn open_audio(&self) {
+    pub fn open_audio(&mut self) {
         self.perform_click();
+        let opened = self
+            .actions
+            .open_audio_requested
+            .as_ref()
+            .map(|handler| handler())
+            .unwrap_or(false);
+
+        if opened {
+            self.is_audio_player_open = true;
+            self.notify_changed();
+        }
     }
 
     pub fn open_image(&self) {
         self.perform_click();
+        if let Some(handler) = self.actions.open_image_requested.as_ref() {
+            handler();
+        }
     }
 
     pub fn open_choreography_settings(&mut self) {
         self.perform_click();
         self.is_choreography_settings_open = true;
+        self.notify_changed();
     }
 
     pub fn toggle_navigation(&mut self) {
@@ -83,6 +110,7 @@ impl MainViewModel {
         } else {
             0.0
         };
+        self.notify_changed();
     }
 
     pub fn update_place_mode(&mut self, scene: Option<&SceneViewModel>) {
@@ -104,11 +132,36 @@ impl MainViewModel {
 
         global_state.is_place_mode = dancer_count > 0 && position_count < dancer_count;
         self.is_mode_selection_enabled = !global_state.is_place_mode;
+        self.notify_changed();
     }
 
     pub fn set_selected_mode(&mut self, option: InteractionModeOption) {
         self.selected_mode_option = option.clone();
         self.global_state.borrow_mut().interaction_mode = option.mode;
+        if let Some(handler) = self.actions.interaction_mode_changed.as_ref() {
+            handler(option.mode);
+        }
+        self.notify_changed();
+    }
+
+    pub fn show_dialog(&mut self, content: Option<String>) {
+        self.dialog_content = content;
+        self.is_dialog_open = self.dialog_content.is_some();
+        self.notify_changed();
+    }
+
+    pub fn hide_dialog(&mut self) {
+        self.is_dialog_open = false;
+        self.dialog_content = None;
+        self.notify_changed();
+    }
+
+    pub fn set_actions(&mut self, actions: MainViewModelActions) {
+        self.actions = actions;
+    }
+
+    pub fn set_on_change(&mut self, handler: Option<Rc<dyn Fn()>>) {
+        self.on_change = handler;
     }
 
     fn perform_click(&self) {
@@ -118,6 +171,12 @@ impl MainViewModel {
             haptic.perform_click();
         }
     }
+
+    fn notify_changed(&self) {
+        if let Some(handler) = self.on_change.as_ref() {
+            handler();
+        }
+    }
 }
 
 pub struct MainDependencies {
@@ -125,6 +184,7 @@ pub struct MainDependencies {
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub audio_player: AudioPlayerViewModel,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
+    pub actions: MainViewModelActions,
 }
 
 pub fn build_main_view_model(deps: MainDependencies) -> MainViewModel {
@@ -133,6 +193,7 @@ pub fn build_main_view_model(deps: MainDependencies) -> MainViewModel {
         deps.state_machine,
         deps.audio_player,
         deps.haptic_feedback,
+        deps.actions,
     )
 }
 

@@ -13,6 +13,7 @@ pub use hide_dialog_behavior::HideDialogBehavior;
 pub use main_page_binding::{MainPageActionHandlers, MainPageBinding, MainPageDependencies};
 pub use main_view_model::{
     build_main_view_model, InteractionModeOption, MainDependencies, MainViewModel,
+    MainViewModelActions,
 };
 pub use messages::{CloseDialogCommand, OpenSvgFileCommand, ShowDialogCommand};
 pub use open_audio_behavior::OpenAudioBehavior;
