@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use choreo_master_mobile_json::{Color, SceneId};
+use choreo_models::{SceneModel, SettingsModel};
 use crossbeam_channel::Sender;
 
 use crate::behavior::{Behavior, CompositeDisposable};
@@ -9,190 +10,8 @@ use crate::global::GlobalStateModel;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 use crate::scenes::SceneViewModel;
-use choreo_models::{SceneModel, SettingsModel};
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct GridSizeOption {
-    pub value: i32,
-    pub display: String,
-}
-
-pub struct ChoreographySettingsViewModel {
-    pub floor_size_options: Vec<i32>,
-    pub grid_size_options: Vec<GridSizeOption>,
-    pub selected_grid_size_option: GridSizeOption,
-    pub floor_front: i32,
-    pub floor_back: i32,
-    pub floor_left: i32,
-    pub floor_right: i32,
-    pub draw_path_from: bool,
-    pub draw_path_to: bool,
-    pub grid_lines: bool,
-    pub snap_to_grid: bool,
-    pub floor_color: Color,
-    pub show_timestamps: bool,
-    pub positions_at_side: bool,
-    pub show_legend: bool,
-    pub transparency: f64,
-    pub comment: String,
-    pub name: String,
-    pub subtitle: String,
-    pub date: String,
-    pub variation: String,
-    pub author: String,
-    pub description: String,
-    pub has_selected_scene: bool,
-    pub scene_name: String,
-    pub scene_text: String,
-    pub scene_fixed_positions: bool,
-    pub scene_has_timestamp: bool,
-    pub scene_timestamp_seconds: f64,
-    pub scene_timestamp_minutes: i32,
-    pub scene_timestamp_seconds_part: i32,
-    pub scene_timestamp_millis: i32,
-    pub scene_color: Color,
-    is_updating_scene_timestamp: bool,
-    disposables: CompositeDisposable,
-}
-
-impl ChoreographySettingsViewModel {
-    const MAX_SCENE_TIMESTAMP_SECONDS: f64 = 1440.0 * 60.0;
-
-    pub fn new(mut behaviors: Vec<Box<dyn Behavior<ChoreographySettingsViewModel>>>) -> Self {
-        let floor_size_options = (0..=100).collect::<Vec<_>>();
-        let grid_size_options = build_grid_size_options();
-        let selected_grid_size_option = grid_size_options
-            .first()
-            .cloned()
-            .unwrap_or(GridSizeOption {
-                value: 1,
-                display: "1/1 m (100 cm)".to_string(),
-            });
-
-        let mut view_model = Self {
-            floor_size_options,
-            grid_size_options,
-            selected_grid_size_option,
-            floor_front: 0,
-            floor_back: 0,
-            floor_left: 0,
-            floor_right: 0,
-            draw_path_from: true,
-            draw_path_to: true,
-            grid_lines: true,
-            snap_to_grid: true,
-            floor_color: Color::transparent(),
-            show_timestamps: false,
-            positions_at_side: true,
-            show_legend: false,
-            transparency: 0.0,
-            comment: String::new(),
-            name: String::new(),
-            subtitle: String::new(),
-            date: String::new(),
-            variation: String::new(),
-            author: String::new(),
-            description: String::new(),
-            has_selected_scene: false,
-            scene_name: String::new(),
-            scene_text: String::new(),
-            scene_fixed_positions: false,
-            scene_has_timestamp: false,
-            scene_timestamp_seconds: 0.0,
-            scene_timestamp_minutes: 0,
-            scene_timestamp_seconds_part: 0,
-            scene_timestamp_millis: 0,
-            scene_color: Color::transparent(),
-            is_updating_scene_timestamp: false,
-            disposables: CompositeDisposable::new(),
-        };
-
-        let mut disposables = CompositeDisposable::new();
-        for behavior in behaviors.drain(..) {
-            behavior.activate(&mut view_model, &mut disposables);
-        }
-        view_model.disposables = disposables;
-        view_model
-    }
-
-    pub fn grid_resolution(&self) -> i32 {
-        self.selected_grid_size_option
-            .value
-            .max(self.grid_size_options.first().map(|opt| opt.value).unwrap_or(1))
-    }
-
-    pub fn set_grid_resolution(&mut self, value: i32) {
-        if let Some(option) = self.grid_size_options.iter().find(|opt| opt.value == value) {
-            self.selected_grid_size_option = option.clone();
-        } else if let Some(first) = self.grid_size_options.first().cloned() {
-            self.selected_grid_size_option = first;
-        }
-    }
-
-    pub fn set_scene_timestamp_seconds(&mut self, seconds: f64) {
-        if self.is_updating_scene_timestamp {
-            return;
-        }
-
-        self.is_updating_scene_timestamp = true;
-        let clamped = clamp_scene_timestamp(seconds);
-        let total_millis = (clamped * 1000.0).round() as i64;
-        let minutes = (total_millis / 60000) as i32;
-        let seconds_part = ((total_millis / 1000) % 60) as i32;
-        let millis = (total_millis % 1000) as i32;
-        let millis = (millis / 10) * 10;
-        self.scene_timestamp_seconds = clamped;
-        self.scene_timestamp_minutes = minutes;
-        self.scene_timestamp_seconds_part = seconds_part;
-        self.scene_timestamp_millis = millis;
-        self.is_updating_scene_timestamp = false;
-    }
-
-    pub fn set_scene_timestamp_parts(&mut self, minutes: i32, seconds: i32, millis: i32) {
-        if self.is_updating_scene_timestamp {
-            return;
-        }
-
-        self.is_updating_scene_timestamp = true;
-        let minutes = minutes.clamp(0, 1440);
-        let seconds = seconds.clamp(0, 59);
-        let millis = millis.clamp(0, 999);
-        let millis = (millis / 10) * 10;
-        let total = (minutes as f64 * 60.0)
-            + (seconds as f64)
-            + (millis as f64 / 1000.0);
-        let clamped = clamp_scene_timestamp(total);
-        let total_millis = (clamped * 1000.0).round() as i64;
-        let minutes = (total_millis / 60000) as i32;
-        let seconds_part = ((total_millis / 1000) % 60) as i32;
-        let millis = (total_millis % 1000) as i32;
-        let millis = (millis / 10) * 10;
-
-        self.scene_timestamp_seconds = clamped;
-        self.scene_timestamp_minutes = minutes;
-        self.scene_timestamp_seconds_part = seconds_part;
-        self.scene_timestamp_millis = millis;
-        self.is_updating_scene_timestamp = false;
-    }
-
-    pub fn dispose(&mut self) {
-        self.disposables.dispose_all();
-    }
-}
-
-impl Default for ChoreographySettingsViewModel {
-    fn default() -> Self {
-        Self::new(Vec::new())
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RedrawFloorCommand;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ShowTimestampsChangedEvent {
-    pub is_enabled: bool,
-}
+use super::view_model::{ChoreographySettingsViewModel, RedrawFloorCommand, ShowTimestampsChangedEvent};
 
 pub struct LoadChoreographySettingsBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
@@ -1198,74 +1017,6 @@ impl Behavior<ChoreographySettingsViewModel> for UpdateSelectedSceneBehavior {
     }
 }
 
-fn clamp_scene_timestamp(seconds: f64) -> f64 {
-    if seconds < 0.0 {
-        return 0.0;
-    }
-
-    if seconds > ChoreographySettingsViewModel::MAX_SCENE_TIMESTAMP_SECONDS {
-        return ChoreographySettingsViewModel::MAX_SCENE_TIMESTAMP_SECONDS;
-    }
-
-    seconds
-}
-
-fn build_grid_size_options() -> Vec<GridSizeOption> {
-    let mut options = Vec::new();
-    for denominator in 1..=16 {
-        let centimeters = 100.0 / denominator as f64;
-        let centimeters_text = format_decimal(centimeters);
-        let display = format!("1/{denominator} m ({centimeters_text} cm)");
-        options.push(GridSizeOption {
-            value: denominator,
-            display,
-        });
-    }
-    options
-}
-
-fn format_decimal(value: f64) -> String {
-    let mut text = format!("{value:.2}");
-    while text.ends_with('0') {
-        text.pop();
-    }
-    if text.ends_with('.') {
-        text.pop();
-    }
-    text
-}
-
-fn round_to_two_decimals(value: f64) -> f64 {
-    (value * 100.0).round() / 100.0
-}
-
-pub struct DecimalDoubleConverter;
-
-impl DecimalDoubleConverter {
-    pub fn convert(value: f64) -> f64 {
-        value
-    }
-
-    pub fn convert_back(value: f64) -> f64 {
-        round_to_two_decimals(value.clamp(0.0, 1.0))
-    }
-}
-
-pub struct ChoreographySettingsBehavior;
-
-impl Behavior<ChoreographySettingsViewModel> for ChoreographySettingsBehavior {
-    fn activate(
-        &self,
-        _view_model: &mut ChoreographySettingsViewModel,
-        _disposables: &mut CompositeDisposable,
-    ) {
-        BehaviorLog::behavior_activated(
-            "ChoreographySettingsBehavior",
-            "ChoreographySettingsViewModel",
-        );
-    }
-}
-
 fn reset_view_model(view_model: &mut ChoreographySettingsViewModel) {
     view_model.comment.clear();
     view_model.name.clear();
@@ -1320,44 +1071,6 @@ fn map_from_choreography(
     view_model.snap_to_grid = choreography.settings.snap_to_grid;
     view_model.floor_color = choreography.settings.floor_color.clone();
     view_model.show_timestamps = choreography.settings.show_timestamps;
-}
-
-pub struct ChoreographySettingsMapper;
-
-impl ChoreographySettingsMapper {
-    pub fn map_to_view_model(
-        &self,
-        source: &choreo_models::ChoreographyModel,
-        target: &mut ChoreographySettingsViewModel,
-    ) {
-        map_from_choreography(source, target);
-    }
-
-    pub fn map_to_model(
-        &self,
-        source: &ChoreographySettingsViewModel,
-        target: &mut choreo_models::ChoreographyModel,
-    ) {
-        target.comment = normalize_text(&source.comment);
-        target.name = source.name.clone();
-        target.subtitle = normalize_text(&source.subtitle);
-        target.variation = normalize_text(&source.variation);
-        target.author = normalize_text(&source.author);
-        target.description = normalize_text(&source.description);
-        target.date = normalize_text(&source.date);
-
-        target.settings.resolution = clamp_grid_resolution(source.grid_resolution());
-        target.settings.transparency = clamp_transparency(source.transparency);
-        target.settings.positions_at_side = source.positions_at_side;
-        target.settings.grid_lines = source.grid_lines;
-        target.settings.snap_to_grid = source.snap_to_grid;
-        target.settings.floor_color = source.floor_color.clone();
-        target.settings.show_timestamps = source.show_timestamps;
-        target.floor.size_front = clamp_floor_size(source.floor_front);
-        target.floor.size_back = clamp_floor_size(source.floor_back);
-        target.floor.size_left = clamp_floor_size(source.floor_left);
-        target.floor.size_right = clamp_floor_size(source.floor_right);
-    }
 }
 
 pub struct ChoreographySettingsDependencies<P: Preferences> {
@@ -1549,18 +1262,6 @@ fn normalize_text(value: &str) -> Option<String> {
     } else {
         Some(value.trim().to_string())
     }
-}
-
-fn clamp_floor_size(value: i32) -> i32 {
-    value.clamp(0, 100)
-}
-
-fn clamp_grid_resolution(value: i32) -> i32 {
-    value.clamp(1, 16)
-}
-
-fn clamp_transparency(value: f64) -> f64 {
-    value.clamp(0.0, 1.0)
 }
 
 fn find_scene_mut(

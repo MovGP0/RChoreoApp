@@ -63,9 +63,23 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="restructure json code">
+    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="refactor models into modules">
       <change beforePath="$PROJECT_DIR$/.beads/issues.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/.beads/issues.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/behavior.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/floor.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/global.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/logging.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/main_behaviors.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/main_view_model.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/preferences.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/settings.rs" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,7 +116,7 @@
     &quot;RunOnceActivity.rust.reset.selective.auto.import&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Rebasing main&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;D:/RChoreoApp&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
@@ -190,7 +204,7 @@
       <workItem from="1769272132897" duration="2139000" />
       <workItem from="1769274715450" duration="112000" />
       <workItem from="1769275813767" duration="1910000" />
-      <workItem from="1769277827550" duration="19506000" />
+      <workItem from="1769277827550" duration="19895000" />
     </task>
     <task id="LOCAL-00001" summary="implementing json parsing">
       <option name="closed" value="true" />
@@ -256,7 +270,23 @@
       <option name="project" value="LOCAL" />
       <updated>1769323446100</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="refactor models into modules">
+      <option name="closed" value="true" />
+      <created>1769324000432</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1769324000432</updated>
+    </task>
+    <task id="LOCAL-00010" summary="refactor models into modules">
+      <option name="closed" value="true" />
+      <created>1769324009041</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1769324009041</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -268,7 +298,19 @@
     <MESSAGE value="starting porting components" />
     <MESSAGE value="porting components" />
     <MESSAGE value="restructure json code" />
-    <option name="LAST_COMMIT_MESSAGE" value="restructure json code" />
+    <MESSAGE value="refactor models into modules" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor models into modules" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/crates/choreo_components/src/choreo_main/mod.rs</url>
+          <line>3</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

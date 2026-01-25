@@ -16,5 +16,4 @@ pub mod audio_player;
 pub mod dancers;
 pub mod choreography_settings;
 pub mod floor;
-pub mod main_view_model;
-pub mod main_behaviors;
+pub mod choreo_main;

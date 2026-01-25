@@ -13,8 +13,9 @@ use choreo_state_machine::{
 
 use crate::audio_player::OpenAudioFileCommand;
 use crate::global::{GlobalStateModel, InteractionMode};
-use crate::main_view_model::MainViewModel;
 use crate::preferences::Preferences;
+
+use super::view_model::MainViewModel;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CloseDialogCommand;

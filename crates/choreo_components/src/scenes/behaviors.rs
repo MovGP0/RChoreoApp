@@ -2,214 +2,19 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crossbeam_channel::{Receiver, Sender};
-use choreo_models::{Colors, PositionModel, SceneModel, SettingsPreferenceKeys};
-use choreo_master_mobile_json::{Color, SceneId};
+use choreo_models::{Colors, SceneModel, SettingsPreferenceKeys};
 use choreo_state_machine::{
     ApplicationStateMachine, ApplicationTrigger, PlacePositionsCompletedTrigger,
     PlacePositionsStartedTrigger,
 };
 
-use crate::audio_player::HapticFeedback;
 use crate::global::GlobalStateModel;
 use crate::preferences::Preferences;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct SceneViewModel {
-    pub scene_id: SceneId,
-    pub name: String,
-    pub text: String,
-    pub fixed_positions: bool,
-    pub timestamp: Option<f64>,
-    pub is_selected: bool,
-    pub positions: Vec<PositionModel>,
-    pub variation_depth: i32,
-    pub variations: Vec<Vec<SceneModel>>,
-    pub current_variation: Vec<SceneModel>,
-    pub color: Color,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum DialogRequest {
-    DeleteScene { scene_id: SceneId },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ShowDialogCommand {
-    pub dialog: DialogRequest,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CloseDialogCommand;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct SceneSelectedEvent {
-    pub selected_scene: SceneViewModel,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CopyScenePositionsDecision {
-    CopyPositions,
-    KeepPositions,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct CopyScenePositionsDecisionEvent {
-    pub decision: CopyScenePositionsDecision,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct SelectedSceneChangedEvent {
-    pub selected_scene: Option<SceneViewModel>,
-}
-
-pub struct ScenesPaneViewModel<P: Preferences> {
-    global_state: Rc<RefCell<GlobalStateModel>>,
-    show_dialog_sender: Sender<ShowDialogCommand>,
-    _close_dialog_sender: Sender<CloseDialogCommand>,
-    haptic_feedback: Option<Box<dyn HapticFeedback>>,
-    preferences: P,
-    pub search_text: String,
-    pub scenes: Vec<SceneViewModel>,
-    pub can_save_choreo: bool,
-    pub can_delete_scene: bool,
-    pub show_timestamps: bool,
-    pub can_navigate_to_settings: bool,
-    pub can_navigate_to_dancer_settings: bool,
-}
-
-impl<P: Preferences> ScenesPaneViewModel<P> {
-    pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
-        preferences: P,
-        show_dialog_sender: Sender<ShowDialogCommand>,
-        close_dialog_sender: Sender<CloseDialogCommand>,
-        haptic_feedback: Option<Box<dyn HapticFeedback>>,
-    ) -> Self {
-        let mut view_model = Self {
-            global_state,
-            show_dialog_sender,
-            _close_dialog_sender: close_dialog_sender,
-            haptic_feedback,
-            preferences,
-            search_text: String::new(),
-            scenes: Vec::new(),
-            can_save_choreo: false,
-            can_delete_scene: false,
-            show_timestamps: false,
-            can_navigate_to_settings: true,
-            can_navigate_to_dancer_settings: true,
-        };
-
-        view_model.refresh_scenes();
-        view_model.update_can_save();
-        view_model
-    }
-
-    pub fn selected_scene(&self) -> Option<SceneViewModel> {
-        self.global_state.borrow().selected_scene.clone()
-    }
-
-    pub fn set_selected_scene(&mut self, scene: Option<SceneViewModel>) {
-        self.global_state.borrow_mut().selected_scene = scene.clone();
-        self.can_delete_scene = scene.is_some();
-    }
-
-    pub fn add_scene_before(&self) {
-        self.perform_click();
-    }
-
-    pub fn add_scene_after(&self) {
-        self.perform_click();
-    }
-
-    pub fn refresh_scenes(&mut self) {
-        self.scenes.clear();
-
-        let global_state = self.global_state.borrow();
-        if self.search_text.trim().is_empty() {
-            self.scenes.extend(global_state.scenes.iter().cloned());
-            return;
-        }
-
-        let search = self.search_text.to_ascii_lowercase();
-        self.scenes.extend(
-            global_state
-                .scenes
-                .iter()
-                .filter(|scene| scene.name.to_ascii_lowercase().contains(&search))
-                .cloned(),
-        );
-    }
-
-    pub fn navigate_to_settings(&self) {
-        self.perform_click();
-    }
-
-    pub fn navigate_to_dancer_settings(&self) {
-        self.perform_click();
-    }
-
-    pub fn open_choreo(&self) {
-        self.perform_click();
-    }
-
-    pub fn save_choreo(&self) {
-        self.perform_click();
-    }
-
-    pub fn delete_scene(&self) {
-        self.perform_click();
-
-        let Some(scene) = self.global_state.borrow().selected_scene.clone() else {
-            return;
-        };
-
-        let command = ShowDialogCommand {
-            dialog: DialogRequest::DeleteScene {
-                scene_id: scene.scene_id,
-            },
-        };
-        let _ = self.show_dialog_sender.send(command);
-    }
-
-    pub fn update_can_save(&mut self) {
-        let path = self
-            .preferences
-            .get_string(SettingsPreferenceKeys::LAST_OPENED_CHOREO_FILE, "");
-        let has_path = !path.trim().is_empty();
-        let has_file = has_path && std::path::Path::new(&path).exists();
-
-        let has_choreo = !self.global_state.borrow().choreography.name.is_empty()
-            || !self.global_state.borrow().choreography.scenes.is_empty();
-        self.can_save_choreo = has_choreo && has_file;
-    }
-
-    fn perform_click(&self) {
-        if let Some(haptic) = &self.haptic_feedback
-            && haptic.is_supported()
-        {
-            haptic.perform_click();
-        }
-    }
-}
-
-impl SceneViewModel {
-    pub fn new(scene_id: SceneId, name: impl Into<String>, color: Color) -> Self {
-        Self {
-            scene_id,
-            name: name.into(),
-            text: String::new(),
-            fixed_positions: false,
-            timestamp: None,
-            is_selected: false,
-            positions: Vec::new(),
-            variation_depth: 0,
-            variations: Vec::new(),
-            current_variation: Vec::new(),
-            color,
-        }
-    }
-}
+use super::mapper::SceneMapper;
+use super::view_model::{
+    SceneSelectedEvent, SceneViewModel, ScenesPaneViewModel, SelectedSceneChangedEvent,
+};
 
 pub struct SelectSceneFromAudioPositionBehavior;
 
@@ -280,10 +85,6 @@ impl ShowSceneTimestampsBehavior {
     pub fn update_from_choreography<P: Preferences>(&self, view_model: &mut ScenesPaneViewModel<P>) {
         view_model.show_timestamps = self.global_state.borrow().choreography.settings.show_timestamps;
     }
-}
-
-pub fn as_observable_collection_extended<T>(source: impl IntoIterator<Item = T>) -> Vec<T> {
-    source.into_iter().collect()
 }
 
 pub struct ApplyPlacementModeBehavior {
@@ -450,12 +251,12 @@ fn build_scene_name(scenes: &[SceneViewModel]) -> String {
     }
 }
 
-fn next_scene_id(scenes: &[SceneViewModel]) -> SceneId {
+fn next_scene_id(scenes: &[SceneViewModel]) -> choreo_master_mobile_json::SceneId {
     let mut next = 0;
     for scene in scenes {
         next = next.max(scene.scene_id.0 as i64);
     }
-    SceneId(next.saturating_add(1) as i32)
+    choreo_master_mobile_json::SceneId(next.saturating_add(1) as i32)
 }
 
 pub struct LoadScenesBehavior {
@@ -596,120 +397,5 @@ impl SelectSceneBehavior {
             }
             Err(_) => false,
         }
-    }
-}
-
-pub struct SceneMapper;
-
-impl SceneMapper {
-    pub fn map_view_model_to_model(&self, source: &SceneViewModel, target: &mut SceneModel) {
-        target.scene_id = source.scene_id;
-        target.name = source.name.clone();
-        target.text = normalize_text(&source.text);
-        target.fixed_positions = source.fixed_positions;
-        target.timestamp = source.timestamp.map(format_seconds);
-        target.variation_depth = source.variation_depth;
-        target.color = source.color.clone();
-
-        target.variations = source
-            .variations
-            .iter()
-            .map(|list| clone_scene_list(list))
-            .collect();
-        target.current_variation = clone_scene_list(&source.current_variation);
-
-        target.positions.clear();
-        target.positions.extend(source.positions.iter().cloned());
-    }
-
-    pub fn map_model_to_view_model(&self, source: &SceneModel, target: &mut SceneViewModel) {
-        target.scene_id = source.scene_id;
-        target.name = source.name.clone();
-        target.text = source.text.clone().unwrap_or_default();
-        target.fixed_positions = source.fixed_positions;
-        target.timestamp = source
-            .timestamp
-            .as_deref()
-            .and_then(parse_timestamp_seconds);
-        target.variation_depth = source.variation_depth;
-        target.color = source.color.clone();
-
-        target.positions.clear();
-        target.positions.extend(source.positions.iter().cloned());
-        target.variations = source
-            .variations
-            .iter()
-            .map(|list| clone_scene_list(list))
-            .collect();
-        target.current_variation = clone_scene_list(&source.current_variation);
-    }
-}
-
-fn clone_scene_list(source: &[SceneModel]) -> Vec<SceneModel> {
-    source.iter().map(clone_scene).collect()
-}
-
-fn clone_scene(source: &SceneModel) -> SceneModel {
-    SceneModel {
-        scene_id: source.scene_id,
-        positions: source.positions.to_vec(),
-        name: source.name.clone(),
-        text: source.text.clone(),
-        fixed_positions: source.fixed_positions,
-        timestamp: source.timestamp.clone(),
-        variation_depth: source.variation_depth,
-        variations: source
-            .variations
-            .iter()
-            .map(|list| clone_scene_list(list))
-            .collect(),
-        current_variation: clone_scene_list(&source.current_variation),
-        color: source.color.clone(),
-    }
-}
-
-fn parse_timestamp_seconds(value: &str) -> Option<f64> {
-    let value = value.trim();
-    if value.is_empty() {
-        return None;
-    }
-
-    let mut parts = value.split(':').collect::<Vec<_>>();
-    if parts.len() > 3 {
-        return None;
-    }
-
-    let seconds_part = parts.pop()?;
-    let minutes_part = parts.pop().unwrap_or("0");
-    let hours_part = parts.pop().unwrap_or("0");
-
-    let seconds = seconds_part.parse::<f64>().ok()?;
-    let minutes = minutes_part.parse::<f64>().ok()?;
-    let hours = hours_part.parse::<f64>().ok()?;
-
-    Some(hours * 3600.0 + minutes * 60.0 + seconds)
-}
-
-fn format_seconds(value: f64) -> String {
-    let mut text = format!("{value:.3}");
-    if let Some(dot) = text.find('.') {
-        while text.ends_with('0') {
-            text.pop();
-        }
-        if text.ends_with('.') {
-            text.pop();
-        }
-        if text.len() == dot {
-            text.push('0');
-        }
-    }
-    text
-}
-
-fn normalize_text(value: &str) -> Option<String> {
-    if value.trim().is_empty() {
-        None
-    } else {
-        Some(value.trim().to_string())
     }
 }
