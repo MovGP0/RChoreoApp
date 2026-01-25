@@ -1,10 +1,26 @@
-import { MaterialWindow } from "@material";
+import { MaterialWindow, MenuItem } from "@material";
 import { MainPage } from "main_page.slint";
 import { SettingsPage } from "settings_page.slint";
 
 export component ShellHost inherits MaterialWindow {
     in property <string> title_text;
     in property <int> content_index: 0;
+    in-out property <[MenuItem]> mode_items: [];
+    in-out property <int> selected_mode_index: -1;
+    in property <bool> is_mode_selection_enabled: true;
+    in-out property <length> nav_width: 280px;
+    in-out property <bool> is_nav_open: true;
+    in-out property <bool> is_choreography_settings_open: false;
+    in-out property <bool> is_audio_player_open: false;
+    in-out property <bool> is_dialog_open: false;
+    in property <component-factory> dialog_content;
+
+    callback toggle_nav();
+    callback open_settings();
+    callback open_image();
+    callback open_audio();
+    callback select_mode(int);
+    callback close_dialog();
 
     title: root.title_text;
 
@@ -13,7 +29,25 @@ export component ShellHost inherits MaterialWindow {
         height: parent.height;
         background: transparent;
 
-        if root.content_index == 0 : MainPage { }
+        if root.content_index == 0 : MainPage {
+            title_text: root.title_text;
+            mode_items <=> root.mode_items;
+            selected_mode_index <=> root.selected_mode_index;
+            is_mode_selection_enabled: root.is_mode_selection_enabled;
+            nav_width <=> root.nav_width;
+            is_nav_open <=> root.is_nav_open;
+            is_choreography_settings_open <=> root.is_choreography_settings_open;
+            is_audio_player_open <=> root.is_audio_player_open;
+            is_dialog_open <=> root.is_dialog_open;
+            dialog_content: root.dialog_content;
+
+            toggle_nav => { root.toggle_nav(); }
+            open_settings => { root.open_settings(); }
+            open_image => { root.open_image(); }
+            open_audio => { root.open_audio(); }
+            select_mode(index) => { root.select_mode(index); }
+            close_dialog => { root.close_dialog(); }
+        }
         if root.content_index == 1 : SettingsPage { }
     }
 }
