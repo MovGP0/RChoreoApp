@@ -1,4 +1,4 @@
-import { MaterialAnimations, MaterialPalette } from "@material";
+import { MaterialAnimations, MaterialPalette, StateLayerArea } from "@material";
 
 export component HamburgerToggleButton inherits Rectangle {
     in-out property <bool> checked: false;
@@ -6,6 +6,8 @@ export component HamburgerToggleButton inherits Rectangle {
     in property <bool> toggle_on_click: true;
     in property <length> content_padding: 10px;
     in property <length> corner_radius: 8px;
+    in property <string> tooltip;
+    in property <length> tooltip_offset: root.height / 2 + root.bar_thickness;
     in property <color> bar_color: MaterialPalette.on_surface;
     in property <color> checked_bar_color: bar_color;
     in property <color> disabled_bar_color: MaterialPalette.on_surface_variant;
@@ -18,9 +20,9 @@ export component HamburgerToggleButton inherits Rectangle {
 
     min-width: 40px;
     min-height: 40px;
-    border-radius: corner_radius;
+    border-radius: root.height / 2;
     background: root.checked ? root.background_checked_color : transparent;
-    opacity: root.enabled ? (touch_area.pressed ? root.pressed_opacity : 1) : 0.38;
+    opacity: root.enabled ? (state_layer_area.pressed ? root.pressed_opacity : 1) : 0.38;
 
     property <float> content_width_px: Math.max(0.0, (root.width - root.content_padding * 2) / 1px);
     property <float> content_height_px: Math.max(0.0, (root.height - root.content_padding * 2) / 1px);
@@ -38,10 +40,31 @@ export component HamburgerToggleButton inherits Rectangle {
     property <length> bar_full_width: Math.max(0.0, content_width_px - bar_inset_px * 2) * 1px;
     property <length> bar_half_width: bar_full_width / 2;
     property <length> bar_mid_y: root.content_padding + content_height / 2 - bar_thickness / 2;
+    property <color> state_layer_tint: MaterialPalette.on_surface_variant;
+    property <color> state_layer_color: MaterialPalette.on_surface_variant;
 
     property <color> effective_bar_color: root.enabled
         ? (root.checked ? root.checked_bar_color : root.bar_color)
         : root.disabled_bar_color;
+
+    state_layer_area := StateLayerArea {
+        width: parent.width;
+        height: parent.height;
+        border_radius: root.height / 2;
+        color: root.state_layer_tint;
+        display_background: false;
+        enabled: root.enabled;
+        tooltip: root.tooltip;
+        tooltip_offset: root.tooltip_offset;
+        clip_ripple: true;
+
+        clicked => {
+            root.clicked();
+            if (root.toggle_on_click) {
+                root.checked = !root.checked;
+            }
+        }
+    }
 
     bar1 := Rectangle {
         x: root.content_padding + root.bar_inset;
@@ -90,6 +113,7 @@ export component HamburgerToggleButton inherits Rectangle {
 
     states [
         checked when root.checked: {
+            root.state_layer_tint: MaterialPalette.primary;
             bar1.y: root.bar_mid_y;
             bar1.width: root.bar_half_width;
             bar1.transform-rotation: -35deg;
@@ -100,18 +124,6 @@ export component HamburgerToggleButton inherits Rectangle {
         }
     ]
 
-    touch_area := TouchArea {
-        width: parent.width;
-        height: parent.height;
-        enabled: root.enabled;
-
-        clicked => {
-            root.clicked();
-            if (root.toggle_on_click) {
-                root.checked = !root.checked;
-            }
-        }
-    }
 
     changed checked => {
         root.toggled(root.checked);
