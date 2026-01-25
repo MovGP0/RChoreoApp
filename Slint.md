@@ -215,3 +215,17 @@ fn main() -> Result<(), slint::PlatformError> {
 * Did you mutate interior data instead of replacing it?
 * Did you try to write to an `in` property?
 * Did you try to observe a property instead of structuring logic explicitly?
+
+## Color binding
+
+Colors are defined as `out` properties:
+```slint
+export global MaterialPalette {
+    out property<color> surface_container_lowest;
+    // ...
+}
+```
+So we can just bind them to an `in` or `in-out` property of a control:
+```slint
+in property<color> background: MaterialPalette.surface_container_low;
+```

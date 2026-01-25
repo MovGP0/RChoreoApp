@@ -1,4 +1,4 @@
-import { MaterialPalette, MaterialText, TextButton, TextField, Vertical, Horizontal, ListView } from "@material";
+import { IconButton, ListView, MaterialPalette, MaterialText, SearchBar, Vertical, Horizontal } from "@material";
 import { SceneItemView } from "scene_item_view.slint";
 
 export struct SceneListItem {
@@ -59,33 +59,27 @@ export component ScenesPaneView inherits Rectangle {
             }
         }
 
-        Rectangle {
-            background: MaterialPalette.surface_container;
-            border-radius: 12px;
-            padding: 8px;
-
-            TextField {
-                label: search_placeholder;
-                text: search_text;
-                edited(value) => { update_search_text(value); }
-            }
+        SearchBar {
+            placeholder_text: search_placeholder;
+            text: search_text;
+            edited(value) => { update_search_text(value); }
         }
 
         Horizontal {
             spacing: 8px;
 
-            TextButton { text: add_before_text; clicked => { add_scene_before(); } }
-            TextButton { text: add_after_text; clicked => { add_scene_after(); } }
-            TextButton { text: delete_text; enabled: can_delete_scene; clicked => { delete_scene(); } }
+            IconButton { icon: @image-url("icons/PlusCircleOutline.svg"); tooltip: add_before_text; clicked => { add_scene_before(); } }
+            IconButton { icon: @image-url("icons/Plus.svg"); tooltip: add_after_text; clicked => { add_scene_after(); } }
+            IconButton { icon: @image-url("icons/DeleteOutline.svg"); tooltip: delete_text; enabled: can_delete_scene; clicked => { delete_scene(); } }
         }
 
         Horizontal {
             spacing: 8px;
 
-            TextButton { text: open_text; clicked => { open_choreo(); } }
-            TextButton { text: save_text; enabled: can_save_choreo; clicked => { save_choreo(); } }
-            TextButton { text: settings_text; enabled: can_navigate_to_settings; clicked => { navigate_to_settings(); } }
-            TextButton { text: dancers_text; enabled: can_navigate_to_dancer_settings; clicked => { navigate_to_dancer_settings(); } }
+            IconButton { icon: @image-url("icons/FolderOpen.svg"); tooltip: open_text; clicked => { open_choreo(); } }
+            IconButton { icon: @image-url("icons/ContentSave.svg"); tooltip: save_text; enabled: can_save_choreo; clicked => { save_choreo(); } }
+            IconButton { icon: @image-url("icons/Cog.svg"); tooltip: settings_text; enabled: can_navigate_to_settings; clicked => { navigate_to_settings(); } }
+            IconButton { icon: @image-url("icons/AccountGroup.svg"); tooltip: dancers_text; enabled: can_navigate_to_dancer_settings; clicked => { navigate_to_dancer_settings(); } }
         }
     }
 }
