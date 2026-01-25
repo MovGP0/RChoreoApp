@@ -63,43 +63,8 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="starting porting components">
-      <change afterPath="$PROJECT_DIR$/crates/choreo_components/src/main_behaviors.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crates/choreo_components/src/main_view_model.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crates/choreo_components/ui/copy_scene_positions_dialog.slint" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crates/choreo_components/ui/delete_scene_dialog.slint" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crates/choreo_components/ui/floor_canvas_view.slint" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crates/choreo_components/ui/main_page.slint" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crates/choreo_components/ui/scene_item_view.slint" afterDir="false" />
+    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="porting components">
       <change beforePath="$PROJECT_DIR$/.beads/issues.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/.beads/issues.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/LICENSE.md" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/LICENSE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/check_box.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/check_box.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/filled_icon_button.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/filled_icon_button.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/icon_button.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/icon_button.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/navigation_drawer.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/navigation_drawer.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/outline_icon_button.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/outline_icon_button.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/progress_indicator.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/progress_indicator.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/radio_button.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/radio_button.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/search_bar.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/search_bar.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/slider.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/slider.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/switch.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/switch.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/text_field.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/text_field.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/tonal_icon_button.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/material-1.0/ui/components/tonal_icon_button.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/floor.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/floor.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/settings.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/settings.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/audio_player_view.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/audio_player_view.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/choreography_settings_view.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/choreography_settings_view.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/dancer_settings_page.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/dancer_settings_page.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/main.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/main.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/swap_dancers_dialog.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/swap_dancers_dialog.slint" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -224,7 +189,7 @@
       <workItem from="1769272132897" duration="2139000" />
       <workItem from="1769274715450" duration="112000" />
       <workItem from="1769275813767" duration="1910000" />
-      <workItem from="1769277827550" duration="18452000" />
+      <workItem from="1769277827550" duration="18841000" />
     </task>
     <task id="LOCAL-00001" summary="implementing json parsing">
       <option name="closed" value="true" />
@@ -274,7 +239,15 @@
       <option name="project" value="LOCAL" />
       <updated>1769296806826</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="porting components">
+      <option name="closed" value="true" />
+      <created>1769322876747</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1769322876747</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -284,7 +257,8 @@
     <MESSAGE value="implementing json parsing" />
     <MESSAGE value="adding notes in DI" />
     <MESSAGE value="starting porting components" />
-    <option name="LAST_COMMIT_MESSAGE" value="starting porting components" />
+    <MESSAGE value="porting components" />
+    <option name="LAST_COMMIT_MESSAGE" value="porting components" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
