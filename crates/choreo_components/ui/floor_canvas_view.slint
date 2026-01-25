@@ -1,4 +1,50 @@
-import { MaterialPalette, Vertical } from "@material";
+import { MaterialPalette, Vertical, Horizontal } from "@material";
+
+export struct FloorPosition {
+    x: float,
+    y: float,
+    fill_color: color,
+    border_color: color,
+    text_color: color,
+    shortcut: string,
+    is_selected: bool,
+    has_dancer: bool,
+}
+
+export struct FloorCurve {
+    start_x: float,
+    start_y: float,
+    end_x: float,
+    end_y: float,
+    control1_x: float,
+    control1_y: float,
+    control2_x: float,
+    control2_y: float,
+    has_control1: bool,
+    has_control2: bool,
+    color: color,
+}
+
+export struct LineSegment {
+    start_x: float,
+    start_y: float,
+    end_x: float,
+    end_y: float,
+    color: color,
+    thickness: float,
+}
+
+export struct AxisLabel {
+    value: float,
+    text: string,
+}
+
+export struct LegendEntry {
+    color: color,
+    shortcut: string,
+    name: string,
+    position_text: string,
+}
 
 export component FloorCanvasView inherits Rectangle {
     in property <string> choreography_name: "";
@@ -21,6 +67,48 @@ export component FloorCanvasView inherits Rectangle {
     in property <length> border_thickness: 2px;
     in property <length> center_line_thickness: 2px;
     in property <length> center_dot_size: 8px;
+    in property <float> pan_x: 0.0;
+    in property <float> pan_y: 0.0;
+    in property <float> zoom_factor: 1.0;
+    in property <float> dancer_size: 1.0;
+    in property <length> dancer_text_size: 24px;
+    in property <length> dancer_border_thickness: 2px;
+    in property <length> dancer_selection_thickness: 3px;
+    in property <length> dancer_selection_padding: 4px;
+    in property <color> dancer_selection_color: MaterialPalette.secondary;
+    in property <[FloorPosition]> positions: [];
+    in property <[FloorCurve]> curves: [];
+    in property <[LineSegment]> dashed_curve_segments: [];
+    in property <[LineSegment]> selection_segments: [];
+    in property <[AxisLabel]> axis_labels_x: [];
+    in property <[AxisLabel]> axis_labels_y: [];
+    in property <length> axis_label_offset: 12px;
+    in property <length> axis_label_size: 16px;
+    in property <bool> show_axis_labels: false;
+    in property <[LegendEntry]> legend_entries: [];
+    in property <bool> show_legend: false;
+    in property <length> legend_padding: 8px;
+    in property <length> legend_row_spacing: 6px;
+    in property <length> legend_column_spacing: 10px;
+    in property <length> legend_square_size: 10px;
+    in property <length> legend_margin: 48px;
+    in property <length> legend_panel_width: 240px;
+    in property <length> legend_text_size: 14px;
+    in property <color> legend_text_color: MaterialPalette.on_surface;
+    in property <color> legend_border_color: MaterialPalette.outline_variant;
+    in property <image> svg_overlay;
+    in property <bool> has_svg_overlay: false;
+    in property <bool> show_placement_overlay: false;
+    in property <int> remaining_positions: 0;
+    in property <string> remaining_positions_text: "";
+    in property <length> placement_padding: 12px;
+    in property <length> placement_spacing: 4px;
+    in property <length> placement_corner_radius: 8px;
+    in property <length> placement_title_size: 16px;
+    in property <length> placement_body_size: 14px;
+    in property <color> placement_title_color: MaterialPalette.on_surface;
+    in property <color> placement_body_color: MaterialPalette.on_surface_variant;
+    in property <color> placement_background_color: MaterialPalette.surface_variant;
 
     property <int> max_horizontal_meters: floor_left > floor_right ? floor_left : floor_right;
     property <int> max_vertical_meters: floor_front > floor_back ? floor_front : floor_back;
@@ -74,19 +162,27 @@ export component FloorCanvasView inherits Rectangle {
             property <float> scale_y: root.floor_height_meters > 0.0
                 ? available_height_px / root.floor_height_meters
                 : 1.0;
-            property <float> scale: scale_x < scale_y ? scale_x : scale_y;
+            property <float> base_scale: scale_x < scale_y ? scale_x : scale_y;
+            property <float> zoom: root.zoom_factor > 0.0 ? root.zoom_factor : 1.0;
+            property <float> scale: base_scale * zoom;
             property <length> floor_width: root.floor_width_meters > 0.0
                 ? root.floor_width_meters * scale * 1px
                 : 0px;
             property <length> floor_height: root.floor_height_meters > 0.0
                 ? root.floor_height_meters * scale * 1px
                 : 0px;
+            property <length> floor_x: (parent.width - floor_width) / 2 + root.pan_x * 1px;
+            property <length> floor_y: (parent.height - floor_height) / 2 + root.pan_y * 1px;
+            property <length> center_x: floor_x + floor_width / 2;
+            property <length> center_y: floor_y + floor_height / 2;
+            property <float> floor_width_px: floor_width / 1px;
+            property <float> floor_height_px: floor_height / 1px;
 
             floor_rect := Rectangle {
                 width: content.floor_width;
                 height: content.floor_height;
-                x: (parent.width - self.width) / 2;
-                y: (parent.height - self.height) / 2;
+                x: content.floor_x;
+                y: content.floor_y;
                 background: root.floor_color;
                 border-width: root.border_thickness;
                 border-color: root.floor_border_color;
@@ -172,6 +268,278 @@ export component FloorCanvasView inherits Rectangle {
                     background: root.floor_border_color;
                     x: parent.width / 2 - self.width / 2;
                     y: parent.height / 2 - self.height / 2;
+                }
+            }
+
+            svg_overlay_layer := Rectangle {
+                x: floor_rect.x;
+                y: floor_rect.y;
+                width: floor_rect.width;
+                height: floor_rect.height;
+                background: transparent;
+                clip: true;
+                visible: root.has_svg_overlay;
+
+                Image {
+                    source: root.svg_overlay;
+                    width: parent.width;
+                    height: parent.height;
+                    image-fit: contain;
+                }
+            }
+
+            axis_layer := Rectangle {
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: parent.height;
+                background: transparent;
+                visible: root.show_axis_labels;
+
+                for label in root.axis_labels_x: Text {
+                    text: label.text;
+                    color: root.subtitle_color;
+                    font-size: root.axis_label_size;
+                    horizontal-alignment: center;
+                    x: content.center_x + label.value * content.scale * 1px - self.width / 2;
+                    y: floor_rect.y - root.axis_label_offset;
+                }
+
+                for label in root.axis_labels_x: Text {
+                    text: label.text;
+                    color: root.subtitle_color;
+                    font-size: root.axis_label_size;
+                    horizontal-alignment: center;
+                    x: content.center_x + label.value * content.scale * 1px - self.width / 2;
+                    y: floor_rect.y + floor_rect.height + root.axis_label_offset - self.height;
+                }
+
+                for label in root.axis_labels_y: Text {
+                    text: label.text;
+                    color: root.subtitle_color;
+                    font-size: root.axis_label_size;
+                    horizontal-alignment: right;
+                    x: floor_rect.x - root.axis_label_offset - self.width;
+                    y: content.center_y - label.value * content.scale * 1px - self.height / 2;
+                }
+
+                for label in root.axis_labels_y: Text {
+                    text: label.text;
+                    color: root.subtitle_color;
+                    font-size: root.axis_label_size;
+                    horizontal-alignment: left;
+                    x: floor_rect.x + floor_rect.width + root.axis_label_offset;
+                    y: content.center_y - label.value * content.scale * 1px - self.height / 2;
+                }
+            }
+
+            curve_layer := Rectangle {
+                x: floor_rect.x;
+                y: floor_rect.y;
+                width: floor_rect.width;
+                height: floor_rect.height;
+                background: transparent;
+                clip: true;
+
+                for curve in root.curves: Path {
+                    stroke: curve.color;
+                    stroke-width: root.dancer_border_thickness;
+                    fill: transparent;
+                    viewbox-width: parent.width / 1px;
+                    viewbox-height: parent.height / 1px;
+
+                    MoveTo {
+                        x: parent.viewbox-width / 2 + curve.start_x * content.scale;
+                        y: parent.viewbox-height / 2 - curve.start_y * content.scale;
+                    }
+
+                    if !curve.has_control1 : LineTo {
+                        x: parent.viewbox-width / 2 + curve.end_x * content.scale;
+                        y: parent.viewbox-height / 2 - curve.end_y * content.scale;
+                    }
+
+                    if curve.has_control1 && !curve.has_control2 : QuadraticTo {
+                        x: parent.viewbox-width / 2 + curve.end_x * content.scale;
+                        y: parent.viewbox-height / 2 - curve.end_y * content.scale;
+                        control-x: parent.viewbox-width / 2 + curve.control1_x * content.scale;
+                        control-y: parent.viewbox-height / 2 - curve.control1_y * content.scale;
+                    }
+
+                    if curve.has_control1 && curve.has_control2 : CubicTo {
+                        x: parent.viewbox-width / 2 + curve.end_x * content.scale;
+                        y: parent.viewbox-height / 2 - curve.end_y * content.scale;
+                        control-1-x: parent.viewbox-width / 2 + curve.control1_x * content.scale;
+                        control-1-y: parent.viewbox-height / 2 - curve.control1_y * content.scale;
+                        control-2-x: parent.viewbox-width / 2 + curve.control2_x * content.scale;
+                        control-2-y: parent.viewbox-height / 2 - curve.control2_y * content.scale;
+                    }
+                }
+
+                for segment in root.dashed_curve_segments: Path {
+                    stroke: segment.color;
+                    stroke-width: segment.thickness * 1px;
+                    fill: transparent;
+                    viewbox-width: parent.width / 1px;
+                    viewbox-height: parent.height / 1px;
+
+                    MoveTo {
+                        x: parent.viewbox-width / 2 + segment.start_x * content.scale;
+                        y: parent.viewbox-height / 2 - segment.start_y * content.scale;
+                    }
+
+                    LineTo {
+                        x: parent.viewbox-width / 2 + segment.end_x * content.scale;
+                        y: parent.viewbox-height / 2 - segment.end_y * content.scale;
+                    }
+                }
+            }
+
+            position_layer := Rectangle {
+                x: floor_rect.x;
+                y: floor_rect.y;
+                width: floor_rect.width;
+                height: floor_rect.height;
+                background: transparent;
+                clip: true;
+
+                for position in root.positions: Rectangle {
+                    width: root.dancer_size * content.scale * 1px;
+                    height: root.dancer_size * content.scale * 1px;
+                    border-radius: self.width / 2;
+                    background: position.fill_color;
+                    border-width: root.dancer_border_thickness;
+                    border-color: position.border_color;
+                    x: content.center_x + position.x * content.scale * 1px - self.width / 2;
+                    y: content.center_y - position.y * content.scale * 1px - self.height / 2;
+
+                    if position.is_selected : Rectangle {
+                        width: parent.width + root.dancer_selection_padding * 2;
+                        height: parent.height + root.dancer_selection_padding * 2;
+                        border-radius: self.width / 2;
+                        border-width: root.dancer_selection_thickness;
+                        border-color: root.dancer_selection_color;
+                        background: transparent;
+                        x: parent.width / 2 - self.width / 2;
+                        y: parent.height / 2 - self.height / 2;
+                    }
+
+                    if position.has_dancer && position.shortcut != "" : Text {
+                        text: position.shortcut;
+                        color: position.text_color;
+                        font-size: root.dancer_text_size * content.zoom;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        width: parent.width;
+                        height: parent.height;
+                    }
+                }
+            }
+
+            selection_layer := Rectangle {
+                x: floor_rect.x;
+                y: floor_rect.y;
+                width: floor_rect.width;
+                height: floor_rect.height;
+                background: transparent;
+                clip: true;
+
+                for segment in root.selection_segments: Path {
+                    stroke: segment.color;
+                    stroke-width: segment.thickness * 1px;
+                    fill: transparent;
+                    viewbox-width: parent.width / 1px;
+                    viewbox-height: parent.height / 1px;
+
+                    MoveTo {
+                        x: parent.viewbox-width / 2 + segment.start_x * content.scale;
+                        y: parent.viewbox-height / 2 - segment.start_y * content.scale;
+                    }
+
+                    LineTo {
+                        x: parent.viewbox-width / 2 + segment.end_x * content.scale;
+                        y: parent.viewbox-height / 2 - segment.end_y * content.scale;
+                    }
+                }
+            }
+
+            legend_panel := Rectangle {
+                visible: root.show_legend && root.legend_entries.length > 0;
+                x: floor_rect.x + floor_rect.width + root.legend_margin;
+                y: floor_rect.y;
+                width: root.legend_panel_width;
+                height: root.legend_entries.length > 0
+                    ? root.legend_padding * 2
+                        + (root.legend_entries.length * (root.legend_square_size > root.legend_text_size
+                            ? root.legend_square_size
+                            : root.legend_text_size))
+                        + ((root.legend_entries.length - 1) * root.legend_row_spacing)
+                    : 0px;
+                background: transparent;
+                border-width: 1px;
+                border-color: root.legend_border_color;
+
+                Vertical {
+                    padding: root.legend_padding;
+                    spacing: root.legend_row_spacing;
+
+                    for entry in root.legend_entries: Horizontal {
+                        spacing: root.legend_column_spacing;
+
+                        Rectangle {
+                            width: root.legend_square_size;
+                            height: root.legend_square_size;
+                            background: entry.color;
+                        }
+
+                        Text {
+                            text: entry.shortcut;
+                            color: root.legend_text_color;
+                            font-size: root.legend_text_size;
+                        }
+
+                        Text {
+                            text: entry.name;
+                            color: root.legend_text_color;
+                            font-size: root.legend_text_size;
+                        }
+
+                        Text {
+                            text: entry.position_text;
+                            color: root.legend_text_color;
+                            font-size: root.legend_text_size;
+                        }
+                    }
+                }
+            }
+
+            placement_overlay := Rectangle {
+                visible: root.show_placement_overlay && root.remaining_positions > 0;
+                x: root.placement_padding;
+                y: root.placement_padding;
+                background: root.placement_background_color;
+                border-radius: root.placement_corner_radius;
+
+                Vertical {
+                    padding: root.placement_padding;
+                    spacing: root.placement_spacing;
+
+                    Text {
+                        text: "Placement mode";
+                        color: root.placement_title_color;
+                        font-size: root.placement_title_size;
+                    }
+
+                    Text {
+                        text: "Tap to place a position";
+                        color: root.placement_body_color;
+                        font-size: root.placement_body_size;
+                    }
+
+                    Text {
+                        text: root.remaining_positions_text;
+                        color: root.placement_body_color;
+                        font-size: root.placement_body_size;
+                    }
                 }
             }
         }
