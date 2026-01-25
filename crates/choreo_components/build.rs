@@ -1,4 +1,8 @@
 fn main() {
+    // SAFETY: build script initialization before any Slint compiler threads are spawned.
+    unsafe {
+        std::env::set_var("SLINT_ENABLE_EXPERIMENTAL_FEATURES", "1");
+    }
     let config = slint_build::CompilerConfiguration::new().with_library_paths(
         std::collections::HashMap::from([(
             "material".to_string(),

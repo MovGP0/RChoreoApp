@@ -1,0 +1,70 @@
+import { MaterialPalette } from "@material";
+
+export component DialogHost inherits Rectangle {
+    in-out property <bool> is_open: false;
+    in property <bool> close_on_click_away: false;
+    in property <color> overlay_color: #66000000;
+    in property <color> dialog_background: MaterialPalette.surface_container_high;
+    in property <length> dialog_padding: 24px;
+    in property <length> dialog_margin: 24px;
+    in property <length> dialog_corner_radius: 12px;
+    in property <component-factory> dialog_content;
+
+    callback close_requested();
+
+    Rectangle {
+        width: parent.width;
+        height: parent.height;
+        background: transparent;
+
+        @children
+    }
+
+    overlay := TouchArea {
+        visible: root.is_open;
+        enabled: root.is_open;
+        width: parent.width;
+        height: parent.height;
+
+        Rectangle {
+            width: parent.width;
+            height: parent.height;
+            background: root.overlay_color;
+        }
+
+        clicked => {
+            if (root.close_on_click_away) {
+                root.is_open = false;
+                root.close_requested();
+            }
+        }
+    }
+
+    dialog_container := Rectangle {
+        visible: root.is_open;
+        width: parent.width;
+        height: parent.height;
+        background: transparent;
+
+        dialog_panel := Rectangle {
+            x: root.dialog_margin;
+            y: root.dialog_margin;
+            width: parent.width - root.dialog_margin * 2;
+            height: parent.height - root.dialog_margin * 2;
+            background: root.dialog_background;
+            border-radius: root.dialog_corner_radius;
+
+            Rectangle {
+                x: root.dialog_padding;
+                y: root.dialog_padding;
+                width: parent.width - root.dialog_padding * 2;
+                height: parent.height - root.dialog_padding * 2;
+                background: transparent;
+
+                ComponentContainer {
+                    component-factory: root.dialog_content;
+                }
+            }
+        }
+    }
+}

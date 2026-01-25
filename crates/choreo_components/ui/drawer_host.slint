@@ -1,0 +1,124 @@
+import { MaterialPalette } from "@material";
+
+export component DrawerHost inherits Rectangle {
+    in property <length> left_drawer_width: 320px;
+    in property <length> right_drawer_width: 320px;
+    in property <length> top_drawer_height: 320px;
+    in property <length> bottom_drawer_height: 320px;
+    in property <bool> inline_left: false;
+    in-out property <bool> is_left_open: false;
+    in-out property <bool> is_right_open: false;
+    in-out property <bool> is_top_open: false;
+    in-out property <bool> is_bottom_open: false;
+    in property <bool> left_close_on_click_away: true;
+    in property <bool> right_close_on_click_away: true;
+    in property <bool> top_close_on_click_away: true;
+    in property <bool> bottom_close_on_click_away: true;
+    in property <color> overlay_color: #66000000;
+    in property <color> drawer_background: MaterialPalette.surface_container_low;
+    in property <component-factory> left_drawer;
+    in property <component-factory> right_drawer;
+    in property <component-factory> top_drawer;
+    in property <component-factory> bottom_drawer;
+
+    callback overlay_clicked();
+
+    property <length> inline_left_width: root.inline_left && root.is_left_open
+        ? root.left_drawer_width
+        : 0px;
+    property <bool> overlay_visible: (root.is_left_open && !root.inline_left && root.left_close_on_click_away)
+        || (root.is_right_open && root.right_close_on_click_away)
+        || (root.is_top_open && root.top_close_on_click_away)
+        || (root.is_bottom_open && root.bottom_close_on_click_away);
+
+    content := Rectangle {
+        x: root.inline_left_width;
+        y: 0px;
+        width: parent.width - root.inline_left_width;
+        height: parent.height;
+        background: transparent;
+
+        @children
+    }
+
+    overlay := TouchArea {
+        visible: root.overlay_visible;
+        enabled: root.overlay_visible;
+        width: parent.width;
+        height: parent.height;
+
+        Rectangle {
+            width: parent.width;
+            height: parent.height;
+            background: root.overlay_color;
+        }
+
+        clicked => {
+            if (root.left_close_on_click_away) {
+                root.is_left_open = false;
+            }
+            if (root.right_close_on_click_away) {
+                root.is_right_open = false;
+            }
+            if (root.top_close_on_click_away) {
+                root.is_top_open = false;
+            }
+            if (root.bottom_close_on_click_away) {
+                root.is_bottom_open = false;
+            }
+            root.overlay_clicked();
+        }
+    }
+
+    left_panel := Rectangle {
+        visible: root.inline_left || root.is_left_open;
+        x: 0px;
+        y: 0px;
+        width: root.left_drawer_width;
+        height: parent.height;
+        background: root.drawer_background;
+
+        ComponentContainer {
+            component-factory: root.left_drawer;
+        }
+    }
+
+    right_panel := Rectangle {
+        visible: root.is_right_open;
+        x: parent.width - root.right_drawer_width;
+        y: 0px;
+        width: root.right_drawer_width;
+        height: parent.height;
+        background: root.drawer_background;
+
+        ComponentContainer {
+            component-factory: root.right_drawer;
+        }
+    }
+
+    top_panel := Rectangle {
+        visible: root.is_top_open;
+        x: 0px;
+        y: 0px;
+        width: parent.width;
+        height: root.top_drawer_height;
+        background: root.drawer_background;
+
+        ComponentContainer {
+            component-factory: root.top_drawer;
+        }
+    }
+
+    bottom_panel := Rectangle {
+        visible: root.is_bottom_open;
+        x: 0px;
+        y: parent.height - root.bottom_drawer_height;
+        width: parent.width;
+        height: root.bottom_drawer_height;
+        background: root.drawer_background;
+
+        ComponentContainer {
+            component-factory: root.bottom_drawer;
+        }
+    }
+}
