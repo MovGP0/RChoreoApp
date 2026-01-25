@@ -6,8 +6,8 @@ use material_color_utilities::hct::Hct;
 
 use crate::preferences::Preferences;
 
-use super::behaviors::MaterialSchemeUpdater;
-use super::view_model::SettingsViewModel;
+use super::settings_view_model::SettingsViewModel;
+use super::types::MaterialSchemeUpdater;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MaterialScheme {
