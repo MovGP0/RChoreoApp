@@ -19,3 +19,6 @@ pub mod floor;
 pub mod choreo_main;
 pub mod time;
 pub mod color_picker;
+pub mod shell;
+
+slint::include_modules!();

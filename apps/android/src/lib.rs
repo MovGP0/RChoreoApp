@@ -10,18 +10,20 @@
 #[unsafe(no_mangle)]
 #[cfg(target_os = "android")]
 fn android_main(app: slint::android::AndroidApp) {
+    use choreo_components::shell;
+
     if let Err(err) = slint::android::init(app) {
         eprintln!("failed to init Slint Android backend: {err}");
         return;
     }
-    let ui = match shared::create_main_window() {
+    let ui = match shell::create_shell_host() {
         Ok(ui) => ui,
         Err(err) => {
             eprintln!("failed to create UI: {err}");
             return;
         }
     };
-    ui.set_message(shared::hello_text().into());
+    ui.set_title_text(shell::app_title().into());
     if let Err(err) = ui.run() {
         eprintln!("failed to run UI: {err}");
     }

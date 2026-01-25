@@ -1,0 +1,19 @@
+import { MaterialWindow } from "@material";
+import { MainPage } from "main_page.slint";
+import { SettingsPage } from "settings_page.slint";
+
+export component ShellHost inherits MaterialWindow {
+    in property <string> title_text;
+    in property <int> content_index: 0;
+
+    title: root.title_text;
+
+    Rectangle {
+        width: parent.width;
+        height: parent.height;
+        background: transparent;
+
+        if root.content_index == 0 : MainPage { }
+        if root.content_index == 1 : SettingsPage { }
+    }
+}

@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "crates/shared",
     "crates/choreo_master_mobile_json",
     "crates/choreo_state_machine",
     "crates/choreo_algorithms",
@@ -13,7 +12,6 @@ members = [
 ]
 default-members = [
     "apps/desktop",
-    "crates/shared",
 ]
 resolver = "2"
 

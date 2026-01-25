@@ -7,9 +7,10 @@
 #![deny(clippy::all)]
 
 use slint::ComponentHandle;
+use choreo_components::shell;
 
 fn main() -> Result<(), slint::PlatformError> {
-    let ui = shared::create_main_window()?;
-    ui.set_message(shared::hello_text().into());
+    let ui = shell::create_shell_host()?;
+    ui.set_title_text(shell::app_title().into());
     ui.run()
 }

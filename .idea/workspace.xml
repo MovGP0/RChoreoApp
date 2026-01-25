@@ -63,16 +63,22 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="improving floor rendering">
-      <change afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/style_behavior.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/translate_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/RChoreoApp.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/RChoreoApp.iml" afterDir="false" />
+    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="implementing color picker">
+      <change beforePath="$PROJECT_DIR$/.beads/issues.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/.beads/issues.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_view_model.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/audio_player_view.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/audio_player_view.slint" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/android/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/apps/android/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/android/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/android/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/desktop/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/apps/desktop/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/desktop/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/desktop/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/wasm/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/apps/wasm/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/wasm/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/wasm/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/main.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/main.slint" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/shared/Cargo.toml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/shared/build.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/shared/src/lib.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/shared/ui/main_window.slint" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -310,7 +316,55 @@
       <option name="project" value="LOCAL" />
       <updated>1769332493415</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="improving audio player">
+      <option name="closed" value="true" />
+      <created>1769339343244</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1769339343244</updated>
+    </task>
+    <task id="LOCAL-00015" summary="implementing color picker">
+      <option name="closed" value="true" />
+      <created>1769340553169</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1769340553169</updated>
+    </task>
+    <task id="LOCAL-00016" summary="implementing color picker">
+      <option name="closed" value="true" />
+      <created>1769340563737</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1769340563737</updated>
+    </task>
+    <task id="LOCAL-00017" summary="implementing color picker">
+      <option name="closed" value="true" />
+      <created>1769340571701</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1769340571701</updated>
+    </task>
+    <task id="LOCAL-00018" summary="implementing color picker">
+      <option name="closed" value="true" />
+      <created>1769340679204</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1769340679204</updated>
+    </task>
+    <task id="LOCAL-00019" summary="implementing color picker">
+      <option name="closed" value="true" />
+      <created>1769340692920</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1769340692920</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -325,7 +379,9 @@
     <MESSAGE value="refactor models into modules" />
     <MESSAGE value="adding agent instructions for choreo_components module" />
     <MESSAGE value="improving floor rendering" />
-    <option name="LAST_COMMIT_MESSAGE" value="improving floor rendering" />
+    <MESSAGE value="improving audio player" />
+    <MESSAGE value="implementing color picker" />
+    <option name="LAST_COMMIT_MESSAGE" value="implementing color picker" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -4283,7 +4283,12 @@ dependencies = [
 name = "rchoreo_android"
 version = "0.1.0"
 dependencies = [
- "rchoreo_shared",
+ "choreo_algorithms",
+ "choreo_components",
+ "choreo_i18n",
+ "choreo_master_mobile_json",
+ "choreo_models",
+ "choreo_state_machine",
  "slint",
 ]
 
@@ -4292,28 +4297,24 @@ name = "rchoreo_desktop"
 version = "0.1.0"
 dependencies = [
  "choreo_algorithms",
+ "choreo_components",
  "choreo_i18n",
  "choreo_master_mobile_json",
  "choreo_models",
  "choreo_state_machine",
- "rchoreo_shared",
  "slint",
-]
-
-[[package]]
-name = "rchoreo_shared"
-version = "0.1.0"
-dependencies = [
- "material-color-utilities",
- "slint",
- "slint-build",
 ]
 
 [[package]]
 name = "rchoreo_wasm"
 version = "0.1.0"
 dependencies = [
- "rchoreo_shared",
+ "choreo_algorithms",
+ "choreo_components",
+ "choreo_i18n",
+ "choreo_master_mobile_json",
+ "choreo_models",
+ "choreo_state_machine",
  "slint",
  "wasm-bindgen",
 ]
