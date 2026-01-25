@@ -1,9 +1,67 @@
-mod behaviors;
-mod view_model;
+mod apply_interaction_mode_behavior;
+mod hide_dialog_behavior;
+mod main_view_model;
+mod messages;
+mod open_audio_behavior;
+mod open_image_behavior;
+mod open_svg_file_behavior;
+mod show_dialog_behavior;
 
-pub use behaviors::{
-    build_main_behaviors, ApplyInteractionModeBehavior, CloseDialogCommand, HideDialogBehavior,
-    MainBehaviorDependencies, MainBehaviors, OpenAudioBehavior, OpenImageBehavior, OpenSvgFileBehavior,
-    OpenSvgFileCommand, ShowDialogBehavior, ShowDialogCommand,
+pub use apply_interaction_mode_behavior::ApplyInteractionModeBehavior;
+pub use hide_dialog_behavior::HideDialogBehavior;
+pub use main_view_model::{
+    build_main_view_model, InteractionModeOption, MainDependencies, MainViewModel,
 };
-pub use view_model::{build_main_view_model, InteractionModeOption, MainDependencies, MainViewModel};
+pub use messages::{CloseDialogCommand, OpenSvgFileCommand, ShowDialogCommand};
+pub use open_audio_behavior::OpenAudioBehavior;
+pub use open_image_behavior::OpenImageBehavior;
+pub use open_svg_file_behavior::OpenSvgFileBehavior;
+pub use show_dialog_behavior::ShowDialogBehavior;
+
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use crossbeam_channel::{Receiver, Sender};
+use choreo_state_machine::ApplicationStateMachine;
+
+use crate::audio_player::OpenAudioFileCommand;
+use crate::global::GlobalStateModel;
+use crate::preferences::Preferences;
+
+pub struct MainBehaviorDependencies<P: Preferences> {
+    pub global_state: Rc<RefCell<GlobalStateModel>>,
+    pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
+    pub open_audio_sender: Sender<OpenAudioFileCommand>,
+    pub open_svg_sender: Sender<OpenSvgFileCommand>,
+    pub open_svg_receiver: Receiver<OpenSvgFileCommand>,
+    pub show_dialog_receiver: Receiver<ShowDialogCommand>,
+    pub close_dialog_receiver: Receiver<CloseDialogCommand>,
+    pub preferences: P,
+}
+
+pub struct MainBehaviors<P: Preferences> {
+    pub apply_interaction_mode: ApplyInteractionModeBehavior,
+    pub open_audio: OpenAudioBehavior,
+    pub open_image: OpenImageBehavior,
+    pub open_svg_file: OpenSvgFileBehavior<P>,
+    pub show_dialog: ShowDialogBehavior,
+    pub hide_dialog: HideDialogBehavior,
+}
+
+pub fn build_main_behaviors<P: Preferences>(deps: MainBehaviorDependencies<P>) -> MainBehaviors<P> {
+    MainBehaviors {
+        apply_interaction_mode: ApplyInteractionModeBehavior::new(
+            deps.global_state.clone(),
+            deps.state_machine,
+        ),
+        open_audio: OpenAudioBehavior::new(deps.open_audio_sender),
+        open_image: OpenImageBehavior::new(deps.open_svg_sender),
+        open_svg_file: OpenSvgFileBehavior::new(
+            deps.global_state,
+            deps.preferences,
+            deps.open_svg_receiver,
+        ),
+        show_dialog: ShowDialogBehavior::new(deps.show_dialog_receiver),
+        hide_dialog: HideDialogBehavior::new(deps.close_dialog_receiver),
+    }
+}

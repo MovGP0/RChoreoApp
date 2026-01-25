@@ -1,14 +1,42 @@
-mod behaviors;
+mod draw_floor_behavior;
+mod gesture_handling_behavior;
+mod messages;
+mod move_positions_behavior;
+mod place_position_behavior;
+mod redraw_floor_behavior;
+mod rotate_around_center_behavior;
+mod scale_around_dancer_behavior;
+mod scale_positions_behavior;
 mod types;
-mod view_model;
+mod floor_view_model;
 
-pub use behaviors::{
-    DrawFloorBehavior, GestureHandlingBehavior, MovePositionsBehavior, PlacePositionBehavior,
-    RedrawFloorBehavior, RotateAroundCenterBehavior, ScaleAroundDancerBehavior, ScalePositionsBehavior,
+pub use draw_floor_behavior::DrawFloorBehavior;
+pub use gesture_handling_behavior::GestureHandlingBehavior;
+pub use messages::{
+    DrawFloorCommand,
+    PanUpdatedCommand,
+    PinchUpdatedCommand,
+    PointerMovedCommand,
+    PointerPressedCommand,
+    PointerReleasedCommand,
+    PointerWheelChangedCommand,
+    TouchCommand,
 };
+pub use move_positions_behavior::MovePositionsBehavior;
+pub use place_position_behavior::PlacePositionBehavior;
+pub use redraw_floor_behavior::RedrawFloorBehavior;
+pub use rotate_around_center_behavior::RotateAroundCenterBehavior;
+pub use scale_around_dancer_behavior::ScaleAroundDancerBehavior;
+pub use scale_positions_behavior::ScalePositionsBehavior;
+
 pub use types::{
-    CanvasViewHandle, DrawFloorCommand, FloorRenderGate, FloorRenderGateImpl, Matrix,
-    PanUpdatedCommand, PinchUpdatedCommand, PointerMovedCommand, PointerPressedCommand,
-    PointerReleasedCommand, PointerWheelChangedCommand, Rect, RgbaColor, Size, TouchCommand,
+    CanvasViewHandle,
+    FloorRenderGate,
+    FloorRenderGateImpl,
+    Matrix,
+    Rect,
+    RgbaColor,
+    Size,
 };
-pub use view_model::{build_floor_canvas_view_model, FloorCanvasViewModel, FloorDependencies};
+
+pub use floor_view_model::{build_floor_canvas_view_model, FloorCanvasViewModel, FloorDependencies};

@@ -177,13 +177,6 @@ impl Default for ChoreographySettingsViewModel {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RedrawFloorCommand;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ShowTimestampsChangedEvent {
-    pub is_enabled: bool,
-}
 
 pub(crate) fn clamp_scene_timestamp(seconds: f64) -> f64 {
     seconds.clamp(0.0, ChoreographySettingsViewModel::MAX_SCENE_TIMESTAMP_SECONDS)
@@ -224,3 +217,4 @@ fn format_decimal(value: f64) -> String {
 fn round_to_two_decimals(value: f64) -> f64 {
     (value * 100.0).round() / 100.0
 }
+

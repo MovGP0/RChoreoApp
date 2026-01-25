@@ -9,6 +9,8 @@ use crate::audio_player::HapticFeedback;
 use crate::global::GlobalStateModel;
 use crate::preferences::Preferences;
 
+use super::messages::{CloseDialogCommand, DialogRequest, ShowDialogCommand};
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct SceneViewModel {
     pub scene_id: SceneId,
@@ -24,39 +26,6 @@ pub struct SceneViewModel {
     pub color: Color,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum DialogRequest {
-    DeleteScene { scene_id: SceneId },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ShowDialogCommand {
-    pub dialog: DialogRequest,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CloseDialogCommand;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct SceneSelectedEvent {
-    pub selected_scene: SceneViewModel,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CopyScenePositionsDecision {
-    CopyPositions,
-    KeepPositions,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct CopyScenePositionsDecisionEvent {
-    pub decision: CopyScenePositionsDecision,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct SelectedSceneChangedEvent {
-    pub selected_scene: Option<SceneViewModel>,
-}
 
 pub struct ScenesPaneViewModel<P: Preferences> {
     global_state: Rc<RefCell<GlobalStateModel>>,
@@ -207,6 +176,5 @@ impl SceneViewModel {
     }
 }
 
-pub fn as_observable_collection_extended<T>(source: impl IntoIterator<Item = T>) -> Vec<T> {
-    source.into_iter().collect()
-}
+
+

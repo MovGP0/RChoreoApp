@@ -1,15 +1,39 @@
-use crossbeam_channel::{Receiver, Sender};
-
-use crate::behavior::{Behavior, CompositeDisposable};
-
-use super::behaviors::{
-    DrawFloorBehavior, GestureHandlingBehavior, MovePositionsBehavior, PlacePositionBehavior,
-    RedrawFloorBehavior, RotateAroundCenterBehavior, ScaleAroundDancerBehavior, ScalePositionsBehavior,
+use crossbeam_channel::{
+    Receiver,
+    Sender
 };
+
+use crate::behavior::{
+    Behavior,
+    CompositeDisposable
+};
+
+use super::draw_floor_behavior::DrawFloorBehavior;
+use super::gesture_handling_behavior::GestureHandlingBehavior;
+use super::move_positions_behavior::MovePositionsBehavior;
+use super::place_position_behavior::PlacePositionBehavior;
+use super::redraw_floor_behavior::RedrawFloorBehavior;
+use super::rotate_around_center_behavior::RotateAroundCenterBehavior;
+use super::scale_around_dancer_behavior::ScaleAroundDancerBehavior;
+use super::scale_positions_behavior::ScalePositionsBehavior;
+
+use super::messages::{
+    DrawFloorCommand,
+    PanUpdatedCommand,
+    PinchUpdatedCommand,
+    PointerMovedCommand,
+    PointerPressedCommand,
+    PointerReleasedCommand,
+    PointerWheelChangedCommand,
+    TouchCommand,
+};
+
 use super::types::{
-    CanvasViewHandle, DrawFloorCommand, FloorRenderGate, Matrix, PanUpdatedCommand,
-    PinchUpdatedCommand, PointerMovedCommand, PointerPressedCommand, PointerReleasedCommand,
-    PointerWheelChangedCommand, Rect, Size, TouchCommand,
+    CanvasViewHandle,
+    FloorRenderGate,
+    Matrix,
+    Rect,
+    Size,
 };
 
 pub struct FloorCanvasViewModel {
@@ -141,3 +165,5 @@ impl FloorCanvasViewModel {
         self.has_floor_bounds
     }
 }
+
+

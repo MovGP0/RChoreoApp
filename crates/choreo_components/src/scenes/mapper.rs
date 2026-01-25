@@ -1,6 +1,6 @@
 use choreo_models::SceneModel;
 
-use super::view_model::SceneViewModel;
+use super::scenes_view_model::SceneViewModel;
 
 pub struct SceneMapper;
 
@@ -115,4 +115,31 @@ fn normalize_text(value: &str) -> Option<String> {
     } else {
         Some(value.trim().to_string())
     }
+}
+
+
+pub(crate) fn build_scene_name(scenes: &[SceneViewModel]) -> String {
+    const BASE_NAME: &str = "New Scene";
+    if scenes.iter().all(|scene| scene.name != BASE_NAME) {
+        return BASE_NAME.to_string();
+    }
+
+    let mut suffix = 2;
+    loop {
+        let candidate = format!("{BASE_NAME} {suffix}");
+        if scenes.iter().all(|scene| scene.name != candidate) {
+            return candidate;
+        }
+        suffix += 1;
+    }
+}
+
+pub(crate) fn next_scene_id(
+    scenes: &[SceneViewModel],
+) -> choreo_master_mobile_json::SceneId {
+    let mut next = 0;
+    for scene in scenes {
+        next = next.max(scene.scene_id.0 as i64);
+    }
+    choreo_master_mobile_json::SceneId(next.saturating_add(1) as i32)
 }

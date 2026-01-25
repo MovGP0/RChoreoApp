@@ -6,6 +6,8 @@ use choreo_models::{DancerModel, RoleModel};
 
 use crate::audio_player::HapticFeedback;
 
+use super::messages::CloseDancerDialogCommand;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IconOption {
     pub key: String,
@@ -82,13 +84,6 @@ impl DancerSettingsViewModel {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CloseDancerDialogCommand;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ShowDancerDialogCommand {
-    pub content_id: Option<String>,
-}
 
 pub struct IconNameToImageSourceConverter;
 
@@ -294,3 +289,5 @@ fn format_swap_message(locale: &str, first: &str, second: &str) -> String {
         .replace("{0}", first)
         .replace("{1}", second)
 }
+
+
