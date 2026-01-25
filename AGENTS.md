@@ -85,6 +85,17 @@ Only when the changes are verified, you can close the bd ticket.
 - Prefer standard library macros/helpers over hand-rolled versions.
 - Use tooling: `cargo fmt` and `cargo clippy`.
 
+# Architecture
+
+## Specific to `choreo_components` module
+
+- each component is a module
+- structure into a folder per module (`main` is not allowed in rust as a folder or module name)
+- place view models into a NAME_view_module.rs file (e.g. `floor_view_model.rs`)
+- place behaviors into dedicated NAME_behavior.rs files (e.g. `draw_floor_behavior.rs`)
+- place message (Event, Command, Query, Response) types into `messages.rs`
+- place the slint views into the shared `ui` folder
+
 # Issue Tracking
 
 This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
