@@ -1,0 +1,297 @@
+import { MaterialPalette, Slider, Vertical, Horizontal } from "@material";
+
+export enum ColorPickerDock { left, top, right, bottom }
+
+component WheelArea inherits Rectangle {
+    in property <length> wheel_min_width: 160px;
+    in property <length> wheel_min_height: 160px;
+    in property <float> hue_normalized: 0.0;
+    in property <float> saturation: 1.0;
+    in property <color> computed_color: #000000;
+    in property <length> selection_thumb_size: 18px;
+    in property <length> selection_stroke_thickness: 2px;
+    in property <color> selection_stroke_color: #ffffff;
+
+    callback point_selected(
+        x: length,
+        y: length,
+        center_x: length,
+        center_y: length,
+        radius_px: float
+    );
+
+    min-width: wheel_min_width;
+    min-height: wheel_min_height;
+    background: transparent;
+    property <float> wheel_size_px: Math.min(self.width / 1px, self.height / 1px);
+    property <length> wheel_size: wheel_size_px * 1px;
+    property <length> wheel_radius: (wheel_size_px / 2) * 1px;
+    property <float> wheel_radius_px: wheel_radius / 1px;
+    property <length> center_x: self.width / 2;
+    property <length> center_y: self.height / 2;
+
+    hue_wheel := Rectangle {
+        width: wheel_size;
+        height: wheel_size;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        border-radius: self.width / 2;
+        clip: true;
+        background: @conic-gradient(
+            #ff0000 0deg,
+            #ffff00 60deg,
+            #00ff00 120deg,
+            #00ffff 180deg,
+            #0000ff 240deg,
+            #ff00ff 300deg,
+            #ff0000 360deg
+        );
+
+        Rectangle {
+            width: parent.width;
+            height: parent.height;
+            background: @radial-gradient(circle, #ffffff 0%, transparent 100%);
+        }
+    }
+
+    thumb := Rectangle {
+        width: selection_thumb_size;
+        height: selection_thumb_size;
+        border-radius: self.width / 2;
+        background: computed_color;
+        border-width: selection_stroke_thickness;
+        border-color: selection_stroke_color;
+
+        property <angle> hue_angle: hue_normalized * 1deg;
+        property <float> distance: saturation * wheel_radius_px;
+        x: center_x + Math.cos(hue_angle) * distance * 1px - self.width / 2;
+        y: center_y + Math.sin(hue_angle) * distance * 1px - self.height / 2;
+    }
+
+    TouchArea {
+        width: parent.width;
+        height: parent.height;
+        pointer-event(event) => {
+            if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                root.point_selected(
+                    self.mouse-x,
+                    self.mouse-y,
+                    root.center_x,
+                    root.center_y,
+                    root.wheel_radius_px
+                );
+            }
+        }
+        moved => {
+            if (self.pressed) {
+                root.point_selected(
+                    self.mouse-x,
+                    self.mouse-y,
+                    root.center_x,
+                    root.center_y,
+                    root.wheel_radius_px
+                );
+            }
+        }
+    }
+}
+
+export component ColorPicker inherits Rectangle {
+    in-out property <color> selected_color: #000000;
+    in-out property <float> hue: 0.0;
+    in-out property <float> saturation: 1.0;
+    in-out property <float> brightness: 1.0;
+    in property <length> wheel_min_width: 160px;
+    in property <length> wheel_min_height: 160px;
+    in property <ColorPickerDock> value_slider_position: ColorPickerDock.bottom;
+    in property <length> selection_thumb_size: 18px;
+    in property <length> selection_stroke_thickness: 2px;
+    in property <color> selection_stroke_color: #ffffff;
+
+    callback color_changed(color);
+
+    property <float> hue_normalized: {
+        if (hue < 0) {
+            return Math.mod(hue, 360) + 360;
+        }
+        Math.mod(hue, 360)
+    }
+    property <float> hue_section: hue_normalized / 60.0;
+    property <float> section_index: Math.floor(hue_section);
+    property <float> section_fraction: hue_section - section_index;
+    property <float> p: brightness * (1 - saturation);
+    property <float> q: brightness * (1 - saturation * section_fraction);
+    property <float> t: brightness * (1 - saturation * (1 - section_fraction));
+
+    property <float> r: saturation <= 0
+        ? brightness
+        : (section_index < 1 ? brightness
+            : section_index < 2 ? q
+            : section_index < 3 ? p
+            : section_index < 4 ? p
+            : section_index < 5 ? t
+            : brightness);
+    property <float> g: saturation <= 0
+        ? brightness
+        : (section_index < 1 ? t
+            : section_index < 2 ? brightness
+            : section_index < 3 ? brightness
+            : section_index < 4 ? q
+            : section_index < 5 ? p
+            : p);
+    property <float> b: saturation <= 0
+        ? brightness
+        : (section_index < 1 ? p
+            : section_index < 2 ? p
+            : section_index < 3 ? t
+            : section_index < 4 ? brightness
+            : section_index < 5 ? brightness
+            : q);
+
+    property <color> computed_color: rgb(
+        Math.round(r * 255),
+        Math.round(g * 255),
+        Math.round(b * 255)
+    );
+
+    clip: true;
+
+    if value_slider_position == ColorPickerDock.top : Vertical {
+        spacing: 8px;
+
+        Slider {
+            minimum: 0;
+            maximum: 1;
+            value: root.brightness;
+            value_changed(value) => {
+                root.brightness = value;
+                root.selected_color = root.computed_color;
+                root.color_changed(root.selected_color);
+            }
+        }
+
+        WheelArea {
+            wheel_min_width: root.wheel_min_width;
+            wheel_min_height: root.wheel_min_height;
+            hue_normalized: root.hue_normalized;
+            saturation: root.saturation;
+            computed_color: root.computed_color;
+            selection_thumb_size: root.selection_thumb_size;
+            selection_stroke_thickness: root.selection_stroke_thickness;
+            selection_stroke_color: root.selection_stroke_color;
+            point_selected(x, y, center_x, center_y, radius_px) => {
+                root.update_from_point(x, y, center_x, center_y, radius_px);
+            }
+        }
+    }
+
+    if value_slider_position == ColorPickerDock.bottom : Vertical {
+        spacing: 8px;
+
+        WheelArea {
+            wheel_min_width: root.wheel_min_width;
+            wheel_min_height: root.wheel_min_height;
+            hue_normalized: root.hue_normalized;
+            saturation: root.saturation;
+            computed_color: root.computed_color;
+            selection_thumb_size: root.selection_thumb_size;
+            selection_stroke_thickness: root.selection_stroke_thickness;
+            selection_stroke_color: root.selection_stroke_color;
+            point_selected(x, y, center_x, center_y, radius_px) => {
+                root.update_from_point(x, y, center_x, center_y, radius_px);
+            }
+        }
+
+        Slider {
+            minimum: 0;
+            maximum: 1;
+            value: root.brightness;
+            value_changed(value) => {
+                root.brightness = value;
+                root.selected_color = root.computed_color;
+                root.color_changed(root.selected_color);
+            }
+        }
+    }
+
+    if value_slider_position == ColorPickerDock.left : Horizontal {
+        spacing: 8px;
+
+        Slider {
+            minimum: 0;
+            maximum: 1;
+            value: root.brightness;
+            transform-rotation: -90deg;
+            value_changed(value) => {
+                root.brightness = value;
+                root.selected_color = root.computed_color;
+                root.color_changed(root.selected_color);
+            }
+        }
+
+        WheelArea {
+            wheel_min_width: root.wheel_min_width;
+            wheel_min_height: root.wheel_min_height;
+            hue_normalized: root.hue_normalized;
+            saturation: root.saturation;
+            computed_color: root.computed_color;
+            selection_thumb_size: root.selection_thumb_size;
+            selection_stroke_thickness: root.selection_stroke_thickness;
+            selection_stroke_color: root.selection_stroke_color;
+            point_selected(x, y, center_x, center_y, radius_px) => {
+                root.update_from_point(x, y, center_x, center_y, radius_px);
+            }
+        }
+    }
+
+    if value_slider_position == ColorPickerDock.right : Horizontal {
+        spacing: 8px;
+
+        WheelArea {
+            wheel_min_width: root.wheel_min_width;
+            wheel_min_height: root.wheel_min_height;
+            hue_normalized: root.hue_normalized;
+            saturation: root.saturation;
+            computed_color: root.computed_color;
+            selection_thumb_size: root.selection_thumb_size;
+            selection_stroke_thickness: root.selection_stroke_thickness;
+            selection_stroke_color: root.selection_stroke_color;
+            point_selected(x, y, center_x, center_y, radius_px) => {
+                root.update_from_point(x, y, center_x, center_y, radius_px);
+            }
+        }
+
+        Slider {
+            minimum: 0;
+            maximum: 1;
+            value: root.brightness;
+            transform-rotation: 90deg;
+            value_changed(value) => {
+                root.brightness = value;
+                root.selected_color = root.computed_color;
+                root.color_changed(root.selected_color);
+            }
+        }
+    }
+
+    callback update_from_point(
+        x: length,
+        y: length,
+        center_x: length,
+        center_y: length,
+        radius_px: float
+    );
+    update_from_point(x, y, center_x, center_y, radius_px) => {
+        let dx = x / 1px - center_x / 1px;
+        let dy = y / 1px - center_y / 1px;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        let clamped = Math.min(distance, radius_px);
+        let angle = atan2(dy, dx);
+        let normalized = angle < 0deg ? angle + 360deg : angle;
+
+        root.hue = normalized / 1deg;
+        root.saturation = radius_px > 0 ? clamped / radius_px : 0;
+        root.selected_color = root.computed_color;
+        root.color_changed(root.selected_color);
+    }
+}
