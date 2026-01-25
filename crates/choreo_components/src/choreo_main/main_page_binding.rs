@@ -79,14 +79,17 @@ impl<P: Preferences + Clone + 'static> MainPageBinding<P> {
         let view_weak = view.as_weak();
 
         {
-            let view_model = Rc::clone(&view_model);
-            let view_weak = view_weak.clone();
             let view_model_for_change = Rc::clone(&view_model);
+            let view_weak = view_weak.clone();
             let on_change = Rc::new(move || {
-                if let Some(view) = view_weak.upgrade() {
-                    let view_model = view_model_for_change.borrow();
-                    apply_view_model(&view, &view_model);
-                }
+                let view_model = Rc::clone(&view_model_for_change);
+                let view_weak = view_weak.clone();
+                slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
+                    if let Some(view) = view_weak.upgrade() {
+                        let view_model = view_model.borrow();
+                        apply_view_model(&view, &view_model);
+                    }
+                });
             });
             view_model.borrow_mut().set_on_change(Some(on_change));
         }

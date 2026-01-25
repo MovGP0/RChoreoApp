@@ -60,97 +60,7 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="hotfixing build">
-      <change beforePath="$PROJECT_DIR$/.beads/issues.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/.beads/issues.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_link_scene_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_link_scene_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_position_changed_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_position_changed_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_ticks_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_ticks_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_view_model.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/close_audio_file_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/close_audio_file_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/open_audio_file_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/open_audio_file_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/style_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/style_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/translate_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/translate_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/apply_interaction_mode_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/apply_interaction_mode_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/hide_dialog_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/hide_dialog_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_page_binding.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_page_binding.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_view_model.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/open_audio_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/open_audio_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/open_image_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/open_image_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/open_svg_file_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/open_svg_file_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/show_dialog_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/show_dialog_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/choreography_settings_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/choreography_settings_view_model.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/load_choreography_settings_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/load_choreography_settings_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/load_settings_preferences_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/load_settings_preferences_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_author_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_author_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_comment_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_comment_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_date_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_date_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_description_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_description_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_draw_path_from_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_draw_path_from_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_draw_path_to_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_draw_path_to_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_floor_back_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_floor_back_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_floor_color_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_floor_color_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_floor_front_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_floor_front_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_floor_left_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_floor_left_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_floor_right_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_floor_right_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_grid_lines_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_grid_lines_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_grid_resolution_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_grid_resolution_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_name_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_name_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_positions_at_side_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_positions_at_side_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_selected_scene_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_selected_scene_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_show_legend_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_show_legend_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_show_timestamps_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_show_timestamps_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_snap_to_grid_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_snap_to_grid_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_subtitle_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_subtitle_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_transparency_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_transparency_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_variation_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_variation_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/color_picker/color_picker_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/color_picker/color_picker_view_model.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/add_dancer_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/add_dancer_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/cancel_dancer_settings_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/cancel_dancer_settings_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/dancer_settings_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/dancer_settings_view_model.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/delete_dancer_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/delete_dancer_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/hide_dancer_dialog_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/hide_dancer_dialog_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/load_dancer_settings_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/load_dancer_settings_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/save_dancer_settings_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/save_dancer_settings_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/selected_dancer_state_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/selected_dancer_state_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/selected_icon_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/selected_icon_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/selected_role_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/selected_role_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/show_dancer_dialog_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/show_dancer_dialog_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/swap_dancer_selection_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/swap_dancer_selection_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers/swap_dancers_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/dancers/swap_dancers_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/floor/draw_floor_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/floor/draw_floor_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/floor/floor_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/floor/floor_view_model.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/floor/gesture_handling_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/floor/gesture_handling_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/floor/move_positions_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/floor/move_positions_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/floor/place_position_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/floor/place_position_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/floor/redraw_floor_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/floor/redraw_floor_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/floor/rotate_around_center_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/floor/rotate_around_center_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/floor/scale_around_dancer_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/floor/scale_around_dancer_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/floor/scale_positions_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/floor/scale_positions_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes/apply_placement_mode_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes/apply_placement_mode_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes/filter_scenes_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes/filter_scenes_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes/insert_scene_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes/insert_scene_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes/load_scenes_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes/load_scenes_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes/open_choreo_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes/open_choreo_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes/publish_scene_selected_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes/publish_scene_selected_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes/save_choreo_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes/save_choreo_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes/scenes_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes/scenes_view_model.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes/select_scene_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes/select_scene_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes/select_scene_from_audio_position_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes/select_scene_from_audio_position_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes/show_scene_timestamps_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/scenes/show_scene_timestamps_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/settings/color_preferences_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/settings/color_preferences_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/settings/load_settings_preferences_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/settings/load_settings_preferences_behavior.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/settings/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/settings/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/settings/settings_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/settings/settings_view_model.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/settings/switch_dark_light_mode_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/settings/switch_dark_light_mode_behavior.rs" afterDir="false" />
-    </list>
+    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="fixing di issues" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -181,35 +91,35 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Cargo.Run RChoreoApp.executor&quot;: &quot;Debug&quot;,
-    &quot;Cargo.Run Web.executor&quot;: &quot;Run&quot;,
-    &quot;Cargo.Test RChoreoApp.executor&quot;: &quot;Debug&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.rust.reset.selective.auto.import&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/RChoreoApp&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
-    &quot;org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon&quot;: &quot;&quot;,
-    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.intellij.mcpserver.settings&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;,
-    &quot;wasm-pack.Build.executor&quot;: &quot;Run&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Cargo.Run RChoreoApp.executor": "Run",
+    "Cargo.Run Web.executor": "Run",
+    "Cargo.Test RChoreoApp.executor": "Debug",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.rust.reset.selective.auto.import": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "D:/RChoreoApp",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
+    "org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon": "",
+    "org.rust.first.attach.projects": "true",
+    "settings.editor.selected.configurable": "com.intellij.mcpserver.settings",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true",
+    "wasm-pack.Build.executor": "Run"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\RChoreoApp\crates\choreo_components" />
@@ -444,7 +354,23 @@
       <option name="project" value="LOCAL" />
       <updated>1769342766967</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="implementing dependency injection">
+      <option name="closed" value="true" />
+      <created>1769381673143</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1769381673143</updated>
+    </task>
+    <task id="LOCAL-00022" summary="fixing di issues">
+      <option name="closed" value="true" />
+      <created>1769383262720</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1769383262720</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -462,7 +388,9 @@
     <MESSAGE value="improving audio player" />
     <MESSAGE value="implementing color picker" />
     <MESSAGE value="hotfixing build" />
-    <option name="LAST_COMMIT_MESSAGE" value="hotfixing build" />
+    <MESSAGE value="implementing dependency injection" />
+    <MESSAGE value="fixing di issues" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixing di issues" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

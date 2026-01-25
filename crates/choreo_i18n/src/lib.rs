@@ -23,11 +23,8 @@ static TRANSLATIONS: Lazy<HashMap<&'static str, HashMap<&'static str, &'static s
     });
 
 fn parse_locale(locale: &str, content: &str) -> HashMap<&'static str, &'static str> {
-    let value: toml::Value = content.parse().unwrap_or_else(|err| {
+    let table: toml::Table = toml::from_str(content).unwrap_or_else(|err| {
         panic!("Failed to parse i18n TOML for locale {locale}: {err}")
-    });
-    let table = value.as_table().unwrap_or_else(|| {
-        panic!("i18n TOML for locale {locale} must be a table")
     });
 
     let mut map = HashMap::with_capacity(table.len());

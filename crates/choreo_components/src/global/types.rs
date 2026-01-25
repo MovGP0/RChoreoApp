@@ -39,3 +39,5 @@ pub struct GlobalStateModel {
     pub redraw_floor: bool,
     pub svg_file_path: Option<String>,
 }
+
+impl choreo_state_machine::GlobalStateModel for GlobalStateModel {}
