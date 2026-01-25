@@ -1,4 +1,4 @@
-import { MaterialPalette } from "@material";
+import { MaterialPalette, MaterialAnimations } from "@material";
 
 export component DrawerHost inherits Rectangle {
     in property <length> left_drawer_width: 320px;
@@ -30,6 +30,8 @@ export component DrawerHost inherits Rectangle {
         || (root.is_right_open && root.right_close_on_click_away)
         || (root.is_top_open && root.top_close_on_click_away)
         || (root.is_bottom_open && root.bottom_close_on_click_away);
+
+    clip: true;
 
     content := Rectangle {
         x: root.inline_left_width;
@@ -72,11 +74,16 @@ export component DrawerHost inherits Rectangle {
 
     left_panel := Rectangle {
         visible: root.inline_left || root.is_left_open;
-        x: 0px;
+        x: root.inline_left ? 0px : (root.is_left_open ? 0px : -self.width);
         y: 0px;
         width: root.left_drawer_width;
         height: parent.height;
         background: root.drawer_background;
+
+        animate x {
+            duration: MaterialAnimations.standard_decelerate_duration;
+            easing: MaterialAnimations.standard_easing;
+        }
 
         ComponentContainer {
             component-factory: root.left_drawer;
@@ -85,11 +92,16 @@ export component DrawerHost inherits Rectangle {
 
     right_panel := Rectangle {
         visible: root.is_right_open;
-        x: parent.width - root.right_drawer_width;
+        x: root.is_right_open ? parent.width - root.right_drawer_width : parent.width;
         y: 0px;
         width: root.right_drawer_width;
         height: parent.height;
         background: root.drawer_background;
+
+        animate x {
+            duration: MaterialAnimations.standard_decelerate_duration;
+            easing: MaterialAnimations.standard_easing;
+        }
 
         ComponentContainer {
             component-factory: root.right_drawer;
@@ -99,10 +111,15 @@ export component DrawerHost inherits Rectangle {
     top_panel := Rectangle {
         visible: root.is_top_open;
         x: 0px;
-        y: 0px;
+        y: root.is_top_open ? 0px : -self.height;
         width: parent.width;
         height: root.top_drawer_height;
         background: root.drawer_background;
+
+        animate y {
+            duration: MaterialAnimations.standard_decelerate_duration;
+            easing: MaterialAnimations.standard_easing;
+        }
 
         ComponentContainer {
             component-factory: root.top_drawer;
@@ -112,10 +129,15 @@ export component DrawerHost inherits Rectangle {
     bottom_panel := Rectangle {
         visible: root.is_bottom_open;
         x: 0px;
-        y: parent.height - root.bottom_drawer_height;
+        y: root.is_bottom_open ? parent.height - root.bottom_drawer_height : parent.height;
         width: parent.width;
         height: root.bottom_drawer_height;
         background: root.drawer_background;
+
+        animate y {
+            duration: MaterialAnimations.standard_decelerate_duration;
+            easing: MaterialAnimations.standard_easing;
+        }
 
         ComponentContainer {
             component-factory: root.bottom_drawer;
