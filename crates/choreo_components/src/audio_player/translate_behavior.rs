@@ -1,9 +1,12 @@
 use crate::behavior::{Behavior, CompositeDisposable};
+use nject::injectable;
 
 use choreo_i18n::translation_with_fallback;
 
 use super::audio_player_view_model::AudioPlayerViewModel;
 
+#[injectable]
+#[inject(|locale: String| Self::new(locale))]
 pub struct AudioPlayerTranslateBehavior {
     locale: String,
 }

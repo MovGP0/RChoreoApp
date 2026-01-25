@@ -9,7 +9,9 @@ use crate::logging::BehaviorLog;
 
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
 use super::messages::RedrawFloorCommand;
+use nject::injectable;
 
+#[injectable]
 pub struct UpdateFloorFrontBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
     redraw_sender: Sender<RedrawFloorCommand>,

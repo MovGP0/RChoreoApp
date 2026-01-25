@@ -1,5 +1,8 @@
 use crate::preferences::Preferences;
+use nject::injectable;
 
+#[injectable]
+#[inject(|preferences: P| Self::new(preferences))]
 pub struct OpenChoreoBehavior<P: Preferences> {
     preferences: P,
 }

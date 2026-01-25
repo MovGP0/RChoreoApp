@@ -1,8 +1,11 @@
 use crossbeam_channel::Sender;
+use nject::injectable;
 
 use super::messages::SceneSelectedEvent;
 use super::scenes_view_model::SceneViewModel;
 
+#[injectable]
+#[inject(|sender: Sender<SceneSelectedEvent>| Self { sender })]
 pub struct PublishSceneSelectedBehavior {
     sender: Sender<SceneSelectedEvent>,
 }

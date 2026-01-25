@@ -4,6 +4,7 @@ use std::rc::Rc;
 use crossbeam_channel::Sender;
 use choreo_master_mobile_json::{Color, SceneId};
 use choreo_models::{PositionModel, SceneModel, SettingsPreferenceKeys};
+use nject::injectable;
 
 use crate::audio_player::HapticFeedback;
 use crate::global::GlobalStateModel;
@@ -27,6 +28,22 @@ pub struct SceneViewModel {
 }
 
 
+#[injectable]
+#[inject(
+    |global_state: Rc<RefCell<GlobalStateModel>>,
+     preferences: P,
+     show_dialog_sender: Sender<ShowDialogCommand>,
+     close_dialog_sender: Sender<CloseDialogCommand>,
+     haptic_feedback: Option<Box<dyn HapticFeedback>>| {
+        Self::new(
+            global_state,
+            preferences,
+            show_dialog_sender,
+            close_dialog_sender,
+            haptic_feedback,
+        )
+    }
+)]
 pub struct ScenesPaneViewModel<P: Preferences> {
     global_state: Rc<RefCell<GlobalStateModel>>,
     show_dialog_sender: Sender<ShowDialogCommand>,

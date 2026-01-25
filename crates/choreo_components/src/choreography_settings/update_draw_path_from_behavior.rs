@@ -6,7 +6,9 @@ use crate::preferences::Preferences;
 
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
 use super::messages::RedrawFloorCommand;
+use nject::injectable;
 
+#[injectable]
 pub struct UpdateDrawPathFromBehavior<P: Preferences> {
     preferences: P,
     redraw_sender: Sender<RedrawFloorCommand>,

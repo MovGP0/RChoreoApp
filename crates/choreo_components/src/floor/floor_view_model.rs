@@ -1,12 +1,7 @@
-use crossbeam_channel::{
-    Receiver,
-    Sender
-};
+use crossbeam_channel::{Receiver, Sender};
+use nject::injectable;
 
-use crate::behavior::{
-    Behavior,
-    CompositeDisposable
-};
+use crate::behavior::{Behavior, CompositeDisposable};
 
 use super::draw_floor_behavior::DrawFloorBehavior;
 use super::gesture_handling_behavior::GestureHandlingBehavior;
@@ -36,6 +31,13 @@ use super::types::{
     Size,
 };
 
+#[injectable]
+#[inject(
+    |draw_floor_command_sender: Sender<DrawFloorCommand>,
+     behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>>| {
+        Self::new(draw_floor_command_sender, behaviors)
+    }
+)]
 pub struct FloorCanvasViewModel {
     draw_floor_command_sender: Sender<DrawFloorCommand>,
     disposables: CompositeDisposable,

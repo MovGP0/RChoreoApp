@@ -1,10 +1,17 @@
 use crossbeam_channel::{Receiver, Sender};
+use nject::injectable;
 
 use crate::preferences::Preferences;
 
 use super::messages::{SceneSelectedEvent, SelectedSceneChangedEvent};
 use super::scenes_view_model::ScenesPaneViewModel;
 
+#[injectable]
+#[inject(
+    |receiver: Receiver<SceneSelectedEvent>, sender: Sender<SelectedSceneChangedEvent>| {
+        Self::new(receiver, sender)
+    }
+)]
 pub struct SelectSceneBehavior {
     receiver: Receiver<SceneSelectedEvent>,
     sender: Sender<SelectedSceneChangedEvent>,

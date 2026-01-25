@@ -3,7 +3,9 @@ use choreo_models::SettingsModel;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
+use nject::injectable;
 
+#[injectable]
 pub struct LoadSettingsPreferencesBehavior<P: Preferences> {
     preferences: P,
 }

@@ -3,9 +3,12 @@ use crate::global::GlobalStateModel;
 use crate::logging::BehaviorLog;
 use crate::scenes::SceneViewModel;
 use crate::time::format_seconds;
+use nject::injectable;
 
 use super::audio_player_view_model::AudioPlayerViewModel;
 
+#[injectable]
+#[inject(|| Self)]
 pub struct AudioPlayerLinkSceneBehavior;
 
 impl AudioPlayerLinkSceneBehavior {

@@ -3,6 +3,7 @@ use std::path::Path;
 
 use crossbeam_channel::Receiver;
 use choreo_models::SettingsPreferenceKeys;
+use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
@@ -11,6 +12,8 @@ use crate::preferences::Preferences;
 use super::audio_player_view_model::AudioPlayerViewModel;
 use super::messages::OpenAudioFileCommand;
 
+#[injectable]
+#[inject(|receiver: Receiver<OpenAudioFileCommand>, preferences: P| Self::new(receiver, preferences))]
 pub struct OpenAudioFileBehavior<P: Preferences> {
     receiver: Receiver<OpenAudioFileCommand>,
     preferences: P,

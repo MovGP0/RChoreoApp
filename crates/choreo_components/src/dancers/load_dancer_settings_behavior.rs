@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use choreo_models::{DancerModel, RoleModel};
+use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateModel;
@@ -11,6 +12,8 @@ use crate::logging::BehaviorLog;
 use super::mapper::{default_role, ensure_default_roles};
 use super::dancer_settings_view_model::DancerSettingsViewModel;
 
+#[injectable]
+#[inject(|global_state: Rc<RefCell<GlobalStateModel>>| Self::new(global_state))]
 pub struct LoadDancerSettingsBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
 }

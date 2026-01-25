@@ -1,9 +1,12 @@
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
+use nject::injectable;
 
 use super::audio_player_view_model::AudioPlayerViewModel;
 use super::types::AudioPlayer;
 
+#[injectable]
+#[inject(|| Self)]
 pub struct AudioPlayerBehavior;
 
 impl AudioPlayerBehavior {

@@ -1,6 +1,7 @@
 use choreo_master_mobile_json::Color;
 
 use crate::behavior::{Behavior, CompositeDisposable};
+use nject::injectable;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GridSizeOption {
@@ -8,6 +9,8 @@ pub struct GridSizeOption {
     pub display: String,
 }
 
+#[injectable]
+#[inject(|behaviors: Vec<Box<dyn Behavior<ChoreographySettingsViewModel>>>| Self::new(behaviors))]
 pub struct ChoreographySettingsViewModel {
     pub floor_size_options: Vec<i32>,
     pub grid_size_options: Vec<GridSizeOption>,

@@ -2,12 +2,19 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crossbeam_channel::Receiver;
+use nject::injectable;
 
 use crate::global::GlobalStateModel;
 use crate::preferences::Preferences;
 
 use super::messages::OpenSvgFileCommand;
 
+#[injectable]
+#[inject(
+    |global_state: Rc<RefCell<GlobalStateModel>>, preferences: P, receiver: Receiver<OpenSvgFileCommand>| {
+        Self::new(global_state, preferences, receiver)
+    }
+)]
 pub struct OpenSvgFileBehavior<P: Preferences> {
     global_state: Rc<RefCell<GlobalStateModel>>,
     preferences: P,

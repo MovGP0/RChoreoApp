@@ -2,11 +2,14 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use choreo_models::{Colors, SceneModel};
+use nject::injectable;
 
 use crate::global::GlobalStateModel;
 
 use super::mapper::SceneMapper;
 
+#[injectable]
+#[inject(|global_state: Rc<RefCell<GlobalStateModel>>| Self::new(global_state))]
 pub struct SaveChoreoBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
 }

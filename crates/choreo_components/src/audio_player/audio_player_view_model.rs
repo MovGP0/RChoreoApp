@@ -1,7 +1,10 @@
 use slint::Color;
+use nject::injectable;
 
 use super::types::{AudioPlayer, HapticFeedback, StreamFactory};
 
+#[injectable]
+#[inject(|haptic_feedback: Option<Box<dyn HapticFeedback>>| Self::new(haptic_feedback))]
 pub struct AudioPlayerViewModel {
     pub speed: f64,
     pub minimum_speed: f64,

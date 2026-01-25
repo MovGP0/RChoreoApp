@@ -1,6 +1,7 @@
 use choreo_master_mobile_json::Color;
 
 use crate::behavior::{Behavior, CompositeDisposable};
+use nject::injectable;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
@@ -17,6 +18,8 @@ impl BooleanNegationConverter {
 }
 
 #[derive(Debug)]
+#[injectable]
+#[inject(|behaviors: Vec<Box<dyn Behavior<SettingsViewModel>>>| Self::new(behaviors))]
 pub struct SettingsViewModel {
     pub theme_mode: ThemeMode,
     pub use_system_theme: bool,

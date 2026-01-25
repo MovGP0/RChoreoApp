@@ -51,7 +51,9 @@ pub struct MainBehaviors<P: Preferences> {
     pub hide_dialog: HideDialogBehavior,
 }
 
-pub fn build_main_behaviors<P: Preferences>(deps: MainBehaviorDependencies<P>) -> MainBehaviors<P> {
+pub fn build_main_behaviors<P: Preferences + Clone + 'static>(
+    deps: MainBehaviorDependencies<P>,
+) -> MainBehaviors<P> {
     MainBehaviors {
         apply_interaction_mode: ApplyInteractionModeBehavior::new(
             deps.global_state.clone(),

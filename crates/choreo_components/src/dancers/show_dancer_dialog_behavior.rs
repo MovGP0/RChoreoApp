@@ -1,4 +1,5 @@
 use crossbeam_channel::Receiver;
+use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
@@ -6,6 +7,8 @@ use crate::logging::BehaviorLog;
 use super::dancer_settings_view_model::DancerSettingsViewModel;
 use super::messages::ShowDancerDialogCommand;
 
+#[injectable]
+#[inject(|receiver: Receiver<ShowDancerDialogCommand>| Self { receiver })]
 pub struct ShowDancerDialogBehavior {
     receiver: Receiver<ShowDancerDialogCommand>,
 }

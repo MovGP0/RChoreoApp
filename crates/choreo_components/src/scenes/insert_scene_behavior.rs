@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use choreo_models::{Colors, SceneModel};
+use nject::injectable;
 
 use crate::global::GlobalStateModel;
 use crate::preferences::Preferences;
@@ -9,6 +10,8 @@ use crate::preferences::Preferences;
 use super::mapper::{build_scene_name, next_scene_id};
 use super::scenes_view_model::{SceneViewModel, ScenesPaneViewModel};
 
+#[injectable]
+#[inject(|global_state: Rc<RefCell<GlobalStateModel>>| Self::new(global_state))]
 pub struct InsertSceneBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
 }

@@ -1,12 +1,15 @@
 use std::rc::Rc;
 
 use choreo_models::DancerModel;
+use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
 
 use super::dancer_settings_view_model::DancerSettingsViewModel;
 
+#[injectable]
+#[inject(|| Self)]
 pub struct SelectedRoleBehavior;
 
 impl SelectedRoleBehavior {

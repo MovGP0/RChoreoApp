@@ -34,7 +34,7 @@ pub struct MainPageActionHandlers {
     pub pick_image_path: Option<Rc<dyn Fn() -> Option<String>>>,
 }
 
-pub struct MainPageDependencies<P: Preferences> {
+pub struct MainPageDependencies<P: Preferences + Clone> {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub audio_player: AudioPlayerViewModel,
@@ -48,13 +48,13 @@ pub struct MainPageDependencies<P: Preferences> {
     pub actions: MainPageActionHandlers,
 }
 
-pub struct MainPageBinding<P: Preferences> {
+pub struct MainPageBinding<P: Preferences + Clone> {
     view: ShellHost,
     view_model: Rc<RefCell<MainViewModel>>,
     behaviors: Rc<MainBehaviors<P>>,
 }
 
-impl<P: Preferences + 'static> MainPageBinding<P> {
+impl<P: Preferences + Clone + 'static> MainPageBinding<P> {
     pub fn new(view: ShellHost, deps: MainPageDependencies<P>) -> Self {
         let view_model = Rc::new(RefCell::new(build_main_view_model(MainDependencies {
             global_state: deps.global_state.clone(),

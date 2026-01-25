@@ -1,7 +1,10 @@
 use slint::Color;
+use nject::injectable;
 
 use super::{ColorChangedEvent, ColorPickerDock, Hsb};
 
+#[injectable]
+#[inject(|| Self::new())]
 pub struct ColorPickerViewModel {
     pub color: Color,
     pub hsb: Hsb,

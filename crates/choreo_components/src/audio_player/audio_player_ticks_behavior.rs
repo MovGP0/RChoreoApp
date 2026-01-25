@@ -1,10 +1,13 @@
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateModel;
 use crate::logging::BehaviorLog;
+use nject::injectable;
 
 use super::audio_player_link_scene_behavior::update_ticks;
 use super::audio_player_view_model::AudioPlayerViewModel;
 
+#[injectable]
+#[inject(|| Self)]
 pub struct AudioPlayerTicksBehavior;
 
 impl AudioPlayerTicksBehavior {

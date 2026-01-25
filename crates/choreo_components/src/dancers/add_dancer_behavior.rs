@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use choreo_models::DancerModel;
+use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
@@ -8,6 +9,8 @@ use crate::logging::BehaviorLog;
 use super::mapper::{default_role, ensure_default_roles, next_dancer_id};
 use super::dancer_settings_view_model::DancerSettingsViewModel;
 
+#[injectable]
+#[inject(|| Self)]
 pub struct AddDancerBehavior;
 
 impl AddDancerBehavior {

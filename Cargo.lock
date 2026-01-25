@@ -883,6 +883,7 @@ dependencies = [
  "env_logger",
  "log",
  "material-color-utilities",
+ "nject",
  "rodio",
  "slint",
  "slint-build",

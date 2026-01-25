@@ -7,7 +7,9 @@ use crate::logging::BehaviorLog;
 
 use super::mapper::{find_scene_mut, format_seconds, normalize_text, update_selected_scene};
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
+use nject::injectable;
 
+#[injectable]
 pub struct UpdateSelectedSceneBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
     is_updating: bool,

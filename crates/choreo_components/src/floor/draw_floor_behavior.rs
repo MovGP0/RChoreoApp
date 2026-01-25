@@ -1,9 +1,18 @@
 use crossbeam_channel::Receiver;
+use nject::injectable;
+
 use crate::behavior::{Behavior, CompositeDisposable};
+
+use super::floor_view_model::FloorCanvasViewModel;
 use super::messages::DrawFloorCommand;
 use super::types::FloorRenderGate;
-use super::floor_view_model::FloorCanvasViewModel;
 
+#[injectable]
+#[inject(
+    |receiver: Receiver<DrawFloorCommand>, render_gate: Option<Box<dyn FloorRenderGate>>| {
+        Self::new(receiver, render_gate)
+    }
+)]
 pub struct DrawFloorBehavior {
     receiver: Receiver<DrawFloorCommand>,
     render_gate: Option<Box<dyn FloorRenderGate>>,

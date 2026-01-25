@@ -3,9 +3,12 @@ use std::rc::Rc;
 
 use crate::global::GlobalStateModel;
 use crate::preferences::Preferences;
+use nject::injectable;
 
 use super::scenes_view_model::ScenesPaneViewModel;
 
+#[injectable]
+#[inject(|global_state: Rc<RefCell<GlobalStateModel>>| Self::new(global_state))]
 pub struct ShowSceneTimestampsBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
 }

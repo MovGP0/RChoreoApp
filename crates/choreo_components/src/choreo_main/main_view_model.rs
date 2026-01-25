@@ -3,12 +3,15 @@ use std::rc::Rc;
 
 use choreo_i18n::translation_with_fallback;
 use choreo_state_machine::ApplicationStateMachine;
+use nject::injectable;
 
 use crate::audio_player::{AudioPlayerViewModel, HapticFeedback};
 use crate::global::{GlobalStateModel, InteractionMode};
 use crate::scenes::SceneViewModel;
 
 #[derive(Clone, Default)]
+#[injectable]
+#[inject(|| Self::default())]
 pub struct MainViewModelActions {
     pub open_audio_requested: Option<Rc<dyn Fn() -> bool>>,
     pub open_image_requested: Option<Rc<dyn Fn()>>,
@@ -21,6 +24,16 @@ pub struct InteractionModeOption {
     pub label: String,
 }
 
+#[injectable]
+#[inject(
+    |global_state: Rc<RefCell<GlobalStateModel>>,
+     state_machine: Rc<RefCell<ApplicationStateMachine>>,
+     audio_player: AudioPlayerViewModel,
+     haptic_feedback: Option<Box<dyn HapticFeedback>>,
+     actions: MainViewModelActions| {
+        Self::new(global_state, state_machine, audio_player, haptic_feedback, actions)
+    }
+)]
 pub struct MainViewModel {
     global_state: Rc<RefCell<GlobalStateModel>>,
     _state_machine: Rc<RefCell<ApplicationStateMachine>>,

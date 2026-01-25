@@ -10,7 +10,9 @@ use crate::preferences::Preferences;
 
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
 use super::messages::{RedrawFloorCommand, ShowTimestampsChangedEvent};
+use nject::injectable;
 
+#[injectable]
 pub struct UpdateShowTimestampsBehavior<P: Preferences> {
     global_state: Rc<RefCell<GlobalStateModel>>,
     preferences: P,

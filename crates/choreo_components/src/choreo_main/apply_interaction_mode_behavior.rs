@@ -9,9 +9,16 @@ use choreo_state_machine::{
     ScalePositionsCompletedTrigger, ScalePositionsSelectionCompletedTrigger,
     ScalePositionsStartedTrigger,
 };
+use nject::injectable;
 
 use crate::global::{GlobalStateModel, InteractionMode};
 
+#[injectable]
+#[inject(
+    |global_state: Rc<RefCell<GlobalStateModel>>, state_machine: Rc<RefCell<ApplicationStateMachine>>| {
+        Self::new(global_state, state_machine)
+    }
+)]
 pub struct ApplyInteractionModeBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
     state_machine: Rc<RefCell<ApplicationStateMachine>>,

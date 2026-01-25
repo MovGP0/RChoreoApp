@@ -3,10 +3,13 @@ use choreo_master_mobile_json::Color;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
+use nject::injectable;
 
 use super::settings_view_model::SettingsViewModel;
 use super::types::MaterialSchemeUpdater;
 
+#[injectable]
+#[inject(|preferences: P, updater: U| Self::new(preferences, updater))]
 pub struct ColorPreferencesBehavior<P: Preferences, U: MaterialSchemeUpdater> {
     preferences: P,
     updater: U,

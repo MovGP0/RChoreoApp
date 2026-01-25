@@ -6,12 +6,21 @@ use choreo_state_machine::{
     ApplicationStateMachine, ApplicationTrigger, PlacePositionsCompletedTrigger,
     PlacePositionsStartedTrigger,
 };
+use nject::injectable;
 
 use crate::global::GlobalStateModel;
 
 use super::messages::SelectedSceneChangedEvent;
 use super::scenes_view_model::SceneViewModel;
 
+#[injectable]
+#[inject(
+    |global_state: Rc<RefCell<GlobalStateModel>>,
+     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
+     receiver: Receiver<SelectedSceneChangedEvent>| {
+        Self::new(global_state, state_machine, receiver)
+    }
+)]
 pub struct ApplyPlacementModeBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,

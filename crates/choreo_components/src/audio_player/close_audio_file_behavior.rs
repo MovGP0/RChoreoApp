@@ -1,4 +1,5 @@
 use crossbeam_channel::Receiver;
+use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
@@ -6,6 +7,8 @@ use crate::logging::BehaviorLog;
 use super::audio_player_view_model::AudioPlayerViewModel;
 use super::messages::CloseAudioFileCommand;
 
+#[injectable]
+#[inject(|receiver: Receiver<CloseAudioFileCommand>| Self::new(receiver))]
 pub struct CloseAudioFileBehavior {
     receiver: Receiver<CloseAudioFileCommand>,
 }

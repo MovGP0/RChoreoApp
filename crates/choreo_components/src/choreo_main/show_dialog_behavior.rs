@@ -1,8 +1,11 @@
 use crossbeam_channel::Receiver;
+use nject::injectable;
 
 use super::messages::ShowDialogCommand;
 use super::main_view_model::MainViewModel;
 
+#[injectable]
+#[inject(|receiver: Receiver<ShowDialogCommand>| Self { receiver })]
 pub struct ShowDialogBehavior {
     receiver: Receiver<ShowDialogCommand>,
 }

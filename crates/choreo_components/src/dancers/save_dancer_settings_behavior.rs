@@ -4,6 +4,7 @@ use std::rc::Rc;
 
 use choreo_master_mobile_json::DancerId;
 use choreo_models::DancerModel;
+use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateModel;
@@ -12,6 +13,8 @@ use crate::logging::BehaviorLog;
 use super::mapper::update_scene_dancers;
 use super::dancer_settings_view_model::DancerSettingsViewModel;
 
+#[injectable]
+#[inject(|global_state: Rc<RefCell<GlobalStateModel>>| Self::new(global_state))]
 pub struct SaveDancerSettingsBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
 }

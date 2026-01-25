@@ -3,12 +3,15 @@ use choreo_master_mobile_json::Color;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
+use nject::injectable;
 
 use super::settings_view_model::{
     default_primary_color, default_secondary_color, default_tertiary_color, SettingsViewModel,
     ThemeMode,
 };
 
+#[injectable]
+#[inject(|preferences: P| Self::new(preferences))]
 pub struct LoadSettingsPreferencesBehavior<P: Preferences> {
     preferences: P,
 }

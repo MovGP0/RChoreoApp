@@ -1,10 +1,18 @@
 use crate::audio_player::HapticFeedback;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
+use nject::injectable;
 
 use super::dancer_settings_view_model::DancerSettingsViewModel;
 use super::messages::ShowDancerDialogCommand;
 
+#[injectable]
+#[inject(
+    |haptic_feedback: Option<Box<dyn HapticFeedback>>,
+     show_dialog_sender: crossbeam_channel::Sender<ShowDancerDialogCommand>| {
+        Self::new(haptic_feedback, show_dialog_sender)
+    }
+)]
 pub struct SwapDancersBehavior {
     haptic_feedback: Option<Box<dyn HapticFeedback>>,
     show_dialog_sender: crossbeam_channel::Sender<ShowDancerDialogCommand>,

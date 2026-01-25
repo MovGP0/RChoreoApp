@@ -1,9 +1,12 @@
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
+use nject::injectable;
 
 use super::mapper::is_icon_match;
 use super::dancer_settings_view_model::DancerSettingsViewModel;
 
+#[injectable]
+#[inject(|| Self)]
 pub struct SelectedDancerStateBehavior;
 
 impl SelectedDancerStateBehavior {

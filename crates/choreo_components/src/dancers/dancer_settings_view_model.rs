@@ -3,6 +3,7 @@ use std::rc::Rc;
 use choreo_i18n::{icon_bytes, icon_names, translation_with_fallback};
 use choreo_master_mobile_json::Color;
 use choreo_models::{DancerModel, RoleModel};
+use nject::injectable;
 
 use crate::audio_player::HapticFeedback;
 
@@ -16,6 +17,8 @@ pub struct IconOption {
     pub icon_bytes: Option<&'static [u8]>,
 }
 
+#[injectable]
+#[inject(|haptic_feedback: Option<Box<dyn HapticFeedback>>| Self::new(haptic_feedback))]
 pub struct DancerSettingsViewModel {
     pub dancers: Vec<Rc<DancerModel>>,
     pub roles: Vec<Rc<RoleModel>>,

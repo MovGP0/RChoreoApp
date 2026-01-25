@@ -1,7 +1,10 @@
 use crossbeam_channel::Sender;
+use nject::injectable;
 
 use crate::audio_player::OpenAudioFileCommand;
 
+#[injectable]
+#[inject(|sender: Sender<OpenAudioFileCommand>| Self { sender })]
 pub struct OpenAudioBehavior {
     sender: Sender<OpenAudioFileCommand>,
 }

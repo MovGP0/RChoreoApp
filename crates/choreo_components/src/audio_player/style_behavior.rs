@@ -1,5 +1,6 @@
 use crossbeam_channel::Receiver;
 use slint::Color;
+use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::settings::MaterialScheme;
@@ -33,6 +34,10 @@ impl Default for AudioPlayerStyle {
     }
 }
 
+#[injectable]
+#[inject(
+    |style: AudioPlayerStyle, receiver: Option<Receiver<MaterialScheme>>| Self::new(style, receiver)
+)]
 pub struct AudioPlayerStyleBehavior {
     style: AudioPlayerStyle,
     receiver: Option<Receiver<MaterialScheme>>,

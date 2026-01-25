@@ -1,7 +1,10 @@
 use crate::preferences::Preferences;
+use nject::injectable;
 
 use super::scenes_view_model::ScenesPaneViewModel;
 
+#[injectable]
+#[inject(|| Self)]
 pub struct FilterScenesBehavior;
 
 impl FilterScenesBehavior {

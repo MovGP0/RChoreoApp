@@ -1,8 +1,11 @@
 use crossbeam_channel::Receiver;
+use nject::injectable;
 
 use super::messages::CloseDialogCommand;
 use super::main_view_model::MainViewModel;
 
+#[injectable]
+#[inject(|receiver: Receiver<CloseDialogCommand>| Self { receiver })]
 pub struct HideDialogBehavior {
     receiver: Receiver<CloseDialogCommand>,
 }

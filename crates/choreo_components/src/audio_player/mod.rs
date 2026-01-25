@@ -39,7 +39,7 @@ pub struct AudioPlayerDependencies<P: crate::preferences::Preferences> {
     pub style_receiver: Option<Receiver<MaterialScheme>>,
 }
 
-pub fn build_audio_player_behaviors<P: crate::preferences::Preferences + 'static>(
+pub fn build_audio_player_behaviors<P: crate::preferences::Preferences + Clone + 'static>(
     deps: AudioPlayerDependencies<P>,
 ) -> Vec<Box<dyn Behavior<AudioPlayerViewModel>>> {
     vec![

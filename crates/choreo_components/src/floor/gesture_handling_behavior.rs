@@ -1,7 +1,10 @@
 use crate::behavior::{Behavior, CompositeDisposable};
+use nject::injectable;
 
 use super::floor_view_model::FloorCanvasViewModel;
 
+#[injectable]
+#[inject(|| Self)]
 pub struct GestureHandlingBehavior;
 
 impl GestureHandlingBehavior {

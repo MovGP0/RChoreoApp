@@ -10,7 +10,9 @@ use crate::preferences::Preferences;
 
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
 use super::messages::RedrawFloorCommand;
+use nject::injectable;
 
+#[injectable]
 pub struct UpdateSnapToGridBehavior<P: Preferences> {
     global_state: Rc<RefCell<GlobalStateModel>>,
     preferences: P,

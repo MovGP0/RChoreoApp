@@ -1,7 +1,10 @@
 use crossbeam_channel::Sender;
+use nject::injectable;
 
 use super::messages::OpenSvgFileCommand;
 
+#[injectable]
+#[inject(|sender: Sender<OpenSvgFileCommand>| Self { sender })]
 pub struct OpenImageBehavior {
     sender: Sender<OpenSvgFileCommand>,
 }

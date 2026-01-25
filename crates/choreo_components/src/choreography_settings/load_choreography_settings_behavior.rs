@@ -7,7 +7,9 @@ use crate::logging::BehaviorLog;
 
 use super::mapper::{map_from_choreography, reset_view_model, update_selected_scene};
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
+use nject::injectable;
 
+#[injectable]
 pub struct LoadChoreographySettingsBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
 }
