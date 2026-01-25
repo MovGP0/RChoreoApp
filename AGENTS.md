@@ -33,6 +33,21 @@ Tips:
 - Clone https://github.com/slint-ui/slint.git to .temp/ to inspect the source code.
 - The material themed controls are located in `D:\RChoreoApp\.temp\slint\ui-libraries\material\src\`.
 
+## Code style
+
+- Place usings into separate lines to improve readability and reduce merge conflicts
+```rust
+use choreo_state_machine::{
+    ApplicationStateMachine,
+    MovePositionsCompletedTrigger
+};
+
+use crate::global::{
+    GlobalStateModel,
+    InteractionMode
+}; 
+```
+
 ## Linting
 
 - Run: `cargo clippy --all-targets --all-features -- -D warnings`

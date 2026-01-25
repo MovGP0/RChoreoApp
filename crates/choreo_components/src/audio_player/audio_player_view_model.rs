@@ -1,3 +1,5 @@
+use slint::Color;
+
 use super::types::{AudioPlayer, HapticFeedback, StreamFactory};
 
 pub struct AudioPlayerViewModel {
@@ -9,6 +11,11 @@ pub struct AudioPlayerViewModel {
     pub duration: f64,
     pub position: f64,
     pub tick_values: String,
+    pub speed_label: String,
+    pub duration_label: String,
+    pub surface_color: Color,
+    pub outline_color: Color,
+    pub on_surface_variant_color: Color,
     pub can_link_scene_to_position: bool,
     pub is_playing: bool,
     pub loop_enabled: bool,
@@ -33,6 +40,11 @@ impl AudioPlayerViewModel {
             duration: 0.0,
             position: 0.0,
             tick_values: String::new(),
+            speed_label: speed_to_percent_text(1.0),
+            duration_label: duration_to_time_text(0.0),
+            surface_color: Color::from_rgb_u8(0xF2, 0xF2, 0xF2),
+            outline_color: Color::from_rgb_u8(0xD1, 0xD1, 0xD1),
+            on_surface_variant_color: Color::from_rgb_u8(0x5E, 0x5E, 0x5E),
             can_link_scene_to_position: false,
             is_playing: false,
             loop_enabled: false,
@@ -102,6 +114,14 @@ impl AudioPlayerViewModel {
             haptic.perform_click();
         }
         // handled by behavior integration
+    }
+
+    pub fn update_speed_label(&mut self) {
+        self.speed_label = speed_to_percent_text(self.speed);
+    }
+
+    pub fn update_duration_label(&mut self) {
+        self.duration_label = duration_to_time_text(self.duration);
     }
 }
 
@@ -188,6 +208,7 @@ impl AudioPlayerViewState {
 
         self.is_adjusting_speed = true;
         view_model.speed = snapped;
+        view_model.update_speed_label();
         self.is_adjusting_speed = false;
     }
 
@@ -239,4 +260,13 @@ pub fn duration_to_time_text(seconds: f64) -> String {
     } else {
         format!("{minutes}:{seconds:02}")
     }
+}
+
+pub fn speed_to_percent_text(speed: f64) -> String {
+    if !speed.is_finite() {
+        return "0%".to_string();
+    }
+
+    let percent = (speed * 100.0).round() as i64;
+    format!("{percent}%")
 }

@@ -10,6 +10,7 @@ impl AudioPlayerBehavior {
     pub fn attach_player(view_model: &mut AudioPlayerViewModel, mut player: Box<dyn AudioPlayer>) {
         sync_capabilities(view_model, player.as_ref());
         sync_parameters(view_model, player.as_mut());
+        view_model.update_duration_label();
         view_model.player = Some(player);
     }
 
@@ -18,6 +19,7 @@ impl AudioPlayerBehavior {
         if player.is_playing() {
             view_model.position = player.current_position();
         }
+        view_model.update_duration_label();
     }
 }
 
@@ -31,6 +33,7 @@ fn sync_capabilities(view_model: &mut AudioPlayerViewModel, player: &dyn AudioPl
     view_model.can_seek = player.can_seek();
     view_model.can_set_speed = player.can_set_speed();
     view_model.duration = player.duration();
+    view_model.update_duration_label();
 }
 
 fn sync_parameters(view_model: &AudioPlayerViewModel, player: &mut dyn AudioPlayer) {

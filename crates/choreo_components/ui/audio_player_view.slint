@@ -1,4 +1,4 @@
-import { Horizontal, MaterialText, Slider, TextButton } from "@material";
+import { Horizontal, IconButton, MaterialText, Slider } from "@material";
 
 export component AudioPlayerView inherits Rectangle {
     in property <float> speed;
@@ -60,17 +60,15 @@ export component AudioPlayerView inherits Rectangle {
             vertical-alignment: center;
         }
 
-        TextButton {
-            text: "link";
+        IconButton {
+            icon: @image-url("icons/link.svg");
             enabled: can_link_scene_to_position;
             clicked => { link_scene_to_position(); }
         }
 
-        TextButton {
-            text: is_playing ? "pause" : "play";
+        IconButton {
+            icon: is_playing ? @image-url("icons/pause.svg") : @image-url("icons/play.svg");
             clicked => { toggle_play_pause(); }
         }
     }
 }
-
-

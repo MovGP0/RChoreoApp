@@ -63,23 +63,16 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="refactor models into modules">
-      <change beforePath="$PROJECT_DIR$/.beads/issues.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/.beads/issues.jsonl" afterDir="false" />
+    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="improving floor rendering">
+      <change afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/style_behavior.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/translate_behavior.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/RChoreoApp.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/RChoreoApp.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/behavior.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/dancers.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/floor.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/global.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/logging.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/main_behaviors.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/main_view_model.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/preferences.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/scenes.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/settings.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_behavior.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/audio_player_view_model.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/audio_player/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/audio_player_view.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/audio_player_view.slint" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -87,6 +80,13 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="RsBuildProfile:dev" />
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Rust File" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -116,7 +116,7 @@
     &quot;RunOnceActivity.rust.reset.selective.auto.import&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;Rebasing main&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;D:/RChoreoApp&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
@@ -286,7 +286,31 @@
       <option name="project" value="LOCAL" />
       <updated>1769324009041</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="refactor models into modules">
+      <option name="closed" value="true" />
+      <created>1769328476077</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1769328476077</updated>
+    </task>
+    <task id="LOCAL-00012" summary="adding agent instructions for choreo_components module">
+      <option name="closed" value="true" />
+      <created>1769329095967</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1769329095967</updated>
+    </task>
+    <task id="LOCAL-00013" summary="improving floor rendering">
+      <option name="closed" value="true" />
+      <created>1769332493415</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1769332493415</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -299,14 +323,16 @@
     <MESSAGE value="porting components" />
     <MESSAGE value="restructure json code" />
     <MESSAGE value="refactor models into modules" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor models into modules" />
+    <MESSAGE value="adding agent instructions for choreo_components module" />
+    <MESSAGE value="improving floor rendering" />
+    <option name="LAST_COMMIT_MESSAGE" value="improving floor rendering" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/crates/choreo_components/src/choreo_main/mod.rs</url>
-          <line>3</line>
+          <line>9</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>
