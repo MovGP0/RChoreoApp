@@ -128,6 +128,16 @@ impl MainViewModel {
         self.notify_changed();
     }
 
+    pub fn close_navigation(&mut self) {
+        if !self.is_nav_open {
+            return;
+        }
+
+        self.is_nav_open = false;
+        self.nav_width = 0.0;
+        self.notify_changed();
+    }
+
     pub fn update_place_mode(&mut self, scene: Option<&SceneViewModel>) {
         let mut global_state = self.global_state.borrow_mut();
         let Some(scene) = scene else {

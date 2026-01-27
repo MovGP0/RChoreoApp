@@ -141,6 +141,14 @@ impl<P: Preferences + Clone + 'static> MainPageBinding<P> {
 
         {
             let view_model = Rc::clone(&view_model);
+            view.on_close_nav(move || {
+                let mut view_model = view_model.borrow_mut();
+                view_model.close_navigation();
+            });
+        }
+
+        {
+            let view_model = Rc::clone(&view_model);
             view.on_open_audio(move || {
                 let mut view_model = view_model.borrow_mut();
                 view_model.open_audio();

@@ -17,6 +17,7 @@ export component ShellHost inherits MaterialWindow {
     in property <component-factory> dialog_content;
 
     callback toggle_nav();
+    callback close_nav();
     callback open_settings();
     callback open_image();
     callback open_audio();
@@ -43,6 +44,7 @@ export component ShellHost inherits MaterialWindow {
             dialog_content: root.dialog_content;
 
             toggle_nav => { root.toggle_nav(); }
+            close_nav => { root.close_nav(); }
             open_settings => { root.open_settings(); }
             open_image => { root.open_image(); }
             open_audio => { root.open_audio(); }
