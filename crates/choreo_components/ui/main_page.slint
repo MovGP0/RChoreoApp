@@ -27,6 +27,7 @@ export component MainPage inherits Rectangle {
     callback toggle_nav();
     callback close_nav();
     callback open_settings();
+    callback close_settings();
     callback open_image();
     callback open_audio();
     callback select_mode(int);
@@ -112,6 +113,7 @@ export component MainPage inherits Rectangle {
                     right_close_on_click_away: true;
 
                     left_close_requested => { root.close_nav(); }
+                    right_close_requested => { root.close_settings(); }
 
                     FloorCanvasView { }
                 }

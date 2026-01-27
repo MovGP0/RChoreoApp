@@ -173,6 +173,14 @@ impl<P: Preferences + Clone + 'static> MainPageBinding<P> {
 
         {
             let view_model = Rc::clone(&view_model);
+            view.on_close_settings(move || {
+                let mut view_model = view_model.borrow_mut();
+                view_model.close_choreography_settings();
+            });
+        }
+
+        {
+            let view_model = Rc::clone(&view_model);
             view.on_select_mode(move |index| {
                 let mut view_model = view_model.borrow_mut();
                 let Some(option) = view_model.mode_options.get(index as usize).cloned() else {

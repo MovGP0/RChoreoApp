@@ -19,6 +19,7 @@ export component ShellHost inherits MaterialWindow {
     callback toggle_nav();
     callback close_nav();
     callback open_settings();
+    callback close_settings();
     callback open_image();
     callback open_audio();
     callback select_mode(int);
@@ -46,6 +47,7 @@ export component ShellHost inherits MaterialWindow {
             toggle_nav => { root.toggle_nav(); }
             close_nav => { root.close_nav(); }
             open_settings => { root.open_settings(); }
+            close_settings => { root.close_settings(); }
             open_image => { root.open_image(); }
             open_audio => { root.open_audio(); }
             select_mode(index) => { root.select_mode(index); }

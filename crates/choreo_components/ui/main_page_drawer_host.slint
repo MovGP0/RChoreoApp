@@ -15,6 +15,7 @@ export component MainPageDrawerHost inherits Rectangle {
 
     callback overlay_clicked();
     callback left_close_requested();
+    callback right_close_requested();
 
     property <length> inline_left_width: root.inline_left && root.is_left_open
         ? root.left_drawer_width
@@ -51,6 +52,9 @@ export component MainPageDrawerHost inherits Rectangle {
         clicked => {
             if (root.left_close_on_click_away && root.is_left_open) {
                 root.left_close_requested();
+            }
+            if (root.right_close_on_click_away && root.is_right_open) {
+                root.right_close_requested();
             }
             if (root.left_close_on_click_away) {
                 root.is_left_open = false;

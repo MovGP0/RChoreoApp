@@ -118,6 +118,15 @@ impl MainViewModel {
         self.notify_changed();
     }
 
+    pub fn close_choreography_settings(&mut self) {
+        if !self.is_choreography_settings_open {
+            return;
+        }
+
+        self.is_choreography_settings_open = false;
+        self.notify_changed();
+    }
+
     pub fn toggle_navigation(&mut self) {
         self.is_nav_open = !self.is_nav_open;
         self.nav_width = if self.is_nav_open {
