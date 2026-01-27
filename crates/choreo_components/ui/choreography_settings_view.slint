@@ -68,7 +68,7 @@ export component ChoreographySettingsView inherits Rectangle {
     padding: 8px;
 
     preferred-height: content.preferred-height;
-    height: content.preferred-height;
+    height: self.preferred-height;
 
     content := Vertical {
         spacing: 12px;
@@ -209,5 +209,4 @@ export component ChoreographySettingsView inherits Rectangle {
             }
         }
     }
-
 }

@@ -67,48 +67,58 @@ export component MainPageDrawerHost inherits Rectangle {
         }
     }
 
-    left_panel := Rectangle {
-        visible: root.inline_left || root.is_left_open;
-        x: root.inline_left ? 0px : (root.is_left_open ? 0px : -self.width);
+    panel_area := Rectangle {
+        x: 0px;
         y: root.top_inset;
-        width: root.left_drawer_width;
+        width: parent.width;
         height: parent.height - root.top_inset;
-        background: root.drawer_background;
+        background: transparent;
         z: 2;
 
-        animate x {
-            duration: MaterialAnimations.standard_decelerate_duration;
-            easing: MaterialAnimations.standard_easing;
-        }
-
-        ScenesPaneView {
-            width: parent.width;
-        }
-    }
-
-    right_panel := Rectangle {
-        visible: root.is_right_open;
-        x: root.is_right_open ? parent.width - root.right_drawer_width : parent.width;
-        y: root.top_inset;
-        width: root.right_drawer_width;
-        height: parent.height - root.top_inset;
-        background: root.drawer_background;
-        z: 2;
-
-        animate x {
-            duration: MaterialAnimations.standard_decelerate_duration;
-            easing: MaterialAnimations.standard_easing;
-        }
-
-        ScrollView {
-            width: parent.width;
+        left_panel := Rectangle {
+            visible: root.inline_left || root.is_left_open;
+            x: root.inline_left ? 0px : (root.is_left_open ? 0px : -self.width);
+            y: 0px;
+            width: root.left_drawer_width;
             height: parent.height;
-            vertical_scrollbar_policy: ScrollBarPolicy.always_on;
-            horizontal_scrollbar_policy: ScrollBarPolicy.always_off;
+            background: root.drawer_background;
+            z: 2;
 
-            ChoreographySettingsView {
+            animate x {
+                duration: MaterialAnimations.standard_decelerate_duration;
+                easing: MaterialAnimations.standard_easing;
+            }
+
+            ScenesPaneView {
                 width: parent.width;
-                height: self.preferred-height;
+            }
+        }
+
+        right_panel := Rectangle {
+            visible: root.is_right_open;
+            x: root.is_right_open ? parent.width - root.right_drawer_width : parent.width;
+            y: 0px;
+            width: root.right_drawer_width;
+            height: parent.height;
+            background: root.drawer_background;
+            z: 2;
+
+            animate x {
+                duration: MaterialAnimations.standard_decelerate_duration;
+                easing: MaterialAnimations.standard_easing;
+            }
+
+            ScrollView {
+                width: parent.width;
+                height: parent.height;
+                vertical_scrollbar_policy: ScrollBarPolicy.always_on;
+                horizontal_scrollbar_policy: ScrollBarPolicy.always_off;
+
+                settings_view := ChoreographySettingsView {
+                    width: parent.width;
+                }
+
+                viewport_height: settings_view.height;
             }
         }
     }

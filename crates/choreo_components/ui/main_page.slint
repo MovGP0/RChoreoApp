@@ -23,6 +23,7 @@ export component MainPage inherits Rectangle {
     in-out property <bool> is_audio_player_open: false;
     in-out property <bool> is_dialog_open: false;
     in property <component-factory> dialog_content;
+    property <length> top_bar_height: 80px;
     property <length> audio_player_height: root.is_audio_player_open ? 80px : 0px;
 
     callback toggle_nav();
@@ -53,7 +54,7 @@ export component MainPage inherits Rectangle {
                 x: 0px;
                 y: 0px;
                 width: parent.width;
-                height: 80px;
+                height: root.top_bar_height;
                 background: MaterialPalette.surface;
                 z: 3;
 
@@ -110,7 +111,7 @@ export component MainPage inherits Rectangle {
                 y: 0px;
                 width: parent.width;
                 height: parent.height - root.audio_player_height;
-                top_inset: top_bar.height;
+                top_inset: root.top_bar_height;
                 inline_left: false;
                 left_drawer_width: root.nav_width;
                 right_drawer_width: 480px;
