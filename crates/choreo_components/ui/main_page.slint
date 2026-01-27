@@ -70,6 +70,8 @@ export component MainPage inherits Rectangle {
                 IconButton {
                     icon: @image-url("icons/Pen.svg");
                     tooltip: "Choreography settings";
+                    checkable: true;
+                    checked <=> root.is_choreography_settings_open;
                     clicked => { root.open_settings(); }
                 }
 
