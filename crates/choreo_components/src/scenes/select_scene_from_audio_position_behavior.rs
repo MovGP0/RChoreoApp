@@ -1,6 +1,7 @@
-use crate::preferences::Preferences;
 use nject::injectable;
 
+use crate::behavior::{Behavior, CompositeDisposable};
+use crate::logging::BehaviorLog;
 use super::scenes_view_model::ScenesPaneViewModel;
 
 #[injectable]
@@ -8,10 +9,7 @@ use super::scenes_view_model::ScenesPaneViewModel;
 pub struct SelectSceneFromAudioPositionBehavior;
 
 impl SelectSceneFromAudioPositionBehavior {
-    pub fn update_selection<P: Preferences>(
-        view_model: &mut ScenesPaneViewModel<P>,
-        position_seconds: f64,
-    ) {
+    pub fn update_selection(view_model: &mut ScenesPaneViewModel, position_seconds: f64) {
         if view_model.scenes.is_empty() {
             return;
         }
@@ -59,5 +57,11 @@ impl SelectSceneFromAudioPositionBehavior {
                 return;
             }
         }
+    }
+}
+
+impl Behavior<ScenesPaneViewModel> for SelectSceneFromAudioPositionBehavior {
+    fn activate(&self, _view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+        BehaviorLog::behavior_activated("SelectSceneFromAudioPositionBehavior", "ScenesPaneViewModel");
     }
 }

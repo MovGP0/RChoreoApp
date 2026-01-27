@@ -2,8 +2,10 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::global::GlobalStateModel;
-use crate::preferences::Preferences;
 use nject::injectable;
+
+use crate::behavior::{Behavior, CompositeDisposable};
+use crate::logging::BehaviorLog;
 
 use super::mapper::SceneMapper;
 use super::scenes_view_model::{SceneViewModel, ScenesPaneViewModel};
@@ -19,7 +21,7 @@ impl LoadScenesBehavior {
         Self { global_state }
     }
 
-    pub fn load<P: Preferences>(&self, view_model: &mut ScenesPaneViewModel<P>) {
+    pub fn load(&self, view_model: &mut ScenesPaneViewModel) {
         let scenes = {
             let global_state = self.global_state.borrow();
             let mapper = SceneMapper;
@@ -36,10 +38,21 @@ impl LoadScenesBehavior {
                 .collect::<Vec<_>>()
         };
 
-        let mut global_state = self.global_state.borrow_mut();
-        global_state.scenes = scenes;
-        global_state.selected_scene = global_state.scenes.first().cloned();
+        let selected_scene = scenes.first().cloned();
+        {
+            let mut global_state = self.global_state.borrow_mut();
+            global_state.scenes = scenes;
+            global_state.selected_scene = selected_scene.clone();
+        }
+
         view_model.refresh_scenes();
-        view_model.set_selected_scene(global_state.selected_scene.clone());
+        view_model.set_selected_scene(selected_scene);
+    }
+}
+
+impl Behavior<ScenesPaneViewModel> for LoadScenesBehavior {
+    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+        BehaviorLog::behavior_activated("LoadScenesBehavior", "ScenesPaneViewModel");
+        self.load(view_model);
     }
 }

@@ -29,9 +29,7 @@ use choreo_state_machine::ApplicationStateMachine;
 
 use crate::audio_player::OpenAudioFileCommand;
 use crate::global::GlobalStateModel;
-use crate::preferences::Preferences;
-
-pub struct MainBehaviorDependencies<P: Preferences> {
+pub struct MainBehaviorDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub open_audio_sender: Sender<OpenAudioFileCommand>,
@@ -39,21 +37,19 @@ pub struct MainBehaviorDependencies<P: Preferences> {
     pub open_svg_receiver: Receiver<OpenSvgFileCommand>,
     pub show_dialog_receiver: Receiver<ShowDialogCommand>,
     pub close_dialog_receiver: Receiver<CloseDialogCommand>,
-    pub preferences: P,
+    pub preferences: Rc<dyn crate::preferences::Preferences>,
 }
 
-pub struct MainBehaviors<P: Preferences> {
+pub struct MainBehaviors {
     pub apply_interaction_mode: ApplyInteractionModeBehavior,
     pub open_audio: OpenAudioBehavior,
     pub open_image: OpenImageBehavior,
-    pub open_svg_file: OpenSvgFileBehavior<P>,
+    pub open_svg_file: OpenSvgFileBehavior,
     pub show_dialog: ShowDialogBehavior,
     pub hide_dialog: HideDialogBehavior,
 }
 
-pub fn build_main_behaviors<P: Preferences + Clone + 'static>(
-    deps: MainBehaviorDependencies<P>,
-) -> MainBehaviors<P> {
+pub fn build_main_behaviors(deps: MainBehaviorDependencies) -> MainBehaviors {
     MainBehaviors {
         apply_interaction_mode: ApplyInteractionModeBehavior::new(
             deps.global_state.clone(),

@@ -11,20 +11,20 @@ use super::messages::OpenSvgFileCommand;
 
 #[injectable]
 #[inject(
-    |global_state: Rc<RefCell<GlobalStateModel>>, preferences: P, receiver: Receiver<OpenSvgFileCommand>| {
+    |global_state: Rc<RefCell<GlobalStateModel>>, preferences: Rc<dyn Preferences>, receiver: Receiver<OpenSvgFileCommand>| {
         Self::new(global_state, preferences, receiver)
     }
 )]
-pub struct OpenSvgFileBehavior<P: Preferences> {
+pub struct OpenSvgFileBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
-    preferences: P,
+    preferences: Rc<dyn Preferences>,
     receiver: Receiver<OpenSvgFileCommand>,
 }
 
-impl<P: Preferences> OpenSvgFileBehavior<P> {
+impl OpenSvgFileBehavior {
     pub fn new(
         global_state: Rc<RefCell<GlobalStateModel>>,
-        preferences: P,
+        preferences: Rc<dyn Preferences>,
         receiver: Receiver<OpenSvgFileCommand>,
     ) -> Self {
         Self {

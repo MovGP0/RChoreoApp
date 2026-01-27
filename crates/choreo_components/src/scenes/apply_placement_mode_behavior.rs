@@ -9,6 +9,8 @@ use choreo_state_machine::{
 use nject::injectable;
 
 use crate::global::GlobalStateModel;
+use crate::behavior::{Behavior, CompositeDisposable};
+use crate::logging::BehaviorLog;
 
 use super::messages::SelectedSceneChangedEvent;
 use super::scenes_view_model::SceneViewModel;
@@ -98,5 +100,15 @@ impl ApplyPlacementModeBehavior {
                 position.dancer = None;
             }
         }
+    }
+}
+
+impl Behavior<super::scenes_view_model::ScenesPaneViewModel> for ApplyPlacementModeBehavior {
+    fn activate(
+        &self,
+        _view_model: &mut super::scenes_view_model::ScenesPaneViewModel,
+        _disposables: &mut CompositeDisposable,
+    ) {
+        BehaviorLog::behavior_activated("ApplyPlacementModeBehavior", "ScenesPaneViewModel");
     }
 }

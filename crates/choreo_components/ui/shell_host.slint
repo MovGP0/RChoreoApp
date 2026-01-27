@@ -1,6 +1,7 @@
 import { MaterialWindow, MenuItem } from "@material";
 import { MainPage } from "main_page.slint";
 import { SettingsPage } from "settings_page.slint";
+import { SceneListItem } from "scenes_pane_view.slint";
 import { Translations } from "translations.slint";
 
 export component ShellHost inherits MaterialWindow {
@@ -15,6 +16,17 @@ export component ShellHost inherits MaterialWindow {
     in-out property <bool> is_audio_player_open: false;
     in-out property <bool> is_dialog_open: false;
     in property <component-factory> dialog_content;
+    in property <[SceneListItem]> scenes;
+    in property <string> scenes_search_text;
+    in property <bool> scenes_show_timestamps;
+    in property <bool> scenes_can_save_choreo;
+    in property <bool> scenes_can_delete_scene;
+    in property <bool> scenes_can_navigate_to_settings;
+    in property <bool> scenes_can_navigate_to_dancer_settings;
+    in property <string> scenes_add_before_text;
+    in property <string> scenes_add_after_text;
+    in property <string> scenes_open_text;
+    in property <string> scenes_save_text;
 
     callback toggle_nav();
     callback close_nav();
@@ -24,6 +36,15 @@ export component ShellHost inherits MaterialWindow {
     callback open_audio();
     callback select_mode(int);
     callback close_dialog();
+    callback scenes_select_scene(int);
+    callback scenes_update_search_text(string);
+    callback scenes_add_scene_before();
+    callback scenes_add_scene_after();
+    callback scenes_delete_scene();
+    callback scenes_open_choreo();
+    callback scenes_save_choreo();
+    callback scenes_navigate_to_settings();
+    callback scenes_navigate_to_dancer_settings();
 
     title: root.title_text;
     icon: @image-url("app_icon.svg");
@@ -44,6 +65,17 @@ export component ShellHost inherits MaterialWindow {
             is_audio_player_open <=> root.is_audio_player_open;
             is_dialog_open <=> root.is_dialog_open;
             dialog_content: root.dialog_content;
+            scenes: root.scenes;
+            scenes_search_text: root.scenes_search_text;
+            scenes_show_timestamps: root.scenes_show_timestamps;
+            scenes_can_save_choreo: root.scenes_can_save_choreo;
+            scenes_can_delete_scene: root.scenes_can_delete_scene;
+            scenes_can_navigate_to_settings: root.scenes_can_navigate_to_settings;
+            scenes_can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
+            scenes_add_before_text: root.scenes_add_before_text;
+            scenes_add_after_text: root.scenes_add_after_text;
+            scenes_open_text: root.scenes_open_text;
+            scenes_save_text: root.scenes_save_text;
 
             toggle_nav => { root.toggle_nav(); }
             close_nav => { root.close_nav(); }
@@ -53,6 +85,15 @@ export component ShellHost inherits MaterialWindow {
             open_audio => { root.open_audio(); }
             select_mode(index) => { root.select_mode(index); }
             close_dialog => { root.close_dialog(); }
+            scenes_select_scene(index) => { root.scenes_select_scene(index); }
+            scenes_update_search_text(value) => { root.scenes_update_search_text(value); }
+            scenes_add_scene_before => { root.scenes_add_scene_before(); }
+            scenes_add_scene_after => { root.scenes_add_scene_after(); }
+            scenes_delete_scene => { root.scenes_delete_scene(); }
+            scenes_open_choreo => { root.scenes_open_choreo(); }
+            scenes_save_choreo => { root.scenes_save_choreo(); }
+            scenes_navigate_to_settings => { root.scenes_navigate_to_settings(); }
+            scenes_navigate_to_dancer_settings => { root.scenes_navigate_to_dancer_settings(); }
         }
         if root.content_index == 1 : SettingsPage { }
     }

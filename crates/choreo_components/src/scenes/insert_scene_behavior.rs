@@ -4,9 +4,9 @@ use std::rc::Rc;
 use choreo_models::{Colors, SceneModel};
 use nject::injectable;
 
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateModel;
-use crate::preferences::Preferences;
-
+use crate::logging::BehaviorLog;
 use super::mapper::{build_scene_name, next_scene_id};
 use super::scenes_view_model::{SceneViewModel, ScenesPaneViewModel};
 
@@ -21,11 +21,7 @@ impl InsertSceneBehavior {
         Self { global_state }
     }
 
-    pub fn insert_scene<P: Preferences>(
-        &self,
-        view_model: &mut ScenesPaneViewModel<P>,
-        insert_after: bool,
-    ) {
+    pub fn insert_scene(&self, view_model: &mut ScenesPaneViewModel, insert_after: bool) {
         let selected_scene_id = self
             .global_state
             .borrow()
@@ -68,5 +64,24 @@ impl InsertSceneBehavior {
 
         view_model.refresh_scenes();
         view_model.set_selected_scene(global_state.selected_scene.clone());
+    }
+}
+
+impl Behavior<ScenesPaneViewModel> for InsertSceneBehavior {
+    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+        BehaviorLog::behavior_activated("InsertSceneBehavior", "ScenesPaneViewModel");
+        let before_behavior = self.global_state.clone();
+        view_model.set_add_scene_before_handler(Some(Rc::new(move |view_model| {
+            let behavior = InsertSceneBehavior::new(before_behavior.clone());
+            behavior.insert_scene(view_model, false);
+            view_model.update_can_save();
+        })));
+
+        let after_behavior = self.global_state.clone();
+        view_model.set_add_scene_after_handler(Some(Rc::new(move |view_model| {
+            let behavior = InsertSceneBehavior::new(after_behavior.clone());
+            behavior.insert_scene(view_model, true);
+            view_model.update_can_save();
+        })));
     }
 }

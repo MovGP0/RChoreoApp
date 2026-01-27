@@ -1,6 +1,6 @@
 import { MaterialAnimations, MaterialPalette, ScrollView } from "@material";
 import { ChoreographySettingsView } from "choreography_settings_view.slint";
-import { ScenesPaneView } from "scenes_pane_view.slint";
+import { SceneListItem, ScenesPaneView } from "scenes_pane_view.slint";
 
 export component MainPageDrawerHost inherits Rectangle {
     in property <length> left_drawer_width: 320px;
@@ -13,10 +13,30 @@ export component MainPageDrawerHost inherits Rectangle {
     in property <bool> right_close_on_click_away: true;
     in property <color> overlay_color: MaterialPalette.background_modal;
     in property <color> drawer_background: MaterialPalette.surface_container_low;
+    in property <[SceneListItem]> scenes;
+    in property <string> scenes_search_text;
+    in property <bool> scenes_show_timestamps;
+    in property <bool> scenes_can_save_choreo;
+    in property <bool> scenes_can_delete_scene;
+    in property <bool> scenes_can_navigate_to_settings;
+    in property <bool> scenes_can_navigate_to_dancer_settings;
+    in property <string> scenes_add_before_text;
+    in property <string> scenes_add_after_text;
+    in property <string> scenes_open_text;
+    in property <string> scenes_save_text;
 
     callback overlay_clicked();
     callback left_close_requested();
     callback right_close_requested();
+    callback scenes_select_scene(int);
+    callback scenes_update_search_text(string);
+    callback scenes_add_scene_before();
+    callback scenes_add_scene_after();
+    callback scenes_delete_scene();
+    callback scenes_open_choreo();
+    callback scenes_save_choreo();
+    callback scenes_navigate_to_settings();
+    callback scenes_navigate_to_dancer_settings();
 
     property <length> inline_left_width: root.inline_left && root.is_left_open
         ? root.left_drawer_width
@@ -89,10 +109,31 @@ export component MainPageDrawerHost inherits Rectangle {
                 easing: MaterialAnimations.standard_easing;
             }
 
-            ScenesPaneView {
-                width: parent.width;
-            }
+        ScenesPaneView {
+            width: parent.width;
+            scenes: root.scenes;
+            search_text: root.scenes_search_text;
+            show_timestamps: root.scenes_show_timestamps;
+            can_save_choreo: root.scenes_can_save_choreo;
+            can_delete_scene: root.scenes_can_delete_scene;
+            can_navigate_to_settings: root.scenes_can_navigate_to_settings;
+            can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
+            add_before_text: root.scenes_add_before_text;
+            add_after_text: root.scenes_add_after_text;
+            open_text: root.scenes_open_text;
+            save_text: root.scenes_save_text;
+
+            select_scene(index) => { root.scenes_select_scene(index); }
+            update_search_text(value) => { root.scenes_update_search_text(value); }
+            add_scene_before => { root.scenes_add_scene_before(); }
+            add_scene_after => { root.scenes_add_scene_after(); }
+            delete_scene => { root.scenes_delete_scene(); }
+            open_choreo => { root.scenes_open_choreo(); }
+            save_choreo => { root.scenes_save_choreo(); }
+            navigate_to_settings => { root.scenes_navigate_to_settings(); }
+            navigate_to_dancer_settings => { root.scenes_navigate_to_dancer_settings(); }
         }
+    }
 
         right_panel := Rectangle {
             visible: root.is_right_open;
