@@ -1,0 +1,15 @@
+﻿import { MaterialPalette } from \ @material\;
+
+export component SplashScreen inherits Rectangle {
+    in property <color> background_color: MaterialPalette.surface;
+    in property <image> splash_image: @image-url(\splash.svg\);
+
+    background: root.background_color;
+
+    Image {
+        source: root.splash_image;
+        width: parent.width;
+        height: parent.height;
+        image-fit: contain;
+    }
+}

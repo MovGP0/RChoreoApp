@@ -22,6 +22,7 @@ pub mod time;
 pub mod color_picker;
 pub mod shell;
 pub mod date;
+pub mod splash_screen;
 
 mod ui {
     #![allow(unreachable_pub)]
