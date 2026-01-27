@@ -19,6 +19,12 @@
 - All ViewModels and Behaviors need to be injectable
 - Behaviors are always transient
 
+## Unit Testing
+See `UnitTesting.md` for detailed instructions.
+
+## Model View Behavior Pattern
+See `ModelViewBehavior.md` for detailed instructions.
+
 ## MaterialDesignThemes to Slint (Material) replacement list
 
 - App root: `material_window.slint` (MaterialWindow).
