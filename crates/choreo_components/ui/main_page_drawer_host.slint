@@ -1,4 +1,4 @@
-import { MaterialAnimations, MaterialPalette } from "@material";
+import { MaterialAnimations, MaterialPalette, ScrollView } from "@material";
 import { ChoreographySettingsView } from "choreography_settings_view.slint";
 import { ScenesPaneView } from "scenes_pane_view.slint";
 
@@ -29,6 +29,7 @@ export component MainPageDrawerHost inherits Rectangle {
         width: parent.width - root.inline_left_width;
         height: parent.height;
         background: transparent;
+        z: 0;
 
         @children
     }
@@ -38,6 +39,7 @@ export component MainPageDrawerHost inherits Rectangle {
         enabled: root.overlay_visible;
         width: parent.width;
         height: parent.height;
+        z: 1;
 
         Rectangle {
             width: parent.width;
@@ -63,6 +65,7 @@ export component MainPageDrawerHost inherits Rectangle {
         width: root.left_drawer_width;
         height: parent.height;
         background: root.drawer_background;
+        z: 2;
 
         animate x {
             duration: MaterialAnimations.standard_decelerate_duration;
@@ -79,12 +82,19 @@ export component MainPageDrawerHost inherits Rectangle {
         width: root.right_drawer_width;
         height: parent.height;
         background: root.drawer_background;
+        z: 2;
 
         animate x {
             duration: MaterialAnimations.standard_decelerate_duration;
             easing: MaterialAnimations.standard_easing;
         }
 
-        ChoreographySettingsView { }
+        ScrollView {
+            width: parent.width;
+            height: parent.height;
+            horizontal_scrollbar_policy: ScrollBarPolicy.always-off;
+
+            ChoreographySettingsView { }
+        }
     }
 }

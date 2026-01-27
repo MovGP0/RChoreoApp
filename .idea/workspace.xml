@@ -60,31 +60,11 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="fixing di issues">
+    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="fixing panel overlay in main page">
+      <change beforePath="$PROJECT_DIR$/.beads/issues.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/.beads/issues.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/android/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/android/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/desktop/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/desktop/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/wasm/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/wasm/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_algorithms/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_algorithms/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_page_binding.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_page_binding.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_view_model.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/choreography_settings_view.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/choreography_settings_view.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/copy_scene_positions_dialog.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/copy_scene_positions_dialog.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/dancer_settings_page.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/dancer_settings_page.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/delete_scene_dialog.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/delete_scene_dialog.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/main.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/main.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/scenes_pane_view.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/scenes_pane_view.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/settings_page.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/settings_page.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/shell_host.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/shell_host.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/swap_dancers_dialog.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/swap_dancers_dialog.slint" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_i18n/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_i18n/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_i18n/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_i18n/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_master_mobile_json/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_master_mobile_json/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_models/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_models/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_state_machine/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_state_machine/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/main_page_drawer_host.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/main_page_drawer_host.slint" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -123,7 +103,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Cargo.Run RChoreoApp.executor": "Run",
+    "Cargo.Run RChoreoApp.executor": "Debug",
     "Cargo.Run Web.executor": "Run",
     "Cargo.Test RChoreoApp.executor": "Debug",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
@@ -145,7 +125,7 @@
     "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
     "org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon": "",
     "org.rust.first.attach.projects": "true",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "settings.editor.selected.configurable": "advanced.settings",
     "to.speed.mode.migration.done": "true",
     "vue.rearranger.settings.migration": "true",
     "wasm-pack.Build.executor": "Run"
@@ -224,7 +204,7 @@
       <workItem from="1769275813767" duration="1910000" />
       <workItem from="1769277827550" duration="19895000" />
       <workItem from="1769362058640" duration="1781000" />
-      <workItem from="1769525694077" duration="1845000" />
+      <workItem from="1769525694077" duration="3866000" />
     </task>
     <task id="LOCAL-00001" summary="implementing json parsing">
       <option name="closed" value="true" />
@@ -402,7 +382,31 @@
       <option name="project" value="LOCAL" />
       <updated>1769383262720</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="implementing translation bindings using slint">
+      <option name="closed" value="true" />
+      <created>1769527760809</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1769527760809</updated>
+    </task>
+    <task id="LOCAL-00024" summary="implementing translation bindings using slint">
+      <option name="closed" value="true" />
+      <created>1769528207519</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1769528207519</updated>
+    </task>
+    <task id="LOCAL-00025" summary="fixing panel overlay in main page">
+      <option name="closed" value="true" />
+      <created>1769529258007</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1769529258007</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -422,7 +426,9 @@
     <MESSAGE value="hotfixing build" />
     <MESSAGE value="implementing dependency injection" />
     <MESSAGE value="fixing di issues" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixing di issues" />
+    <MESSAGE value="implementing translation bindings using slint" />
+    <MESSAGE value="fixing panel overlay in main page" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixing panel overlay in main page" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

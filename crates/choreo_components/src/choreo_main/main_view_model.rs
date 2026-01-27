@@ -114,7 +114,7 @@ impl MainViewModel {
 
     pub fn open_choreography_settings(&mut self) {
         self.perform_click();
-        self.is_choreography_settings_open = true;
+        self.is_choreography_settings_open = !self.is_choreography_settings_open;
         self.notify_changed();
     }
 
