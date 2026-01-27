@@ -3,6 +3,7 @@ import { Date, DatePickerPopup } from "std-widgets.slint";
 import { Translations } from "translations.slint";
 
 export component ChoreographySettingsView inherits Rectangle {
+    property <[int]> today: SlintInternal.date_now();
     in property <bool> has_selected_scene;
     in property <string> scene_name;
     in property <string> scene_text;
@@ -15,7 +16,7 @@ export component ChoreographySettingsView inherits Rectangle {
     in property <string> comment;
     in property <string> name;
     in property <string> subtitle;
-    in-out property <Date> date;
+    in-out property <Date> date: { day: root.today[0], month: root.today[1], year: root.today[2] };
     in property <string> variation;
     in property <string> author;
     in property <string> description;
