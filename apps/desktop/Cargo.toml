@@ -5,8 +5,8 @@ edition = "2024"
 
 [dependencies]
 slint = "1.14.1"
-crossbeam-channel = "0.5"
-rfd = "0.14"
+crossbeam-channel = "0.5.15"
+rfd = "0.17.2"
 choreo_algorithms = { path = "../../crates/choreo_algorithms", package = "choreo_algorithms" }
 choreo_i18n = { path = "../../crates/choreo_i18n", package = "choreo_i18n" }
 choreo_master_mobile_json = { path = "../../crates/choreo_master_mobile_json", package = "choreo_master_mobile_json" }
