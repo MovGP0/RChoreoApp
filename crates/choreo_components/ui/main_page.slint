@@ -104,12 +104,12 @@ export component MainPage inherits Rectangle {
 
                 MainPageDrawerHost {
                     vertical-stretch: 1;
-                    inline_left: root.width >= 900px;
+                    inline_left: false;
                     left_drawer_width: root.nav_width;
                     right_drawer_width: 480px;
                     drawer_background: MaterialPalette.surface_variant;
                     is_left_open: root.is_nav_open;
-                    is_right_open: root.is_choreography_settings_open;
+                    is_right_open <=> root.is_choreography_settings_open;
                     left_close_on_click_away: true;
                     right_close_on_click_away: true;
 
