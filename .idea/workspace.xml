@@ -60,11 +60,41 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="fixing di issues" />
+    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="fixing di issues">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/android/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/android/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/desktop/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/desktop/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/wasm/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/apps/wasm/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_algorithms/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_algorithms/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_page_binding.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_page_binding.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_view_model.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/choreography_settings_view.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/choreography_settings_view.slint" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/copy_scene_positions_dialog.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/copy_scene_positions_dialog.slint" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/dancer_settings_page.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/dancer_settings_page.slint" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/delete_scene_dialog.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/delete_scene_dialog.slint" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/main.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/main.slint" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/scenes_pane_view.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/scenes_pane_view.slint" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/settings_page.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/settings_page.slint" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/shell_host.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/shell_host.slint" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/swap_dancers_dialog.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/swap_dancers_dialog.slint" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_i18n/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_i18n/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_i18n/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_i18n/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_master_mobile_json/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_master_mobile_json/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_models/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_models/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_state_machine/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_state_machine/Cargo.toml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_D:/GitHub/ChoreoAppRS" value="38iAf0dCgkZqfV7ZMmbOTjF2qkK" />
+    </persistenceIdMap>
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="RsBuildProfile:dev" />
   <component name="FileTemplateManagerImpl">
@@ -104,8 +134,9 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "D:/RChoreoApp",
+    "last_opened_file_path": "D:/GitHub/ChoreoAppRS",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -114,7 +145,7 @@
     "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
     "org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon": "",
     "org.rust.first.attach.projects": "true",
-    "settings.editor.selected.configurable": "com.intellij.mcpserver.settings",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
     "to.speed.mode.migration.done": "true",
     "vue.rearranger.settings.migration": "true",
     "wasm-pack.Build.executor": "Run"
@@ -193,6 +224,7 @@
       <workItem from="1769275813767" duration="1910000" />
       <workItem from="1769277827550" duration="19895000" />
       <workItem from="1769362058640" duration="1781000" />
+      <workItem from="1769525694077" duration="1845000" />
     </task>
     <task id="LOCAL-00001" summary="implementing json parsing">
       <option name="closed" value="true" />

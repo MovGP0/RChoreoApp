@@ -16,6 +16,7 @@ pub mod audio_player;
 pub mod dancers;
 pub mod choreography_settings;
 pub mod floor;
+pub mod i18n;
 pub mod choreo_main;
 pub mod time;
 pub mod color_picker;

@@ -230,3 +230,36 @@ So we can just bind them to an `in` or `in-out` property of a control:
 ```slint
 in property<color> background: MaterialPalette.surface_container_low;
 ```
+
+## Translations (Global Properties)
+
+Use a global translation object with `in-out` string properties, then bind UI text directly.
+
+```slint
+export global Translations {
+    in-out property<string> settings_title;
+    in-out property<string> dark_mode_label;
+    in-out property<string> app_title;
+}
+```
+
+Bind in views:
+```slint
+import { Translations } from "translations.slint";
+
+Text { text: Translations.app_title; }
+```
+
+Set values from Rust once at startup (or whenever the locale changes):
+```rust
+let translations = view.global::<Translations<'_>>();
+translations.set_app_title("ChoreoApp".into());
+```
+
+## Material Palette Binding
+
+Material colors are exposed as `out` properties on `MaterialPalette`. Bind them directly to `in`/`in-out` color properties to keep the UI reactive:
+
+```slint
+background: MaterialPalette.surface_container_low;
+```

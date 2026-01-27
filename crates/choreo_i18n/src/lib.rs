@@ -64,3 +64,46 @@ pub fn keys() -> &'static [&'static str] {
 pub fn icon_names() -> &'static [&'static str] {
     generated::ICON_NAMES
 }
+
+pub fn detect_locale() -> String
+{
+    let raw = system_locale().unwrap_or_else(|| "en".to_string());
+    resolve_locale(&raw).to_string()
+}
+
+pub fn resolve_locale(locale: &str) -> &'static str
+{
+    let normalized = locale.replace('_', "-").to_ascii_lowercase();
+    if let Some(found) = find_locale(normalized.as_str())
+    {
+        return found;
+    }
+
+    if let Some((language, _)) = normalized.split_once('-')
+        && let Some(found) = find_locale(language)
+    {
+        return found;
+    }
+
+    "en"
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn system_locale() -> Option<String>
+{
+    sys_locale::get_locale()
+}
+
+#[cfg(target_arch = "wasm32")]
+fn system_locale() -> Option<String>
+{
+    None
+}
+
+fn find_locale(locale: &str) -> Option<&'static str>
+{
+    generated::LOCALES
+        .iter()
+        .copied()
+        .find(|&candidate| candidate == locale)
+}

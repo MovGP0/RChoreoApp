@@ -1,9 +1,10 @@
 import { MaterialPalette, MaterialText, ScrollView, Switch, TextField, Vertical, Horizontal } from "@material";
+import { Translations } from "translations.slint";
 
 export component SettingsPage inherits Rectangle {
-    in property <string> title_text;
+    in property <string> title_text: Translations.settings_title;
     in property <string> use_system_theme_text;
-    in property <string> dark_mode_text;
+    in property <string> dark_mode_text: Translations.dark_mode_label;
     in property <string> primary_color_text;
     in property <string> secondary_color_text;
     in property <string> tertiary_color_text;

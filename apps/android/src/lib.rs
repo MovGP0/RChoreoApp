@@ -20,9 +20,11 @@ fn android_main(app: slint::android::AndroidApp) {
     use choreo_components::choreo_main::MainPageBinding;
     use choreo_components::choreo_main::MainPageDependencies;
     use choreo_components::global::GlobalStateModel;
+    use choreo_components::i18n;
     use choreo_components::preferences::InMemoryPreferences;
     use choreo_components::shell;
     use choreo_state_machine::ApplicationStateMachine;
+    use choreo_i18n::detect_locale;
 
     if let Err(err) = slint::android::init(app) {
         eprintln!("failed to init Slint Android backend: {err}");
@@ -41,6 +43,8 @@ fn android_main(app: slint::android::AndroidApp) {
             GlobalStateModel::default(),
         )),
     ));
+    let locale = detect_locale();
+    i18n::apply_translations(&ui, &locale);
     let audio_player = AudioPlayerViewModel::new(None);
     let preferences = InMemoryPreferences::default();
     let (open_audio_sender, _open_audio_receiver) = unbounded();
@@ -59,6 +63,7 @@ fn android_main(app: slint::android::AndroidApp) {
             global_state,
             state_machine,
             audio_player,
+            locale,
             haptic_feedback: None,
             open_audio_sender,
             open_svg_sender,
@@ -69,7 +74,6 @@ fn android_main(app: slint::android::AndroidApp) {
             actions,
         },
     );
-    binding.view().set_title_text(shell::app_title().into());
     if let Err(err) = binding.view().run() {
         eprintln!("failed to run UI: {err}");
     }

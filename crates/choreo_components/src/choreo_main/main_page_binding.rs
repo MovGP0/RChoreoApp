@@ -38,6 +38,7 @@ pub struct MainPageDependencies<P: Preferences + Clone> {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub audio_player: AudioPlayerViewModel,
+    pub locale: String,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
     pub open_audio_sender: Sender<OpenAudioFileCommand>,
     pub open_svg_sender: Sender<OpenSvgFileCommand>,
@@ -56,10 +57,12 @@ pub struct MainPageBinding<P: Preferences + Clone> {
 
 impl<P: Preferences + Clone + 'static> MainPageBinding<P> {
     pub fn new(view: ShellHost, deps: MainPageDependencies<P>) -> Self {
+        let locale = deps.locale.clone();
         let view_model = Rc::new(RefCell::new(build_main_view_model(MainDependencies {
             global_state: deps.global_state.clone(),
             state_machine: deps.state_machine.clone(),
             audio_player: deps.audio_player,
+            locale,
             haptic_feedback: deps.haptic_feedback,
             actions: MainViewModelActions::default(),
         })));

@@ -1,9 +1,10 @@
 import { MaterialWindow, MenuItem } from "@material";
 import { MainPage } from "main_page.slint";
 import { SettingsPage } from "settings_page.slint";
+import { Translations } from "translations.slint";
 
 export component ShellHost inherits MaterialWindow {
-    in property <string> title_text;
+    in property <string> title_text: Translations.app_title;
     in property <int> content_index: 0;
     in-out property <[MenuItem]> mode_items: [];
     in-out property <int> selected_mode_index: -1;

@@ -2,6 +2,7 @@
 name = "choreo_models"
 version = "0.1.0"
 edition = "2024"
+publish = false
 
 [dependencies]
 choreo_master_mobile_json = { path = "../choreo_master_mobile_json" }

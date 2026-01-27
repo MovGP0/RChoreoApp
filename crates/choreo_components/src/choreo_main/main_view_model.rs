@@ -59,10 +59,12 @@ impl MainViewModel {
         global_state: Rc<RefCell<GlobalStateModel>>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
         audio_player: AudioPlayerViewModel,
+        locale: String,
         haptic_feedback: Option<Box<dyn HapticFeedback>>,
         actions: MainViewModelActions,
-    ) -> Self {
-        let mode_options = build_mode_options();
+    ) -> Self
+    {
+        let mode_options = build_mode_options(&locale);
         let selected_mode_option = mode_options
             .iter()
             .find(|option| option.mode == global_state.borrow().interaction_mode)
@@ -196,6 +198,7 @@ pub struct MainDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub audio_player: AudioPlayerViewModel,
+    pub locale: String,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
     pub actions: MainViewModelActions,
 }
@@ -205,14 +208,17 @@ pub fn build_main_view_model(deps: MainDependencies) -> MainViewModel {
         deps.global_state,
         deps.state_machine,
         deps.audio_player,
+        deps.locale,
         deps.haptic_feedback,
         deps.actions,
     )
 }
 
-fn build_mode_options() -> Vec<InteractionModeOption> {
-    fn t(key: &str, fallback: &str) -> String {
-        translation_with_fallback(key, fallback)
+fn build_mode_options(locale: &str) -> Vec<InteractionModeOption>
+{
+    fn t(locale: &str, key: &str, fallback: &str) -> String
+    {
+        translation_with_fallback(locale, key)
             .map(|value| value.to_string())
             .unwrap_or_else(|| fallback.to_string())
     }
@@ -220,27 +226,27 @@ fn build_mode_options() -> Vec<InteractionModeOption> {
     vec![
         InteractionModeOption {
             mode: InteractionMode::View,
-            label: t("ModeView", "View"),
+            label: t(locale, "ModeView", "View"),
         },
         InteractionModeOption {
             mode: InteractionMode::Move,
-            label: t("ModeMove", "Move"),
+            label: t(locale, "ModeMove", "Move"),
         },
         InteractionModeOption {
             mode: InteractionMode::RotateAroundCenter,
-            label: t("ModeRotateAroundCenter", "Rotate center"),
+            label: t(locale, "ModeRotateAroundCenter", "Rotate center"),
         },
         InteractionModeOption {
             mode: InteractionMode::RotateAroundDancer,
-            label: t("ModeRotateAroundDancer", "Rotate dancer"),
+            label: t(locale, "ModeRotateAroundDancer", "Rotate dancer"),
         },
         InteractionModeOption {
             mode: InteractionMode::Scale,
-            label: t("ModeScale", "Scale"),
+            label: t(locale, "ModeScale", "Scale"),
         },
         InteractionModeOption {
             mode: InteractionMode::LineOfSight,
-            label: t("ModeLineOfSight", "Line of sight"),
+            label: t(locale, "ModeLineOfSight", "Line of sight"),
         },
     ]
 }

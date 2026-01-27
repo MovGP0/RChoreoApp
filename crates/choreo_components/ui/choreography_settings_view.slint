@@ -1,4 +1,5 @@
 import { CheckBoxTile, CheckState, MaterialText, Slider, TextField, Vertical } from "@material";
+import { Translations } from "translations.slint";
 
 export component ChoreographySettingsView inherits Rectangle {
     in property <bool> has_selected_scene;
@@ -77,23 +78,23 @@ export component ChoreographySettingsView inherits Rectangle {
             Vertical {
                 spacing: 8px;
                 MaterialText {
-                    text: "Scene";
+                    text: Translations.scene_section_title;
                     font-size: 18px;
                 }
                 TextField {
-                    label: "Name";
+                    label: Translations.scene_name_label;
                     text: scene_name;
                     enabled: has_selected_scene;
                     edited(new_value) => { update_scene_name(new_value); }
                 }
                 TextField {
-                    label: "Text";
+                    label: Translations.scene_text_label;
                     text: scene_text;
                     enabled: has_selected_scene;
                     edited(new_value) => { update_scene_text(new_value); }
                 }
                 CheckBoxTile {
-                    text: "Fixed positions";
+                    text: Translations.scene_fixed_positions_label;
                     check_state: scene_fixed_positions ? CheckState.checked : CheckState.unchecked;
                     enabled: has_selected_scene;
                     checked_state_changed(state) => {
@@ -101,7 +102,7 @@ export component ChoreographySettingsView inherits Rectangle {
                     }
                 }
                 CheckBoxTile {
-                    text: "Timestamp";
+                    text: Translations.scene_timestamp_label;
                     check_state: scene_has_timestamp ? CheckState.checked : CheckState.unchecked;
                     enabled: has_selected_scene;
                     checked_state_changed(state) => {
@@ -120,14 +121,14 @@ export component ChoreographySettingsView inherits Rectangle {
 
             Vertical {
                 spacing: 8px;
-                MaterialText { text: "Choreography"; font-size: 18px; }
-                TextField { label: "Name"; text: name; edited(v) => { update_name(v); } }
-                TextField { label: "Subtitle"; text: subtitle; edited(v) => { update_subtitle(v); } }
+                MaterialText { text: Translations.choreography_section_title; font-size: 18px; }
+                TextField { label: Translations.choreography_name_placeholder; text: name; edited(v) => { update_name(v); } }
+                TextField { label: Translations.choreography_subtitle_placeholder; text: subtitle; edited(v) => { update_subtitle(v); } }
                 TextField { label: "Date"; text: date; edited(v) => { update_date(v); } }
-                TextField { label: "Variation"; text: variation; edited(v) => { update_variation(v); } }
-                TextField { label: "Author"; text: author; edited(v) => { update_author(v); } }
-                TextField { label: "Comment"; text: comment; edited(v) => { update_comment(v); } }
-                TextField { label: "Description"; text: description; edited(v) => { update_description(v); } }
+                TextField { label: Translations.choreography_variation_placeholder; text: variation; edited(v) => { update_variation(v); } }
+                TextField { label: Translations.choreography_author_placeholder; text: author; edited(v) => { update_author(v); } }
+                TextField { label: Translations.choreography_comment_placeholder; text: comment; edited(v) => { update_comment(v); } }
+                TextField { label: Translations.choreography_description_placeholder; text: description; edited(v) => { update_description(v); } }
             }
         }
 
@@ -140,42 +141,43 @@ export component ChoreographySettingsView inherits Rectangle {
 
             Vertical {
                 spacing: 8px;
-                MaterialText { text: "Floor"; font-size: 18px; }
+                MaterialText { text: Translations.choreography_floor_title; font-size: 18px; }
                 CheckBoxTile {
-                    text: "Positions at side";
+                    text: Translations.choreography_positions_at_side_label;
                     check_state: positions_at_side ? CheckState.checked : CheckState.unchecked;
                     checked_state_changed(state) => {
                         update_positions_at_side(state == CheckState.checked);
                     }
                 }
                 CheckBoxTile {
-                    text: "Grid lines";
+                    text: Translations.choreography_grid_lines_label;
                     check_state: grid_lines ? CheckState.checked : CheckState.unchecked;
                     checked_state_changed(state) => {
                         update_grid_lines(state == CheckState.checked);
                     }
                 }
                 CheckBoxTile {
-                    text: "Snap to grid";
+                    text: Translations.choreography_snap_to_grid_label;
                     check_state: snap_to_grid ? CheckState.checked : CheckState.unchecked;
                     checked_state_changed(state) => {
                         update_snap_to_grid(state == CheckState.checked);
                     }
                 }
                 CheckBoxTile {
-                    text: "Show timestamps";
+                    text: Translations.choreography_show_timestamps_label;
                     check_state: show_timestamps ? CheckState.checked : CheckState.unchecked;
                     checked_state_changed(state) => {
                         update_show_timestamps(state == CheckState.checked);
                     }
                 }
                 CheckBoxTile {
-                    text: "Show legend";
+                    text: Translations.choreography_show_legend_label;
                     check_state: show_legend ? CheckState.checked : CheckState.unchecked;
                     checked_state_changed(state) => {
                         update_show_legend(state == CheckState.checked);
                     }
                 }
+                MaterialText { text: Translations.choreography_transparency_label; }
                 Slider {
                     minimum: 0;
                     maximum: 1;

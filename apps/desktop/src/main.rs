@@ -17,9 +17,11 @@ use choreo_components::choreo_main::MainPageActionHandlers;
 use choreo_components::choreo_main::MainPageBinding;
 use choreo_components::choreo_main::MainPageDependencies;
 use choreo_components::global::GlobalStateModel;
+use choreo_components::i18n;
 use choreo_components::preferences::InMemoryPreferences;
 use choreo_components::shell;
 use choreo_state_machine::ApplicationStateMachine;
+use choreo_i18n::detect_locale;
 
 fn main() -> Result<(), slint::PlatformError> {
     let ui = shell::create_shell_host()?;
@@ -29,6 +31,8 @@ fn main() -> Result<(), slint::PlatformError> {
             GlobalStateModel::default(),
         )),
     ));
+    let locale = detect_locale();
+    i18n::apply_translations(&ui, &locale);
     let audio_player = AudioPlayerViewModel::new(None);
     let preferences = InMemoryPreferences::default();
     let (open_audio_sender, _open_audio_receiver) = unbounded();
@@ -47,6 +51,7 @@ fn main() -> Result<(), slint::PlatformError> {
             global_state,
             state_machine,
             audio_player,
+            locale,
             haptic_feedback: None,
             open_audio_sender,
             open_svg_sender,
@@ -57,7 +62,6 @@ fn main() -> Result<(), slint::PlatformError> {
             actions,
         },
     );
-    binding.view().set_title_text(shell::app_title().into());
     binding.view().run()
 }
 

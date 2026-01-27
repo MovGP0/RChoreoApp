@@ -1,5 +1,6 @@
 import { IconButton, ListView, MaterialPalette, MaterialText, SearchBar, Vertical, Horizontal } from "@material";
 import { SceneItemView } from "scene_item_view.slint";
+import { Translations } from "translations.slint";
 
 export struct SceneListItem {
     name: string,
@@ -16,14 +17,14 @@ export component ScenesPaneView inherits Rectangle {
     in property <bool> can_delete_scene;
     in property <bool> can_navigate_to_settings;
     in property <bool> can_navigate_to_dancer_settings;
-    in property <string> search_placeholder;
+    in property <string> search_placeholder: Translations.search_placeholder;
     in property <string> add_before_text;
     in property <string> add_after_text;
-    in property <string> delete_text;
+    in property <string> delete_text: Translations.delete_scene_dialog_title;
     in property <string> open_text;
     in property <string> save_text;
-    in property <string> settings_text;
-    in property <string> dancers_text;
+    in property <string> settings_text: Translations.settings_title;
+    in property <string> dancers_text: Translations.dancers_title;
 
     callback select_scene(int);
     callback update_search_text(string);
@@ -67,15 +68,13 @@ export component ScenesPaneView inherits Rectangle {
 
         Horizontal {
             spacing: 8px;
-
-            IconButton { icon: @image-url("icons/PlusCircleOutline.svg"); tooltip: add_before_text; clicked => { add_scene_before(); } }
-            IconButton { icon: @image-url("icons/Plus.svg"); tooltip: add_after_text; clicked => { add_scene_after(); } }
-            IconButton { icon: @image-url("icons/DeleteOutline.svg"); tooltip: delete_text; enabled: can_delete_scene; clicked => { delete_scene(); } }
+            IconButton { icon: @image-url("icons/TableRowPlusBefore.svg"); tooltip: add_before_text; clicked => { add_scene_before(); } }
+            IconButton { icon: @image-url("icons/TableRowPlusAfter.svg"); tooltip: add_after_text; clicked => { add_scene_after(); } }
+            IconButton { icon: @image-url("icons/Delete.svg"); tooltip: delete_text; enabled: can_delete_scene; clicked => { delete_scene(); } }
         }
 
         Horizontal {
             spacing: 8px;
-
             IconButton { icon: @image-url("icons/FolderOpen.svg"); tooltip: open_text; clicked => { open_choreo(); } }
             IconButton { icon: @image-url("icons/ContentSave.svg"); tooltip: save_text; enabled: can_save_choreo; clicked => { save_choreo(); } }
             IconButton { icon: @image-url("icons/Cog.svg"); tooltip: settings_text; enabled: can_navigate_to_settings; clicked => { navigate_to_settings(); } }

@@ -1,4 +1,5 @@
 import { ListView, MaterialText, TextButton, TextField, Vertical } from "@material";
+import { Translations } from "translations.slint";
 
 export component DancerSettingsPage inherits Rectangle {
     in property <[string]> dancer_names;
@@ -10,10 +11,10 @@ export component DancerSettingsPage inherits Rectangle {
     in property <string> dancer_icon_name;
     in property <bool> can_delete_dancer;
     in property <bool> can_swap_dancers;
-    in property <string> title_text;
-    in property <string> swap_title_text;
-    in property <string> save_text;
-    in property <string> cancel_text;
+    in property <string> title_text: Translations.dancers_title;
+    in property <string> swap_title_text: Translations.dancer_swap_section_title;
+    in property <string> save_text: Translations.common_ok;
+    in property <string> cancel_text: Translations.common_cancel;
 
     callback select_dancer(int);
     callback add_dancer();
@@ -59,9 +60,9 @@ export component DancerSettingsPage inherits Rectangle {
 
             Vertical {
                 spacing: 6px;
-                TextField { label: "Name"; text: dancer_name; edited(v) => { update_dancer_name(v); } }
-                TextField { label: "Shortcut"; text: dancer_shortcut; edited(v) => { update_dancer_shortcut(v); } }
-                TextField { label: "Icon"; text: dancer_icon_name; edited(v) => { update_dancer_icon(v); } }
+                TextField { label: Translations.dancer_name_label; text: dancer_name; edited(v) => { update_dancer_name(v); } }
+                TextField { label: Translations.dancer_shortcut_label; text: dancer_shortcut; edited(v) => { update_dancer_shortcut(v); } }
+                TextField { label: Translations.dancer_icon_label; text: dancer_icon_name; edited(v) => { update_dancer_icon(v); } }
             }
         }
 
@@ -75,7 +76,7 @@ export component DancerSettingsPage inherits Rectangle {
             Vertical {
                 spacing: 6px;
                 MaterialText { text: swap_title_text; }
-                TextButton { text: "Swap"; enabled: can_swap_dancers; clicked => { swap_dancers(); } }
+                TextButton { text: Translations.dancer_swap_button; enabled: can_swap_dancers; clicked => { swap_dancers(); } }
             }
         }
 

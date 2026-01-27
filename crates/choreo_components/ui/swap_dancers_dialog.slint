@@ -1,10 +1,11 @@
 import { MaterialText, TextButton, Vertical } from "@material";
+import { Translations } from "translations.slint";
 
 export component SwapDancersDialogView inherits Rectangle {
-    in property <string> title_text;
+    in property <string> title_text: Translations.dancer_swap_dialog_title;
     in property <string> message_text;
-    in property <string> confirm_text;
-    in property <string> cancel_text;
+    in property <string> confirm_text: Translations.dancer_swap_dialog_confirm;
+    in property <string> cancel_text: Translations.dancer_swap_dialog_cancel;
     in property <color> first_color;
     in property <color> second_color;
     in property <string> first_name;

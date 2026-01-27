@@ -1,12 +1,13 @@
 import { ElevatedCard, MaterialText, TextButton, Vertical, Horizontal } from "@material";
+import { Translations } from "translations.slint";
 
 export component DeleteSceneDialogView inherits Rectangle {
-    in property <string> title_text;
+    in property <string> title_text: Translations.delete_scene_dialog_title;
     in property <string> scene_name;
     in property <string> message_text;
     in property <color> scene_color;
-    in property <string> confirm_text;
-    in property <string> cancel_text;
+    in property <string> confirm_text: Translations.delete_scene_dialog_yes;
+    in property <string> cancel_text: Translations.delete_scene_dialog_no;
 
     callback confirm_delete();
     callback cancel();
