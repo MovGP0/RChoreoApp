@@ -1,6 +1,6 @@
-mod common;
+mod floor;
 
-use common::Report;
+use floor::Report;
 use choreo_components::floor::{Point, PointerButton, PointerEventArgs};
 
 #[test]
@@ -21,6 +21,6 @@ fn test_pointer_event_args_spec() {
         });
     });
 
-    let report = common::run_suite(&suite);
+    let report = floor::run_suite(&suite);
     assert!(report.is_success());
 }

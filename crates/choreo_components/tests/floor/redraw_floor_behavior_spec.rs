@@ -1,6 +1,6 @@
-mod common;
+mod floor;
 
-use common::Report;
+use floor::Report;
 use choreo_components::floor::RedrawFloorBehavior;
 
 fn count_draws(receiver: &crossbeam_channel::Receiver<choreo_components::floor::DrawFloorCommand>) -> usize {
@@ -11,7 +11,7 @@ fn count_draws(receiver: &crossbeam_channel::Receiver<choreo_components::floor::
 fn redraw_floor_behavior_spec() {
     let suite = rspec::describe("redraw floor behavior", (), |spec| {
         spec.it("redraws when choreography changes", |_| {
-            let mut context = common::FloorTestContext::new();
+            let mut context = floor::FloorTestContext::new();
             context.configure_canvas();
             let behavior = RedrawFloorBehavior;
 
@@ -20,7 +20,7 @@ fn redraw_floor_behavior_spec() {
         });
 
         spec.it("redraws when selected scene changes", |_| {
-            let mut context = common::FloorTestContext::new();
+            let mut context = floor::FloorTestContext::new();
             context.configure_canvas();
             let behavior = RedrawFloorBehavior;
 
@@ -29,7 +29,7 @@ fn redraw_floor_behavior_spec() {
         });
 
         spec.it("redraws when redraw command is published", |_| {
-            let mut context = common::FloorTestContext::new();
+            let mut context = floor::FloorTestContext::new();
             context.configure_canvas();
             let behavior = RedrawFloorBehavior;
 
@@ -38,6 +38,6 @@ fn redraw_floor_behavior_spec() {
         });
     });
 
-    let report = common::run_suite(&suite);
+    let report = floor::run_suite(&suite);
     assert!(report.is_success());
 }

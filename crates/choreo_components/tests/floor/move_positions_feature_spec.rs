@@ -1,16 +1,16 @@
-mod common;
+mod floor;
 
-use common::Report;
+use choreo_components::floor::Report;
 use choreo_components::floor::{Matrix, MovePositionsBehavior, Point};
 use choreo_components::global::InteractionMode;
-use choreo_state_machine::MovePositionsStartedTrigger;
+use choreo_state_machine::{MovePositionsStartedTrigger, StateKind};
 
-fn setup_context() -> (common::FloorTestContext, MovePositionsBehavior, choreo_models::SceneModel) {
-    let mut context = common::FloorTestContext::new();
+fn setup_context() -> (floor::FloorTestContext, MovePositionsBehavior, choreo_models::SceneModel) {
+    let mut context = floor::FloorTestContext::new();
     context.configure_canvas();
 
-    let (choreography, scene) = common::build_three_position_choreography();
-    let scene_view_model = common::map_scene_view_model(&scene);
+    let (choreography, scene) = floor::build_three_position_choreography();
+    let scene_view_model = floor::map_scene_view_model(&scene);
     context.global_state.choreography = choreography;
     context.global_state.selected_scene = Some(scene_view_model.clone());
     context.global_state.scenes = vec![scene_view_model];
@@ -22,28 +22,28 @@ fn setup_context() -> (common::FloorTestContext, MovePositionsBehavior, choreo_m
 
 fn select_rectangle(
     behavior: &mut MovePositionsBehavior,
-    context: &mut common::FloorTestContext,
+    context: &mut floor::FloorTestContext,
     start: Point,
     end: Point,
 ) {
-    let view_start = common::floor_to_view_point(&context.view_model, &context.global_state.choreography, start);
-    let view_end = common::floor_to_view_point(&context.view_model, &context.global_state.choreography, end);
-    behavior.handle_pointer_pressed(&context.view_model, &mut context.global_state, &mut context.state_machine, common::pointer_pressed(view_start));
-    behavior.handle_pointer_moved(&context.view_model, &mut context.global_state, &mut context.state_machine, common::pointer_moved(view_end));
-    behavior.handle_pointer_released(&context.view_model, &mut context.global_state, &mut context.state_machine, common::pointer_released(view_end));
+    let view_start = floor::floor_to_view_point(&context.view_model, &context.global_state.choreography, start);
+    let view_end = floor::floor_to_view_point(&context.view_model, &context.global_state.choreography, end);
+    behavior.handle_pointer_pressed(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_pressed(view_start));
+    behavior.handle_pointer_moved(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_moved(view_end));
+    behavior.handle_pointer_released(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_released(view_end));
 }
 
 fn drag_from_to(
     behavior: &mut MovePositionsBehavior,
-    context: &mut common::FloorTestContext,
+    context: &mut floor::FloorTestContext,
     start: Point,
     end: Point,
 ) {
-    let view_start = common::floor_to_view_point(&context.view_model, &context.global_state.choreography, start);
-    let view_end = common::floor_to_view_point(&context.view_model, &context.global_state.choreography, end);
-    behavior.handle_pointer_pressed(&context.view_model, &mut context.global_state, &mut context.state_machine, common::pointer_pressed(view_start));
-    behavior.handle_pointer_moved(&context.view_model, &mut context.global_state, &mut context.state_machine, common::pointer_moved(view_end));
-    behavior.handle_pointer_released(&context.view_model, &mut context.global_state, &mut context.state_machine, common::pointer_released(view_end));
+    let view_start = floor::floor_to_view_point(&context.view_model, &context.global_state.choreography, start);
+    let view_end = floor::floor_to_view_point(&context.view_model, &context.global_state.choreography, end);
+    behavior.handle_pointer_pressed(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_pressed(view_start));
+    behavior.handle_pointer_moved(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_moved(view_end));
+    behavior.handle_pointer_released(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_released(view_end));
 }
 
 #[test]
@@ -68,12 +68,12 @@ fn move_positions_feature_spec() {
             let second = &scene.positions[1];
             let third = &scene.positions[2];
 
-            common::assert_close(first.x, start_first.x + 1.5, 0.0001);
-            common::assert_close(first.y, start_first.y - 1.0, 0.0001);
-            common::assert_close(second.x, start_second.x + 1.5, 0.0001);
-            common::assert_close(second.y, start_second.y - 1.0, 0.0001);
-            common::assert_close(third.x, start_third.x, 0.0001);
-            common::assert_close(third.y, start_third.y, 0.0001);
+            floor::assert_close(first.x, start_first.x + 1.5, 0.0001);
+            floor::assert_close(first.y, start_first.y - 1.0, 0.0001);
+            floor::assert_close(second.x, start_second.x + 1.5, 0.0001);
+            floor::assert_close(second.y, start_second.y - 1.0, 0.0001);
+            floor::assert_close(third.x, start_third.x, 0.0001);
+            floor::assert_close(third.y, start_third.y, 0.0001);
         });
 
         spec.it("clears selection when clicking outside", |_| {
@@ -104,17 +104,18 @@ fn move_positions_feature_spec() {
             let second = &scene.positions[1];
             let third = &scene.positions[2];
 
-            common::assert_close(first.x, start_first.x - 1.0, 0.0001);
-            common::assert_close(first.y, start_first.y + 2.0, 0.0001);
-            common::assert_close(second.x, start_second.x, 0.0001);
-            common::assert_close(second.y, start_second.y, 0.0001);
-            common::assert_close(third.x, start_third.x, 0.0001);
-            common::assert_close(third.y, start_third.y, 0.0001);
+            floor::assert_close(first.x, start_first.x - 1.0, 0.0001);
+            floor::assert_close(first.y, start_first.y + 2.0, 0.0001);
+            floor::assert_close(second.x, start_second.x, 0.0001);
+            floor::assert_close(second.y, start_second.y, 0.0001);
+            floor::assert_close(third.x, start_third.x, 0.0001);
+            floor::assert_close(third.y, start_third.y, 0.0001);
             assert_eq!(context.global_state.selected_positions.len(), 1);
         });
 
         spec.it("selects positions with mouse drag rectangle", |_| {
             let (mut context, mut behavior, _) = setup_context();
+            assert_eq!(context.state_machine.state().kind(), StateKind::MovePositionsState);
             select_rectangle(&mut behavior, &mut context, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
 
             let selected = &context.global_state.selected_positions;
@@ -126,6 +127,7 @@ fn move_positions_feature_spec() {
 
         spec.it("selects positions with mouse drag rectangle after translation", |_| {
             let (mut context, mut behavior, _) = setup_context();
+            assert_eq!(context.state_machine.state().kind(), StateKind::MovePositionsState);
             context.view_model.set_transformation_matrix(Matrix::translation(10.0, -12.0));
 
             select_rectangle(&mut behavior, &mut context, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
@@ -138,6 +140,6 @@ fn move_positions_feature_spec() {
         });
     });
 
-    let report = common::run_suite(&suite);
+    let report = floor::run_suite(&suite);
     assert!(report.is_success());
 }
