@@ -1,3 +1,3 @@
 mod types;
 
-pub use types::{GlobalStateModel, InteractionMode};
+pub use types::{GlobalStateModel, InteractionMode, SelectionRectangle};

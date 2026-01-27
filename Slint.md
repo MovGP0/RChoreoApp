@@ -12,11 +12,11 @@ What it provides instead is:
 
 In practice, most Slint applications end up **MVVM-like**:
 
-| Role | In Slint |
-|----|----|
-| View | `.slint` components |
+| Role      | In Slint                                          |
+| --------- | ------------------------------------------------- |
+| View      | `.slint` components                               |
 | ViewModel | `global` or root component properties + callbacks |
-| Model | Rust domain structs, services, persistence |
+| Model     | Rust domain structs, services, persistence        |
 
 Key difference to classic MVVM:
 - No `INotifyPropertyChanged`
@@ -25,11 +25,11 @@ Key difference to classic MVVM:
 
 ## Property Directions (Critical)
 
-| Property kind | Who writes | Who reads | Typical use |
-|--------------|-----------|----------|-------------|
-| `in` | Parent / binding | Component | Inputs, configuration |
-| `out` | Component | Parent | Outputs, signals |
-| `in-out` | Both | Both | Shared state |
+| Property kind | Who writes       | Who reads | Typical use           |
+| ------------- | ---------------- | --------- | --------------------- |
+| `in`          | Parent / binding | Component | Inputs, configuration |
+| `out`         | Component        | Parent    | Outputs, signals      |
+| `in-out`      | Both             | Both      | Shared state          |
 
 Slint **enforces directionality at compile time**.
 
@@ -59,7 +59,8 @@ child.value := parent.count;
 | Operator | Meaning             |
 | -------- | ------------------- |
 | `:`      | Reactive binding    |
-| `:=`     | One-time assignment |
+| `=`      | One-time assignment |
+| `<=>`    | Two-way binding     |
 
 ## `out → in` Is Fully Data-Bound
 

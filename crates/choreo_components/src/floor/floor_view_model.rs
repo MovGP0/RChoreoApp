@@ -61,12 +61,12 @@ pub fn build_floor_canvas_view_model(deps: FloorDependencies) -> FloorCanvasView
             deps.render_gate,
         )),
         Box::new(RedrawFloorBehavior),
-        Box::new(GestureHandlingBehavior),
-        Box::new(PlacePositionBehavior),
-        Box::new(MovePositionsBehavior),
-        Box::new(RotateAroundCenterBehavior),
-        Box::new(ScalePositionsBehavior),
-        Box::new(ScaleAroundDancerBehavior),
+        Box::new(GestureHandlingBehavior::default()),
+        Box::new(PlacePositionBehavior::default()),
+        Box::new(MovePositionsBehavior::default()),
+        Box::new(RotateAroundCenterBehavior::default()),
+        Box::new(ScalePositionsBehavior::default()),
+        Box::new(ScaleAroundDancerBehavior::default()),
     ];
 
     FloorCanvasViewModel::new(deps.draw_floor_sender, behaviors)

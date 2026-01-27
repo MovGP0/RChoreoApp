@@ -3,6 +3,13 @@ use std::rc::Rc;
 use choreo_models::{ChoreographyModel, PositionModel, SceneModel};
 
 use crate::scenes::SceneViewModel;
+use crate::floor::Point;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SelectionRectangle {
+    pub start: Point,
+    pub end: Point,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum InteractionMode {
@@ -22,6 +29,7 @@ pub struct GlobalStateModel {
     pub selected_scene: Option<SceneViewModel>,
     pub selected_positions: Vec<PositionModel>,
     pub selected_positions_snapshot: Vec<PositionModel>,
+    pub selection_rectangle: Option<SelectionRectangle>,
     pub is_place_mode: bool,
     pub interaction_mode: InteractionMode,
     pub main_canvas_view: Option<Rc<crate::floor::CanvasViewHandle>>,

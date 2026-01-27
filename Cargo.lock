@@ -940,6 +940,7 @@ dependencies = [
  "material-color-utilities",
  "nject",
  "rodio",
+ "rspec",
  "slint",
  "slint-build",
 ]
