@@ -8,173 +8,268 @@ use choreo_models::{
 use std::rc::Rc;
 use time::{Date, Month, PrimitiveDateTime, Time};
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr, $message:expr) => {
+        if !$condition {
+            $errors.push($message.to_string());
+        }
+    };
+}
+
 #[test]
 fn should_map_json_choreography_to_model_when_invoked() {
-    let mapper = ChoreographyModelMapper;
+    // arrange
+    let subject = ChoreographyModelMapper;
     let source = build_json_choreography();
 
-    let result = mapper.map_to_model(&source);
+    // act
+    let result = subject.map_to_model(&source);
 
-    assert_eq!(result.comment.as_deref(), Some("comment"));
-    assert_eq!(result.name, "Choreo");
-    assert_eq!(result.subtitle.as_deref(), Some("Subtitle"));
-    assert_eq!(result.date.as_deref(), Some("2026-01-10"));
-    assert_eq!(result.variation.as_deref(), Some("Variation"));
-    assert_eq!(result.author.as_deref(), Some("Author"));
-    assert_eq!(result.description.as_deref(), Some("Description"));
-    assert_eq!(result.last_save_date, fixed_last_save_date());
-    assert_eq!(result.settings.animation_milliseconds, 250);
-    assert_eq!(result.settings.front_position, FrontPosition::Left);
-    assert_eq!(result.settings.dancer_position, FrontPosition::Right);
-    assert_eq!(result.settings.resolution, 12);
-    assert_eq!(result.settings.transparency, 0.75);
-    assert!(result.settings.positions_at_side);
-    assert!(result.settings.grid_lines);
-    assert!(result.settings.snap_to_grid);
-    assert_eq!(result.settings.floor_color, Colors::blue());
-    assert_eq!(result.settings.dancer_size, 0.9);
-    assert!(!result.settings.show_timestamps);
-    assert_eq!(
+    // assert
+    let mut errors = Vec::new();
+    check_eq!(errors, result.comment.as_deref(), Some("comment"));
+    check_eq!(errors, result.name, "Choreo");
+    check_eq!(errors, result.subtitle.as_deref(), Some("Subtitle"));
+    check_eq!(
+        errors,
+        result.date,
+        Some(Date::from_calendar_date(2026, Month::January, 10).expect("valid date"))
+    );
+    check_eq!(errors, result.variation.as_deref(), Some("Variation"));
+    check_eq!(errors, result.author.as_deref(), Some("Author"));
+    check_eq!(errors, result.description.as_deref(), Some("Description"));
+    check_eq!(errors, result.last_save_date, fixed_last_save_date());
+    check_eq!(errors, result.settings.animation_milliseconds, 250);
+    check_eq!(errors, result.settings.front_position, FrontPosition::Left);
+    check_eq!(errors, result.settings.dancer_position, FrontPosition::Right);
+    check_eq!(errors, result.settings.resolution, 12);
+    check_eq!(errors, result.settings.transparency, 0.75);
+    check!(errors, result.settings.positions_at_side, "positions_at_side mismatch");
+    check!(errors, result.settings.grid_lines, "grid_lines mismatch");
+    check!(errors, result.settings.snap_to_grid, "snap_to_grid mismatch");
+    check_eq!(errors, result.settings.floor_color, Colors::blue());
+    check_eq!(errors, result.settings.dancer_size, 0.9);
+    check!(
+        errors,
+        !result.settings.show_timestamps,
+        "show_timestamps mismatch"
+    );
+    check_eq!(
+        errors,
         result.settings.music_path_absolute.as_deref(),
         Some("C:\\music\\track.mp3")
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.settings.music_path_relative.as_deref(),
         Some("track.mp3")
     );
-    assert_eq!(result.floor.size_front, 10);
-    assert_eq!(result.floor.size_back, 11);
-    assert_eq!(result.floor.size_left, 12);
-    assert_eq!(result.floor.size_right, 13);
-    assert_eq!(result.roles.len(), 2);
-    assert_eq!(result.dancers.len(), 2);
-    assert_eq!(result.scenes.len(), 2);
-    assert!(Rc::ptr_eq(&result.dancers[0].role, &result.roles[0]));
-    assert!(Rc::ptr_eq(&result.dancers[1].role, &result.roles[1]));
-    assert_eq!(result.scenes[0].name, "Scene 1");
-    assert_eq!(result.scenes[0].text.as_deref(), Some("Text"));
-    assert!(result.scenes[0].fixed_positions);
-    assert_eq!(result.scenes[0].timestamp.as_deref(), Some("00:00:12"));
-    assert_eq!(result.scenes[0].variation_depth, 1);
-    assert_eq!(result.scenes[0].color, Colors::green());
-    assert_eq!(result.scenes[0].positions.len(), 2);
-    assert!(Rc::ptr_eq(
-        result.scenes[0].positions[0].dancer.as_ref().expect("dancer"),
-        &result.dancers[0]
-    ));
-    assert_eq!(result.scenes[0].positions[0].orientation, Some(90.0));
-    assert_eq!(result.scenes[0].positions[0].x, 1.25);
-    assert_eq!(result.scenes[0].positions[0].y, 2.5);
-    assert_eq!(result.scenes[0].positions[0].curve1_x, Some(0.1));
-    assert_eq!(result.scenes[0].positions[0].curve1_y, Some(0.2));
-    assert_eq!(result.scenes[0].positions[0].curve2_x, Some(0.3));
-    assert_eq!(result.scenes[0].positions[0].curve2_y, Some(0.4));
-    assert_eq!(result.scenes[0].positions[0].movement1_x, Some(0.5));
-    assert_eq!(result.scenes[0].positions[0].movement1_y, Some(0.6));
-    assert_eq!(result.scenes[0].positions[0].movement2_x, Some(0.7));
-    assert_eq!(result.scenes[0].positions[0].movement2_y, Some(0.8));
-    assert_eq!(result.scenes[0].variations.len(), 1);
-    assert_eq!(result.scenes[0].variations[0].len(), 1);
-    assert_eq!(result.scenes[0].variations[0][0].name, "Variation Scene");
-    assert_eq!(result.scenes[0].current_variation.len(), 1);
-    assert_eq!(result.scenes[0].current_variation[0].name, "Current Variation");
-    assert!(result.scenes[1].positions.is_empty());
+    check_eq!(errors, result.floor.size_front, 10);
+    check_eq!(errors, result.floor.size_back, 11);
+    check_eq!(errors, result.floor.size_left, 12);
+    check_eq!(errors, result.floor.size_right, 13);
+    check_eq!(errors, result.roles.len(), 2);
+    check_eq!(errors, result.dancers.len(), 2);
+    check_eq!(errors, result.scenes.len(), 2);
+    check!(
+        errors,
+        Rc::ptr_eq(&result.dancers[0].role, &result.roles[0]),
+        "dancer 0 role should reference role 0"
+    );
+    check!(
+        errors,
+        Rc::ptr_eq(&result.dancers[1].role, &result.roles[1]),
+        "dancer 1 role should reference role 1"
+    );
+    check_eq!(errors, result.scenes[0].name, "Scene 1");
+    check_eq!(errors, result.scenes[0].text.as_deref(), Some("Text"));
+    check!(
+        errors,
+        result.scenes[0].fixed_positions,
+        "scene 0 fixed_positions mismatch"
+    );
+    check_eq!(errors, result.scenes[0].timestamp.as_deref(), Some("00:00:12"));
+    check_eq!(errors, result.scenes[0].variation_depth, 1);
+    check_eq!(errors, result.scenes[0].color, Colors::green());
+    check_eq!(errors, result.scenes[0].positions.len(), 2);
+    check!(
+        errors,
+        Rc::ptr_eq(
+            result.scenes[0].positions[0].dancer.as_ref().expect("dancer"),
+            &result.dancers[0]
+        ),
+        "scene 0 position 0 dancer reference mismatch"
+    );
+    check_eq!(errors, result.scenes[0].positions[0].orientation, Some(90.0));
+    check_eq!(errors, result.scenes[0].positions[0].x, 1.25);
+    check_eq!(errors, result.scenes[0].positions[0].y, 2.5);
+    check_eq!(errors, result.scenes[0].positions[0].curve1_x, Some(0.1));
+    check_eq!(errors, result.scenes[0].positions[0].curve1_y, Some(0.2));
+    check_eq!(errors, result.scenes[0].positions[0].curve2_x, Some(0.3));
+    check_eq!(errors, result.scenes[0].positions[0].curve2_y, Some(0.4));
+    check_eq!(errors, result.scenes[0].positions[0].movement1_x, Some(0.5));
+    check_eq!(errors, result.scenes[0].positions[0].movement1_y, Some(0.6));
+    check_eq!(errors, result.scenes[0].positions[0].movement2_x, Some(0.7));
+    check_eq!(errors, result.scenes[0].positions[0].movement2_y, Some(0.8));
+    check_eq!(errors, result.scenes[0].variations.len(), 1);
+    check_eq!(errors, result.scenes[0].variations[0].len(), 1);
+    check_eq!(errors, result.scenes[0].variations[0][0].name, "Variation Scene");
+    check_eq!(errors, result.scenes[0].current_variation.len(), 1);
+    check_eq!(
+        errors,
+        result.scenes[0].current_variation[0].name,
+        "Current Variation"
+    );
+    check!(
+        errors,
+        result.scenes[1].positions.is_empty(),
+        "scene 1 positions should be empty"
+    );
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]
 fn should_map_model_choreography_to_json_when_invoked() {
-    let mapper = ChoreographyModelMapper;
+    // arrange
+    let subject = ChoreographyModelMapper;
     let source = build_model_choreography();
 
-    let result = mapper.map_to_json(&source);
+    // act
+    let result = subject.map_to_json(&source);
 
-    assert_eq!(result.comment.as_deref(), Some("comment"));
-    assert_eq!(result.name, "Choreo");
-    assert_eq!(result.subtitle.as_deref(), Some("Subtitle"));
-    assert_eq!(result.date.as_deref(), Some("2026-01-10"));
-    assert_eq!(result.variation.as_deref(), Some("Variation"));
-    assert_eq!(result.author.as_deref(), Some("Author"));
-    assert_eq!(result.description.as_deref(), Some("Description"));
-    assert_eq!(result.last_save_date, fixed_last_save_date());
-    assert_eq!(result.settings.animation_milliseconds, 250);
-    assert_eq!(result.settings.front_position, FrontPosition::Left);
-    assert_eq!(result.settings.dancer_position, FrontPosition::Right);
-    assert_eq!(result.settings.resolution, 12);
-    assert_eq!(result.settings.transparency, 0.75);
-    assert!(result.settings.positions_at_side);
-    assert!(result.settings.grid_lines);
-    assert!(result.settings.snap_to_grid);
-    assert_eq!(result.settings.floor_color, Colors::blue());
-    assert_eq!(result.settings.dancer_size, 0.9);
-    assert!(!result.settings.show_timestamps);
-    assert_eq!(
+    // assert
+    let mut errors = Vec::new();
+    check_eq!(errors, result.comment.as_deref(), Some("comment"));
+    check_eq!(errors, result.name, "Choreo");
+    check_eq!(errors, result.subtitle.as_deref(), Some("Subtitle"));
+    check_eq!(errors, result.date.as_deref(), Some("2026-01-10"));
+    check_eq!(errors, result.variation.as_deref(), Some("Variation"));
+    check_eq!(errors, result.author.as_deref(), Some("Author"));
+    check_eq!(errors, result.description.as_deref(), Some("Description"));
+    check_eq!(errors, result.last_save_date, fixed_last_save_date());
+    check_eq!(errors, result.settings.animation_milliseconds, 250);
+    check_eq!(errors, result.settings.front_position, FrontPosition::Left);
+    check_eq!(errors, result.settings.dancer_position, FrontPosition::Right);
+    check_eq!(errors, result.settings.resolution, 12);
+    check_eq!(errors, result.settings.transparency, 0.75);
+    check!(errors, result.settings.positions_at_side, "positions_at_side mismatch");
+    check!(errors, result.settings.grid_lines, "grid_lines mismatch");
+    check!(errors, result.settings.snap_to_grid, "snap_to_grid mismatch");
+    check_eq!(errors, result.settings.floor_color, Colors::blue());
+    check_eq!(errors, result.settings.dancer_size, 0.9);
+    check!(
+        errors,
+        !result.settings.show_timestamps,
+        "show_timestamps mismatch"
+    );
+    check_eq!(
+        errors,
         result.settings.music_path_absolute.as_deref(),
         Some("C:\\music\\track.mp3")
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.settings.music_path_relative.as_deref(),
         Some("track.mp3")
     );
-    assert_eq!(result.floor.size_front, 10);
-    assert_eq!(result.floor.size_back, 11);
-    assert_eq!(result.floor.size_left, 12);
-    assert_eq!(result.floor.size_right, 13);
-    assert_eq!(result.roles.len(), 2);
-    assert_eq!(result.dancers.len(), 2);
-    assert_eq!(result.scenes.len(), 2);
-    assert_eq!(result.scenes[0].name, "Scene 1");
-    assert_eq!(result.scenes[0].text.as_deref(), Some("Text"));
-    assert!(result.scenes[0].fixed_positions);
-    assert_eq!(result.scenes[0].timestamp.as_deref(), Some("00:00:12"));
-    assert_eq!(result.scenes[0].variation_depth, 1);
-    assert_eq!(result.scenes[0].color, Colors::green());
-    assert_eq!(result.scenes[0].positions.as_ref().expect("positions").len(), 2);
-    assert_eq!(
-        result.scenes[0].positions.as_ref().expect("positions")[0]
-            .orientation,
+    check_eq!(errors, result.floor.size_front, 10);
+    check_eq!(errors, result.floor.size_back, 11);
+    check_eq!(errors, result.floor.size_left, 12);
+    check_eq!(errors, result.floor.size_right, 13);
+    check_eq!(errors, result.roles.len(), 2);
+    check_eq!(errors, result.dancers.len(), 2);
+    check_eq!(errors, result.scenes.len(), 2);
+    check_eq!(errors, result.scenes[0].name, "Scene 1");
+    check_eq!(errors, result.scenes[0].text.as_deref(), Some("Text"));
+    check!(
+        errors,
+        result.scenes[0].fixed_positions,
+        "scene 0 fixed_positions mismatch"
+    );
+    check_eq!(errors, result.scenes[0].timestamp.as_deref(), Some("00:00:12"));
+    check_eq!(errors, result.scenes[0].variation_depth, 1);
+    check_eq!(errors, result.scenes[0].color, Colors::green());
+    check_eq!(
+        errors,
+        result.scenes[0].positions.as_ref().expect("positions").len(),
+        2
+    );
+    check_eq!(
+        errors,
+        result.scenes[0].positions.as_ref().expect("positions")[0].orientation,
         Some(90.0)
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0].positions.as_ref().expect("positions")[0].x,
         1.25
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0].positions.as_ref().expect("positions")[0].y,
         2.5
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0].positions.as_ref().expect("positions")[0].curve1_x,
         Some(0.1)
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0].positions.as_ref().expect("positions")[0].curve1_y,
         Some(0.2)
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0].positions.as_ref().expect("positions")[0].curve2_x,
         Some(0.3)
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0].positions.as_ref().expect("positions")[0].curve2_y,
         Some(0.4)
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0].positions.as_ref().expect("positions")[0].movement1_x,
         Some(0.5)
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0].positions.as_ref().expect("positions")[0].movement1_y,
         Some(0.6)
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0].positions.as_ref().expect("positions")[0].movement2_x,
         Some(0.7)
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0].positions.as_ref().expect("positions")[0].movement2_y,
         Some(0.8)
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0]
             .variations
             .as_ref()
@@ -182,7 +277,8 @@ fn should_map_model_choreography_to_json_when_invoked() {
             .len(),
         1
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0]
             .variations
             .as_ref()
@@ -190,7 +286,8 @@ fn should_map_model_choreography_to_json_when_invoked() {
             .len(),
         1
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0]
             .variations
             .as_ref()
@@ -198,7 +295,8 @@ fn should_map_model_choreography_to_json_when_invoked() {
             .name,
         "Variation Scene"
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0]
             .current_variation
             .as_ref()
@@ -206,7 +304,8 @@ fn should_map_model_choreography_to_json_when_invoked() {
             .len(),
         1
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         result.scenes[0]
             .current_variation
             .as_ref()
@@ -214,7 +313,17 @@ fn should_map_model_choreography_to_json_when_invoked() {
             .name,
         "Current Variation"
     );
-    assert!(result.scenes[1].positions.is_none());
+    check!(
+        errors,
+        result.scenes[1].positions.is_none(),
+        "scene 1 positions should be none"
+    );
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 fn fixed_last_save_date() -> time::OffsetDateTime {
@@ -416,7 +525,7 @@ fn build_model_choreography() -> ChoreographyModel {
         comment: Some("comment".to_string()),
         name: "Choreo".to_string(),
         subtitle: Some("Subtitle".to_string()),
-        date: Some("2026-01-10".to_string()),
+        date: Some(Date::from_calendar_date(2026, Month::January, 10).expect("valid date")),
         variation: Some("Variation".to_string()),
         author: Some("Author".to_string()),
         description: Some("Description".to_string()),

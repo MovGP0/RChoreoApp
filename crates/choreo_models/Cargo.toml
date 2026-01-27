@@ -7,4 +7,4 @@ publish = false
 [dependencies]
 choreo_master_mobile_json = { path = "../choreo_master_mobile_json" }
 crossbeam-channel = "0.5"
-time = { version = "0.3", features = ["formatting", "parsing"] }
+time = { version = "0.3.46", features = ["formatting", "parsing"] }

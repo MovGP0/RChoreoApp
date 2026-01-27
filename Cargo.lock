@@ -919,6 +919,7 @@ dependencies = [
  "rspec",
  "slint",
  "slint-build",
+ "time 0.3.46",
 ]
 
 [[package]]

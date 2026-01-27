@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use time::OffsetDateTime;
+use time::{Date, OffsetDateTime};
 
 use crate::clone_mode::CloneMode;
 use crate::models::dancer::DancerModel;
@@ -20,7 +20,7 @@ pub struct ChoreographyModel {
     pub scenes: Vec<SceneModel>,
     pub name: String,
     pub subtitle: Option<String>,
-    pub date: Option<String>,
+    pub date: Option<Date>,
     pub variation: Option<String>,
     pub author: Option<String>,
     pub description: Option<String>,
@@ -64,7 +64,7 @@ impl ChoreographyModel {
             scenes,
             name: self.name.clone(),
             subtitle: self.subtitle.clone(),
-            date: self.date.clone(),
+            date: self.date,
             variation: self.variation.clone(),
             author: self.author.clone(),
             description: self.description.clone(),

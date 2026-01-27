@@ -1,4 +1,5 @@
-import { CheckBoxTile, CheckState, MaterialText, Slider, TextField, Vertical } from "@material";
+import { CheckBoxTile, CheckState, MaterialPalette, MaterialText, Slider, TextField, Vertical } from "@material";
+import { Date, DatePickerPopup } from "std-widgets.slint";
 import { Translations } from "translations.slint";
 
 export component ChoreographySettingsView inherits Rectangle {
@@ -14,7 +15,7 @@ export component ChoreographySettingsView inherits Rectangle {
     in property <string> comment;
     in property <string> name;
     in property <string> subtitle;
-    in property <string> date;
+    in-out property <Date> date;
     in property <string> variation;
     in property <string> author;
     in property <string> description;
@@ -44,7 +45,7 @@ export component ChoreographySettingsView inherits Rectangle {
     callback update_comment(string);
     callback update_name(string);
     callback update_subtitle(string);
-    callback update_date(string);
+    callback update_date_parts(int, int, int);
     callback update_variation(string);
     callback update_author(string);
     callback update_description(string);
@@ -62,16 +63,19 @@ export component ChoreographySettingsView inherits Rectangle {
     callback update_floor_right(int);
     callback update_grid_resolution(int);
 
-    background: #f2f2f2;
+    background: MaterialPalette.surface_variant;
     padding: 8px;
 
-    Vertical {
+    preferred-height: content.preferred-height;
+    height: content.preferred-height;
+
+    content := Vertical {
         spacing: 12px;
 
         Rectangle {
-            background: #ffffff;
+            background: MaterialPalette.surface_container;
             border-width: 1px;
-            border-color: #dddddd;
+            border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
             padding: 12px;
 
@@ -113,9 +117,9 @@ export component ChoreographySettingsView inherits Rectangle {
         }
 
         Rectangle {
-            background: #ffffff;
+            background: MaterialPalette.surface_container;
             border-width: 1px;
-            border-color: #dddddd;
+            border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
             padding: 12px;
 
@@ -124,18 +128,35 @@ export component ChoreographySettingsView inherits Rectangle {
                 MaterialText { text: Translations.choreography_section_title; font-size: 18px; }
                 TextField { label: Translations.choreography_name_placeholder; text: name; edited(v) => { update_name(v); } }
                 TextField { label: Translations.choreography_subtitle_placeholder; text: subtitle; edited(v) => { update_subtitle(v); } }
-                TextField { label: "Date"; text: date; edited(v) => { update_date(v); } }
+                TextField {
+                    label: "Date";
+                    read_only: true;
+                    text: date.year + "-" + date.month + "-" + date.day;
+                    trailing_icon: @image-url("icons/CalendarToday.svg");
+                    trailing_icon_clicked => { date_picker.show(); }
+                }
                 TextField { label: Translations.choreography_variation_placeholder; text: variation; edited(v) => { update_variation(v); } }
                 TextField { label: Translations.choreography_author_placeholder; text: author; edited(v) => { update_author(v); } }
                 TextField { label: Translations.choreography_comment_placeholder; text: comment; edited(v) => { update_comment(v); } }
                 TextField { label: Translations.choreography_description_placeholder; text: description; edited(v) => { update_description(v); } }
             }
+
+            date_picker := DatePickerPopup {
+                title: "Date";
+                date <=> root.date;
+
+                accepted(date) => {
+                    root.date = date;
+                    root.update_date_parts(date.year, date.month, date.day);
+                    date_picker.close();
+                }
+            }
         }
 
         Rectangle {
-            background: #ffffff;
+            background: MaterialPalette.surface_container;
             border-width: 1px;
-            border-color: #dddddd;
+            border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
             padding: 12px;
 
@@ -187,6 +208,5 @@ export component ChoreographySettingsView inherits Rectangle {
             }
         }
     }
+
 }
-
-

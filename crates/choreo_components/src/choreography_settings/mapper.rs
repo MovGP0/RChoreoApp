@@ -1,6 +1,7 @@
 use choreo_master_mobile_json::{Color, SceneId};
 use choreo_models::{ChoreographyModel, SceneModel};
 
+use crate::date;
 use crate::scenes::SceneViewModel;
 use crate::time::parse_timestamp_seconds;
 
@@ -15,7 +16,7 @@ pub(crate) fn reset_view_model(view_model: &mut ChoreographySettingsViewModel) {
     view_model.variation.clear();
     view_model.author.clear();
     view_model.description.clear();
-    view_model.date.clear();
+    view_model.date = date::today_date();
     view_model.floor_front = 0;
     view_model.floor_back = 0;
     view_model.floor_left = 0;
@@ -49,7 +50,7 @@ pub(crate) fn map_from_choreography(
     view_model.variation = choreography.variation.clone().unwrap_or_default();
     view_model.author = choreography.author.clone().unwrap_or_default();
     view_model.description = choreography.description.clone().unwrap_or_default();
-    view_model.date = choreography.date.clone().unwrap_or_default();
+    view_model.date = choreography.date.unwrap_or_else(date::today_date);
 
     view_model.floor_front = choreography.floor.size_front;
     view_model.floor_back = choreography.floor.size_back;

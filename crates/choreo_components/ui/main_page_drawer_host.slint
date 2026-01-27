@@ -10,7 +10,7 @@ export component MainPageDrawerHost inherits Rectangle {
     in-out property <bool> is_right_open: false;
     in property <bool> left_close_on_click_away: true;
     in property <bool> right_close_on_click_away: true;
-    in property <color> overlay_color: #66000000;
+    in property <color> overlay_color: MaterialPalette.background_modal;
     in property <color> drawer_background: MaterialPalette.surface_container_low;
 
     callback overlay_clicked();
@@ -72,6 +72,11 @@ export component MainPageDrawerHost inherits Rectangle {
             easing: MaterialAnimations.standard_easing;
         }
 
+        TouchArea {
+            width: parent.width;
+            height: parent.height;
+        }
+
         ScenesPaneView { }
     }
 
@@ -89,12 +94,20 @@ export component MainPageDrawerHost inherits Rectangle {
             easing: MaterialAnimations.standard_easing;
         }
 
+        TouchArea {
+            width: parent.width;
+            height: parent.height;
+        }
+
         ScrollView {
             width: parent.width;
             height: parent.height;
-            horizontal_scrollbar_policy: ScrollBarPolicy.always-off;
+            vertical_scrollbar_policy: ScrollBarPolicy.always_on;
+            horizontal_scrollbar_policy: ScrollBarPolicy.always_off;
 
-            ChoreographySettingsView { }
+            ChoreographySettingsView {
+                width: parent.width;
+            }
         }
     }
 }

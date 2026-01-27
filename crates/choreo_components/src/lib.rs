@@ -21,6 +21,7 @@ pub mod choreo_main;
 pub mod time;
 pub mod color_picker;
 pub mod shell;
+pub mod date;
 
 mod ui {
     #![allow(unreachable_pub)]

@@ -60,11 +60,22 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="fixing panel overlay in main page">
+    <list default="true" id="b12a9ac7-299e-407e-abda-4fe814005095" name="Changes" comment="adding documentation for MVB pattern">
+      <change afterPath="$PROJECT_DIR$/crates/choreo_components/src/date.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.beads/issues.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/.beads/issues.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreo_main/main_view_model.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/choreography_settings_view_model.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/choreography_settings_view_model.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/mapper.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/mapper.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_date_behavior.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/choreography_settings/update_date_behavior.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/choreography_settings_view.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/choreography_settings_view.slint" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/crates/choreo_components/ui/main_page_drawer_host.slint" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_components/ui/main_page_drawer_host.slint" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_models/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_models/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_models/src/mapping.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_models/src/mapping.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_models/src/models/choreography.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_models/src/models/choreography.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crates/choreo_models/tests/choreography_model_mapper_tests.rs" beforeDir="false" afterPath="$PROJECT_DIR$/crates/choreo_models/tests/choreography_model_mapper_tests.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -204,7 +215,7 @@
       <workItem from="1769275813767" duration="1910000" />
       <workItem from="1769277827550" duration="19895000" />
       <workItem from="1769362058640" duration="1781000" />
-      <workItem from="1769525694077" duration="3866000" />
+      <workItem from="1769525694077" duration="12157000" />
     </task>
     <task id="LOCAL-00001" summary="implementing json parsing">
       <option name="closed" value="true" />
@@ -406,7 +417,39 @@
       <option name="project" value="LOCAL" />
       <updated>1769529258007</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="fixing opening and closing of sidebar panels">
+      <option name="closed" value="true" />
+      <created>1769529717845</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1769529717845</updated>
+    </task>
+    <task id="LOCAL-00027" summary="adding notes on unit testing">
+      <option name="closed" value="true" />
+      <created>1769533326584</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1769533326584</updated>
+    </task>
+    <task id="LOCAL-00028" summary="adding documentation for MVB pattern">
+      <option name="closed" value="true" />
+      <created>1769535764692</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1769535764692</updated>
+    </task>
+    <task id="LOCAL-00029" summary="adding documentation for MVB pattern">
+      <option name="closed" value="true" />
+      <created>1769537236834</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1769537236834</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -428,7 +471,10 @@
     <MESSAGE value="fixing di issues" />
     <MESSAGE value="implementing translation bindings using slint" />
     <MESSAGE value="fixing panel overlay in main page" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixing panel overlay in main page" />
+    <MESSAGE value="fixing opening and closing of sidebar panels" />
+    <MESSAGE value="adding notes on unit testing" />
+    <MESSAGE value="adding documentation for MVB pattern" />
+    <option name="LAST_COMMIT_MESSAGE" value="adding documentation for MVB pattern" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -440,6 +486,10 @@
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

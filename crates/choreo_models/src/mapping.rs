@@ -4,6 +4,8 @@ use std::rc::Rc;
 use choreo_master_mobile_json::{
     Choreography, Dancer, DancerId, Floor, Position, Role, Scene, Settings,
 };
+use time::Date;
+use time::format_description::{self, FormatItem};
 
 use crate::models::{
     ChoreographyModel, DancerModel, FloorModel, PositionModel, RoleModel, SceneModel, SettingsModel,
@@ -49,7 +51,7 @@ impl ChoreographyModelMapper {
             scenes,
             name: source.name.clone(),
             subtitle: source.subtitle.clone(),
-            date: source.date.clone(),
+            date: parse_date(source.date.as_deref()),
             variation: source.variation.clone(),
             author: source.author.clone(),
             description: source.description.clone(),
@@ -96,13 +98,33 @@ impl ChoreographyModelMapper {
             scenes,
             name: source.name.clone(),
             subtitle: source.subtitle.clone(),
-            date: source.date.clone(),
+            date: format_date(source.date.as_ref()),
             variation: source.variation.clone(),
             author: source.author.clone(),
             description: source.description.clone(),
             last_save_date: source.last_save_date,
         }
     }
+}
+
+fn parse_date(source: Option<&str>) -> Option<Date>
+{
+    let source = source?;
+    let format = date_format();
+    Date::parse(source, &format).ok()
+}
+
+fn format_date(source: Option<&Date>) -> Option<String>
+{
+    let source = source?;
+    let format = date_format();
+    source.format(&format).ok()
+}
+
+fn date_format() -> Vec<FormatItem<'static>>
+{
+    format_description::parse("[year]-[month]-[day]")
+        .expect("valid date format")
 }
 
 pub(crate) fn role_ptr(role: &Rc<RoleModel>) -> usize {

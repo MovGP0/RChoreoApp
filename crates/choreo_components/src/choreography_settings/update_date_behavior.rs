@@ -7,7 +7,7 @@ use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateModel;
 use crate::logging::BehaviorLog;
 
-use super::mapper::normalize_text;
+use crate::date;
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
 use super::messages::RedrawFloorCommand;
 use nject::injectable;
@@ -29,9 +29,9 @@ impl UpdateDateBehavior {
         }
     }
 
-    pub fn update_date(&self, value: &str) {
+    pub fn update_date_parts(&self, year: i32, month: i32, day: i32) {
         let mut global_state = self.global_state.borrow_mut();
-        global_state.choreography.date = normalize_text(value);
+        global_state.choreography.date = date::build_date(year, month, day);
         let _ = self.redraw_sender.send(RedrawFloorCommand);
     }
 }

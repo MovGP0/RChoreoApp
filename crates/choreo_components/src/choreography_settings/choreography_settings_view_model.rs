@@ -1,4 +1,6 @@
 use choreo_master_mobile_json::Color;
+use crate::date;
+use time::Date;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use nject::injectable;
@@ -31,7 +33,7 @@ pub struct ChoreographySettingsViewModel {
     pub comment: String,
     pub name: String,
     pub subtitle: String,
-    pub date: String,
+    pub date: Date,
     pub variation: String,
     pub author: String,
     pub description: String,
@@ -83,7 +85,7 @@ impl ChoreographySettingsViewModel {
             comment: String::new(),
             name: String::new(),
             subtitle: String::new(),
-            date: String::new(),
+            date: date::today_date(),
             variation: String::new(),
             author: String::new(),
             description: String::new(),
