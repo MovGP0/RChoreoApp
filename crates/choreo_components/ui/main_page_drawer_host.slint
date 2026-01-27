@@ -5,6 +5,7 @@ import { ScenesPaneView } from "scenes_pane_view.slint";
 export component MainPageDrawerHost inherits Rectangle {
     in property <length> left_drawer_width: 320px;
     in property <length> right_drawer_width: 320px;
+    in property <length> top_inset: 0px;
     in property <bool> inline_left: false;
     in-out property <bool> is_left_open: false;
     in-out property <bool> is_right_open: false;
@@ -69,9 +70,9 @@ export component MainPageDrawerHost inherits Rectangle {
     left_panel := Rectangle {
         visible: root.inline_left || root.is_left_open;
         x: root.inline_left ? 0px : (root.is_left_open ? 0px : -self.width);
-        y: 0px;
+        y: root.top_inset;
         width: root.left_drawer_width;
-        height: parent.height;
+        height: parent.height - root.top_inset;
         background: root.drawer_background;
         z: 2;
 
@@ -80,31 +81,23 @@ export component MainPageDrawerHost inherits Rectangle {
             easing: MaterialAnimations.standard_easing;
         }
 
-        TouchArea {
+        ScenesPaneView {
             width: parent.width;
-            height: parent.height;
         }
-
-        ScenesPaneView { }
     }
 
     right_panel := Rectangle {
         visible: root.is_right_open;
         x: root.is_right_open ? parent.width - root.right_drawer_width : parent.width;
-        y: 0px;
+        y: root.top_inset;
         width: root.right_drawer_width;
-        height: parent.height;
+        height: parent.height - root.top_inset;
         background: root.drawer_background;
         z: 2;
 
         animate x {
             duration: MaterialAnimations.standard_decelerate_duration;
             easing: MaterialAnimations.standard_easing;
-        }
-
-        TouchArea {
-            width: parent.width;
-            height: parent.height;
         }
 
         ScrollView {
@@ -115,6 +108,7 @@ export component MainPageDrawerHost inherits Rectangle {
 
             ChoreographySettingsView {
                 width: parent.width;
+                height: self.preferred-height;
             }
         }
     }

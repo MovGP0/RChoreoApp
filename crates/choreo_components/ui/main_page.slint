@@ -23,6 +23,7 @@ export component MainPage inherits Rectangle {
     in-out property <bool> is_audio_player_open: false;
     in-out property <bool> is_dialog_open: false;
     in property <component-factory> dialog_content;
+    property <length> audio_player_height: root.is_audio_player_open ? 80px : 0px;
 
     callback toggle_nav();
     callback close_nav();
@@ -35,93 +36,102 @@ export component MainPage inherits Rectangle {
 
     background: MaterialPalette.surface_container_low;
 
-    Vertical {
-        spacing: 0px;
+    DialogHost {
+        width: parent.width;
+        height: parent.height;
+        is_open: root.is_dialog_open;
+        close_on_click_away: true;
+        dialog_content: root.dialog_content;
+        close_requested => { root.close_dialog(); }
 
         Rectangle {
-            height: 80px;
-            background: MaterialPalette.surface;
+            width: parent.width;
+            height: parent.height;
+            background: transparent;
 
-            HorizontalLayout {
-                padding: 8px;
-                spacing: 12px;
+            top_bar := Rectangle {
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: 80px;
+                background: MaterialPalette.surface;
+                z: 3;
 
-                HamburgerToggleButton {
-                    width: 48px;
-                    height: 48px;
-                    checked: root.is_nav_open;
-                    toggle_on_click: false;
-                    tooltip: "Toggle navigation";
-                    clicked => { root.toggle_nav(); }
-                }
+                HorizontalLayout {
+                    padding: 8px;
+                    spacing: 12px;
 
-                Rectangle {
-                    horizontal-stretch: 1;
-                    background: transparent;
-                }
+                    HamburgerToggleButton {
+                        width: 48px;
+                        height: 48px;
+                        checked: root.is_nav_open;
+                        toggle_on_click: false;
+                        tooltip: "Toggle navigation";
+                        clicked => { root.toggle_nav(); }
+                    }
 
-                DropDownMenu {
-                    enabled: root.is_mode_selection_enabled;
-                    items: root.mode_items;
-                    current_index: root.selected_mode_index;
-                    height: 56px;
-                    width: 180px;
-                    selected(index) => { root.select_mode(index); }
-                }
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        background: transparent;
+                    }
 
-                IconButton {
-                    icon: @image-url("icons/Pen.svg");
-                    tooltip: "Choreography settings";
-                    checkable: true;
-                    checked <=> root.is_choreography_settings_open;
-                    clicked => { root.open_settings(); }
-                }
+                    DropDownMenu {
+                        enabled: root.is_mode_selection_enabled;
+                        items: root.mode_items;
+                        current_index: root.selected_mode_index;
+                        height: 56px;
+                        width: 180px;
+                        selected(index) => { root.select_mode(index); }
+                    }
 
-                IconButton {
-                    icon: @image-url("icons/Svg.svg");
-                    tooltip: "Open floor plan";
-                    clicked => { root.open_image(); }
-                }
+                    IconButton {
+                        icon: @image-url("icons/Pen.svg");
+                        tooltip: "Choreography settings";
+                        checkable: true;
+                        checked <=> root.is_choreography_settings_open;
+                        clicked => { root.open_settings(); }
+                    }
 
-                IconButton {
-                    icon: @image-url("icons/PlayCircle.svg");
-                    tooltip: "Open audio file";
-                    clicked => { root.open_audio(); }
+                    IconButton {
+                        icon: @image-url("icons/Svg.svg");
+                        tooltip: "Open floor plan";
+                        clicked => { root.open_image(); }
+                    }
+
+                    IconButton {
+                        icon: @image-url("icons/PlayCircle.svg");
+                        tooltip: "Open audio file";
+                        clicked => { root.open_audio(); }
+                    }
                 }
             }
-        }
 
-        DialogHost {
-            vertical-stretch: 1;
-            is_open: root.is_dialog_open;
-            close_on_click_away: true;
-            dialog_content: root.dialog_content;
-            close_requested => { root.close_dialog(); }
+            MainPageDrawerHost {
+                y: 0px;
+                width: parent.width;
+                height: parent.height - root.audio_player_height;
+                top_inset: top_bar.height;
+                inline_left: false;
+                left_drawer_width: root.nav_width;
+                right_drawer_width: 480px;
+                drawer_background: MaterialPalette.surface_variant;
+                is_left_open <=> root.is_nav_open;
+                is_right_open <=> root.is_choreography_settings_open;
+                left_close_on_click_away: true;
+                right_close_on_click_away: true;
 
-            Vertical {
-                spacing: 0px;
+                left_close_requested => { root.close_nav(); }
+                right_close_requested => { root.close_settings(); }
 
-                MainPageDrawerHost {
-                    vertical-stretch: 1;
-                    inline_left: false;
-                    left_drawer_width: root.nav_width;
-                    right_drawer_width: 480px;
-                    drawer_background: MaterialPalette.surface_variant;
-                    is_left_open <=> root.is_nav_open;
-                    is_right_open <=> root.is_choreography_settings_open;
-                    left_close_on_click_away: true;
-                    right_close_on_click_away: true;
+                FloorCanvasView { }
+            }
 
-                    left_close_requested => { root.close_nav(); }
-                    right_close_requested => { root.close_settings(); }
-
-                    FloorCanvasView { }
-                }
-
-                AudioPlayerView {
-                    visible: root.is_audio_player_open;
-                    height: root.is_audio_player_open ? 80px : 0px;
-                }
+            AudioPlayerView {
+                visible: root.is_audio_player_open;
+                height: root.audio_player_height;
+                y: parent.height - self.height;
+                width: parent.width;
+                z: 2;
             }
         }
     }
