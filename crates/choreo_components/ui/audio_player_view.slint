@@ -1,4 +1,5 @@
 import { Horizontal, IconButton, MaterialText, Slider } from "@material";
+import { SliderWithTicks } from "slider_with_ticks.slint";
 
 export component AudioPlayerView inherits Rectangle {
     in property <float> speed;
@@ -6,7 +7,7 @@ export component AudioPlayerView inherits Rectangle {
     in property <float> maximum_speed;
     in property <float> position;
     in property <float> duration;
-    in property <string> tick_values;
+    in property <[float]> tick_values;
     in property <bool> can_seek;
     in property <bool> can_link_scene_to_position;
     in property <bool> is_playing;
@@ -18,6 +19,8 @@ export component AudioPlayerView inherits Rectangle {
 
     callback speed_changed(float);
     callback position_changed(float);
+    callback position_drag_started();
+    callback position_drag_completed();
     callback link_scene_to_position();
     callback toggle_play_pause();
 
@@ -45,12 +48,15 @@ export component AudioPlayerView inherits Rectangle {
             vertical-alignment: center;
         }
 
-        Slider {
+        SliderWithTicks {
             minimum: 0;
             maximum: duration;
             value: position;
             enabled: can_seek;
             value_changed(value) => { position_changed(value); }
+            drag_started => { position_drag_started(); }
+            drag_completed => { position_drag_completed(); }
+            tick_values: tick_values;
         }
 
         MaterialText {

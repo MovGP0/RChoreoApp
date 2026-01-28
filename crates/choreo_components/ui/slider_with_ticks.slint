@@ -1,0 +1,199 @@
+import { MaterialPalette, MaterialStyleMetrics, StateLayer } from "@material";
+
+export component SliderWithTicks inherits Rectangle {
+    in property <bool> enabled: true;
+    in_out property <float> value;
+    in property <float> minimum;
+    in property <int> stop_count: 0;
+    in property <float> maximum: 100;
+    in property <[float]> tick_values: [];
+    in property <color> tick_color: MaterialPalette.outline;
+
+    callback drag_started();
+    callback drag_completed();
+    callback value_changed(float);
+
+    property <int> steps: root.stop_count > 0 ? (root.maximum - root.minimum) / root.stop_count : 1;
+    property <bool> is_dragging: false;
+
+    min_height: MaterialStyleMetrics.size_16 + MaterialStyleMetrics.size_8;
+    accessible-role: slider;
+    accessible-enabled: root.enabled;
+    accessible-value: root.value;
+    accessible-value-minimum: root.minimum;
+    accessible-value-maximum: root.maximum;
+    accessible-value-step: min(steps, (root.maximum - root.minimum) / 100);
+    background: transparent;
+    forward-focus: focus_scope;
+
+    function begin_drag() {
+        if !root.enabled || root.is_dragging {
+            return;
+        }
+
+        root.is_dragging = true;
+        root.drag_started();
+    }
+
+    function end_drag() {
+        if !root.is_dragging {
+            return;
+        }
+
+        root.is_dragging = false;
+        root.drag_completed();
+    }
+
+    VerticalLayout {
+        spacing: MaterialStyleMetrics.size_2;
+        alignment: start;
+
+        focus_scope := FocusScope {
+            horizontal-stretch: 1;
+            touch_area := TouchArea {
+                enabled: root.enabled;
+                track := Rectangle {
+                    x: 0;
+                    height: MaterialStyleMetrics.size_16;
+                    background: MaterialPalette.surface_container_highest;
+                    border_radius: self.height / 2;
+
+                    Rectangle {
+                        x: 0;
+                        width: state_layer.x - MaterialStyleMetrics.size_6;
+                        border-top-left-radius: track.border_radius;
+                        border-bottom-left-radius: track.border_radius;
+                        border-top-right-radius: MaterialStyleMetrics.size_1;
+                        border-bottom-right-radius: MaterialStyleMetrics.size_1;
+                        background: thumb.background;
+                    }
+
+                    if root.stop_count > 1: Rectangle {
+                        width: 100%;
+                        height: 100%;
+
+                        for i in (root.maximum - root.minimum) / root.steps - 1: Rectangle {
+                            x: root.value_to_length(track.width, (i + 1) * root.steps) - self.width / 2;
+                            height: MaterialStyleMetrics.size_4;
+                            width: self.height;
+                            border_radius: self.height / 2;
+                            background: MaterialPalette.outline;
+                        }
+                    }
+                }
+
+                state_layer := Rectangle {
+                    x: root.value_to_length(track.width, root.value);
+                    width: 0;
+                    height: track.height + (MaterialStyleMetrics.size_14 * 2);
+                    StateLayer {
+                        height: track.height + (MaterialStyleMetrics.size_16 * 2);
+                        width: thumb.width + (MaterialStyleMetrics.size_2 * 2);
+                        border_radius: self.width / 2;
+                        pressed: touch_area.pressed;
+                        has_hover: touch_area.has_hover;
+                        has_focus: focus_scope.has_focus;
+                        enabled: root.enabled;
+                        background: thumb.background;
+                        display_background: thumb_area.pressed || thumb_area.has_hover || focus_scope.has_focus;
+
+                        thumb_area := TouchArea {
+                            enabled: root.enabled;
+                            height: track.height + (MaterialStyleMetrics.size_14 * 2);
+                            width: self.height;
+                            thumb := Rectangle {
+                                width: MaterialStyleMetrics.size_4;
+                                border_radius: self.width / 2;
+                                background: MaterialPalette.primary;
+                            }
+
+                            moved => {
+                                root.set_value(root.length_to_value(state_layer.x + (self.mouse_x - self.pressed_x), track.width));
+                            }
+
+                            pointer_event(event) => {
+                                if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                                    root.begin_drag();
+                                }
+                                if event.kind == PointerEventKind.up {
+                                    root.end_drag();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                pointer_event(event) => {
+                    if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                        root.begin_drag();
+                        root.set_value(root.length_to_value(self.mouse_x, track.width));
+                    }
+                    if event.kind == PointerEventKind.up {
+                        root.end_drag();
+                    }
+                }
+            }
+
+            key_pressed(event) => {
+                if event.text == Key.LeftArrow {
+                    root.set_value(root.value - root.steps);
+                    return accept;
+                }
+                if event.text == Key.RightArrow {
+                    root.set_value(root.value + root.steps);
+                    return accept;
+                }
+                reject
+            }
+        }
+
+        Rectangle {
+            horizontal-stretch: 1;
+            height: MaterialStyleMetrics.size_6;
+            background: transparent;
+
+            for tick[index] in root.tick_values: Rectangle {
+                width: MaterialStyleMetrics.size_1;
+                height: min(MaterialStyleMetrics.size_4, parent.height);
+                x: root.value_to_length(parent.width, tick) - (self.width / 2);
+                y: parent.height - self.height;
+                background: root.tick_color;
+                visible: root.maximum > root.minimum
+                    && tick >= root.minimum
+                    && tick <= root.maximum;
+            }
+        }
+    }
+
+    changed value => {
+        root.value_changed(root.value);
+    }
+
+    pure function value_to_length(width: length, value: float) -> length {
+        if root.maximum <= root.minimum {
+            return 0px;
+        }
+
+        return clamp(
+            width * (value - root.minimum) / (root.maximum - root.minimum),
+            0px,
+            width
+        );
+    }
+
+    pure function length_to_value(x: length, width: length) -> float {
+        if width <= 0px {
+            return root.minimum;
+        }
+
+        return x * (root.maximum - root.minimum) / width;
+    }
+
+    function set_value(value: float) {
+        if root.steps > 1 {
+            root.value = clamp(round(value / root.steps) * root.steps, root.minimum, root.maximum)
+        } else {
+            root.value = clamp(value, root.minimum, root.maximum)
+        }
+    }
+}

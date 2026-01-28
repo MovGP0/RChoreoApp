@@ -23,6 +23,7 @@ pub mod color_picker;
 pub mod shell;
 pub mod date;
 pub mod splash_screen;
+pub mod slider_with_ticks;
 
 mod ui {
     #![allow(unreachable_pub)]

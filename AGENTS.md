@@ -176,6 +176,7 @@ If you encounter a compile error after a code change you did, keep a note here h
 - Material `Slider` emits `value_changed(value)` (not `changed`).
 - If `material-1.0` mismatches the Slint version (e.g., `radio-button` accessibility role errors), sync to the template’s `material-1.0` or patch the role to `checkbox`.
 - Keep `material-1.0` synced with the Slint tag in use (`v1.14.1` from `.temp/slint`); do not edit `material-1.0` directly.
+- In Slint functions returning `length`, use units (e.g., `0px`) and avoid binding `width` to parent/root inside layouts; prefer `horizontal-stretch` to prevent layout loops.
 
 # Slint
 

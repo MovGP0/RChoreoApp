@@ -105,13 +105,7 @@ pub(crate) fn update_ticks(view_model: &mut AudioPlayerViewModel, scenes: &[Scen
         .collect();
     ticks.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
     ticks.dedup_by(|a, b| (*a - *b).abs() < 0.000_5);
-
-    let formatted: Vec<String> = ticks.into_iter().map(format_seconds).collect();
-    view_model.tick_values = if formatted.is_empty() {
-        String::new()
-    } else {
-        formatted.join(",")
-    };
+    view_model.tick_values = ticks;
 }
 
 fn round_to_100_millis(seconds: f64) -> f64 {
