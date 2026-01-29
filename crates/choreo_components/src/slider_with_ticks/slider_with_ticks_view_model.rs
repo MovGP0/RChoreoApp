@@ -2,7 +2,6 @@ use crate::behavior::{Behavior, CompositeDisposable};
 use nject::injectable;
 use slint::Color;
 
-#[derive(Debug)]
 #[injectable]
 #[inject(|behaviors: Vec<Box<dyn Behavior<SliderWithTicksViewModel>>>| Self::new(behaviors))]
 pub struct SliderWithTicksViewModel {

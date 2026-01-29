@@ -1,4 +1,11 @@
-import { MaterialWindow } from "@material";
+import { MaterialPalette, MaterialWindow } from "@material";
+import {
+    AxisLabel,
+    FloorCurve,
+    FloorPosition,
+    LegendEntry,
+    LineSegment
+} from "floor_canvas_view.slint";
 import { MainPage } from "main_page.slint";
 import { SettingsPage } from "settings_page.slint";
 import { SceneListItem } from "scenes_pane_view.slint";
@@ -22,6 +29,38 @@ export component ShellHost inherits MaterialWindow {
     in property <bool> scenes_can_delete_scene;
     in property <bool> scenes_can_navigate_to_settings;
     in property <bool> scenes_can_navigate_to_dancer_settings;
+    in property <string> floor_choreography_name: "";
+    in property <string> floor_scene_name: "";
+    in property <int> floor_front: 6;
+    in property <int> floor_back: 6;
+    in property <int> floor_left: 6;
+    in property <int> floor_right: 6;
+    in property <bool> floor_show_grid_lines: true;
+    in property <color> floor_color: MaterialPalette.surface_variant;
+    in property <color> floor_subtitle_color: MaterialPalette.on_surface_variant;
+    in property <float> floor_pan_x: 0.0;
+    in property <float> floor_pan_y: 0.0;
+    in property <float> floor_zoom_factor: 1.0;
+    in property <float> floor_dancer_size: 1.0;
+    in property <[FloorPosition]> floor_positions: [];
+    in property <[FloorCurve]> floor_curves: [];
+    in property <[LineSegment]> floor_dashed_curve_segments: [];
+    in property <[LineSegment]> floor_selection_segments: [];
+    in property <[AxisLabel]> floor_axis_labels_x: [];
+    in property <[AxisLabel]> floor_axis_labels_y: [];
+    in property <bool> floor_show_axis_labels: false;
+    in property <[LegendEntry]> floor_legend_entries: [];
+    in property <bool> floor_show_legend: false;
+    in property <image> floor_svg_overlay;
+    in property <bool> floor_has_svg_overlay: false;
+    in property <bool> floor_show_placement_overlay: false;
+    in property <int> floor_remaining_positions: 0;
+    out property <float> floor_bounds_left: main_page.floor_bounds_left;
+    out property <float> floor_bounds_top: main_page.floor_bounds_top;
+    out property <float> floor_bounds_right: main_page.floor_bounds_right;
+    out property <float> floor_bounds_bottom: main_page.floor_bounds_bottom;
+    out property <float> floor_canvas_width: main_page.floor_canvas_width;
+    out property <float> floor_canvas_height: main_page.floor_canvas_height;
 
     callback toggle_nav();
     callback close_nav();
@@ -40,6 +79,10 @@ export component ShellHost inherits MaterialWindow {
     callback scenes_save_choreo();
     callback scenes_navigate_to_settings();
     callback scenes_navigate_to_dancer_settings();
+    callback floor_pointer_pressed(x: float, y: float, is_primary: bool, is_in_contact: bool);
+    callback floor_pointer_moved(x: float, y: float, is_primary: bool, is_in_contact: bool);
+    callback floor_pointer_released(x: float, y: float, is_primary: bool, is_in_contact: bool);
+    callback floor_pointer_wheel_changed(delta: float, x: float, y: float);
 
     title: root.title_text;
     icon: @image-url("app_icon.svg");
@@ -49,7 +92,8 @@ export component ShellHost inherits MaterialWindow {
         height: parent.height;
         background: transparent;
 
-        if root.content_index == 0 : MainPage {
+        main_page := MainPage {
+            visible: root.content_index == 0;
             selected_mode_index <=> root.selected_mode_index;
             is_mode_selection_enabled: root.is_mode_selection_enabled;
             nav_width <=> root.nav_width;
@@ -65,6 +109,32 @@ export component ShellHost inherits MaterialWindow {
             scenes_can_delete_scene: root.scenes_can_delete_scene;
             scenes_can_navigate_to_settings: root.scenes_can_navigate_to_settings;
             scenes_can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
+            floor_choreography_name: root.floor_choreography_name;
+            floor_scene_name: root.floor_scene_name;
+            floor_front: root.floor_front;
+            floor_back: root.floor_back;
+            floor_left: root.floor_left;
+            floor_right: root.floor_right;
+            floor_show_grid_lines: root.floor_show_grid_lines;
+            floor_color: root.floor_color;
+            floor_subtitle_color: root.floor_subtitle_color;
+            floor_pan_x: root.floor_pan_x;
+            floor_pan_y: root.floor_pan_y;
+            floor_zoom_factor: root.floor_zoom_factor;
+            floor_dancer_size: root.floor_dancer_size;
+            floor_positions: root.floor_positions;
+            floor_curves: root.floor_curves;
+            floor_dashed_curve_segments: root.floor_dashed_curve_segments;
+            floor_selection_segments: root.floor_selection_segments;
+            floor_axis_labels_x: root.floor_axis_labels_x;
+            floor_axis_labels_y: root.floor_axis_labels_y;
+            floor_show_axis_labels: root.floor_show_axis_labels;
+            floor_legend_entries: root.floor_legend_entries;
+            floor_show_legend: root.floor_show_legend;
+            floor_svg_overlay: root.floor_svg_overlay;
+            floor_has_svg_overlay: root.floor_has_svg_overlay;
+            floor_show_placement_overlay: root.floor_show_placement_overlay;
+            floor_remaining_positions: root.floor_remaining_positions;
 
             toggle_nav => { root.toggle_nav(); }
             close_nav => { root.close_nav(); }
@@ -83,7 +153,21 @@ export component ShellHost inherits MaterialWindow {
             scenes_save_choreo => { root.scenes_save_choreo(); }
             scenes_navigate_to_settings => { root.scenes_navigate_to_settings(); }
             scenes_navigate_to_dancer_settings => { root.scenes_navigate_to_dancer_settings(); }
+            floor_pointer_pressed(x, y, is_primary, is_in_contact) => {
+                root.floor_pointer_pressed(x, y, is_primary, is_in_contact);
+            }
+            floor_pointer_moved(x, y, is_primary, is_in_contact) => {
+                root.floor_pointer_moved(x, y, is_primary, is_in_contact);
+            }
+            floor_pointer_released(x, y, is_primary, is_in_contact) => {
+                root.floor_pointer_released(x, y, is_primary, is_in_contact);
+            }
+            floor_pointer_wheel_changed(delta, x, y) => {
+                root.floor_pointer_wheel_changed(delta, x, y);
+            }
         }
-        if root.content_index == 1 : SettingsPage { }
+        settings_page := SettingsPage {
+            visible: root.content_index == 1;
+        }
     }
 }

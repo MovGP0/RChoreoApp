@@ -9,6 +9,7 @@ mod scale_around_dancer_behavior;
 mod scale_positions_behavior;
 mod types;
 mod floor_view_model;
+mod floor_adapter;
 
 pub use draw_floor_behavior::DrawFloorBehavior;
 pub use gesture_handling_behavior::GestureHandlingBehavior;
@@ -34,6 +35,7 @@ pub use rotate_around_center_behavior::RotateAroundCenterBehavior;
 pub use scale_around_dancer_behavior::ScaleAroundDancerBehavior;
 pub use scale_around_dancer_behavior::{SystemTimeProvider, TimeProvider};
 pub use scale_positions_behavior::ScalePositionsBehavior;
+pub use floor_adapter::FloorAdapter;
 
 pub use types::{
     CanvasViewHandle,

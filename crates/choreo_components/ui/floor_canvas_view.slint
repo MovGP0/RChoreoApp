@@ -24,6 +24,7 @@ export struct FloorCurve {
     has_control1: bool,
     has_control2: bool,
     color: color,
+    commands: string,
 }
 
 export struct LineSegment {
@@ -33,6 +34,7 @@ export struct LineSegment {
     end_y: float,
     color: color,
     thickness: float,
+    commands: string,
 }
 
 export struct AxisLabel {
@@ -61,6 +63,8 @@ export component FloorCanvasView inherits Rectangle {
     in property <color> floor_border_color: MaterialPalette.primary;
     in property <color> title_color: MaterialPalette.on_surface;
     in property <color> subtitle_color: MaterialPalette.on_surface_variant;
+    in property <color> empty_position_fill_color: MaterialPalette.surface_variant;
+    in property <color> empty_position_border_color: MaterialPalette.outline_variant;
     in property <length> header_padding: 16px;
     in property <length> header_spacing: 4px;
     in property <length> grid_padding: 46px;
@@ -101,7 +105,6 @@ export component FloorCanvasView inherits Rectangle {
     in property <bool> has_svg_overlay: false;
     in property <bool> show_placement_overlay: false;
     in property <int> remaining_positions: 0;
-    in property <string> remaining_positions_text: "";
     in property <length> placement_padding: 12px;
     in property <length> placement_spacing: 4px;
     in property <length> placement_corner_radius: 8px;
@@ -110,6 +113,12 @@ export component FloorCanvasView inherits Rectangle {
     in property <color> placement_title_color: MaterialPalette.on_surface;
     in property <color> placement_body_color: MaterialPalette.on_surface_variant;
     in property <color> placement_background_color: MaterialPalette.surface_variant;
+    out property <float> floor_bounds_left: content.floor_x / 1px;
+    out property <float> floor_bounds_top: content.floor_y / 1px;
+    out property <float> floor_bounds_right: (content.floor_x + content.floor_width) / 1px;
+    out property <float> floor_bounds_bottom: (content.floor_y + content.floor_height) / 1px;
+    out property <float> canvas_width: root.width / 1px;
+    out property <float> canvas_height: root.height / 1px;
 
     property <int> max_horizontal_meters: floor_left > floor_right ? floor_left : floor_right;
     property <int> max_vertical_meters: floor_front > floor_back ? floor_front : floor_back;
@@ -117,6 +126,10 @@ export component FloorCanvasView inherits Rectangle {
     property <float> floor_height_meters: (floor_front + floor_back) * 1.0;
 
     callback redraw();
+    callback pointer_pressed(x: float, y: float, is_primary: bool, is_in_contact: bool);
+    callback pointer_moved(x: float, y: float, is_primary: bool, is_in_contact: bool);
+    callback pointer_released(x: float, y: float, is_primary: bool, is_in_contact: bool);
+    callback pointer_wheel_changed(delta: float, x: float, y: float);
 
     background: surface_color;
 
@@ -343,39 +356,25 @@ export component FloorCanvasView inherits Rectangle {
                 clip: true;
 
                 for curve in root.curves: Path {
+                    width: parent.width;
+                    height: parent.height;
+                    fill: transparent;
                     stroke: curve.color;
                     stroke-width: root.dancer_border_thickness;
-                    fill: transparent;
                     viewbox-width: parent.width / 1px;
                     viewbox-height: parent.height / 1px;
-
-                    MoveTo {
-                        x: parent.viewbox-width / 2 + curve.start_x * content.scale;
-                        y: parent.viewbox-height / 2 - curve.start_y * content.scale;
-                    }
-
-                    LineTo {
-                        x: parent.viewbox-width / 2 + curve.end_x * content.scale;
-                        y: parent.viewbox-height / 2 - curve.end_y * content.scale;
-                    }
+                    commands: curve.commands;
                 }
 
                 for segment in root.dashed_curve_segments: Path {
+                    width: parent.width;
+                    height: parent.height;
+                    fill: transparent;
                     stroke: segment.color;
                     stroke-width: segment.thickness * 1px;
-                    fill: transparent;
                     viewbox-width: parent.width / 1px;
                     viewbox-height: parent.height / 1px;
-
-                    MoveTo {
-                        x: parent.viewbox-width / 2 + segment.start_x * content.scale;
-                        y: parent.viewbox-height / 2 - segment.start_y * content.scale;
-                    }
-
-                    LineTo {
-                        x: parent.viewbox-width / 2 + segment.end_x * content.scale;
-                        y: parent.viewbox-height / 2 - segment.end_y * content.scale;
-                    }
+                    commands: segment.commands;
                 }
             }
 
@@ -391,9 +390,9 @@ export component FloorCanvasView inherits Rectangle {
                     width: root.dancer_size * content.scale * 1px;
                     height: root.dancer_size * content.scale * 1px;
                     border-radius: self.width / 2;
-                    background: position.fill_color;
+                    background: position.has_dancer ? position.fill_color : root.empty_position_fill_color;
                     border-width: root.dancer_border_thickness;
-                    border-color: position.border_color;
+                    border-color: position.has_dancer ? position.border_color : root.empty_position_border_color;
                     x: content.center_x + position.x * content.scale * 1px - self.width / 2;
                     y: content.center_y - position.y * content.scale * 1px - self.height / 2;
 
@@ -429,21 +428,14 @@ export component FloorCanvasView inherits Rectangle {
                 clip: true;
 
                 for segment in root.selection_segments: Path {
+                    width: parent.width;
+                    height: parent.height;
+                    fill: transparent;
                     stroke: segment.color;
                     stroke-width: segment.thickness * 1px;
-                    fill: transparent;
                     viewbox-width: parent.width / 1px;
                     viewbox-height: parent.height / 1px;
-
-                    MoveTo {
-                        x: parent.viewbox-width / 2 + segment.start_x * content.scale;
-                        y: parent.viewbox-height / 2 - segment.start_y * content.scale;
-                    }
-
-                    LineTo {
-                        x: parent.viewbox-width / 2 + segment.end_x * content.scale;
-                        y: parent.viewbox-height / 2 - segment.end_y * content.scale;
-                    }
+                    commands: segment.commands;
                 }
             }
 
@@ -521,10 +513,53 @@ export component FloorCanvasView inherits Rectangle {
                     }
 
                     Text {
-                        text: root.remaining_positions_text;
+                        text: Translations.floor_placement_remaining_prefix + root.remaining_positions;
                         color: root.placement_body_color;
                         font-size: root.placement_body_size;
                     }
+                }
+            }
+
+            touch_overlay := TouchArea {
+                width: parent.width;
+                height: parent.height;
+                z: 10;
+
+                pointer-event(event) => {
+                    if (event.kind == PointerEventKind.down) {
+                        root.pointer_pressed(
+                            self.mouse-x / 1px,
+                            self.mouse-y / 1px,
+                            event.button == PointerEventButton.left,
+                            true
+                        );
+                    }
+                    if (event.kind == PointerEventKind.up) {
+                        root.pointer_released(
+                            self.mouse-x / 1px,
+                            self.mouse-y / 1px,
+                            event.button == PointerEventButton.left,
+                            false
+                        );
+                    }
+                }
+
+                moved => {
+                    root.pointer_moved(
+                        self.mouse-x / 1px,
+                        self.mouse-y / 1px,
+                        true,
+                        self.pressed
+                    );
+                }
+
+                scroll-event(event) => {
+                    root.pointer_wheel_changed(
+                        event.delta-y / 1px,
+                        self.mouse-x / 1px,
+                        self.mouse-y / 1px
+                    );
+                    return accept;
                 }
             }
         }

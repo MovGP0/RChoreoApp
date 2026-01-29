@@ -48,11 +48,13 @@ pub fn main() {
     let preferences = Rc::new(InMemoryPreferences::default());
     let (open_audio_sender, _open_audio_receiver) = unbounded();
     let (close_audio_sender, _close_audio_receiver) = unbounded::<CloseAudioFileCommand>();
+    let (_audio_position_sender, audio_position_receiver) = unbounded();
     let (open_svg_sender, open_svg_receiver) = unbounded();
     let (show_dialog_sender, show_dialog_receiver) = unbounded();
     let (close_dialog_sender, close_dialog_receiver) = unbounded();
     let (scenes_show_dialog_sender, _scenes_show_dialog_receiver) = unbounded();
     let (scenes_close_dialog_sender, _scenes_close_dialog_receiver) = unbounded();
+    let (_redraw_floor_sender, redraw_floor_receiver) = unbounded();
 
     let actions = MainPageActionHandlers {
         pick_audio_path: None,
@@ -69,6 +71,7 @@ pub fn main() {
             haptic_feedback: None,
             open_audio_sender,
             close_audio_sender,
+            audio_position_receiver,
             open_svg_sender,
             open_svg_receiver,
             show_dialog_sender,
@@ -77,6 +80,7 @@ pub fn main() {
             close_dialog_receiver,
             scenes_show_dialog_sender,
             scenes_close_dialog_sender,
+            redraw_floor_receiver,
             preferences,
             actions,
         },

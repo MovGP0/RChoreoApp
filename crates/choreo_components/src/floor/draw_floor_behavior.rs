@@ -1,30 +1,46 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crossbeam_channel::Receiver;
 use nject::injectable;
+use rxrust::observable::SubscribeNext;
 
 use crate::behavior::{Behavior, CompositeDisposable};
+use crate::behavior::SubscriptionDisposable;
+use crate::logging::BehaviorLog;
 
 use super::floor_view_model::FloorCanvasViewModel;
 use super::messages::DrawFloorCommand;
 use super::types::FloorRenderGate;
 
+#[derive(Clone)]
 #[injectable]
 #[inject(
-    |receiver: Receiver<DrawFloorCommand>, render_gate: Option<Box<dyn FloorRenderGate>>| {
-        Self::new(receiver, render_gate)
+    |receiver: Receiver<DrawFloorCommand>,
+     render_gate: Option<Box<dyn FloorRenderGate>>,
+     view_model: Rc<RefCell<FloorCanvasViewModel>>| {
+        Self::new(receiver, render_gate.map(Rc::from), view_model)
     }
 )]
 pub struct DrawFloorBehavior {
     receiver: Receiver<DrawFloorCommand>,
-    render_gate: Option<Box<dyn FloorRenderGate>>,
+    render_gate: Option<Rc<dyn FloorRenderGate>>,
     has_rendered: bool,
+    view_model: Option<Rc<RefCell<FloorCanvasViewModel>>>,
 }
 
 impl DrawFloorBehavior {
-    pub fn new(receiver: Receiver<DrawFloorCommand>, render_gate: Option<Box<dyn FloorRenderGate>>) -> Self {
+    pub fn new(
+        receiver: Receiver<DrawFloorCommand>,
+        render_gate: Option<Rc<dyn FloorRenderGate>>,
+        view_model: Rc<RefCell<FloorCanvasViewModel>>,
+    ) -> Self
+    {
         Self {
             receiver,
             render_gate,
             has_rendered: false,
+            view_model: Some(view_model),
         }
     }
 
@@ -42,10 +58,36 @@ impl DrawFloorBehavior {
             Err(_) => false,
         }
     }
+
+    pub fn handle_draw_floor(&mut self) {
+        if self.has_rendered {
+            return;
+        }
+
+        self.has_rendered = true;
+        if let Some(render_gate) = &self.render_gate {
+            render_gate.mark_rendered();
+        }
+    }
 }
 
 impl Behavior<FloorCanvasViewModel> for DrawFloorBehavior {
-    fn activate(&self, _view_model: &mut FloorCanvasViewModel, _disposables: &mut CompositeDisposable) {}
+    fn activate(&self, _view_model: &mut FloorCanvasViewModel, disposables: &mut CompositeDisposable) {
+        BehaviorLog::behavior_activated("DrawFloorBehavior", "FloorCanvasViewModel");
+        let Some(view_model) = self.view_model.clone() else {
+            return;
+        };
+
+        let behavior = Rc::new(RefCell::new(self.clone()));
+        let subscription = view_model
+            .borrow()
+            .draw_floor_subject()
+            .subscribe(move |_| {
+                let mut behavior = behavior.borrow_mut();
+                behavior.handle_draw_floor();
+            });
+        disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
+    }
 }
 
 

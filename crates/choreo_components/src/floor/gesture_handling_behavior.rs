@@ -1,6 +1,10 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use crate::behavior::{Behavior, CompositeDisposable};
+use crate::behavior::SubscriptionDisposable;
+use crate::logging::BehaviorLog;
 use choreo_state_machine::{
     ApplicationStateMachine,
     PanCompletedTrigger,
@@ -10,6 +14,7 @@ use choreo_state_machine::{
     ZoomStartedTrigger,
 };
 use nject::injectable;
+use rxrust::observable::SubscribeNext;
 
 use super::floor_view_model::FloorCanvasViewModel;
 use super::messages::{
@@ -24,10 +29,14 @@ use super::messages::{
 };
 use super::types::{Matrix, Point};
 
-#[derive(Debug, Default)]
+#[derive(Default, Clone)]
 #[injectable]
-#[inject(|| Self::default())]
+#[inject(|state_machine: Rc<RefCell<ApplicationStateMachine>>, view_model: Rc<RefCell<FloorCanvasViewModel>>| {
+    Self::new(state_machine, view_model)
+})]
 pub struct GestureHandlingBehavior {
+    state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
+    view_model: Option<Rc<RefCell<FloorCanvasViewModel>>>,
     active_touches: HashMap<i64, Point>,
     last_hover_position: Option<Point>,
     last_pointer_position: Option<Point>,
@@ -40,6 +49,18 @@ pub struct GestureHandlingBehavior {
 
 impl GestureHandlingBehavior {
     pub const TOUCH_PAN_FACTOR: f32 = 0.5;
+
+    pub fn new(
+        state_machine: Rc<RefCell<ApplicationStateMachine>>,
+        view_model: Rc<RefCell<FloorCanvasViewModel>>,
+    ) -> Self
+    {
+        Self {
+            state_machine: Some(state_machine),
+            view_model: Some(view_model),
+            ..Self::default()
+        }
+    }
 
     pub fn handle_pointer_pressed(
         &mut self,
@@ -267,6 +288,86 @@ impl GestureHandlingBehavior {
 
 impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
     fn activate(&self, _view_model: &mut FloorCanvasViewModel, _disposables: &mut CompositeDisposable) {
+        BehaviorLog::behavior_activated("GestureHandlingBehavior", "FloorCanvasViewModel");
+        let Some(state_machine) = self.state_machine.clone() else {
+            return;
+        };
+        let Some(view_model) = self.view_model.clone() else {
+            return;
+        };
+
+        let behavior = Rc::new(RefCell::new(self.clone()));
+
+        {
+            let behavior = Rc::clone(&behavior);
+            let view_model = Rc::clone(&view_model);
+            let state_machine = Rc::clone(&state_machine);
+            let subject = view_model.borrow().pointer_pressed_subject();
+            let subscription = subject.subscribe(move |command| {
+                let mut behavior = behavior.borrow_mut();
+                let mut state_machine = state_machine.borrow_mut();
+                behavior.handle_pointer_pressed(&mut state_machine, command);
+            });
+            _disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
+        }
+
+        {
+            let behavior = Rc::clone(&behavior);
+            let view_model = Rc::clone(&view_model);
+            let state_machine = Rc::clone(&state_machine);
+            let subject = view_model.borrow().pointer_moved_subject();
+            let subscription = subject.subscribe(move |command| {
+                let mut behavior = behavior.borrow_mut();
+                let mut view_model = view_model.borrow_mut();
+                let mut state_machine = state_machine.borrow_mut();
+                behavior.handle_pointer_moved(&mut view_model, &mut state_machine, command);
+                view_model.draw_floor();
+            });
+            _disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
+        }
+
+        {
+            let behavior = Rc::clone(&behavior);
+            let view_model = Rc::clone(&view_model);
+            let state_machine = Rc::clone(&state_machine);
+            let subject = view_model.borrow().pointer_released_subject();
+            let subscription = subject.subscribe(move |command| {
+                let mut behavior = behavior.borrow_mut();
+                let mut state_machine = state_machine.borrow_mut();
+                behavior.handle_pointer_released(&mut state_machine, command);
+            });
+            _disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
+        }
+
+        {
+            let behavior = Rc::clone(&behavior);
+            let view_model = Rc::clone(&view_model);
+            let state_machine = Rc::clone(&state_machine);
+            let subject = view_model.borrow().pointer_wheel_changed_subject();
+            let subscription = subject.subscribe(move |command| {
+                let mut behavior = behavior.borrow_mut();
+                let mut view_model = view_model.borrow_mut();
+                let mut state_machine = state_machine.borrow_mut();
+                behavior.handle_pointer_wheel_changed(&mut view_model, &mut state_machine, command);
+                view_model.draw_floor();
+            });
+            _disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
+        }
+
+        {
+            let behavior = Rc::clone(&behavior);
+            let view_model = Rc::clone(&view_model);
+            let state_machine = Rc::clone(&state_machine);
+            let subject = view_model.borrow().touch_subject();
+            let subscription = subject.subscribe(move |command| {
+                let mut behavior = behavior.borrow_mut();
+                let mut view_model = view_model.borrow_mut();
+                let mut state_machine = state_machine.borrow_mut();
+                behavior.handle_touch(&mut view_model, &mut state_machine, command);
+                view_model.draw_floor();
+            });
+            _disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
+        }
     }
 }
 

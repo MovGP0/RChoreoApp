@@ -17,7 +17,6 @@ impl BooleanNegationConverter {
     }
 }
 
-#[derive(Debug)]
 #[injectable]
 #[inject(|behaviors: Vec<Box<dyn Behavior<SettingsViewModel>>>| Self::new(behaviors))]
 pub struct SettingsViewModel {

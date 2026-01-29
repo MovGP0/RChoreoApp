@@ -15,7 +15,7 @@ fn redraw_floor_behavior_spec() {
             context.configure_canvas();
             let behavior = RedrawFloorBehavior;
 
-            behavior.handle_choreography_changed(&context.view_model);
+            behavior.handle_choreography_changed(&mut context.view_model);
             assert!(count_draws(&context.draw_floor_receiver) > 0);
         });
 
@@ -24,7 +24,7 @@ fn redraw_floor_behavior_spec() {
             context.configure_canvas();
             let behavior = RedrawFloorBehavior;
 
-            behavior.handle_selected_scene_changed(&context.view_model);
+            behavior.handle_selected_scene_changed(&mut context.view_model);
             assert!(count_draws(&context.draw_floor_receiver) > 0);
         });
 
@@ -33,7 +33,7 @@ fn redraw_floor_behavior_spec() {
             context.configure_canvas();
             let behavior = RedrawFloorBehavior;
 
-            behavior.handle_redraw_command(&context.view_model);
+            behavior.handle_redraw_command(&mut context.view_model);
             assert!(count_draws(&context.draw_floor_receiver) > 0);
         });
     });

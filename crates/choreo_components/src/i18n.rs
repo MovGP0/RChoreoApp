@@ -30,6 +30,7 @@ pub fn apply_translations(view: &ShellHost, locale: &str)
     translations.set_choreography_floor_title(t(locale, "ChoreographyFloorTitle"));
     translations.set_floor_placement_title(t(locale, "FloorPlacementTitle"));
     translations.set_floor_placement_hint(t(locale, "FloorPlacementHint"));
+    translations.set_floor_placement_remaining_prefix(t(locale, "FloorPlacementRemainingPrefix"));
     translations.set_choreography_grid_lines_label(t(locale, "ChoreographyGridLinesLabel"));
     translations.set_choreography_snap_to_grid_label(t(locale, "ChoreographySnapToGridLabel"));
     translations.set_choreography_grid_size_label(t(locale, "ChoreographyGridSizeLabel"));
