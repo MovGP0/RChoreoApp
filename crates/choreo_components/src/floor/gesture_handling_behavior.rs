@@ -31,12 +31,11 @@ use super::types::{Matrix, Point};
 
 #[derive(Default, Clone)]
 #[injectable]
-#[inject(|state_machine: Rc<RefCell<ApplicationStateMachine>>, view_model: Rc<RefCell<FloorCanvasViewModel>>| {
-    Self::new(state_machine, view_model)
+#[inject(|state_machine: Rc<RefCell<ApplicationStateMachine>>| {
+    Self::new(state_machine)
 })]
 pub struct GestureHandlingBehavior {
     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
-    view_model: Option<Rc<RefCell<FloorCanvasViewModel>>>,
     active_touches: HashMap<i64, Point>,
     last_hover_position: Option<Point>,
     last_pointer_position: Option<Point>,
@@ -52,12 +51,10 @@ impl GestureHandlingBehavior {
 
     pub fn new(
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
-        view_model: Rc<RefCell<FloorCanvasViewModel>>,
     ) -> Self
     {
         Self {
             state_machine: Some(state_machine),
-            view_model: Some(view_model),
             ..Self::default()
         }
     }
@@ -287,12 +284,14 @@ impl GestureHandlingBehavior {
 }
 
 impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
-    fn activate(&self, _view_model: &mut FloorCanvasViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, view_model: &mut FloorCanvasViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("GestureHandlingBehavior", "FloorCanvasViewModel");
         let Some(state_machine) = self.state_machine.clone() else {
             return;
         };
-        let Some(view_model) = self.view_model.clone() else {
+        let Some(view_model) = view_model
+            .self_handle()
+            .and_then(|handle| handle.upgrade()) else {
             return;
         };
 

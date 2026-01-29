@@ -2,7 +2,7 @@ use crossbeam_channel::{Receiver, Sender};
 use nject::injectable;
 use rxrust::prelude::{LocalSubject, Observer};
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateModel;
@@ -56,6 +56,7 @@ pub struct FloorCanvasViewModel {
     pointer_wheel_changed_subject: LocalSubject<'static, PointerWheelChangedCommand, ()>,
     touch_subject: LocalSubject<'static, TouchCommand, ()>,
     on_redraw: Option<Rc<dyn Fn()>>,
+    self_handle: Option<Weak<RefCell<FloorCanvasViewModel>>>,
     pub canvas_view: Option<CanvasViewHandle>,
     pub transformation_matrix: Matrix,
     has_floor_bounds: bool,
@@ -78,45 +79,40 @@ pub fn build_floor_canvas_view_model(deps: FloorDependencies) -> Rc<RefCell<Floo
         deps.draw_floor_sender,
         Vec::new(),
     )));
+    view_model
+        .borrow_mut()
+        .set_self_handle(Rc::downgrade(&view_model));
 
     let behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>> = vec![
         Box::new(DrawFloorBehavior::new(
             deps.draw_floor_receiver,
             deps.render_gate.map(Rc::from),
-            Rc::clone(&view_model),
         )),
         Box::new(RedrawFloorBehavior::new(
-            Rc::clone(&view_model),
             deps.redraw_receiver,
         )),
         Box::new(GestureHandlingBehavior::new(
             Rc::clone(&deps.state_machine),
-            Rc::clone(&view_model),
         )),
         Box::new(PlacePositionBehavior::new(
             Rc::clone(&deps.global_state),
             Rc::clone(&deps.state_machine),
-            Rc::clone(&view_model),
         )),
         Box::new(MovePositionsBehavior::new(
             Rc::clone(&deps.global_state),
             Rc::clone(&deps.state_machine),
-            Rc::clone(&view_model),
         )),
         Box::new(RotateAroundCenterBehavior::new(
             Rc::clone(&deps.global_state),
             Rc::clone(&deps.state_machine),
-            Rc::clone(&view_model),
         )),
         Box::new(ScalePositionsBehavior::new(
             Rc::clone(&deps.global_state),
             Rc::clone(&deps.state_machine),
-            Rc::clone(&view_model),
         )),
         Box::new(ScaleAroundDancerBehavior::new(
             Rc::clone(&deps.global_state),
             Rc::clone(&deps.state_machine),
-            Rc::clone(&view_model),
         )),
     ];
 
@@ -145,6 +141,7 @@ impl FloorCanvasViewModel {
             pointer_wheel_changed_subject: LocalSubject::new(),
             touch_subject: LocalSubject::new(),
             on_redraw: None,
+            self_handle: None,
             canvas_view: None,
             transformation_matrix: Matrix::identity(),
             has_floor_bounds: false,
@@ -220,6 +217,14 @@ impl FloorCanvasViewModel {
 
     pub fn set_on_redraw(&mut self, handler: Option<Rc<dyn Fn()>>) {
         self.on_redraw = handler;
+    }
+
+    pub fn set_self_handle(&mut self, handle: Weak<RefCell<FloorCanvasViewModel>>) {
+        self.self_handle = Some(handle);
+    }
+
+    pub fn self_handle(&self) -> Option<Weak<RefCell<FloorCanvasViewModel>>> {
+        self.self_handle.clone()
     }
 
     pub fn pan_updated(&mut self, command: PanUpdatedCommand) -> PanUpdatedCommand {

@@ -55,15 +55,13 @@ impl TimeProvider for SystemTimeProvider {
 #[injectable]
 #[inject(
     |global_state: Rc<RefCell<GlobalStateModel>>,
-     state_machine: Rc<RefCell<ApplicationStateMachine>>,
-     view_model: Rc<RefCell<FloorCanvasViewModel>>| {
-        Self::new(global_state, state_machine, view_model)
+     state_machine: Rc<RefCell<ApplicationStateMachine>>| {
+        Self::new(global_state, state_machine)
     }
 )]
 pub struct ScaleAroundDancerBehavior {
     global_state: Option<Rc<RefCell<GlobalStateModel>>>,
     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
-    view_model: Option<Rc<RefCell<FloorCanvasViewModel>>>,
     time_provider: Rc<dyn TimeProvider>,
     pointer_pressed_position: Option<Point>,
     pointer_moved: bool,
@@ -85,7 +83,6 @@ impl Default for ScaleAroundDancerBehavior {
         Self {
             global_state: None,
             state_machine: None,
-            view_model: None,
             time_provider: Rc::new(SystemTimeProvider::new()),
             pointer_pressed_position: None,
             pointer_moved: false,
@@ -108,13 +105,11 @@ impl ScaleAroundDancerBehavior {
     pub fn new(
         global_state: Rc<RefCell<GlobalStateModel>>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
-        view_model: Rc<RefCell<FloorCanvasViewModel>>,
     ) -> Self
     {
         Self {
             global_state: Some(global_state),
             state_machine: Some(state_machine),
-            view_model: Some(view_model),
             ..Self::default()
         }
     }
@@ -661,7 +656,7 @@ impl ScaleAroundDancerBehavior {
 }
 
 impl Behavior<FloorCanvasViewModel> for ScaleAroundDancerBehavior {
-    fn activate(&self, _view_model: &mut FloorCanvasViewModel, disposables: &mut CompositeDisposable) {
+    fn activate(&self, view_model: &mut FloorCanvasViewModel, disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("ScaleAroundDancerBehavior", "FloorCanvasViewModel");
         let Some(global_state) = self.global_state.clone() else {
             return;
@@ -669,7 +664,9 @@ impl Behavior<FloorCanvasViewModel> for ScaleAroundDancerBehavior {
         let Some(state_machine) = self.state_machine.clone() else {
             return;
         };
-        let Some(view_model) = self.view_model.clone() else {
+        let Some(view_model) = view_model
+            .self_handle()
+            .and_then(|handle| handle.upgrade()) else {
             return;
         };
 

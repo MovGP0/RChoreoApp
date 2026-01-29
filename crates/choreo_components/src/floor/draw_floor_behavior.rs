@@ -17,30 +17,26 @@ use super::types::FloorRenderGate;
 #[injectable]
 #[inject(
     |receiver: Receiver<DrawFloorCommand>,
-     render_gate: Option<Box<dyn FloorRenderGate>>,
-     view_model: Rc<RefCell<FloorCanvasViewModel>>| {
-        Self::new(receiver, render_gate.map(Rc::from), view_model)
+     render_gate: Option<Box<dyn FloorRenderGate>>| {
+        Self::new(receiver, render_gate.map(Rc::from))
     }
 )]
 pub struct DrawFloorBehavior {
     receiver: Receiver<DrawFloorCommand>,
     render_gate: Option<Rc<dyn FloorRenderGate>>,
     has_rendered: bool,
-    view_model: Option<Rc<RefCell<FloorCanvasViewModel>>>,
 }
 
 impl DrawFloorBehavior {
     pub fn new(
         receiver: Receiver<DrawFloorCommand>,
         render_gate: Option<Rc<dyn FloorRenderGate>>,
-        view_model: Rc<RefCell<FloorCanvasViewModel>>,
     ) -> Self
     {
         Self {
             receiver,
             render_gate,
             has_rendered: false,
-            view_model: Some(view_model),
         }
     }
 
@@ -72,9 +68,11 @@ impl DrawFloorBehavior {
 }
 
 impl Behavior<FloorCanvasViewModel> for DrawFloorBehavior {
-    fn activate(&self, _view_model: &mut FloorCanvasViewModel, disposables: &mut CompositeDisposable) {
+    fn activate(&self, view_model: &mut FloorCanvasViewModel, disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("DrawFloorBehavior", "FloorCanvasViewModel");
-        let Some(view_model) = self.view_model.clone() else {
+        let Some(view_model) = view_model
+            .self_handle()
+            .and_then(|handle| handle.upgrade()) else {
             return;
         };
 

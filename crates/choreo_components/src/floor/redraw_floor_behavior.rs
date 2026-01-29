@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::time::Duration;
 
 use crate::behavior::{Behavior, CompositeDisposable};
@@ -15,23 +13,18 @@ use crate::choreography_settings::RedrawFloorCommand;
 #[derive(Default, Clone)]
 #[injectable]
 #[inject(
-    |view_model: Rc<RefCell<FloorCanvasViewModel>>, receiver: Receiver<RedrawFloorCommand>| {
-        Self::new(view_model, receiver)
+    |receiver: Receiver<RedrawFloorCommand>| {
+        Self::new(receiver)
     }
 )]
 pub struct RedrawFloorBehavior {
-    view_model: Option<Rc<RefCell<FloorCanvasViewModel>>>,
     receiver: Option<Receiver<RedrawFloorCommand>>,
 }
 
 impl RedrawFloorBehavior {
-    pub fn new(
-        view_model: Rc<RefCell<FloorCanvasViewModel>>,
-        receiver: Receiver<RedrawFloorCommand>,
-    ) -> Self
+    pub fn new(receiver: Receiver<RedrawFloorCommand>) -> Self
     {
         Self {
-            view_model: Some(view_model),
             receiver: Some(receiver),
         }
     }
@@ -50,9 +43,11 @@ impl RedrawFloorBehavior {
 }
 
 impl Behavior<FloorCanvasViewModel> for RedrawFloorBehavior {
-    fn activate(&self, _view_model: &mut FloorCanvasViewModel, disposables: &mut CompositeDisposable) {
+    fn activate(&self, view_model: &mut FloorCanvasViewModel, disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("RedrawFloorBehavior", "FloorCanvasViewModel");
-        let Some(view_model) = self.view_model.clone() else {
+        let Some(view_model) = view_model
+            .self_handle()
+            .and_then(|handle| handle.upgrade()) else {
             return;
         };
         let Some(receiver) = self.receiver.clone() else {

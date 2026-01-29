@@ -25,15 +25,13 @@ use super::types::Point;
 #[injectable]
 #[inject(
     |global_state: Rc<RefCell<GlobalStateModel>>,
-     state_machine: Rc<RefCell<ApplicationStateMachine>>,
-     view_model: Rc<RefCell<FloorCanvasViewModel>>| {
-        Self::new(global_state, state_machine, view_model)
+     state_machine: Rc<RefCell<ApplicationStateMachine>>| {
+        Self::new(global_state, state_machine)
     }
 )]
 pub struct ScalePositionsBehavior {
     global_state: Option<Rc<RefCell<GlobalStateModel>>>,
     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
-    view_model: Option<Rc<RefCell<FloorCanvasViewModel>>>,
     pointer_pressed_position: Option<Point>,
     pointer_moved: bool,
     selection_active: bool,
@@ -49,13 +47,11 @@ impl ScalePositionsBehavior {
     pub fn new(
         global_state: Rc<RefCell<GlobalStateModel>>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
-        view_model: Rc<RefCell<FloorCanvasViewModel>>,
     ) -> Self
     {
         Self {
             global_state: Some(global_state),
             state_machine: Some(state_machine),
-            view_model: Some(view_model),
             ..Self::default()
         }
     }
@@ -457,7 +453,7 @@ impl ScalePositionsBehavior {
 }
 
 impl Behavior<FloorCanvasViewModel> for ScalePositionsBehavior {
-    fn activate(&self, _view_model: &mut FloorCanvasViewModel, disposables: &mut CompositeDisposable) {
+    fn activate(&self, view_model: &mut FloorCanvasViewModel, disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("ScalePositionsBehavior", "FloorCanvasViewModel");
         let Some(global_state) = self.global_state.clone() else {
             return;
@@ -465,7 +461,9 @@ impl Behavior<FloorCanvasViewModel> for ScalePositionsBehavior {
         let Some(state_machine) = self.state_machine.clone() else {
             return;
         };
-        let Some(view_model) = self.view_model.clone() else {
+        let Some(view_model) = view_model
+            .self_handle()
+            .and_then(|handle| handle.upgrade()) else {
             return;
         };
 
