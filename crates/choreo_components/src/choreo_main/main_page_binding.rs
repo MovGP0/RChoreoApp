@@ -203,18 +203,22 @@ impl MainPageBinding {
             let view_model_for_change = Rc::clone(&view_model);
             let floor_view_model_for_change = Rc::clone(&floor_view_model);
             let floor_adapter_for_change = Rc::clone(&floor_adapter);
+            let behaviors_for_dialog = Rc::clone(&behaviors);
             let view_weak = view_weak.clone();
             let on_change = Rc::new(move || {
                 let view_model = Rc::clone(&view_model_for_change);
                 let floor_view_model = Rc::clone(&floor_view_model_for_change);
                 let floor_adapter = Rc::clone(&floor_adapter_for_change);
+                let behaviors = Rc::clone(&behaviors_for_dialog);
                 let view_weak = view_weak.clone();
                 slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
-                    if let Some(view) = view_weak.upgrade() {
-                        let view_model = view_model.borrow();
-                        apply_view_model(&view, &view_model);
-                        drop(view_model);
+                    if let Some(view) = view_weak.upgrade()
+                    {
+                        let view_model_snapshot = view_model.borrow();
+                        apply_view_model(&view, &view_model_snapshot);
+                        drop(view_model_snapshot);
                         apply_floor_view(&view, &floor_adapter, &floor_view_model);
+                        drain_dialog_commands(&view, &view_model, &behaviors);
                     }
                 });
             });
@@ -225,18 +229,24 @@ impl MainPageBinding {
             let scenes_view_model_for_change = Rc::clone(&scenes_view_model);
             let floor_view_model_for_change = Rc::clone(&floor_view_model);
             let floor_adapter_for_change = Rc::clone(&floor_adapter);
+            let view_model_for_dialog = Rc::clone(&view_model);
+            let behaviors_for_dialog = Rc::clone(&behaviors);
             let view_weak = view_weak.clone();
             let on_change = Rc::new(move || {
                 let scenes_view_model = Rc::clone(&scenes_view_model_for_change);
                 let floor_view_model = Rc::clone(&floor_view_model_for_change);
                 let floor_adapter = Rc::clone(&floor_adapter_for_change);
+                let view_model = Rc::clone(&view_model_for_dialog);
+                let behaviors = Rc::clone(&behaviors_for_dialog);
                 let view_weak = view_weak.clone();
                 slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
-                    if let Some(view) = view_weak.upgrade() {
-                        let scenes_view_model = scenes_view_model.borrow();
-                        apply_scenes_view_model(&view, &scenes_view_model);
-                        drop(scenes_view_model);
+                    if let Some(view) = view_weak.upgrade()
+                    {
+                        let scenes_view_model_snapshot = scenes_view_model.borrow();
+                        apply_scenes_view_model(&view, &scenes_view_model_snapshot);
+                        drop(scenes_view_model_snapshot);
                         apply_floor_view(&view, &floor_adapter, &floor_view_model);
+                        drain_dialog_commands(&view, &view_model, &behaviors);
                     }
                 });
             });
@@ -266,6 +276,7 @@ impl MainPageBinding {
                         && let Some(path) = picker()
                     {
                         behaviors_for_image.open_image.open_svg(path);
+                        let _ = behaviors_for_image.open_svg_file.try_handle();
                         floor_view_model_for_image.borrow_mut().draw_floor();
                     }
                 })),
@@ -575,6 +586,34 @@ fn apply_floor_view(
 ) {
     let mut floor_view_model = floor_view_model.borrow_mut();
     floor_adapter.borrow_mut().apply(view, &mut floor_view_model);
+}
+
+fn drain_dialog_commands(
+    view: &ShellHost,
+    view_model: &Rc<RefCell<MainViewModel>>,
+    behaviors: &Rc<MainBehaviors>,
+)
+{
+    let mut view_model_ref = view_model.borrow_mut();
+    let mut updated = false;
+
+    while behaviors.show_dialog.try_handle(&mut view_model_ref)
+    {
+        updated = true;
+    }
+
+    while behaviors.hide_dialog.try_handle(&mut view_model_ref)
+    {
+        updated = true;
+    }
+
+    drop(view_model_ref);
+
+    if updated
+    {
+        let view_model_snapshot = view_model.borrow();
+        apply_view_model(view, &view_model_snapshot);
+    }
 }
 
 fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneListItem> {
