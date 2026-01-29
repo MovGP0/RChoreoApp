@@ -28,17 +28,20 @@ pub struct SceneViewModel {
     pub color: Color,
 }
 
+type SceneActionHandler = Rc<dyn Fn(&mut ScenesPaneViewModel)>;
+type SceneSelectHandler = Rc<dyn Fn(&mut ScenesPaneViewModel, usize)>;
+
 #[derive(Clone, Default)]
 pub struct ScenesPaneViewModelActions {
-    pub add_scene_before: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
-    pub add_scene_after: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
-    pub update_search_text: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
-    pub delete_scene: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
-    pub open_choreo: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
-    pub save_choreo: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
-    pub navigate_to_settings: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
-    pub navigate_to_dancer_settings: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
-    pub select_scene: Option<Rc<dyn Fn(&mut ScenesPaneViewModel, usize)>>,
+    pub add_scene_before: Option<SceneActionHandler>,
+    pub add_scene_after: Option<SceneActionHandler>,
+    pub update_search_text: Option<SceneActionHandler>,
+    pub delete_scene: Option<SceneActionHandler>,
+    pub open_choreo: Option<SceneActionHandler>,
+    pub save_choreo: Option<SceneActionHandler>,
+    pub navigate_to_settings: Option<SceneActionHandler>,
+    pub navigate_to_dancer_settings: Option<SceneActionHandler>,
+    pub select_scene: Option<SceneSelectHandler>,
 }
 
 
@@ -134,63 +137,63 @@ impl ScenesPaneViewModel {
 
     pub fn set_add_scene_before_handler(
         &mut self,
-        handler: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
+        handler: Option<SceneActionHandler>,
     ) {
         self.actions.add_scene_before = handler;
     }
 
     pub fn set_add_scene_after_handler(
         &mut self,
-        handler: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
+        handler: Option<SceneActionHandler>,
     ) {
         self.actions.add_scene_after = handler;
     }
 
     pub fn set_update_search_text_handler(
         &mut self,
-        handler: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
+        handler: Option<SceneActionHandler>,
     ) {
         self.actions.update_search_text = handler;
     }
 
     pub fn set_delete_scene_handler(
         &mut self,
-        handler: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
+        handler: Option<SceneActionHandler>,
     ) {
         self.actions.delete_scene = handler;
     }
 
     pub fn set_open_choreo_handler(
         &mut self,
-        handler: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
+        handler: Option<SceneActionHandler>,
     ) {
         self.actions.open_choreo = handler;
     }
 
     pub fn set_save_choreo_handler(
         &mut self,
-        handler: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
+        handler: Option<SceneActionHandler>,
     ) {
         self.actions.save_choreo = handler;
     }
 
     pub fn set_navigate_to_settings_handler(
         &mut self,
-        handler: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
+        handler: Option<SceneActionHandler>,
     ) {
         self.actions.navigate_to_settings = handler;
     }
 
     pub fn set_navigate_to_dancer_settings_handler(
         &mut self,
-        handler: Option<Rc<dyn Fn(&mut ScenesPaneViewModel)>>,
+        handler: Option<SceneActionHandler>,
     ) {
         self.actions.navigate_to_dancer_settings = handler;
     }
 
     pub fn set_select_scene_handler(
         &mut self,
-        handler: Option<Rc<dyn Fn(&mut ScenesPaneViewModel, usize)>>,
+        handler: Option<SceneSelectHandler>,
     ) {
         self.actions.select_scene = handler;
     }
