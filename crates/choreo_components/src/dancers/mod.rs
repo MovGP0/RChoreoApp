@@ -13,6 +13,7 @@ mod selected_role_behavior;
 mod show_dancer_dialog_behavior;
 mod swap_dancer_selection_behavior;
 mod swap_dancers_behavior;
+mod translate_behavior;
 
 pub use add_dancer_behavior::AddDancerBehavior;
 pub use cancel_dancer_settings_behavior::CancelDancerSettingsBehavior;
@@ -31,6 +32,7 @@ pub use selected_role_behavior::SelectedRoleBehavior;
 pub use show_dancer_dialog_behavior::ShowDancerDialogBehavior;
 pub use swap_dancer_selection_behavior::SwapDancerSelectionBehavior;
 pub use swap_dancers_behavior::SwapDancersBehavior;
+pub use translate_behavior::DancerSettingsTranslateBehavior;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -48,12 +50,14 @@ pub struct DancerSettingsDependencies {
     pub show_dialog_receiver: Receiver<ShowDancerDialogCommand>,
     pub close_dialog_receiver: Receiver<CloseDancerDialogCommand>,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
+    pub locale: String,
 }
 
 pub fn build_dancer_settings_behaviors(
     deps: DancerSettingsDependencies,
 ) -> Vec<Box<dyn Behavior<DancerSettingsViewModel>>> {
     vec![
+        Box::new(DancerSettingsTranslateBehavior::new(deps.locale)),
         Box::new(LoadDancerSettingsBehavior::new(deps.global_state.clone())),
         Box::new(AddDancerBehavior),
         Box::new(DeleteDancerBehavior),
