@@ -10,6 +10,11 @@ pub fn apply_translations(view: &ShellHost, locale: &str)
 
     translations.set_settings_title(t(locale, "SettingsTitle"));
     translations.set_dark_mode_label(t(locale, "DarkModeLabel"));
+    translations.set_settings_use_system_theme_label(t(locale, "SettingsUseSystemThemeLabel"));
+    translations.set_settings_primary_color_label(t(locale, "SettingsPrimaryColorLabel"));
+    translations.set_settings_secondary_color_label(t(locale, "SettingsSecondaryColorLabel"));
+    translations.set_settings_tertiary_color_label(t(locale, "SettingsTertiaryColorLabel"));
+    translations.set_settings_color_hex_label(t(locale, "SettingsColorHexLabel"));
     translations.set_app_title(t(locale, "AppTitle"));
     translations.set_choreography_author_placeholder(t(locale, "ChoreographyAuthorPlaceholder"));
     translations.set_choreography_comment_placeholder(t(locale, "ChoreographyCommentPlaceholder"));
