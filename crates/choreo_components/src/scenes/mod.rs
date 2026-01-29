@@ -11,6 +11,7 @@ mod scenes_view_model;
 mod select_scene_behavior;
 mod select_scene_from_audio_position_behavior;
 mod show_scene_timestamps_behavior;
+mod translate_behavior;
 
 pub use apply_placement_mode_behavior::ApplyPlacementModeBehavior;
 pub use filter_scenes_behavior::FilterScenesBehavior;
@@ -33,6 +34,7 @@ pub use scenes_view_model::{SceneViewModel, ScenesPaneViewModel};
 pub use select_scene_behavior::SelectSceneBehavior;
 pub use select_scene_from_audio_position_behavior::SelectSceneFromAudioPositionBehavior;
 pub use show_scene_timestamps_behavior::ShowSceneTimestampsBehavior;
+pub use translate_behavior::ScenesTranslateBehavior;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -53,6 +55,7 @@ pub struct ScenesDependencies {
     pub open_audio_sender: Sender<OpenAudioFileCommand>,
     pub close_audio_sender: Sender<CloseAudioFileCommand>,
     pub actions: OpenChoreoActions,
+    pub locale: String,
 }
 
 pub fn build_scenes_view_model(deps: ScenesDependencies) -> ScenesPaneViewModel {
@@ -60,6 +63,7 @@ pub fn build_scenes_view_model(deps: ScenesDependencies) -> ScenesPaneViewModel 
     let (selected_scene_changed_sender, selected_scene_changed_receiver) = crossbeam_channel::unbounded();
 
     let behaviors: Vec<Box<dyn Behavior<ScenesPaneViewModel>>> = vec![
+        Box::new(ScenesTranslateBehavior::new(deps.locale)),
         Box::new(LoadScenesBehavior::new(deps.global_state.clone())),
         Box::new(FilterScenesBehavior),
         Box::new(InsertSceneBehavior::new(deps.global_state.clone())),

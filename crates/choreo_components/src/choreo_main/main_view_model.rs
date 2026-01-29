@@ -50,6 +50,10 @@ pub struct MainViewModel {
     pub is_choreography_settings_open: bool,
     pub is_dialog_open: bool,
     pub dialog_content: Option<String>,
+    pub toggle_nav_tooltip: String,
+    pub open_settings_tooltip: String,
+    pub open_image_tooltip: String,
+    pub open_audio_tooltip: String,
 }
 
 impl MainViewModel {
@@ -87,6 +91,10 @@ impl MainViewModel {
             is_choreography_settings_open: false,
             is_dialog_open: false,
             dialog_content: None,
+            toggle_nav_tooltip: "Toggle navigation".to_string(),
+            open_settings_tooltip: "Choreography settings".to_string(),
+            open_image_tooltip: "Open floor plan".to_string(),
+            open_audio_tooltip: "Open audio file".to_string(),
         }
     }
 

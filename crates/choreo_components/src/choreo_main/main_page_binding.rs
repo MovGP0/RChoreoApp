@@ -77,7 +77,7 @@ impl MainPageBinding {
             global_state: global_state.clone(),
             state_machine: state_machine.clone(),
             audio_player: deps.audio_player,
-            locale,
+            locale: locale.clone(),
             haptic_feedback: deps.haptic_feedback,
             actions: MainViewModelActions::default(),
         })));
@@ -91,6 +91,7 @@ impl MainPageBinding {
             show_dialog_receiver: deps.show_dialog_receiver,
             close_dialog_receiver: deps.close_dialog_receiver,
             preferences,
+            locale: deps.locale.clone(),
         }));
 
         let actions = deps.actions;
@@ -107,6 +108,7 @@ impl MainPageBinding {
             actions: OpenChoreoActions {
                 pick_choreo_path: actions.pick_choreo_path.clone(),
             },
+            locale: locale.clone(),
         })));
 
         {
@@ -124,6 +126,8 @@ impl MainPageBinding {
             });
             view_model.borrow_mut().set_on_change(Some(on_change));
         }
+
+        behaviors.translate.apply(&mut view_model.borrow_mut());
 
         {
             let scenes_view_model_for_change = Rc::clone(&scenes_view_model);
@@ -352,6 +356,10 @@ fn apply_view_model(view: &ShellHost, view_model: &MainViewModel) {
     view.set_is_choreography_settings_open(view_model.is_choreography_settings_open);
     view.set_is_audio_player_open(view_model.is_audio_player_open);
     view.set_is_dialog_open(view_model.is_dialog_open);
+    view.set_toggle_nav_tooltip(view_model.toggle_nav_tooltip.as_str().into());
+    view.set_open_settings_tooltip(view_model.open_settings_tooltip.as_str().into());
+    view.set_open_image_tooltip(view_model.open_image_tooltip.as_str().into());
+    view.set_open_audio_tooltip(view_model.open_audio_tooltip.as_str().into());
 
     view.set_dialog_content(ComponentFactory::default());
 }

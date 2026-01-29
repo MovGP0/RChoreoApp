@@ -7,6 +7,7 @@ mod open_audio_behavior;
 mod open_image_behavior;
 mod open_svg_file_behavior;
 mod show_dialog_behavior;
+mod translate_behavior;
 
 pub use apply_interaction_mode_behavior::ApplyInteractionModeBehavior;
 pub use hide_dialog_behavior::HideDialogBehavior;
@@ -20,6 +21,7 @@ pub use open_audio_behavior::OpenAudioBehavior;
 pub use open_image_behavior::OpenImageBehavior;
 pub use open_svg_file_behavior::OpenSvgFileBehavior;
 pub use show_dialog_behavior::ShowDialogBehavior;
+pub use translate_behavior::MainTranslateBehavior;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -38,6 +40,7 @@ pub struct MainBehaviorDependencies {
     pub show_dialog_receiver: Receiver<ShowDialogCommand>,
     pub close_dialog_receiver: Receiver<CloseDialogCommand>,
     pub preferences: Rc<dyn crate::preferences::Preferences>,
+    pub locale: String,
 }
 
 pub struct MainBehaviors {
@@ -47,6 +50,7 @@ pub struct MainBehaviors {
     pub open_svg_file: OpenSvgFileBehavior,
     pub show_dialog: ShowDialogBehavior,
     pub hide_dialog: HideDialogBehavior,
+    pub translate: MainTranslateBehavior,
 }
 
 pub fn build_main_behaviors(deps: MainBehaviorDependencies) -> MainBehaviors {
@@ -64,5 +68,6 @@ pub fn build_main_behaviors(deps: MainBehaviorDependencies) -> MainBehaviors {
         ),
         show_dialog: ShowDialogBehavior::new(deps.show_dialog_receiver),
         hide_dialog: HideDialogBehavior::new(deps.close_dialog_receiver),
+        translate: MainTranslateBehavior::new(deps.locale),
     }
 }

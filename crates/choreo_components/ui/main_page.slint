@@ -35,6 +35,10 @@ export component MainPage inherits Rectangle {
     in property <string> scenes_add_after_text;
     in property <string> scenes_open_text;
     in property <string> scenes_save_text;
+    in property <string> toggle_nav_tooltip;
+    in property <string> open_settings_tooltip;
+    in property <string> open_image_tooltip;
+    in property <string> open_audio_tooltip;
     property <length> top_bar_height: 80px;
     property <length> audio_player_height: root.is_audio_player_open ? 80px : 0px;
 
@@ -88,7 +92,7 @@ export component MainPage inherits Rectangle {
                         height: 48px;
                         checked: root.is_nav_open;
                         toggle_on_click: false;
-                        tooltip: "Toggle navigation";
+                        tooltip: root.toggle_nav_tooltip;
                         clicked => { root.toggle_nav(); }
                     }
 
@@ -108,7 +112,7 @@ export component MainPage inherits Rectangle {
 
                     IconButton {
                         icon: @image-url("icons/Pen.svg");
-                        tooltip: "Choreography settings";
+                        tooltip: root.open_settings_tooltip;
                         checkable: true;
                         checked <=> root.is_choreography_settings_open;
                         clicked => { root.open_settings(); }
@@ -116,13 +120,13 @@ export component MainPage inherits Rectangle {
 
                     IconButton {
                         icon: @image-url("icons/Svg.svg");
-                        tooltip: "Open floor plan";
+                        tooltip: root.open_image_tooltip;
                         clicked => { root.open_image(); }
                     }
 
                     IconButton {
                         icon: @image-url("icons/PlayCircle.svg");
-                        tooltip: "Open audio file";
+                        tooltip: root.open_audio_tooltip;
                         clicked => { root.open_audio(); }
                     }
                 }

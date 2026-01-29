@@ -27,6 +27,10 @@ export component ShellHost inherits MaterialWindow {
     in property <string> scenes_add_after_text;
     in property <string> scenes_open_text;
     in property <string> scenes_save_text;
+    in property <string> toggle_nav_tooltip;
+    in property <string> open_settings_tooltip;
+    in property <string> open_image_tooltip;
+    in property <string> open_audio_tooltip;
 
     callback toggle_nav();
     callback close_nav();
@@ -76,6 +80,10 @@ export component ShellHost inherits MaterialWindow {
             scenes_add_after_text: root.scenes_add_after_text;
             scenes_open_text: root.scenes_open_text;
             scenes_save_text: root.scenes_save_text;
+            toggle_nav_tooltip: root.toggle_nav_tooltip;
+            open_settings_tooltip: root.open_settings_tooltip;
+            open_image_tooltip: root.open_image_tooltip;
+            open_audio_tooltip: root.open_audio_tooltip;
 
             toggle_nav => { root.toggle_nav(); }
             close_nav => { root.close_nav(); }
