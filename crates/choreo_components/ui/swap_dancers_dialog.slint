@@ -1,4 +1,4 @@
-import { MaterialText, TextButton, Vertical } from "@material";
+import { MaterialPalette, MaterialText, TextButton, Vertical } from "@material";
 import { Translations } from "translations.slint";
 
 export component SwapDancersDialogView inherits Rectangle {
@@ -14,9 +14,9 @@ export component SwapDancersDialogView inherits Rectangle {
     callback confirm();
     callback cancel();
 
-    background: #ffffff;
+    background: MaterialPalette.surface;
     border-width: 1px;
-    border-color: #dddddd;
+    border-color: MaterialPalette.outline_variant;
     border-radius: 8px;
     padding: 16px;
 

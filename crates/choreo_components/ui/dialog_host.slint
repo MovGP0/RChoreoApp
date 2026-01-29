@@ -3,7 +3,7 @@ import { MaterialPalette } from "@material";
 export component DialogHost inherits Rectangle {
     in-out property <bool> is_open: false;
     in property <bool> close_on_click_away: false;
-    in property <color> overlay_color: #66000000;
+    in property <color> overlay_color: MaterialPalette.background_modal;
     in property <color> dialog_background: MaterialPalette.surface_container_high;
     in property <length> dialog_padding: 24px;
     in property <length> dialog_margin: 24px;
