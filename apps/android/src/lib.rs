@@ -22,7 +22,7 @@ fn android_main(app: slint::android::AndroidApp) {
     use choreo_components::choreo_main::MainPageDependencies;
     use choreo_components::global::GlobalStateModel;
     use choreo_components::i18n;
-    use choreo_components::preferences::FilePreferences;
+    use choreo_components::preferences::PlatformPreferences;
     use choreo_components::shell;
     use choreo_state_machine::ApplicationStateMachine;
     use choreo_i18n::detect_locale;
@@ -47,7 +47,7 @@ fn android_main(app: slint::android::AndroidApp) {
     let locale = detect_locale();
     i18n::apply_translations(&ui, &locale);
     let audio_player = AudioPlayerViewModel::new(None);
-    let preferences = Rc::new(FilePreferences::new("ChoreoApp"));
+    let preferences = Rc::new(PlatformPreferences::new("ChoreoApp"));
     let (open_audio_sender, _open_audio_receiver) = unbounded();
     let (close_audio_sender, _close_audio_receiver) = unbounded::<CloseAudioFileCommand>();
     let (_audio_position_sender, audio_position_receiver) = unbounded();
