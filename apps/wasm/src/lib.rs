@@ -17,6 +17,7 @@ use choreo_components::audio_player::CloseAudioFileCommand;
 use choreo_components::choreo_main::MainPageActionHandlers;
 use choreo_components::choreo_main::MainPageBinding;
 use choreo_components::choreo_main::MainPageDependencies;
+use choreo_components::choreo_main::MainStyle;
 use choreo_components::global::GlobalStateModel;
 use choreo_components::i18n;
 use choreo_components::preferences::InMemoryPreferences;
@@ -79,6 +80,8 @@ pub fn main() {
             scenes_show_dialog_sender,
             scenes_close_dialog_sender,
             preferences,
+            style: MainStyle::default(),
+            style_receiver: None,
             actions,
         },
     );

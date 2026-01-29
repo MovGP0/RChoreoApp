@@ -4,6 +4,7 @@ use std::rc::Rc;
 use choreo_i18n::translation_with_fallback;
 use choreo_state_machine::ApplicationStateMachine;
 use nject::injectable;
+use slint::Color;
 
 use crate::audio_player::{AudioPlayerViewModel, HapticFeedback};
 use crate::global::{GlobalStateModel, InteractionMode};
@@ -54,6 +55,11 @@ pub struct MainViewModel {
     pub open_settings_tooltip: String,
     pub open_image_tooltip: String,
     pub open_audio_tooltip: String,
+    pub background_color: Color,
+    pub top_bar_color: Color,
+    pub drawer_background_color: Color,
+    pub dialog_background_color: Color,
+    pub overlay_color: Color,
 }
 
 impl MainViewModel {
@@ -95,6 +101,11 @@ impl MainViewModel {
             open_settings_tooltip: "Choreography settings".to_string(),
             open_image_tooltip: "Open floor plan".to_string(),
             open_audio_tooltip: "Open audio file".to_string(),
+            background_color: Color::from_rgb_u8(0xF2, 0xF2, 0xF2),
+            top_bar_color: Color::from_rgb_u8(0xFF, 0xFF, 0xFF),
+            drawer_background_color: Color::from_rgb_u8(0xF2, 0xF2, 0xF2),
+            dialog_background_color: Color::from_rgb_u8(0xFF, 0xFF, 0xFF),
+            overlay_color: Color::from_argb_u8(0x66, 0x00, 0x00, 0x00),
         }
     }
 

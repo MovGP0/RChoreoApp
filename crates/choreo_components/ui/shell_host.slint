@@ -1,4 +1,4 @@
-import { MaterialWindow, MenuItem } from "@material";
+import { MaterialWindow, MenuItem, MaterialPalette } from "@material";
 import { MainPage } from "main_page.slint";
 import { SettingsPage } from "settings_page.slint";
 import { SceneListItem } from "scenes_pane_view.slint";
@@ -31,6 +31,11 @@ export component ShellHost inherits MaterialWindow {
     in property <string> open_settings_tooltip;
     in property <string> open_image_tooltip;
     in property <string> open_audio_tooltip;
+    in property <color> background_color: MaterialPalette.surface_container_low;
+    in property <color> top_bar_color: MaterialPalette.surface;
+    in property <color> drawer_background_color: MaterialPalette.surface_variant;
+    in property <color> dialog_background_color: MaterialPalette.surface_container_high;
+    in property <color> overlay_color: MaterialPalette.background_modal;
 
     callback toggle_nav();
     callback close_nav();
@@ -84,6 +89,11 @@ export component ShellHost inherits MaterialWindow {
             open_settings_tooltip: root.open_settings_tooltip;
             open_image_tooltip: root.open_image_tooltip;
             open_audio_tooltip: root.open_audio_tooltip;
+            background_color: root.background_color;
+            top_bar_color: root.top_bar_color;
+            drawer_background_color: root.drawer_background_color;
+            dialog_background_color: root.dialog_background_color;
+            overlay_color: root.overlay_color;
 
             toggle_nav => { root.toggle_nav(); }
             close_nav => { root.close_nav(); }

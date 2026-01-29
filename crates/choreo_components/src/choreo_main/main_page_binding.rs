@@ -14,6 +14,7 @@ use crate::global::GlobalStateModel;
 use crate::scenes::{build_scenes_view_model, OpenChoreoActions, ScenesDependencies, ScenesPaneViewModel};
 use crate::time::format_seconds;
 use crate::{MenuItem, SceneListItem, ShellHost};
+use crate::settings::MaterialScheme;
 
 use super::{
     build_main_behaviors,
@@ -23,6 +24,7 @@ use super::{
     MainBehaviorDependencies,
     MainBehaviors,
     MainDependencies,
+    MainStyle,
     MainViewModelActions,
     MainViewModel,
     OpenSvgFileCommand,
@@ -53,6 +55,8 @@ pub struct MainPageDependencies {
     pub scenes_show_dialog_sender: Sender<crate::scenes::ShowDialogCommand>,
     pub scenes_close_dialog_sender: Sender<crate::scenes::CloseDialogCommand>,
     pub preferences: Rc<dyn crate::preferences::Preferences>,
+    pub style: MainStyle,
+    pub style_receiver: Option<Receiver<MaterialScheme>>,
     pub actions: MainPageActionHandlers,
 }
 
@@ -66,6 +70,8 @@ pub struct MainPageBinding {
 impl MainPageBinding {
     pub fn new(view: ShellHost, deps: MainPageDependencies) -> Self {
         let locale = deps.locale.clone();
+        let style = deps.style;
+        let style_receiver = deps.style_receiver;
         let global_state = deps.global_state.clone();
         let state_machine = deps.state_machine.clone();
         let preferences = Rc::clone(&deps.preferences);
@@ -92,6 +98,8 @@ impl MainPageBinding {
             close_dialog_receiver: deps.close_dialog_receiver,
             preferences,
             locale: deps.locale.clone(),
+            style,
+            style_receiver,
         }));
 
         let actions = deps.actions;
@@ -128,6 +136,7 @@ impl MainPageBinding {
         }
 
         behaviors.translate.apply(&mut view_model.borrow_mut());
+        behaviors.style.apply(&mut view_model.borrow_mut());
 
         {
             let scenes_view_model_for_change = Rc::clone(&scenes_view_model);
@@ -360,6 +369,11 @@ fn apply_view_model(view: &ShellHost, view_model: &MainViewModel) {
     view.set_open_settings_tooltip(view_model.open_settings_tooltip.as_str().into());
     view.set_open_image_tooltip(view_model.open_image_tooltip.as_str().into());
     view.set_open_audio_tooltip(view_model.open_audio_tooltip.as_str().into());
+    view.set_background_color(view_model.background_color);
+    view.set_top_bar_color(view_model.top_bar_color);
+    view.set_drawer_background_color(view_model.drawer_background_color);
+    view.set_dialog_background_color(view_model.dialog_background_color);
+    view.set_overlay_color(view_model.overlay_color);
 
     view.set_dialog_content(ComponentFactory::default());
 }

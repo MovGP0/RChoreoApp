@@ -39,6 +39,11 @@ export component MainPage inherits Rectangle {
     in property <string> open_settings_tooltip;
     in property <string> open_image_tooltip;
     in property <string> open_audio_tooltip;
+    in property <color> background_color: MaterialPalette.surface_container_low;
+    in property <color> top_bar_color: MaterialPalette.surface;
+    in property <color> drawer_background_color: MaterialPalette.surface_variant;
+    in property <color> dialog_background_color: MaterialPalette.surface_container_high;
+    in property <color> overlay_color: MaterialPalette.background_modal;
     property <length> top_bar_height: 80px;
     property <length> audio_player_height: root.is_audio_player_open ? 80px : 0px;
 
@@ -60,7 +65,7 @@ export component MainPage inherits Rectangle {
     callback scenes_navigate_to_settings();
     callback scenes_navigate_to_dancer_settings();
 
-    background: MaterialPalette.surface_container_low;
+    background: root.background_color;
 
     DialogHost {
         width: parent.width;
@@ -68,6 +73,8 @@ export component MainPage inherits Rectangle {
         is_open: root.is_dialog_open;
         close_on_click_away: true;
         dialog_content: root.dialog_content;
+        dialog_background: root.dialog_background_color;
+        overlay_color: root.overlay_color;
         close_requested => { root.close_dialog(); }
 
         Rectangle {
@@ -80,7 +87,7 @@ export component MainPage inherits Rectangle {
                 y: 0px;
                 width: parent.width;
                 height: root.top_bar_height;
-                background: MaterialPalette.surface;
+                background: root.top_bar_color;
                 z: 3;
 
                 HorizontalLayout {
@@ -140,7 +147,8 @@ export component MainPage inherits Rectangle {
                 inline_left: false;
                 left_drawer_width: root.nav_width;
                 right_drawer_width: 480px;
-                drawer_background: MaterialPalette.surface_variant;
+                drawer_background: root.drawer_background_color;
+                overlay_color: root.overlay_color;
                 is_left_open <=> root.is_nav_open;
                 is_right_open <=> root.is_choreography_settings_open;
                 left_close_on_click_away: true;
