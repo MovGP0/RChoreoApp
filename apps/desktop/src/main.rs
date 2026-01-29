@@ -15,6 +15,7 @@ use slint::ComponentHandle;
 
 use choreo_components::audio_player::AudioPlayerViewModel;
 use choreo_components::audio_player::CloseAudioFileCommand;
+use choreo_components::audio_player::PlatformHapticFeedback;
 use choreo_components::choreo_main::MainPageActionHandlers;
 use choreo_components::choreo_main::MainPageBinding;
 use choreo_components::choreo_main::MainPageDependencies;
@@ -59,7 +60,7 @@ fn main() -> Result<(), slint::PlatformError> {
             global_state,
             state_machine,
             audio_player,
-            haptic_feedback: None,
+            haptic_feedback: Some(Box::new(PlatformHapticFeedback::new())),
             open_audio_sender,
             close_audio_sender,
             audio_position_receiver,

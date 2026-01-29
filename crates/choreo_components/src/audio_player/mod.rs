@@ -4,6 +4,7 @@ mod audio_player_position_changed_behavior;
 mod audio_player_ticks_behavior;
 mod audio_player_view_model;
 mod close_audio_file_behavior;
+mod haptics;
 mod messages;
 mod open_audio_file_behavior;
 mod types;
@@ -17,6 +18,7 @@ pub use audio_player_view_model::{
     speed_to_percent_text, PlayPauseGlyph,
 };
 pub use close_audio_file_behavior::CloseAudioFileBehavior;
+pub use haptics::{NoopHapticFeedback, PlatformHapticFeedback};
 pub use messages::{AudioPlayerPositionChangedEvent, CloseAudioFileCommand, OpenAudioFileCommand};
 pub use open_audio_file_behavior::OpenAudioFileBehavior;
 pub use types::{AudioPlayer, HapticFeedback, StreamFactory};
