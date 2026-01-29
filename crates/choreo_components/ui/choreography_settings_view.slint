@@ -17,6 +17,8 @@ export component ChoreographySettingsView inherits Rectangle {
     in property <string> name;
     in property <string> subtitle;
     in-out property <Date> date: { day: root.today[0], month: root.today[1], year: root.today[2] };
+    in property <string> date_label: Translations.choreography_date_label;
+    in property <string> date_picker_title: Translations.choreography_date_picker_title;
     in property <string> variation;
     in property <string> author;
     in property <string> description;
@@ -130,7 +132,7 @@ export component ChoreographySettingsView inherits Rectangle {
                 TextField { label: Translations.choreography_name_placeholder; text: name; edited(v) => { update_name(v); } }
                 TextField { label: Translations.choreography_subtitle_placeholder; text: subtitle; edited(v) => { update_subtitle(v); } }
                 TextField {
-                    label: "Date";
+                    label: date_label;
                     read_only: true;
                     text: date.year + "-" + date.month + "-" + date.day;
                     trailing_icon: @image-url("icons/CalendarToday.svg");
@@ -143,7 +145,7 @@ export component ChoreographySettingsView inherits Rectangle {
             }
 
             date_picker := DatePickerPopup {
-                title: "Date";
+                title: date_picker_title;
                 date <=> root.date;
 
                 accepted(date) => {

@@ -32,6 +32,8 @@ pub fn apply_translations(view: &ShellHost, locale: &str)
     translations.set_choreography_show_timestamps_label(t(locale, "ChoreographyShowTimestampsLabel"));
     translations.set_choreography_show_legend_label(t(locale, "ChoreographyShowLegendLabel"));
     translations.set_choreography_subtitle_placeholder(t(locale, "ChoreographySubtitlePlaceholder"));
+    translations.set_choreography_date_label(t(locale, "ChoreographyDateLabel"));
+    translations.set_choreography_date_picker_title(t(locale, "ChoreographyDatePickerTitle"));
     translations.set_choreography_transparency_label(t(locale, "ChoreographyTransparencyLabel"));
     translations.set_delete_scene_dialog_title(t(locale, "DeleteSceneDialogTitle"));
     translations.set_delete_scene_dialog_message(t(locale, "DeleteSceneDialogMessage"));
