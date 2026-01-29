@@ -1,4 +1,4 @@
-import { ListView, MaterialText, TextButton, TextField, Vertical } from "@material";
+import { ListView, MaterialPalette, MaterialText, TextButton, TextField, Vertical } from "@material";
 import { Translations } from "translations.slint";
 
 export component DancerSettingsPage inherits Rectangle {
@@ -27,16 +27,16 @@ export component DancerSettingsPage inherits Rectangle {
     callback save();
     callback cancel();
 
-    background: #f2f2f2;
+    background: MaterialPalette.surface_container_low;
     padding: 8px;
 
     Vertical {
         spacing: 12px;
 
         Rectangle {
-            background: #ffffff;
+            background: MaterialPalette.surface;
             border-width: 1px;
-            border-color: #dddddd;
+            border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
             padding: 12px;
 
@@ -52,9 +52,9 @@ export component DancerSettingsPage inherits Rectangle {
         }
 
         Rectangle {
-            background: #ffffff;
+            background: MaterialPalette.surface;
             border-width: 1px;
-            border-color: #dddddd;
+            border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
             padding: 12px;
 
@@ -67,9 +67,9 @@ export component DancerSettingsPage inherits Rectangle {
         }
 
         Rectangle {
-            background: #ffffff;
+            background: MaterialPalette.surface;
             border-width: 1px;
-            border-color: #dddddd;
+            border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
             padding: 12px;
 
@@ -81,9 +81,9 @@ export component DancerSettingsPage inherits Rectangle {
         }
 
         Rectangle {
-            background: #ffffff;
+            background: MaterialPalette.surface;
             border-width: 1px;
-            border-color: #dddddd;
+            border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
             padding: 12px;
 
