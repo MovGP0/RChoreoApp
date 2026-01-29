@@ -1,5 +1,6 @@
 use choreo_master_mobile_json::Color;
 use crate::date;
+use slint::Color as SlintColor;
 use time::Date;
 
 use crate::behavior::{Behavior, CompositeDisposable};
@@ -49,6 +50,9 @@ pub struct ChoreographySettingsViewModel {
     pub scene_timestamp_seconds_part: i32,
     pub scene_timestamp_millis: i32,
     pub scene_color: Color,
+    pub surface_color: SlintColor,
+    pub surface_container_color: SlintColor,
+    pub outline_variant_color: SlintColor,
     is_updating_scene_timestamp: bool,
     disposables: CompositeDisposable,
 }
@@ -103,6 +107,9 @@ impl ChoreographySettingsViewModel {
             scene_timestamp_seconds_part: 0,
             scene_timestamp_millis: 0,
             scene_color: Color::transparent(),
+            surface_color: SlintColor::from_rgb_u8(0xF2, 0xF2, 0xF2),
+            surface_container_color: SlintColor::from_rgb_u8(0xFF, 0xFF, 0xFF),
+            outline_variant_color: SlintColor::from_rgb_u8(0xD1, 0xD1, 0xD1),
             is_updating_scene_timestamp: false,
             disposables: CompositeDisposable::new(),
         };
