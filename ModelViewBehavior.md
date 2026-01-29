@@ -29,6 +29,11 @@ We also have additional components:
 - This part manages the different states of the application and transitions between them.
 - The transitions are triggered by trigger events, which may or may not cause a state transition.
 
+## ViewModels
+- ViewModels only know about Models and Behaviors.
+- ViewModels get the behaviors injected, but do not know any specific behavior.
+- ViewModels do not know about Views or Adapters.
+
 ## Behaviors
 
 - Behaviors are reusable components that encapsulate specific functionalities or interactions.
@@ -36,6 +41,8 @@ We also have additional components:
 - Behaviors implement the `Behavior<TViewModel>` trait and are registered in the dependency injection container using `nject`.
 - Behaviors are linked to a specific ViewModel instance using the `activate` method, which takes a mutable reference to the ViewModel and a `CompositeDisposable` for managing subscriptions and resources.
 - When the disposable is disposed of, the behavior then no longer reacts to changes in the ViewModel or events.
+- Behaviors may not have a ViewModel in the constructor. only shared models are allowed.
+- The behavior is linked with the ViewModel during activation.
 
 ## Messages
 
