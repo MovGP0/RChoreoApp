@@ -25,6 +25,20 @@ See `UnitTesting.md` for detailed instructions.
 ## Model View Behavior Pattern
 See `ModelViewBehavior.md` for detailed instructions.
 
+## UI Translations
+
+- Use `crates/choreo_components/ui/translations.slint` for all UI strings.
+- Bind in Slint with `Translations.*` (example: `in property <string> title_text: Translations.dialog_title;`).
+- ViewModels must not contain UI strings or translation keys.
+
+## UI Colors and Styling
+
+- Bind colors directly in Slint using `MaterialScheme` or `MaterialPalette`.
+- Use these style files:
+  - `crates/choreo_components/material-1.0/ui/styling/material_palette.slint`
+  - `crates/choreo_components/material-1.0/ui/styling/material_schemes.slint`
+- Do not add `style_behavior.rs` classes for styling. Behaviors are reserved for business logic.
+
 ## MaterialDesignThemes to Slint (Material) replacement list
 
 - App root: `material_window.slint` (MaterialWindow).
