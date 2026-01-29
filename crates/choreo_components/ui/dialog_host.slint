@@ -1,4 +1,4 @@
-import { MaterialPalette } from "@material";
+import { MaterialPalette, MaterialText } from "@material";
 
 export component DialogHost inherits Rectangle {
     in-out property <bool> is_open: false;
@@ -8,7 +8,7 @@ export component DialogHost inherits Rectangle {
     in property <length> dialog_padding: 24px;
     in property <length> dialog_margin: 24px;
     in property <length> dialog_corner_radius: 12px;
-    in property <component-factory> dialog_content;
+    in property <string> dialog_content;
 
     callback close_requested();
 
@@ -61,8 +61,11 @@ export component DialogHost inherits Rectangle {
                 height: parent.height - root.dialog_padding * 2;
                 background: transparent;
 
-                ComponentContainer {
-                    component-factory: root.dialog_content;
+                MaterialText {
+                    text: root.dialog_content;
+                    color: MaterialPalette.on_surface;
+                    width: parent.width;
+                    wrap: word-wrap;
                 }
             }
         }

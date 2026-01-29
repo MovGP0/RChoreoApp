@@ -3,7 +3,7 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
-use slint::{ComponentFactory, ComponentHandle, ModelRc, Timer, TimerMode, VecModel};
+use slint::{ComponentHandle, ModelRc, Timer, TimerMode, VecModel};
 
 use choreo_state_machine::ApplicationStateMachine;
 
@@ -549,7 +549,13 @@ fn apply_view_model(view: &ShellHost, view_model: &MainViewModel) {
     view.set_is_audio_player_open(view_model.is_audio_player_open);
     view.set_is_dialog_open(view_model.is_dialog_open);
 
-    view.set_dialog_content(ComponentFactory::default());
+    view.set_dialog_content(
+        view_model
+            .dialog_content
+            .as_deref()
+            .unwrap_or_default()
+            .into(),
+    );
 }
 
 fn apply_scenes_view_model(view: &ShellHost, view_model: &ScenesPaneViewModel) {
