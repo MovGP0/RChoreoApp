@@ -1,4 +1,5 @@
 import { MaterialPalette, Vertical, Horizontal } from "@material";
+import { Translations } from "translations.slint";
 
 export struct FloorPosition {
     x: float,
@@ -508,13 +509,13 @@ export component FloorCanvasView inherits Rectangle {
                     spacing: root.placement_spacing;
 
                     Text {
-                        text: "Placement mode";
+                        text: Translations.floor_placement_title;
                         color: root.placement_title_color;
                         font-size: root.placement_title_size;
                     }
 
                     Text {
-                        text: "Tap to place a position";
+                        text: Translations.floor_placement_hint;
                         color: root.placement_body_color;
                         font-size: root.placement_body_size;
                     }

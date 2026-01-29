@@ -23,6 +23,8 @@ pub fn apply_translations(view: &ShellHost, locale: &str)
     translations.set_choreography_floor_left_label(t(locale, "ChoreographyFloorLeftLabel"));
     translations.set_choreography_floor_right_label(t(locale, "ChoreographyFloorRightLabel"));
     translations.set_choreography_floor_title(t(locale, "ChoreographyFloorTitle"));
+    translations.set_floor_placement_title(t(locale, "FloorPlacementTitle"));
+    translations.set_floor_placement_hint(t(locale, "FloorPlacementHint"));
     translations.set_choreography_grid_lines_label(t(locale, "ChoreographyGridLinesLabel"));
     translations.set_choreography_snap_to_grid_label(t(locale, "ChoreographySnapToGridLabel"));
     translations.set_choreography_grid_size_label(t(locale, "ChoreographyGridSizeLabel"));
