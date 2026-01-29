@@ -1,6 +1,4 @@
 use std::io;
-use std::path::Path;
-
 use crossbeam_channel::Receiver;
 use choreo_models::SettingsPreferenceKeys;
 use nject::injectable;
@@ -43,12 +41,6 @@ impl<P: Preferences> OpenAudioFileBehavior<P> {
         }
 
         let file_path = command.file_path;
-        let file_name = Path::new(&file_path)
-            .file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or("Audio");
-        view_model.title = file_name.to_string();
-
         let stream_path = file_path.clone();
         view_model.stream_factory = Some(Box::new(move || {
             let file = std::fs::File::open(&stream_path)?;

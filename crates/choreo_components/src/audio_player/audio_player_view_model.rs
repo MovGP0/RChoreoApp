@@ -1,4 +1,3 @@
-use slint::Color;
 use nject::injectable;
 
 use super::types::{AudioPlayer, HapticFeedback, StreamFactory};
@@ -16,9 +15,6 @@ pub struct AudioPlayerViewModel {
     pub tick_values: Vec<f64>,
     pub speed_label: String,
     pub duration_label: String,
-    pub surface_color: Color,
-    pub outline_color: Color,
-    pub on_surface_variant_color: Color,
     pub can_link_scene_to_position: bool,
     pub is_playing: bool,
     pub loop_enabled: bool,
@@ -27,7 +23,6 @@ pub struct AudioPlayerViewModel {
     pub stream_factory: Option<StreamFactory>,
     pub preparation_seconds: f64,
     pub pause_seconds: f64,
-    pub title: String,
     pub player: Option<Box<dyn AudioPlayer>>,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
 }
@@ -45,9 +40,6 @@ impl AudioPlayerViewModel {
             tick_values: Vec::new(),
             speed_label: speed_to_percent_text(1.0),
             duration_label: duration_to_time_text(0.0),
-            surface_color: Color::from_rgb_u8(0xF2, 0xF2, 0xF2),
-            outline_color: Color::from_rgb_u8(0xD1, 0xD1, 0xD1),
-            on_surface_variant_color: Color::from_rgb_u8(0x5E, 0x5E, 0x5E),
             can_link_scene_to_position: false,
             is_playing: false,
             loop_enabled: false,
@@ -56,7 +48,6 @@ impl AudioPlayerViewModel {
             stream_factory: None,
             preparation_seconds: 4.0,
             pause_seconds: 0.0,
-            title: "Audio".to_string(),
             player: None,
             haptic_feedback,
         }

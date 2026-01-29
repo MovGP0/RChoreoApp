@@ -33,10 +33,6 @@ pub struct DancerSettingsViewModel {
     pub can_swap_dancers: bool,
     pub is_dialog_open: bool,
     pub dialog_content: Option<String>,
-    pub title_text: String,
-    pub swap_title_text: String,
-    pub save_text: String,
-    pub cancel_text: String,
     pub icon_options: Vec<IconOption>,
     haptic_feedback: Option<Box<dyn HapticFeedback>>,
 }
@@ -57,10 +53,6 @@ impl DancerSettingsViewModel {
             can_swap_dancers: false,
             is_dialog_open: false,
             dialog_content: None,
-            title_text: "Dancers".to_string(),
-            swap_title_text: "Swap dancers".to_string(),
-            save_text: "OK".to_string(),
-            cancel_text: "Cancel".to_string(),
             icon_options: load_icon_options(),
             haptic_feedback,
         }

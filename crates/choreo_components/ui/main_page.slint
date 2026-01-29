@@ -12,10 +12,17 @@ import { FloorCanvasView } from "floor_canvas_view.slint";
 import { HamburgerToggleButton } from "hamburger_toggle_button.slint";
 import { MainPageDrawerHost } from "main_page_drawer_host.slint";
 import { SceneListItem } from "scenes_pane_view.slint";
+import { Translations } from "translations.slint";
 
 export component MainPage inherits Rectangle {
-    in property <string> title_text;
-    in property <[MenuItem]> mode_items;
+    property <[MenuItem]> mode_items: [
+        { text: Translations.mode_view },
+        { text: Translations.mode_move },
+        { text: Translations.mode_rotate_around_center },
+        { text: Translations.mode_rotate_around_dancer },
+        { text: Translations.mode_scale },
+        { text: Translations.mode_line_of_sight },
+    ];
     in-out property <int> selected_mode_index: -1;
     in property <bool> is_mode_selection_enabled: true;
     in-out property <length> nav_width: 0px;
@@ -31,19 +38,6 @@ export component MainPage inherits Rectangle {
     in property <bool> scenes_can_delete_scene;
     in property <bool> scenes_can_navigate_to_settings;
     in property <bool> scenes_can_navigate_to_dancer_settings;
-    in property <string> scenes_add_before_text;
-    in property <string> scenes_add_after_text;
-    in property <string> scenes_open_text;
-    in property <string> scenes_save_text;
-    in property <string> toggle_nav_tooltip;
-    in property <string> open_settings_tooltip;
-    in property <string> open_image_tooltip;
-    in property <string> open_audio_tooltip;
-    in property <color> background_color: MaterialPalette.surface_container_low;
-    in property <color> top_bar_color: MaterialPalette.surface;
-    in property <color> drawer_background_color: MaterialPalette.surface_variant;
-    in property <color> dialog_background_color: MaterialPalette.surface_container_high;
-    in property <color> overlay_color: MaterialPalette.background_modal;
     property <length> top_bar_height: 80px;
     property <length> audio_player_height: root.is_audio_player_open ? 80px : 0px;
 
@@ -65,7 +59,7 @@ export component MainPage inherits Rectangle {
     callback scenes_navigate_to_settings();
     callback scenes_navigate_to_dancer_settings();
 
-    background: root.background_color;
+    background: MaterialPalette.surface_container_low;
 
     DialogHost {
         width: parent.width;
@@ -73,8 +67,8 @@ export component MainPage inherits Rectangle {
         is_open: root.is_dialog_open;
         close_on_click_away: true;
         dialog_content: root.dialog_content;
-        dialog_background: root.dialog_background_color;
-        overlay_color: root.overlay_color;
+        dialog_background: MaterialPalette.surface_container_high;
+        overlay_color: MaterialPalette.background_modal;
         close_requested => { root.close_dialog(); }
 
         Rectangle {
@@ -87,7 +81,7 @@ export component MainPage inherits Rectangle {
                 y: 0px;
                 width: parent.width;
                 height: root.top_bar_height;
-                background: root.top_bar_color;
+                background: MaterialPalette.surface;
                 z: 3;
 
                 HorizontalLayout {
@@ -99,7 +93,7 @@ export component MainPage inherits Rectangle {
                         height: 48px;
                         checked: root.is_nav_open;
                         toggle_on_click: false;
-                        tooltip: root.toggle_nav_tooltip;
+                        tooltip: Translations.main_toggle_nav_tooltip;
                         clicked => { root.toggle_nav(); }
                     }
 
@@ -119,7 +113,7 @@ export component MainPage inherits Rectangle {
 
                     IconButton {
                         icon: @image-url("icons/Pen.svg");
-                        tooltip: root.open_settings_tooltip;
+                        tooltip: Translations.main_open_settings_tooltip;
                         checkable: true;
                         checked <=> root.is_choreography_settings_open;
                         clicked => { root.open_settings(); }
@@ -127,13 +121,13 @@ export component MainPage inherits Rectangle {
 
                     IconButton {
                         icon: @image-url("icons/Svg.svg");
-                        tooltip: root.open_image_tooltip;
+                        tooltip: Translations.main_open_image_tooltip;
                         clicked => { root.open_image(); }
                     }
 
                     IconButton {
                         icon: @image-url("icons/PlayCircle.svg");
-                        tooltip: root.open_audio_tooltip;
+                        tooltip: Translations.main_open_audio_tooltip;
                         clicked => { root.open_audio(); }
                     }
                 }
@@ -147,8 +141,8 @@ export component MainPage inherits Rectangle {
                 inline_left: false;
                 left_drawer_width: root.nav_width;
                 right_drawer_width: 480px;
-                drawer_background: root.drawer_background_color;
-                overlay_color: root.overlay_color;
+                drawer_background: MaterialPalette.surface_variant;
+                overlay_color: MaterialPalette.background_modal;
                 is_left_open <=> root.is_nav_open;
                 is_right_open <=> root.is_choreography_settings_open;
                 left_close_on_click_away: true;
@@ -160,10 +154,6 @@ export component MainPage inherits Rectangle {
                 scenes_can_delete_scene: root.scenes_can_delete_scene;
                 scenes_can_navigate_to_settings: root.scenes_can_navigate_to_settings;
                 scenes_can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
-                scenes_add_before_text: root.scenes_add_before_text;
-                scenes_add_after_text: root.scenes_add_after_text;
-                scenes_open_text: root.scenes_open_text;
-                scenes_save_text: root.scenes_save_text;
 
                 left_close_requested => { root.close_nav(); }
                 right_close_requested => { root.close_settings(); }

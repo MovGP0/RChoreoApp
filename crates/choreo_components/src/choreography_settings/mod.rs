@@ -25,8 +25,6 @@ mod update_snap_to_grid_behavior;
 mod update_subtitle_behavior;
 mod update_transparency_behavior;
 mod update_variation_behavior;
-mod translate_behavior;
-mod style_behavior;
 
 pub use choreography_settings_view_model::{ChoreographySettingsViewModel, GridSizeOption};
 pub use load_choreography_settings_behavior::LoadChoreographySettingsBehavior;
@@ -54,26 +52,20 @@ pub use update_snap_to_grid_behavior::UpdateSnapToGridBehavior;
 pub use update_subtitle_behavior::UpdateSubtitleBehavior;
 pub use update_transparency_behavior::UpdateTransparencyBehavior;
 pub use update_variation_behavior::UpdateVariationBehavior;
-pub use translate_behavior::ChoreographySettingsTranslateBehavior;
-pub use style_behavior::{ChoreographySettingsStyle, ChoreographySettingsStyleBehavior};
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crossbeam_channel::{Receiver, Sender};
+use crossbeam_channel::Sender;
 
 use crate::behavior::Behavior;
 use crate::global::GlobalStateModel;
-use crate::settings::MaterialScheme;
 
 pub struct ChoreographySettingsDependencies<P: crate::preferences::Preferences> {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
     pub preferences: P,
     pub redraw_sender: Sender<RedrawFloorCommand>,
     pub show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,
-    pub locale: String,
-    pub style: ChoreographySettingsStyle,
-    pub style_receiver: Option<Receiver<MaterialScheme>>,
 }
 
 pub fn build_choreography_settings_behaviors<P: crate::preferences::Preferences + Clone + 'static>(
@@ -83,16 +75,7 @@ pub fn build_choreography_settings_behaviors<P: crate::preferences::Preferences 
     let preferences = deps.preferences;
     let redraw_sender = deps.redraw_sender;
     let show_timestamps_sender = deps.show_timestamps_sender;
-    let locale = deps.locale;
-    let style = deps.style;
-    let style_receiver = deps.style_receiver;
-
     vec![
-        Box::new(ChoreographySettingsTranslateBehavior::new(locale)),
-        Box::new(ChoreographySettingsStyleBehavior::new(
-            style,
-            style_receiver,
-        )),
         Box::new(LoadChoreographySettingsBehavior::new(
             global_state.clone(),
         )),

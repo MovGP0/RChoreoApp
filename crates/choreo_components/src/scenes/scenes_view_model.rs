@@ -79,10 +79,6 @@ pub struct ScenesPaneViewModel {
     pub show_timestamps: bool,
     pub can_navigate_to_settings: bool,
     pub can_navigate_to_dancer_settings: bool,
-    pub add_before_text: String,
-    pub add_after_text: String,
-    pub open_text: String,
-    pub save_text: String,
 }
 
 impl ScenesPaneViewModel {
@@ -110,10 +106,6 @@ impl ScenesPaneViewModel {
             show_timestamps: false,
             can_navigate_to_settings: true,
             can_navigate_to_dancer_settings: true,
-            add_before_text: "Add before".to_string(),
-            add_after_text: "Add after".to_string(),
-            open_text: "Open".to_string(),
-            save_text: "Save".to_string(),
         };
 
         view_model.refresh_scenes();

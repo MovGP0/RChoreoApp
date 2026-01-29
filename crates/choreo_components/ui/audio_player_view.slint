@@ -1,4 +1,4 @@
-import { Horizontal, IconButton, MaterialText, Slider } from "@material";
+import { Horizontal, IconButton, MaterialPalette, MaterialText, Slider } from "@material";
 import { SliderWithTicks } from "slider_with_ticks.slint";
 
 export component AudioPlayerView inherits Rectangle {
@@ -13,9 +13,6 @@ export component AudioPlayerView inherits Rectangle {
     in property <bool> is_playing;
     in property <string> speed_label;
     in property <string> duration_label;
-    in property <color> surface_color;
-    in property <color> outline_color;
-    in property <color> on_surface_variant_color;
 
     callback speed_changed(float);
     callback position_changed(float);
@@ -24,9 +21,9 @@ export component AudioPlayerView inherits Rectangle {
     callback link_scene_to_position();
     callback toggle_play_pause();
 
-    background: surface_color;
+    background: MaterialPalette.surface_container_low;
     border-width: 1px;
-    border-color: outline_color;
+    border-color: MaterialPalette.outline;
     border-radius: 8px;
     padding: 12px;
 
@@ -43,7 +40,7 @@ export component AudioPlayerView inherits Rectangle {
 
         MaterialText {
             text: speed_label;
-            color: on_surface_variant_color;
+            color: MaterialPalette.on_surface_variant;
             horizontal-alignment: right;
             vertical-alignment: center;
         }
@@ -61,7 +58,7 @@ export component AudioPlayerView inherits Rectangle {
 
         MaterialText {
             text: duration_label;
-            color: on_surface_variant_color;
+            color: MaterialPalette.on_surface_variant;
             width: 64px;
             vertical-alignment: center;
         }

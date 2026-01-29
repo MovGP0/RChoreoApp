@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 use crossbeam_channel::{Receiver, Sender};
-use slint::{ComponentFactory, ComponentHandle, ModelRc, SharedString, VecModel};
+use slint::{ComponentFactory, ComponentHandle, ModelRc, VecModel};
 
 use choreo_state_machine::ApplicationStateMachine;
 
@@ -13,20 +13,19 @@ use crate::audio_player::{
 use crate::global::GlobalStateModel;
 use crate::scenes::{build_scenes_view_model, OpenChoreoActions, ScenesDependencies, ScenesPaneViewModel};
 use crate::time::format_seconds;
-use crate::{MenuItem, SceneListItem, ShellHost};
-use crate::settings::MaterialScheme;
+use crate::{SceneListItem, ShellHost};
 
 use super::{
     build_main_behaviors,
     build_main_view_model,
     CloseDialogCommand,
-    InteractionModeOption,
     MainBehaviorDependencies,
     MainBehaviors,
     MainDependencies,
-    MainStyle,
     MainViewModelActions,
     MainViewModel,
+    mode_index,
+    mode_option_from_index,
     OpenSvgFileCommand,
     ShowDialogCommand,
 };
@@ -42,7 +41,6 @@ pub struct MainPageDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub audio_player: AudioPlayerViewModel,
-    pub locale: String,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
     pub open_audio_sender: Sender<OpenAudioFileCommand>,
     pub close_audio_sender: Sender<crate::audio_player::CloseAudioFileCommand>,
@@ -55,8 +53,6 @@ pub struct MainPageDependencies {
     pub scenes_show_dialog_sender: Sender<crate::scenes::ShowDialogCommand>,
     pub scenes_close_dialog_sender: Sender<crate::scenes::CloseDialogCommand>,
     pub preferences: Rc<dyn crate::preferences::Preferences>,
-    pub style: MainStyle,
-    pub style_receiver: Option<Receiver<MaterialScheme>>,
     pub actions: MainPageActionHandlers,
 }
 
@@ -69,9 +65,6 @@ pub struct MainPageBinding {
 
 impl MainPageBinding {
     pub fn new(view: ShellHost, deps: MainPageDependencies) -> Self {
-        let locale = deps.locale.clone();
-        let style = deps.style;
-        let style_receiver = deps.style_receiver;
         let global_state = deps.global_state.clone();
         let state_machine = deps.state_machine.clone();
         let preferences = Rc::clone(&deps.preferences);
@@ -83,7 +76,6 @@ impl MainPageBinding {
             global_state: global_state.clone(),
             state_machine: state_machine.clone(),
             audio_player: deps.audio_player,
-            locale: locale.clone(),
             haptic_feedback: deps.haptic_feedback,
             actions: MainViewModelActions::default(),
         })));
@@ -97,9 +89,6 @@ impl MainPageBinding {
             show_dialog_receiver: deps.show_dialog_receiver,
             close_dialog_receiver: deps.close_dialog_receiver,
             preferences,
-            locale: deps.locale.clone(),
-            style,
-            style_receiver,
         }));
 
         let actions = deps.actions;
@@ -116,7 +105,6 @@ impl MainPageBinding {
             actions: OpenChoreoActions {
                 pick_choreo_path: actions.pick_choreo_path.clone(),
             },
-            locale: locale.clone(),
         })));
 
         {
@@ -134,9 +122,6 @@ impl MainPageBinding {
             });
             view_model.borrow_mut().set_on_change(Some(on_change));
         }
-
-        behaviors.translate.apply(&mut view_model.borrow_mut());
-        behaviors.style.apply(&mut view_model.borrow_mut());
 
         {
             let scenes_view_model_for_change = Rc::clone(&scenes_view_model);
@@ -241,11 +226,11 @@ impl MainPageBinding {
             let view_model = Rc::clone(&view_model);
             view.on_select_mode(move |index| {
                 let mut view_model = view_model.borrow_mut();
-                let Some(option) = view_model.mode_options.get(index as usize).cloned() else {
+                let Some(mode) = mode_option_from_index(index) else {
                     return;
                 };
 
-                view_model.set_selected_mode(option.clone());
+                view_model.set_selected_mode(mode);
             });
         }
 
@@ -357,7 +342,6 @@ impl MainPageBinding {
 }
 
 fn apply_view_model(view: &ShellHost, view_model: &MainViewModel) {
-    view.set_mode_items(build_mode_items(&view_model.mode_options));
     view.set_selected_mode_index(selected_mode_index(view_model));
     view.set_is_mode_selection_enabled(view_model.is_mode_selection_enabled);
     view.set_nav_width(view_model.nav_width);
@@ -365,15 +349,6 @@ fn apply_view_model(view: &ShellHost, view_model: &MainViewModel) {
     view.set_is_choreography_settings_open(view_model.is_choreography_settings_open);
     view.set_is_audio_player_open(view_model.is_audio_player_open);
     view.set_is_dialog_open(view_model.is_dialog_open);
-    view.set_toggle_nav_tooltip(view_model.toggle_nav_tooltip.as_str().into());
-    view.set_open_settings_tooltip(view_model.open_settings_tooltip.as_str().into());
-    view.set_open_image_tooltip(view_model.open_image_tooltip.as_str().into());
-    view.set_open_audio_tooltip(view_model.open_audio_tooltip.as_str().into());
-    view.set_background_color(view_model.background_color);
-    view.set_top_bar_color(view_model.top_bar_color);
-    view.set_drawer_background_color(view_model.drawer_background_color);
-    view.set_dialog_background_color(view_model.dialog_background_color);
-    view.set_overlay_color(view_model.overlay_color);
 
     view.set_dialog_content(ComponentFactory::default());
 }
@@ -386,10 +361,6 @@ fn apply_scenes_view_model(view: &ShellHost, view_model: &ScenesPaneViewModel) {
     view.set_scenes_can_delete_scene(view_model.can_delete_scene);
     view.set_scenes_can_navigate_to_settings(view_model.can_navigate_to_settings);
     view.set_scenes_can_navigate_to_dancer_settings(view_model.can_navigate_to_dancer_settings);
-    view.set_scenes_add_before_text(view_model.add_before_text.as_str().into());
-    view.set_scenes_add_after_text(view_model.add_after_text.as_str().into());
-    view.set_scenes_open_text(view_model.open_text.as_str().into());
-    view.set_scenes_save_text(view_model.save_text.as_str().into());
 }
 
 fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneListItem> {
@@ -410,26 +381,7 @@ fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneL
     ModelRc::new(VecModel::from(items))
 }
 
-fn build_mode_items(options: &[InteractionModeOption]) -> ModelRc<MenuItem> {
-    let items = options
-        .iter()
-        .map(|option| MenuItem {
-            icon: slint::Image::default(),
-            text: SharedString::from(option.label.as_str()),
-            trailing_text: SharedString::new(),
-            enabled: true,
-        })
-        .collect::<Vec<_>>();
-
-    ModelRc::new(VecModel::from(items))
-}
-
 fn selected_mode_index(view_model: &MainViewModel) -> i32 {
-    view_model
-        .mode_options
-        .iter()
-        .position(|option| option.mode == view_model.selected_mode_option.mode)
-        .map(|index| index as i32)
-        .unwrap_or(-1)
+    mode_index(view_model.selected_mode)
 }
 

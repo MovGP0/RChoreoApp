@@ -1,4 +1,4 @@
-import { MaterialWindow, MenuItem, MaterialPalette } from "@material";
+import { MaterialWindow } from "@material";
 import { MainPage } from "main_page.slint";
 import { SettingsPage } from "settings_page.slint";
 import { SceneListItem } from "scenes_pane_view.slint";
@@ -7,7 +7,6 @@ import { Translations } from "translations.slint";
 export component ShellHost inherits MaterialWindow {
     in property <string> title_text: Translations.app_title;
     in property <int> content_index: 0;
-    in-out property <[MenuItem]> mode_items: [];
     in-out property <int> selected_mode_index: -1;
     in property <bool> is_mode_selection_enabled: true;
     in-out property <length> nav_width: 0px;
@@ -23,19 +22,6 @@ export component ShellHost inherits MaterialWindow {
     in property <bool> scenes_can_delete_scene;
     in property <bool> scenes_can_navigate_to_settings;
     in property <bool> scenes_can_navigate_to_dancer_settings;
-    in property <string> scenes_add_before_text;
-    in property <string> scenes_add_after_text;
-    in property <string> scenes_open_text;
-    in property <string> scenes_save_text;
-    in property <string> toggle_nav_tooltip;
-    in property <string> open_settings_tooltip;
-    in property <string> open_image_tooltip;
-    in property <string> open_audio_tooltip;
-    in property <color> background_color: MaterialPalette.surface_container_low;
-    in property <color> top_bar_color: MaterialPalette.surface;
-    in property <color> drawer_background_color: MaterialPalette.surface_variant;
-    in property <color> dialog_background_color: MaterialPalette.surface_container_high;
-    in property <color> overlay_color: MaterialPalette.background_modal;
 
     callback toggle_nav();
     callback close_nav();
@@ -64,8 +50,6 @@ export component ShellHost inherits MaterialWindow {
         background: transparent;
 
         if root.content_index == 0 : MainPage {
-            title_text: root.title_text;
-            mode_items <=> root.mode_items;
             selected_mode_index <=> root.selected_mode_index;
             is_mode_selection_enabled: root.is_mode_selection_enabled;
             nav_width <=> root.nav_width;
@@ -81,19 +65,6 @@ export component ShellHost inherits MaterialWindow {
             scenes_can_delete_scene: root.scenes_can_delete_scene;
             scenes_can_navigate_to_settings: root.scenes_can_navigate_to_settings;
             scenes_can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
-            scenes_add_before_text: root.scenes_add_before_text;
-            scenes_add_after_text: root.scenes_add_after_text;
-            scenes_open_text: root.scenes_open_text;
-            scenes_save_text: root.scenes_save_text;
-            toggle_nav_tooltip: root.toggle_nav_tooltip;
-            open_settings_tooltip: root.open_settings_tooltip;
-            open_image_tooltip: root.open_image_tooltip;
-            open_audio_tooltip: root.open_audio_tooltip;
-            background_color: root.background_color;
-            top_bar_color: root.top_bar_color;
-            drawer_background_color: root.drawer_background_color;
-            dialog_background_color: root.dialog_background_color;
-            overlay_color: root.overlay_color;
 
             toggle_nav => { root.toggle_nav(); }
             close_nav => { root.close_nav(); }

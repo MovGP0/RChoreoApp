@@ -20,10 +20,6 @@ export component MainPageDrawerHost inherits Rectangle {
     in property <bool> scenes_can_delete_scene;
     in property <bool> scenes_can_navigate_to_settings;
     in property <bool> scenes_can_navigate_to_dancer_settings;
-    in property <string> scenes_add_before_text;
-    in property <string> scenes_add_after_text;
-    in property <string> scenes_open_text;
-    in property <string> scenes_save_text;
 
     callback overlay_clicked();
     callback left_close_requested();
@@ -118,10 +114,6 @@ export component MainPageDrawerHost inherits Rectangle {
             can_delete_scene: root.scenes_can_delete_scene;
             can_navigate_to_settings: root.scenes_can_navigate_to_settings;
             can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
-            add_before_text: root.scenes_add_before_text;
-            add_after_text: root.scenes_add_after_text;
-            open_text: root.scenes_open_text;
-            save_text: root.scenes_save_text;
 
             select_scene(index) => { root.scenes_select_scene(index); }
             update_search_text(value) => { root.scenes_update_search_text(value); }

@@ -38,9 +38,6 @@ export component ChoreographySettingsView inherits Rectangle {
 
     in property <[string]> grid_size_options;
     in property <int> grid_resolution_index;
-    in property <color> surface_color: MaterialPalette.surface_variant;
-    in property <color> surface_container_color: MaterialPalette.surface_container;
-    in property <color> outline_variant_color: MaterialPalette.outline_variant;
 
     callback update_scene_name(string);
     callback update_scene_text(string);
@@ -69,7 +66,7 @@ export component ChoreographySettingsView inherits Rectangle {
     callback update_floor_right(int);
     callback update_grid_resolution(int);
 
-    background: surface_color;
+    background: MaterialPalette.surface_variant;
     padding: 8px;
 
     preferred-height: content.preferred-height;
@@ -79,9 +76,9 @@ export component ChoreographySettingsView inherits Rectangle {
         spacing: 12px;
 
         Rectangle {
-            background: surface_container_color;
+            background: MaterialPalette.surface_container;
             border-width: 1px;
-            border-color: outline_variant_color;
+            border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
             padding: 12px;
 
@@ -123,9 +120,9 @@ export component ChoreographySettingsView inherits Rectangle {
         }
 
         Rectangle {
-            background: surface_container_color;
+            background: MaterialPalette.surface_container;
             border-width: 1px;
-            border-color: outline_variant_color;
+            border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
             padding: 12px;
 
@@ -160,9 +157,9 @@ export component ChoreographySettingsView inherits Rectangle {
         }
 
         Rectangle {
-            background: surface_container_color;
+            background: MaterialPalette.surface_container;
             border-width: 1px;
-            border-color: outline_variant_color;
+            border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
             padding: 12px;
 

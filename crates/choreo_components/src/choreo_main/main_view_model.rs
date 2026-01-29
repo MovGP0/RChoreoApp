@@ -1,10 +1,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use choreo_i18n::translation_with_fallback;
 use choreo_state_machine::ApplicationStateMachine;
 use nject::injectable;
-use slint::Color;
 
 use crate::audio_player::{AudioPlayerViewModel, HapticFeedback};
 use crate::global::{GlobalStateModel, InteractionMode};
@@ -19,11 +17,14 @@ pub struct MainViewModelActions {
     pub interaction_mode_changed: Option<Rc<dyn Fn(InteractionMode)>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct InteractionModeOption {
-    pub mode: InteractionMode,
-    pub label: String,
-}
+const MODE_OPTIONS: [InteractionMode; 6] = [
+    InteractionMode::View,
+    InteractionMode::Move,
+    InteractionMode::RotateAroundCenter,
+    InteractionMode::RotateAroundDancer,
+    InteractionMode::Scale,
+    InteractionMode::LineOfSight,
+];
 
 #[injectable]
 #[inject(
@@ -42,8 +43,7 @@ pub struct MainViewModel {
     actions: MainViewModelActions,
     on_change: Option<Rc<dyn Fn()>>,
     pub audio_player: AudioPlayerViewModel,
-    pub mode_options: Vec<InteractionModeOption>,
-    pub selected_mode_option: InteractionModeOption,
+    pub selected_mode: InteractionMode,
     pub is_mode_selection_enabled: bool,
     pub nav_width: f32,
     pub is_nav_open: bool,
@@ -51,15 +51,6 @@ pub struct MainViewModel {
     pub is_choreography_settings_open: bool,
     pub is_dialog_open: bool,
     pub dialog_content: Option<String>,
-    pub toggle_nav_tooltip: String,
-    pub open_settings_tooltip: String,
-    pub open_image_tooltip: String,
-    pub open_audio_tooltip: String,
-    pub background_color: Color,
-    pub top_bar_color: Color,
-    pub drawer_background_color: Color,
-    pub dialog_background_color: Color,
-    pub overlay_color: Color,
 }
 
 impl MainViewModel {
@@ -69,17 +60,11 @@ impl MainViewModel {
         global_state: Rc<RefCell<GlobalStateModel>>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
         audio_player: AudioPlayerViewModel,
-        locale: String,
         haptic_feedback: Option<Box<dyn HapticFeedback>>,
         actions: MainViewModelActions,
     ) -> Self
     {
-        let mode_options = build_mode_options(&locale);
-        let selected_mode_option = mode_options
-            .iter()
-            .find(|option| option.mode == global_state.borrow().interaction_mode)
-            .cloned()
-            .unwrap_or_else(|| mode_options[0].clone());
+        let selected_mode = global_state.borrow().interaction_mode;
 
         Self {
             global_state,
@@ -88,8 +73,7 @@ impl MainViewModel {
             actions,
             on_change: None,
             audio_player,
-            mode_options,
-            selected_mode_option,
+            selected_mode,
             is_mode_selection_enabled: true,
             nav_width: 0.0,
             is_nav_open: false,
@@ -97,15 +81,6 @@ impl MainViewModel {
             is_choreography_settings_open: false,
             is_dialog_open: false,
             dialog_content: None,
-            toggle_nav_tooltip: "Toggle navigation".to_string(),
-            open_settings_tooltip: "Choreography settings".to_string(),
-            open_image_tooltip: "Open floor plan".to_string(),
-            open_audio_tooltip: "Open audio file".to_string(),
-            background_color: Color::from_rgb_u8(0xF2, 0xF2, 0xF2),
-            top_bar_color: Color::from_rgb_u8(0xFF, 0xFF, 0xFF),
-            drawer_background_color: Color::from_rgb_u8(0xF2, 0xF2, 0xF2),
-            dialog_background_color: Color::from_rgb_u8(0xFF, 0xFF, 0xFF),
-            overlay_color: Color::from_argb_u8(0x66, 0x00, 0x00, 0x00),
         }
     }
 
@@ -188,11 +163,11 @@ impl MainViewModel {
         self.notify_changed();
     }
 
-    pub fn set_selected_mode(&mut self, option: InteractionModeOption) {
-        self.selected_mode_option = option.clone();
-        self.global_state.borrow_mut().interaction_mode = option.mode;
+    pub fn set_selected_mode(&mut self, mode: InteractionMode) {
+        self.selected_mode = mode;
+        self.global_state.borrow_mut().interaction_mode = mode;
         if let Some(handler) = self.actions.interaction_mode_changed.as_ref() {
-            handler(option.mode);
+            handler(mode);
         }
         self.notify_changed();
     }
@@ -236,7 +211,6 @@ pub struct MainDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub audio_player: AudioPlayerViewModel,
-    pub locale: String,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
     pub actions: MainViewModelActions,
 }
@@ -246,45 +220,24 @@ pub fn build_main_view_model(deps: MainDependencies) -> MainViewModel {
         deps.global_state,
         deps.state_machine,
         deps.audio_player,
-        deps.locale,
         deps.haptic_feedback,
         deps.actions,
     )
 }
 
-fn build_mode_options(locale: &str) -> Vec<InteractionModeOption>
-{
-    fn t(locale: &str, key: &str, fallback: &str) -> String
-    {
-        translation_with_fallback(locale, key)
-            .map(|value| value.to_string())
-            .unwrap_or_else(|| fallback.to_string())
+pub fn mode_option_from_index(index: i32) -> Option<InteractionMode> {
+    if index < 0 {
+        return None;
     }
 
-    vec![
-        InteractionModeOption {
-            mode: InteractionMode::View,
-            label: t(locale, "ModeView", "View"),
-        },
-        InteractionModeOption {
-            mode: InteractionMode::Move,
-            label: t(locale, "ModeMove", "Move"),
-        },
-        InteractionModeOption {
-            mode: InteractionMode::RotateAroundCenter,
-            label: t(locale, "ModeRotateAroundCenter", "Rotate center"),
-        },
-        InteractionModeOption {
-            mode: InteractionMode::RotateAroundDancer,
-            label: t(locale, "ModeRotateAroundDancer", "Rotate dancer"),
-        },
-        InteractionModeOption {
-            mode: InteractionMode::Scale,
-            label: t(locale, "ModeScale", "Scale"),
-        },
-        InteractionModeOption {
-            mode: InteractionMode::LineOfSight,
-            label: t(locale, "ModeLineOfSight", "Line of sight"),
-        },
-    ]
+    let index = index as usize;
+    MODE_OPTIONS.get(index).copied()
+}
+
+pub fn mode_index(mode: InteractionMode) -> i32 {
+    MODE_OPTIONS
+        .iter()
+        .position(|option| *option == mode)
+        .map(|index| index as i32)
+        .unwrap_or(-1)
 }

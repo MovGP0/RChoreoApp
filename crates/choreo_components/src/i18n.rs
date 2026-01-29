@@ -58,7 +58,15 @@ pub fn apply_translations(view: &ShellHost, locale: &str)
     translations.set_mode_rotate_around_dancer(t(locale, "ModeRotateAroundDancer"));
     translations.set_mode_scale(t(locale, "ModeScale"));
     translations.set_mode_line_of_sight(t(locale, "ModeLineOfSight"));
+    translations.set_main_toggle_nav_tooltip(t(locale, "MainToggleNavTooltip"));
+    translations.set_main_open_settings_tooltip(t(locale, "MainOpenSettingsTooltip"));
+    translations.set_main_open_image_tooltip(t(locale, "MainOpenImageTooltip"));
+    translations.set_main_open_audio_tooltip(t(locale, "MainOpenAudioTooltip"));
     translations.set_search_placeholder(t(locale, "SearchPlaceholder"));
+    translations.set_scenes_add_before(t(locale, "ScenesAddBefore"));
+    translations.set_scenes_add_after(t(locale, "ScenesAddAfter"));
+    translations.set_scenes_open(t(locale, "ScenesOpen"));
+    translations.set_scenes_save(t(locale, "ScenesSave"));
     translations.set_scene_timestamp_minutes_label(t(locale, "SceneTimestampMinutesLabel"));
     translations.set_scene_timestamp_seconds_label(t(locale, "SceneTimestampSecondsLabel"));
     translations.set_scene_timestamp_milliseconds_label(t(locale, "SceneTimestampMillisecondsLabel"));
