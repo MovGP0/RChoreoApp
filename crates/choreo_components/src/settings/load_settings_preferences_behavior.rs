@@ -9,16 +9,18 @@ use super::settings_view_model::{
     default_primary_color, default_secondary_color, default_tertiary_color, SettingsViewModel,
     ThemeMode,
 };
+use super::types::MaterialSchemeUpdater;
 
 #[injectable]
-#[inject(|preferences: P| Self::new(preferences))]
-pub struct LoadSettingsPreferencesBehavior<P: Preferences> {
+#[inject(|preferences: P, updater: U| Self::new(preferences, updater))]
+pub struct LoadSettingsPreferencesBehavior<P: Preferences, U: MaterialSchemeUpdater> {
     preferences: P,
+    updater: U,
 }
 
-impl<P: Preferences> LoadSettingsPreferencesBehavior<P> {
-    pub fn new(preferences: P) -> Self {
-        Self { preferences }
+impl<P: Preferences, U: MaterialSchemeUpdater> LoadSettingsPreferencesBehavior<P, U> {
+    pub fn new(preferences: P, updater: U) -> Self {
+        Self { preferences, updater }
     }
 
     pub fn load(&self, view_model: &mut SettingsViewModel) {
@@ -58,6 +60,8 @@ impl<P: Preferences> LoadSettingsPreferencesBehavior<P> {
             choreo_models::SettingsPreferenceKeys::TERTIARY_COLOR,
             default_tertiary_color(),
         );
+
+        self.updater.update(view_model, &self.preferences);
     }
 
     fn get_color_from_preferences(&self, key: &str, fallback: Color) -> Color {
@@ -72,7 +76,9 @@ impl<P: Preferences> LoadSettingsPreferencesBehavior<P> {
     }
 }
 
-impl<P: Preferences> Behavior<SettingsViewModel> for LoadSettingsPreferencesBehavior<P> {
+impl<P: Preferences, U: MaterialSchemeUpdater> Behavior<SettingsViewModel>
+    for LoadSettingsPreferencesBehavior<P, U>
+{
     fn activate(&self, view_model: &mut SettingsViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated(
             "LoadSettingsPreferencesBehavior",

@@ -1,4 +1,8 @@
+mod material_scheme_applier;
+
 use crate::ShellHost;
+
+pub use material_scheme_applier::ShellMaterialSchemeApplier;
 
 pub fn app_title() -> &'static str {
     "ChoreoApp"

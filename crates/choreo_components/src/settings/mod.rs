@@ -44,7 +44,10 @@ pub fn build_settings_behaviors<
     let updater = deps.scheme_updater;
 
     vec![
-        Box::new(LoadSettingsPreferencesBehavior::new(preferences.clone())),
+        Box::new(LoadSettingsPreferencesBehavior::new(
+            preferences.clone(),
+            updater.clone(),
+        )),
         Box::new(SwitchDarkLightModeBehavior::new(
             preferences.clone(),
             updater.clone(),

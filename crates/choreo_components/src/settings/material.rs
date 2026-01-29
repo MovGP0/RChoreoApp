@@ -72,6 +72,7 @@ pub trait MaterialSchemeApplier {
     fn apply(&self, schemes: MaterialSchemes);
 }
 
+#[derive(Clone)]
 pub struct MaterialSchemeHelper<A: MaterialSchemeApplier> {
     applier: A,
 }

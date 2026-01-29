@@ -29,8 +29,11 @@ use crate::floor::{
 };
 use crate::global::GlobalStateModel;
 use crate::scenes::{build_scenes_view_model, OpenChoreoActions, ScenesDependencies, ScenesPaneViewModel};
+use crate::settings::{build_settings_view_model, MaterialSchemeHelper, SettingsDependencies, SettingsViewModel};
+use crate::shell::ShellMaterialSchemeApplier;
 use crate::time::format_seconds;
 use crate::{SceneListItem, ShellHost};
+use crate::preferences::SharedPreferences;
 
 use super::{
     build_main_behaviors,
@@ -81,6 +84,8 @@ pub struct MainPageBinding {
     scenes_view_model: Rc<RefCell<ScenesPaneViewModel>>,
     behaviors: Rc<MainBehaviors>,
     #[allow(dead_code)]
+    settings_view_model: Rc<RefCell<SettingsViewModel>>,
+    #[allow(dead_code)]
     floor_view_model: Rc<RefCell<FloorCanvasViewModel>>,
     #[allow(dead_code)]
     floor_adapter: Rc<RefCell<FloorAdapter>>,
@@ -118,6 +123,12 @@ impl MainPageBinding {
 
         let actions = deps.actions;
         let view_weak = view.as_weak();
+        let settings_view_model = Rc::new(RefCell::new(build_settings_view_model(
+            SettingsDependencies {
+                preferences: SharedPreferences::new(Rc::clone(&deps.preferences)),
+                scheme_updater: MaterialSchemeHelper::new(ShellMaterialSchemeApplier::new(&view)),
+            },
+        )));
         let scenes_view_model = Rc::new(RefCell::new(build_scenes_view_model(ScenesDependencies {
             global_state: deps.global_state.clone(),
             state_machine: Some(deps.state_machine.clone()),
@@ -505,6 +516,7 @@ impl MainPageBinding {
             view_model,
             scenes_view_model,
             behaviors,
+            settings_view_model,
             floor_view_model,
             floor_adapter,
             floor_audio_timer,

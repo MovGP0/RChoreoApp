@@ -1,4 +1,5 @@
 mod in_memory;
+mod shared;
 mod types;
 #[cfg(not(target_arch = "wasm32"))]
 mod file;
@@ -6,6 +7,7 @@ mod file;
 mod wasm;
 
 pub use in_memory::InMemoryPreferences;
+pub use shared::SharedPreferences;
 #[cfg(not(target_arch = "wasm32"))]
 pub use file::FilePreferences;
 #[cfg(target_arch = "wasm32")]
