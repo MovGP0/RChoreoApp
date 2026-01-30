@@ -24,6 +24,9 @@ See `UnitTesting.md` for detailed instructions.
 
 ## Model View Behavior Pattern
 See `ModelViewBehavior.md` for detailed instructions.
+Key rules:
+- Activate behaviors before attaching the View-ViewModel adapter, since the adapter holds a mutable borrow.
+- Do not borrow the ViewModel inside subscription callbacks; the adapter is still attached with a mutable borrow.
 
 ## UI Translations
 
