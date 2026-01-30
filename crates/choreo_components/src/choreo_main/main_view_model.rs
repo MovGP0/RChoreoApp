@@ -4,7 +4,8 @@ use std::rc::{Rc, Weak};
 use choreo_state_machine::ApplicationStateMachine;
 use nject::injectable;
 
-use crate::audio_player::{AudioPlayerViewModel, HapticFeedback};
+use crate::audio_player::AudioPlayerViewModel;
+use crate::haptics::HapticFeedback;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::{GlobalStateModel, InteractionMode};
 use crate::scenes::SceneViewModel;
@@ -31,7 +32,7 @@ const MODE_OPTIONS: [InteractionMode; 6] = [
 #[inject(
     |global_state: Rc<RefCell<GlobalStateModel>>,
      state_machine: Rc<RefCell<ApplicationStateMachine>>,
-     audio_player: AudioPlayerViewModel,
+     audio_player: Rc<RefCell<AudioPlayerViewModel>>,
      haptic_feedback: Option<Box<dyn HapticFeedback>>,
      behaviors: Vec<Box<dyn Behavior<MainViewModel>>>,
      actions: MainViewModelActions| {
@@ -54,7 +55,7 @@ pub struct MainViewModel {
     actions: MainViewModelActions,
     on_change: Option<Rc<dyn Fn()>>,
     self_handle: Option<Weak<RefCell<MainViewModel>>>,
-    pub audio_player: AudioPlayerViewModel,
+    pub audio_player: Rc<RefCell<AudioPlayerViewModel>>,
     pub selected_mode: InteractionMode,
     pub is_mode_selection_enabled: bool,
     pub nav_width: f32,
@@ -71,7 +72,7 @@ impl MainViewModel {
     pub fn new(
         global_state: Rc<RefCell<GlobalStateModel>>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
-        audio_player: AudioPlayerViewModel,
+        audio_player: Rc<RefCell<AudioPlayerViewModel>>,
         haptic_feedback: Option<Box<dyn HapticFeedback>>,
         behaviors: Vec<Box<dyn Behavior<MainViewModel>>>,
         actions: MainViewModelActions,
@@ -248,26 +249,6 @@ impl Drop for MainViewModel {
     fn drop(&mut self) {
         self.disposables.dispose_all();
     }
-}
-
-pub struct MainDependencies {
-    pub global_state: Rc<RefCell<GlobalStateModel>>,
-    pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
-    pub audio_player: AudioPlayerViewModel,
-    pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
-    pub behaviors: Vec<Box<dyn Behavior<MainViewModel>>>,
-    pub actions: MainViewModelActions,
-}
-
-pub fn build_main_view_model(deps: MainDependencies) -> MainViewModel {
-    MainViewModel::new(
-        deps.global_state,
-        deps.state_machine,
-        deps.audio_player,
-        deps.haptic_feedback,
-        deps.behaviors,
-        deps.actions,
-    )
 }
 
 pub fn mode_option_from_index(index: i32) -> Option<InteractionMode> {

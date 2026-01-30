@@ -13,6 +13,7 @@ mod selected_role_behavior;
 mod show_dancer_dialog_behavior;
 mod swap_dancer_selection_behavior;
 mod swap_dancers_behavior;
+mod dancers_provider;
 
 pub use add_dancer_behavior::AddDancerBehavior;
 pub use cancel_dancer_settings_behavior::CancelDancerSettingsBehavior;
@@ -31,43 +32,4 @@ pub use selected_role_behavior::SelectedRoleBehavior;
 pub use show_dancer_dialog_behavior::ShowDancerDialogBehavior;
 pub use swap_dancer_selection_behavior::SwapDancerSelectionBehavior;
 pub use swap_dancers_behavior::SwapDancersBehavior;
-
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use crossbeam_channel::{Receiver, Sender};
-
-use crate::audio_player::HapticFeedback;
-use crate::behavior::Behavior;
-use crate::global::GlobalStateModel;
-
-pub struct DancerSettingsDependencies {
-    pub global_state: Rc<RefCell<GlobalStateModel>>,
-    pub show_dialog_sender: Sender<ShowDancerDialogCommand>,
-    pub close_dialog_sender: Sender<CloseDancerDialogCommand>,
-    pub show_dialog_receiver: Receiver<ShowDancerDialogCommand>,
-    pub close_dialog_receiver: Receiver<CloseDancerDialogCommand>,
-    pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
-}
-
-pub fn build_dancer_settings_behaviors(
-    deps: DancerSettingsDependencies,
-) -> Vec<Box<dyn Behavior<DancerSettingsViewModel>>> {
-    vec![
-        Box::new(LoadDancerSettingsBehavior::new(deps.global_state.clone())),
-        Box::new(AddDancerBehavior),
-        Box::new(DeleteDancerBehavior),
-        Box::new(SelectedDancerStateBehavior),
-        Box::new(SelectedIconBehavior),
-        Box::new(SelectedRoleBehavior),
-        Box::new(SwapDancerSelectionBehavior),
-        Box::new(SwapDancersBehavior::new(
-            deps.haptic_feedback,
-            deps.show_dialog_sender,
-        )),
-        Box::new(HideDancerDialogBehavior::new(deps.close_dialog_receiver)),
-        Box::new(ShowDancerDialogBehavior::new(deps.show_dialog_receiver)),
-        Box::new(CancelDancerSettingsBehavior),
-        Box::new(SaveDancerSettingsBehavior::new(deps.global_state)),
-    ]
-}
+pub use dancers_provider::{DancersProvider, DancersProviderDependencies};

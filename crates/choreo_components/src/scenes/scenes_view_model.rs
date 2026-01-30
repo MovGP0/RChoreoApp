@@ -7,7 +7,7 @@ use choreo_models::{PositionModel, SceneModel, SettingsPreferenceKeys};
 use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::audio_player::HapticFeedback;
+use crate::haptics::HapticFeedback;
 use crate::global::GlobalStateModel;
 use crate::preferences::Preferences;
 

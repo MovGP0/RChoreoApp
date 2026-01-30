@@ -10,3 +10,6 @@ pub struct CloseAudioFileCommand;
 pub struct OpenAudioFileCommand {
     pub file_path: String,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LinkSceneToPositionCommand;

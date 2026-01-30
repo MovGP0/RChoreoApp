@@ -1,7 +1,10 @@
+use std::time::Duration;
+
 use crossbeam_channel::Receiver;
 use nject::injectable;
+use slint::TimerMode;
 
-use crate::behavior::{Behavior, CompositeDisposable};
+use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::logging::BehaviorLog;
 
 use super::dancer_settings_view_model::DancerSettingsViewModel;
@@ -14,33 +17,35 @@ pub struct HideDancerDialogBehavior {
 }
 
 impl HideDancerDialogBehavior {
-    pub fn new(receiver: Receiver<CloseDancerDialogCommand>) -> Self {
+    pub(super) fn new(receiver: Receiver<CloseDancerDialogCommand>) -> Self {
         Self { receiver }
     }
 
-    pub fn hide_dialog(view_model: &mut DancerSettingsViewModel) {
+    fn hide_dialog(view_model: &mut DancerSettingsViewModel) {
         view_model.is_dialog_open = false;
         view_model.dialog_content = None;
-    }
-
-    pub fn try_handle(&self, view_model: &mut DancerSettingsViewModel) -> bool {
-        match self.receiver.try_recv() {
-            Ok(_) => {
-                Self::hide_dialog(view_model);
-                true
-            }
-            Err(_) => false,
-        }
     }
 }
 
 impl Behavior<DancerSettingsViewModel> for HideDancerDialogBehavior {
     fn activate(
         &self,
-        _view_model: &mut DancerSettingsViewModel,
-        _disposables: &mut CompositeDisposable,
+        view_model: &mut DancerSettingsViewModel,
+        disposables: &mut CompositeDisposable,
     ) {
         BehaviorLog::behavior_activated("HideDancerDialogBehavior", "DancerSettingsViewModel");
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
+            return;
+        };
+        let receiver = self.receiver.clone();
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            while receiver.try_recv().is_ok() {
+                let mut view_model = view_model_handle.borrow_mut();
+                Self::hide_dialog(&mut view_model);
+            }
+        });
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-

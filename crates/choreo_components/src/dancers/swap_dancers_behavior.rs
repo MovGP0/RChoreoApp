@@ -1,35 +1,42 @@
-use crate::audio_player::HapticFeedback;
-use crate::behavior::{Behavior, CompositeDisposable};
-use crate::logging::BehaviorLog;
+use std::time::Duration;
+
+use crossbeam_channel::Receiver;
 use nject::injectable;
+use slint::TimerMode;
+
+use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
+use crate::logging::BehaviorLog;
 
 use super::dancer_settings_view_model::DancerSettingsViewModel;
-use super::messages::ShowDancerDialogCommand;
+use super::messages::{ShowDancerDialogCommand, SwapDancersCommand};
 
 #[injectable]
 #[inject(
-    |haptic_feedback: Option<Box<dyn HapticFeedback>>,
-     show_dialog_sender: crossbeam_channel::Sender<ShowDancerDialogCommand>| {
-        Self::new(haptic_feedback, show_dialog_sender)
+    |show_dialog_sender: crossbeam_channel::Sender<ShowDancerDialogCommand>,
+     receiver: Receiver<SwapDancersCommand>| {
+        Self::new(show_dialog_sender, receiver)
     }
 )]
 pub struct SwapDancersBehavior {
-    haptic_feedback: Option<Box<dyn HapticFeedback>>,
     show_dialog_sender: crossbeam_channel::Sender<ShowDancerDialogCommand>,
+    receiver: Receiver<SwapDancersCommand>,
 }
 
 impl SwapDancersBehavior {
-    pub fn new(
-        haptic_feedback: Option<Box<dyn HapticFeedback>>,
+    pub(super) fn new(
         show_dialog_sender: crossbeam_channel::Sender<ShowDancerDialogCommand>,
+        receiver: Receiver<SwapDancersCommand>,
     ) -> Self {
         Self {
-            haptic_feedback,
             show_dialog_sender,
+            receiver,
         }
     }
 
-    pub fn show_swap_dialog(&self, view_model: &DancerSettingsViewModel) {
+    fn show_swap_dialog(
+        show_dialog_sender: &crossbeam_channel::Sender<ShowDancerDialogCommand>,
+        view_model: &DancerSettingsViewModel,
+    ) {
         let (Some(from), Some(to)) = (
             view_model.swap_from_dancer.as_ref(),
             view_model.swap_to_dancer.as_ref(),
@@ -41,13 +48,7 @@ impl SwapDancersBehavior {
             return;
         }
 
-        if let Some(haptic) = &self.haptic_feedback
-            && haptic.is_supported()
-        {
-            haptic.perform_click();
-        }
-
-        let _ = self.show_dialog_sender.send(ShowDancerDialogCommand {
+        let _ = show_dialog_sender.send(ShowDancerDialogCommand {
             content_id: Some("swap_dancers".to_string()),
         });
     }
@@ -56,9 +57,23 @@ impl SwapDancersBehavior {
 impl Behavior<DancerSettingsViewModel> for SwapDancersBehavior {
     fn activate(
         &self,
-        _view_model: &mut DancerSettingsViewModel,
-        _disposables: &mut CompositeDisposable,
+        view_model: &mut DancerSettingsViewModel,
+        disposables: &mut CompositeDisposable,
     ) {
         BehaviorLog::behavior_activated("SwapDancersBehavior", "DancerSettingsViewModel");
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
+            return;
+        };
+        let receiver = self.receiver.clone();
+        let show_dialog_sender = self.show_dialog_sender.clone();
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            while receiver.try_recv().is_ok() {
+                let view_model = view_model_handle.borrow();
+                Self::show_swap_dialog(&show_dialog_sender, &view_model);
+            }
+        });
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }

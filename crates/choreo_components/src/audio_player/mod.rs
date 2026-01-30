@@ -4,7 +4,6 @@ mod audio_player_position_changed_behavior;
 mod audio_player_ticks_behavior;
 mod audio_player_view_model;
 mod close_audio_file_behavior;
-mod haptics;
 mod messages;
 mod open_audio_file_behavior;
 mod types;
@@ -18,23 +17,36 @@ pub use audio_player_view_model::{
     speed_to_percent_text, PlayPauseGlyph,
 };
 pub use close_audio_file_behavior::CloseAudioFileBehavior;
-pub use haptics::{NoopHapticFeedback, PlatformHapticFeedback};
-pub use messages::{AudioPlayerPositionChangedEvent, CloseAudioFileCommand, OpenAudioFileCommand};
+pub use crate::haptics::{HapticFeedback, NoopHapticFeedback, PlatformHapticFeedback};
+pub use messages::{
+    AudioPlayerPositionChangedEvent,
+    CloseAudioFileCommand,
+    LinkSceneToPositionCommand,
+    OpenAudioFileCommand,
+};
 pub use open_audio_file_behavior::OpenAudioFileBehavior;
-pub use types::{AudioPlayer, HapticFeedback, StreamFactory};
+pub use types::{AudioPlayer, StreamFactory};
 
-use crate::behavior::Behavior;
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crossbeam_channel::{Receiver, Sender};
 
-pub struct AudioPlayerDependencies<P: crate::preferences::Preferences> {
+use crate::behavior::Behavior;
+use crate::global::GlobalStateModel;
+use crate::preferences::Preferences;
+
+pub struct AudioPlayerBehaviorDependencies {
+    pub global_state: Rc<RefCell<GlobalStateModel>>,
     pub open_audio_receiver: Receiver<OpenAudioFileCommand>,
     pub close_audio_receiver: Receiver<CloseAudioFileCommand>,
-    pub position_changed_publisher: Sender<AudioPlayerPositionChangedEvent>,
-    pub preferences: P,
+    pub position_changed_sender: Sender<AudioPlayerPositionChangedEvent>,
+    pub link_scene_receiver: Receiver<LinkSceneToPositionCommand>,
+    pub preferences: Rc<dyn Preferences>,
 }
 
-pub fn build_audio_player_behaviors<P: crate::preferences::Preferences + Clone + 'static>(
-    deps: AudioPlayerDependencies<P>,
+pub fn build_audio_player_behaviors(
+    deps: AudioPlayerBehaviorDependencies,
 ) -> Vec<Box<dyn Behavior<AudioPlayerViewModel>>> {
     vec![
         Box::new(AudioPlayerBehavior),
@@ -43,10 +55,13 @@ pub fn build_audio_player_behaviors<P: crate::preferences::Preferences + Clone +
             deps.preferences,
         )),
         Box::new(CloseAudioFileBehavior::new(deps.close_audio_receiver)),
-        Box::new(AudioPlayerTicksBehavior),
-        Box::new(AudioPlayerLinkSceneBehavior),
+        Box::new(AudioPlayerTicksBehavior::new(deps.global_state.clone())),
+        Box::new(AudioPlayerLinkSceneBehavior::new(
+            deps.global_state,
+            deps.link_scene_receiver,
+        )),
         Box::new(AudioPlayerPositionChangedBehavior::new(
-            deps.position_changed_publisher,
+            deps.position_changed_sender,
         )),
     ]
 }

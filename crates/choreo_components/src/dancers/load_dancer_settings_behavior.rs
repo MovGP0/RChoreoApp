@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use choreo_models::{DancerModel, RoleModel};
+use crossbeam_channel::Sender;
 use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
@@ -11,19 +12,36 @@ use crate::logging::BehaviorLog;
 
 use super::mapper::{default_role, ensure_default_roles};
 use super::dancer_settings_view_model::DancerSettingsViewModel;
+use super::messages::{DancerSelectionCommand, UpdateSwapSelectionCommand};
 
 #[injectable]
-#[inject(|global_state: Rc<RefCell<GlobalStateModel>>| Self::new(global_state))]
+#[inject(
+    |global_state: Rc<RefCell<GlobalStateModel>>,
+     selection_sender: Sender<DancerSelectionCommand>,
+     swap_selection_sender: Sender<UpdateSwapSelectionCommand>| {
+        Self::new(global_state, selection_sender, swap_selection_sender)
+    }
+)]
 pub struct LoadDancerSettingsBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
+    selection_sender: Sender<DancerSelectionCommand>,
+    swap_selection_sender: Sender<UpdateSwapSelectionCommand>,
 }
 
 impl LoadDancerSettingsBehavior {
-    pub fn new(global_state: Rc<RefCell<GlobalStateModel>>) -> Self {
-        Self { global_state }
+    pub(super) fn new(
+        global_state: Rc<RefCell<GlobalStateModel>>,
+        selection_sender: Sender<DancerSelectionCommand>,
+        swap_selection_sender: Sender<UpdateSwapSelectionCommand>,
+    ) -> Self {
+        Self {
+            global_state,
+            selection_sender,
+            swap_selection_sender,
+        }
     }
 
-    pub fn load(&self, view_model: &mut DancerSettingsViewModel) {
+    pub(super) fn load(&self, view_model: &mut DancerSettingsViewModel) {
         view_model.roles.clear();
         view_model.dancers.clear();
 
@@ -79,6 +97,7 @@ impl Behavior<DancerSettingsViewModel> for LoadDancerSettingsBehavior {
             "DancerSettingsViewModel",
         );
         self.load(view_model);
+        let _ = self.selection_sender.send(DancerSelectionCommand::Refresh);
+        let _ = self.swap_selection_sender.send(UpdateSwapSelectionCommand);
     }
 }
-

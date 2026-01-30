@@ -1,27 +1,22 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::time::Duration;
 
-use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
-use slint::{ComponentHandle, ModelRc, Timer, TimerMode, VecModel};
+use crossbeam_channel::{Receiver, Sender};
+use slint::{ComponentHandle, ModelRc, VecModel};
 
 use choreo_state_machine::ApplicationStateMachine;
 
 use crate::audio_player::{
     AudioPlayerPositionChangedEvent,
     AudioPlayerViewModel,
-    HapticFeedback,
     OpenAudioFileCommand,
 };
+use crate::haptics::HapticFeedback;
 use crate::floor::{
     CanvasViewHandle,
-    DrawFloorBehavior,
-    FloorAdapter,
     FloorCanvasViewModel,
-    FloorPointerEventSenders,
-    GestureHandlingBehavior,
-    MovePositionsBehavior,
-    PlacePositionBehavior,
+    FloorProvider,
+    FloorProviderDependencies,
     Point,
     PointerButton,
     PointerEventArgs,
@@ -29,13 +24,14 @@ use crate::floor::{
     PointerPressedCommand,
     PointerReleasedCommand,
     PointerWheelChangedCommand,
-    RedrawFloorBehavior,
-    RotateAroundCenterBehavior,
-    ScaleAroundDancerBehavior,
-    ScalePositionsBehavior,
 };
 use crate::global::GlobalStateModel;
-use crate::scenes::{build_scenes_view_model, OpenChoreoActions, ScenesDependencies, ScenesPaneViewModel};
+use crate::scenes::{
+    OpenChoreoActions,
+    ScenesDependencies,
+    ScenesPaneViewModel,
+    ScenesProvider,
+};
 use crate::settings::{build_settings_view_model, MaterialSchemeHelper, SettingsDependencies, SettingsViewModel};
 use crate::shell::ShellMaterialSchemeApplier;
 use crate::time::format_seconds;
@@ -43,21 +39,14 @@ use crate::{SceneListItem, ShellHost};
 use crate::preferences::SharedPreferences;
 
 use super::{
-    build_main_view_model,
-    ApplyInteractionModeBehavior,
-    CloseDialogCommand,
-    HideDialogBehavior,
-    MainDependencies,
-    OpenAudioBehavior,
-    OpenImageBehavior,
-    OpenSvgFileBehavior,
-    MainViewModelActions,
     MainViewModel,
+    MainViewModelActions,
+    MainViewModelProvider,
+    MainViewModelProviderDependencies,
+    OpenAudioRequested,
+    OpenImageRequested,
     mode_index,
     mode_option_from_index,
-    OpenSvgFileCommand,
-    ShowDialogCommand,
-    ShowDialogBehavior,
 };
 
 #[derive(Clone, Default)]
@@ -70,17 +59,11 @@ pub struct MainPageActionHandlers {
 pub struct MainPageDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
-    pub audio_player: AudioPlayerViewModel,
+    pub audio_player: Rc<RefCell<AudioPlayerViewModel>>,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
     pub open_audio_sender: Sender<OpenAudioFileCommand>,
     pub close_audio_sender: Sender<crate::audio_player::CloseAudioFileCommand>,
     pub audio_position_receiver: Receiver<AudioPlayerPositionChangedEvent>,
-    pub open_svg_sender: Sender<OpenSvgFileCommand>,
-    pub open_svg_receiver: Receiver<OpenSvgFileCommand>,
-    pub show_dialog_sender: Sender<ShowDialogCommand>,
-    pub show_dialog_receiver: Receiver<ShowDialogCommand>,
-    pub close_dialog_sender: Sender<CloseDialogCommand>,
-    pub close_dialog_receiver: Receiver<CloseDialogCommand>,
     pub scenes_show_dialog_sender: Sender<crate::scenes::ShowDialogCommand>,
     pub scenes_close_dialog_sender: Sender<crate::scenes::CloseDialogCommand>,
     pub redraw_floor_receiver: Receiver<crate::choreography_settings::RedrawFloorCommand>,
@@ -97,9 +80,7 @@ pub struct MainPageBinding {
     #[allow(dead_code)]
     floor_view_model: Rc<RefCell<FloorCanvasViewModel>>,
     #[allow(dead_code)]
-    floor_adapter: Rc<RefCell<FloorAdapter>>,
-    #[allow(dead_code)]
-    floor_audio_timer: Timer,
+    floor_provider: Rc<RefCell<FloorProvider>>,
 }
 
 impl MainPageBinding {
@@ -111,10 +92,6 @@ impl MainPageBinding {
         let close_audio_sender = deps.close_audio_sender.clone();
         let scenes_show_dialog_sender = deps.scenes_show_dialog_sender.clone();
         let scenes_close_dialog_sender = deps.scenes_close_dialog_sender.clone();
-        const MAIN_EVENT_BUFFER: usize = 64;
-        let (interaction_mode_sender, interaction_mode_receiver) = bounded(MAIN_EVENT_BUFFER);
-        let (open_audio_request_sender, open_audio_request_receiver) = bounded(MAIN_EVENT_BUFFER);
-        let (open_image_request_sender, open_image_request_receiver) = bounded(MAIN_EVENT_BUFFER);
 
         let actions = deps.actions;
         let view_weak = view.as_weak();
@@ -124,7 +101,7 @@ impl MainPageBinding {
                 scheme_updater: MaterialSchemeHelper::new(ShellMaterialSchemeApplier::new(&view)),
             },
         )));
-        let scenes_view_model = Rc::new(RefCell::new(build_scenes_view_model(ScenesDependencies {
+        let scenes_provider = ScenesProvider::new(ScenesDependencies {
             global_state: deps.global_state.clone(),
             state_machine: Some(deps.state_machine.clone()),
             preferences: Rc::clone(&deps.preferences),
@@ -136,215 +113,49 @@ impl MainPageBinding {
             actions: OpenChoreoActions {
                 pick_choreo_path: actions.pick_choreo_path.clone(),
             },
-        })));
+        });
+        let scenes_view_model = scenes_provider.scenes_view_model();
 
-        let (draw_floor_sender, draw_floor_receiver) = unbounded();
-        let main_behaviors: Vec<Box<dyn crate::behavior::Behavior<MainViewModel>>> = vec![
-            Box::new(ApplyInteractionModeBehavior::new(
-                Rc::clone(&global_state),
-                Rc::clone(&state_machine),
-                interaction_mode_receiver,
-            )),
-            Box::new(OpenAudioBehavior::new(
-                deps.open_audio_sender,
-                open_audio_request_receiver,
-            )),
-            Box::new(OpenImageBehavior::new(
-                deps.open_svg_sender,
-                open_image_request_receiver,
-            )),
-            Box::new(OpenSvgFileBehavior::new(
-                Rc::clone(&global_state),
-                Rc::clone(&preferences),
-                deps.open_svg_receiver,
-                draw_floor_sender.clone(),
-            )),
-            Box::new(ShowDialogBehavior::new(deps.show_dialog_receiver)),
-            Box::new(HideDialogBehavior::new(deps.close_dialog_receiver)),
-        ];
-        let view_model = Rc::new(RefCell::new(build_main_view_model(MainDependencies {
+        let audio_player = Rc::clone(&deps.audio_player);
+        let audio_player_handle = Rc::downgrade(&audio_player);
+        audio_player
+            .borrow_mut()
+            .set_self_handle(audio_player_handle);
+        AudioPlayerViewModel::activate(&audio_player);
+
+        let floor_provider = Rc::new(RefCell::new(FloorProvider::new(FloorProviderDependencies {
+            global_state: Rc::clone(&deps.global_state),
+            state_machine: Rc::clone(&deps.state_machine),
+            preferences: Rc::clone(&deps.preferences),
+            audio_position_receiver: deps.audio_position_receiver,
+            redraw_floor_receiver: deps.redraw_floor_receiver,
+        })));
+        floor_provider
+            .borrow_mut()
+            .initialize_view(view_weak.clone());
+        let draw_floor_sender = floor_provider.borrow().draw_floor_sender();
+        let floor_view_model = floor_provider.borrow().floor_view_model();
+
+        let mut main_provider = MainViewModelProvider::new(MainViewModelProviderDependencies {
             global_state: global_state.clone(),
             state_machine: state_machine.clone(),
-            audio_player: deps.audio_player,
+            audio_player,
+            open_audio_sender: deps.open_audio_sender,
+            preferences: Rc::clone(&preferences),
+            draw_floor_sender: draw_floor_sender.clone(),
             haptic_feedback: deps.haptic_feedback,
-            behaviors: main_behaviors,
-            actions: MainViewModelActions::default(),
-        })));
-        const POINTER_EVENT_BUFFER: usize = 256;
-        let (gesture_pressed_sender, gesture_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (gesture_moved_sender, gesture_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (gesture_released_sender, gesture_released_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (gesture_wheel_sender, gesture_wheel_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (gesture_touch_sender, gesture_touch_receiver) = bounded(POINTER_EVENT_BUFFER);
-
-        let (place_pressed_sender, place_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (place_moved_sender, place_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (place_released_sender, place_released_receiver) = bounded(POINTER_EVENT_BUFFER);
-
-        let (move_pressed_sender, move_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (move_moved_sender, move_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (move_released_sender, move_released_receiver) = bounded(POINTER_EVENT_BUFFER);
-
-        let (rotate_pressed_sender, rotate_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (rotate_moved_sender, rotate_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (rotate_released_sender, rotate_released_receiver) = bounded(POINTER_EVENT_BUFFER);
-
-        let (scale_pressed_sender, scale_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (scale_moved_sender, scale_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (scale_released_sender, scale_released_receiver) = bounded(POINTER_EVENT_BUFFER);
-
-        let (scale_dancer_pressed_sender, scale_dancer_pressed_receiver) =
-            bounded(POINTER_EVENT_BUFFER);
-        let (scale_dancer_moved_sender, scale_dancer_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
-        let (scale_dancer_released_sender, scale_dancer_released_receiver) =
-            bounded(POINTER_EVENT_BUFFER);
-
-        let floor_event_senders = FloorPointerEventSenders {
-            pointer_pressed_senders: vec![
-                gesture_pressed_sender,
-                place_pressed_sender,
-                move_pressed_sender,
-                rotate_pressed_sender,
-                scale_pressed_sender,
-                scale_dancer_pressed_sender,
-            ],
-            pointer_moved_senders: vec![
-                gesture_moved_sender,
-                place_moved_sender,
-                move_moved_sender,
-                rotate_moved_sender,
-                scale_moved_sender,
-                scale_dancer_moved_sender,
-            ],
-            pointer_released_senders: vec![
-                gesture_released_sender,
-                place_released_sender,
-                move_released_sender,
-                rotate_released_sender,
-                scale_released_sender,
-                scale_dancer_released_sender,
-            ],
-            pointer_wheel_changed_senders: vec![gesture_wheel_sender],
-            touch_senders: vec![gesture_touch_sender],
-        };
-
-        let floor_view_model = Rc::new(RefCell::new(FloorCanvasViewModel::new(
-            draw_floor_sender,
-            floor_event_senders,
-        )));
-        floor_view_model
-            .borrow_mut()
-            .set_self_handle(Rc::downgrade(&floor_view_model));
-
-        let floor_behaviors: Vec<Box<dyn crate::behavior::Behavior<FloorCanvasViewModel>>> = vec![
-            Box::new(DrawFloorBehavior::new(
-                draw_floor_receiver,
-                None,
-            )),
-            Box::new(RedrawFloorBehavior::new(
-                deps.redraw_floor_receiver,
-            )),
-            Box::new(GestureHandlingBehavior::new(
-                Rc::clone(&deps.state_machine),
-                gesture_pressed_receiver,
-                gesture_moved_receiver,
-                gesture_released_receiver,
-                gesture_wheel_receiver,
-                gesture_touch_receiver,
-            )),
-            Box::new(PlacePositionBehavior::new(
-                Rc::clone(&deps.global_state),
-                Rc::clone(&deps.state_machine),
-                place_pressed_receiver,
-                place_moved_receiver,
-                place_released_receiver,
-            )),
-            Box::new(MovePositionsBehavior::new(
-                Rc::clone(&deps.global_state),
-                Rc::clone(&deps.state_machine),
-                move_pressed_receiver,
-                move_moved_receiver,
-                move_released_receiver,
-            )),
-            Box::new(RotateAroundCenterBehavior::new(
-                Rc::clone(&deps.global_state),
-                Rc::clone(&deps.state_machine),
-                rotate_pressed_receiver,
-                rotate_moved_receiver,
-                rotate_released_receiver,
-            )),
-            Box::new(ScalePositionsBehavior::new(
-                Rc::clone(&deps.global_state),
-                Rc::clone(&deps.state_machine),
-                scale_pressed_receiver,
-                scale_moved_receiver,
-                scale_released_receiver,
-            )),
-            Box::new(ScaleAroundDancerBehavior::new(
-                Rc::clone(&deps.global_state),
-                Rc::clone(&deps.state_machine),
-                scale_dancer_pressed_receiver,
-                scale_dancer_moved_receiver,
-                scale_dancer_released_receiver,
-            )),
-        ];
-
-        FloorCanvasViewModel::activate(&floor_view_model, floor_behaviors);
-
-        let floor_adapter = Rc::new(RefCell::new(FloorAdapter::new(
-            deps.global_state.clone(),
-            deps.state_machine.clone(),
-            Rc::clone(&deps.preferences),
-            deps.audio_position_receiver,
-        )));
-
-        {
-            let floor_view_model_for_redraw = Rc::clone(&floor_view_model);
-            let floor_adapter_for_redraw = Rc::clone(&floor_adapter);
-            let view_weak = view_weak.clone();
-            floor_view_model.borrow_mut().set_on_redraw(Some(Rc::new(move || {
-                let floor_view_model = Rc::clone(&floor_view_model_for_redraw);
-                let floor_adapter = Rc::clone(&floor_adapter_for_redraw);
-                let view_weak = view_weak.clone();
-                slint::Timer::single_shot(Duration::from_millis(0), move || {
-                    if let Some(view) = view_weak.upgrade() {
-                        apply_floor_view(&view, &floor_adapter, &floor_view_model);
-                    }
-                });
-            })));
-        }
-
-        let floor_audio_timer = Timer::default();
-        {
-            let floor_adapter = Rc::clone(&floor_adapter);
-            let floor_view_model = Rc::clone(&floor_view_model);
-            let view_weak = view_weak.clone();
-            floor_audio_timer.start(
-                TimerMode::Repeated,
-                Duration::from_millis(100),
-                move || {
-                    let mut adapter = floor_adapter.borrow_mut();
-                    if !adapter.poll_audio_position() {
-                        return;
-                    }
-
-                    if let Some(view) = view_weak.upgrade() {
-                        let mut floor_view_model = floor_view_model.borrow_mut();
-                        adapter.apply(&view, &mut floor_view_model);
-                    }
-                },
-            );
-        }
-
+        });
+        let interaction_mode_sender = main_provider.interaction_mode_sender();
+        let open_audio_request_sender = main_provider.open_audio_request_sender();
+        let open_image_request_sender = main_provider.open_image_request_sender();
+        let view_model = Rc::new(RefCell::new(main_provider.create_main_view_model()));
         {
             let view_model_for_change = Rc::clone(&view_model);
-            let floor_view_model_for_change = Rc::clone(&floor_view_model);
-            let floor_adapter_for_change = Rc::clone(&floor_adapter);
+            let floor_provider_for_change = Rc::clone(&floor_provider);
             let view_weak = view_weak.clone();
             let on_change = Rc::new(move || {
                 let view_model = Rc::clone(&view_model_for_change);
-                let floor_view_model = Rc::clone(&floor_view_model_for_change);
-                let floor_adapter = Rc::clone(&floor_adapter_for_change);
+                let floor_provider = Rc::clone(&floor_provider_for_change);
                 let view_weak = view_weak.clone();
                 slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
                     if let Some(view) = view_weak.upgrade()
@@ -352,7 +163,7 @@ impl MainPageBinding {
                         let view_model_snapshot = view_model.borrow();
                         apply_view_model(&view, &view_model_snapshot);
                         drop(view_model_snapshot);
-                        apply_floor_view(&view, &floor_adapter, &floor_view_model);
+                        floor_provider.borrow().apply_to_view(&view);
                     }
                 });
             });
@@ -361,13 +172,11 @@ impl MainPageBinding {
 
         {
             let scenes_view_model_for_change = Rc::clone(&scenes_view_model);
-            let floor_view_model_for_change = Rc::clone(&floor_view_model);
-            let floor_adapter_for_change = Rc::clone(&floor_adapter);
+            let floor_provider_for_change = Rc::clone(&floor_provider);
             let view_weak = view_weak.clone();
             let on_change = Rc::new(move || {
                 let scenes_view_model = Rc::clone(&scenes_view_model_for_change);
-                let floor_view_model = Rc::clone(&floor_view_model_for_change);
-                let floor_adapter = Rc::clone(&floor_adapter_for_change);
+                let floor_provider = Rc::clone(&floor_provider_for_change);
                 let view_weak = view_weak.clone();
                 slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
                     if let Some(view) = view_weak.upgrade()
@@ -375,7 +184,7 @@ impl MainPageBinding {
                         let scenes_view_model_snapshot = scenes_view_model.borrow();
                         apply_scenes_view_model(&view, &scenes_view_model_snapshot);
                         drop(scenes_view_model_snapshot);
-                        apply_floor_view(&view, &floor_adapter, &floor_view_model);
+                        floor_provider.borrow().apply_to_view(&view);
                     }
                 });
             });
@@ -392,7 +201,9 @@ impl MainPageBinding {
                     if let Some(picker) = actions_for_audio.pick_audio_path.as_ref()
                         && let Some(path) = picker()
                     {
-                        let _ = open_audio_request_sender.try_send(path);
+                        let _ = open_audio_request_sender.try_send(OpenAudioRequested {
+                            file_path: path,
+                        });
                         return true;
                     }
                     false
@@ -401,7 +212,9 @@ impl MainPageBinding {
                     if let Some(picker) = actions_for_image.pick_image_path.as_ref()
                         && let Some(path) = picker()
                     {
-                        let _ = open_image_request_sender.try_send(path);
+                        let _ = open_image_request_sender.try_send(OpenImageRequested {
+                            file_path: path,
+                        });
                         floor_view_model_for_image.borrow_mut().draw_floor();
                     }
                 })),
@@ -420,19 +233,7 @@ impl MainPageBinding {
 
         apply_view_model(&view, &view_model.borrow());
         apply_scenes_view_model(&view, &scenes_view_model.borrow());
-        apply_floor_view(&view, &floor_adapter, &floor_view_model);
-
-        {
-            let floor_view_model = Rc::clone(&floor_view_model);
-            let view_weak = view_weak.clone();
-            let floor_adapter = Rc::clone(&floor_adapter);
-            slint::Timer::single_shot(Duration::from_millis(0), move || {
-                if let Some(view) = view_weak.upgrade() {
-                    apply_floor_view(&view, &floor_adapter, &floor_view_model);
-                    floor_view_model.borrow_mut().draw_floor();
-                }
-            });
-        }
+        floor_provider.borrow().apply_to_view(&view);
 
         {
             let view_model = Rc::clone(&view_model);
@@ -658,8 +459,7 @@ impl MainPageBinding {
             scenes_view_model,
             settings_view_model,
             floor_view_model,
-            floor_adapter,
-            floor_audio_timer,
+            floor_provider,
         }
     }
 
@@ -703,15 +503,6 @@ fn apply_scenes_view_model(view: &ShellHost, view_model: &ScenesPaneViewModel) {
     view.set_scenes_can_delete_scene(view_model.can_delete_scene);
     view.set_scenes_can_navigate_to_settings(view_model.can_navigate_to_settings);
     view.set_scenes_can_navigate_to_dancer_settings(view_model.can_navigate_to_dancer_settings);
-}
-
-fn apply_floor_view(
-    view: &ShellHost,
-    floor_adapter: &Rc<RefCell<FloorAdapter>>,
-    floor_view_model: &Rc<RefCell<FloorCanvasViewModel>>,
-) {
-    let mut floor_view_model = floor_view_model.borrow_mut();
-    floor_adapter.borrow_mut().apply(view, &mut floor_view_model);
 }
 
 fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneListItem> {

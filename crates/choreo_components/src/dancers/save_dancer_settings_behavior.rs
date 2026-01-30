@@ -1,31 +1,44 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::time::Duration;
 
 use choreo_master_mobile_json::DancerId;
 use choreo_models::DancerModel;
+use crossbeam_channel::Receiver;
 use nject::injectable;
+use slint::TimerMode;
 
-use crate::behavior::{Behavior, CompositeDisposable};
+use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateModel;
 use crate::logging::BehaviorLog;
 
 use super::mapper::update_scene_dancers;
 use super::dancer_settings_view_model::DancerSettingsViewModel;
+use super::messages::SaveDancerSettingsCommand;
 
 #[injectable]
-#[inject(|global_state: Rc<RefCell<GlobalStateModel>>| Self::new(global_state))]
+#[inject(
+    |global_state: Rc<RefCell<GlobalStateModel>>,
+     receiver: Receiver<SaveDancerSettingsCommand>| {
+        Self::new(global_state, receiver)
+    }
+)]
 pub struct SaveDancerSettingsBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
+    receiver: Receiver<SaveDancerSettingsCommand>,
 }
 
 impl SaveDancerSettingsBehavior {
-    pub fn new(global_state: Rc<RefCell<GlobalStateModel>>) -> Self {
-        Self { global_state }
+    pub(super) fn new(
+        global_state: Rc<RefCell<GlobalStateModel>>,
+        receiver: Receiver<SaveDancerSettingsCommand>,
+    ) -> Self {
+        Self { global_state, receiver }
     }
 
-    pub fn apply_changes(&mut self, view_model: &DancerSettingsViewModel) {
-        let mut global_state = self.global_state.borrow_mut();
+    fn apply_changes(global_state: &Rc<RefCell<GlobalStateModel>>, view_model: &DancerSettingsViewModel) {
+        let mut global_state = global_state.borrow_mut();
         let choreography = &mut global_state.choreography;
         choreography.roles.clear();
         choreography
@@ -52,13 +65,26 @@ impl SaveDancerSettingsBehavior {
 impl Behavior<DancerSettingsViewModel> for SaveDancerSettingsBehavior {
     fn activate(
         &self,
-        _view_model: &mut DancerSettingsViewModel,
-        _disposables: &mut CompositeDisposable,
+        view_model: &mut DancerSettingsViewModel,
+        disposables: &mut CompositeDisposable,
     ) {
         BehaviorLog::behavior_activated(
             "SaveDancerSettingsBehavior",
             "DancerSettingsViewModel",
         );
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
+            return;
+        };
+        let receiver = self.receiver.clone();
+        let global_state = Rc::clone(&self.global_state);
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            while receiver.try_recv().is_ok() {
+                let view_model = view_model_handle.borrow();
+                Self::apply_changes(&global_state, &view_model);
+            }
+        });
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-

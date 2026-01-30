@@ -1,11 +1,13 @@
-use std::rc::Rc;
+use std::cell::RefCell;
+use std::rc::{Rc, Weak};
 
 use choreo_i18n::{icon_bytes, icon_names, translation_with_fallback};
 use choreo_master_mobile_json::Color;
 use choreo_models::{DancerModel, RoleModel};
 use nject::injectable;
 
-use crate::audio_player::HapticFeedback;
+use crate::behavior::{Behavior, CompositeDisposable};
+use crate::haptics::HapticFeedback;
 
 use super::messages::CloseDancerDialogCommand;
 
@@ -17,9 +19,32 @@ pub struct IconOption {
     pub icon_bytes: Option<&'static [u8]>,
 }
 
+type DancerActionHandler = Rc<dyn Fn(&mut DancerSettingsViewModel)>;
+type DancerIndexHandler = Rc<dyn Fn(&mut DancerSettingsViewModel, usize)>;
+type DancerTextHandler = Rc<dyn Fn(&mut DancerSettingsViewModel, String)>;
+
+#[derive(Clone, Default)]
+pub struct DancerSettingsViewModelActions {
+    pub select_dancer: Option<DancerIndexHandler>,
+    pub add_dancer: Option<DancerActionHandler>,
+    pub delete_dancer: Option<DancerActionHandler>,
+    pub select_role: Option<DancerIndexHandler>,
+    pub update_dancer_name: Option<DancerTextHandler>,
+    pub update_dancer_shortcut: Option<DancerTextHandler>,
+    pub update_dancer_icon: Option<DancerTextHandler>,
+    pub swap_dancers: Option<DancerActionHandler>,
+    pub save: Option<DancerActionHandler>,
+    pub cancel: Option<DancerActionHandler>,
+}
+
 #[injectable]
-#[inject(|haptic_feedback: Option<Box<dyn HapticFeedback>>| Self::new(haptic_feedback))]
+#[inject(
+    |haptic_feedback: Option<Box<dyn HapticFeedback>>| {
+        Self::new(haptic_feedback)
+    }
+)]
 pub struct DancerSettingsViewModel {
+    actions: DancerSettingsViewModelActions,
     pub dancers: Vec<Rc<DancerModel>>,
     pub roles: Vec<Rc<RoleModel>>,
     pub selected_dancer: Option<Rc<DancerModel>>,
@@ -35,11 +60,14 @@ pub struct DancerSettingsViewModel {
     pub dialog_content: Option<String>,
     pub icon_options: Vec<IconOption>,
     haptic_feedback: Option<Box<dyn HapticFeedback>>,
+    disposables: CompositeDisposable,
+    self_handle: Option<Weak<RefCell<DancerSettingsViewModel>>>,
 }
 
 impl DancerSettingsViewModel {
     pub fn new(haptic_feedback: Option<Box<dyn HapticFeedback>>) -> Self {
         Self {
+            actions: DancerSettingsViewModelActions::default(),
             dancers: Vec::new(),
             roles: Vec::new(),
             selected_dancer: None,
@@ -55,27 +83,100 @@ impl DancerSettingsViewModel {
             dialog_content: None,
             icon_options: load_icon_options(),
             haptic_feedback,
+            disposables: CompositeDisposable::new(),
+            self_handle: None,
         }
     }
 
-    pub fn add_dancer(&self) {
-        self.perform_click();
+    pub fn activate(
+        view_model: &Rc<RefCell<DancerSettingsViewModel>>,
+        behaviors: Vec<Box<dyn Behavior<DancerSettingsViewModel>>>,
+    ) {
+        let mut disposables = CompositeDisposable::new();
+        {
+            let mut view_model = view_model.borrow_mut();
+            for behavior in behaviors.iter() {
+                behavior.activate(&mut view_model, &mut disposables);
+            }
+        }
+        view_model.borrow_mut().disposables = disposables;
     }
 
-    pub fn delete_dancer(&self) {
-        self.perform_click();
+    pub fn set_actions(&mut self, actions: DancerSettingsViewModelActions) {
+        self.actions = actions;
     }
 
-    pub fn swap_dancers(&self) {
-        self.perform_click();
+    pub fn set_self_handle(&mut self, handle: Weak<RefCell<DancerSettingsViewModel>>) {
+        self.self_handle = Some(handle);
     }
 
-    pub fn cancel(&self) {
-        self.perform_click();
+    pub fn self_handle(&self) -> Option<Weak<RefCell<DancerSettingsViewModel>>> {
+        self.self_handle.clone()
     }
 
-    pub fn save(&self) {
+    pub fn add_dancer(&mut self) {
         self.perform_click();
+        if let Some(handler) = self.actions.add_dancer.clone() {
+            handler(self);
+        }
+    }
+
+    pub fn delete_dancer(&mut self) {
+        self.perform_click();
+        if let Some(handler) = self.actions.delete_dancer.clone() {
+            handler(self);
+        }
+    }
+
+    pub fn select_dancer(&mut self, index: usize) {
+        if let Some(handler) = self.actions.select_dancer.clone() {
+            handler(self, index);
+        }
+    }
+
+    pub fn select_role(&mut self, index: usize) {
+        if let Some(handler) = self.actions.select_role.clone() {
+            handler(self, index);
+        }
+    }
+
+    pub fn update_dancer_name(&mut self, value: String) {
+        if let Some(handler) = self.actions.update_dancer_name.clone() {
+            handler(self, value);
+        }
+    }
+
+    pub fn update_dancer_shortcut(&mut self, value: String) {
+        if let Some(handler) = self.actions.update_dancer_shortcut.clone() {
+            handler(self, value);
+        }
+    }
+
+    pub fn update_dancer_icon(&mut self, value: String) {
+        if let Some(handler) = self.actions.update_dancer_icon.clone() {
+            handler(self, value);
+        }
+    }
+
+    pub fn swap_dancers(&mut self) {
+        self.perform_click();
+        if let Some(handler) = self.actions.swap_dancers.clone() {
+            handler(self);
+        }
+    }
+
+    pub fn cancel(&mut self) {
+        self.perform_click();
+        if let Some(handler) = self.actions.cancel.clone() {
+            handler(self);
+        }
+    }
+
+    pub fn save(&mut self) {
+        self.perform_click();
+        if let Some(handler) = self.actions.save.clone() {
+            handler(self);
+        }
     }
 
     fn perform_click(&self) {
@@ -84,6 +185,12 @@ impl DancerSettingsViewModel {
         {
             haptic.perform_click();
         }
+    }
+}
+
+impl Drop for DancerSettingsViewModel {
+    fn drop(&mut self) {
+        self.disposables.dispose_all();
     }
 }
 

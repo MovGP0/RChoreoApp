@@ -1,10 +1,5 @@
 use std::io;
 
-pub trait HapticFeedback {
-    fn is_supported(&self) -> bool;
-    fn perform_click(&self);
-}
-
 pub trait AudioPlayer {
     fn is_playing(&self) -> bool;
     fn can_seek(&self) -> bool;

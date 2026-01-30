@@ -10,26 +10,33 @@ use crate::behavior::TimerDisposable;
 use crate::logging::BehaviorLog;
 
 use super::main_view_model::MainViewModel;
+use super::messages::OpenAudioRequested;
 
 #[derive(Clone)]
 #[injectable]
 #[inject(
-    |sender: Sender<OpenAudioFileCommand>, receiver: Receiver<String>| {
+    |sender: Sender<OpenAudioFileCommand>, receiver: Receiver<OpenAudioRequested>| {
         Self { sender, receiver }
     }
 )]
 pub struct OpenAudioBehavior {
     sender: Sender<OpenAudioFileCommand>,
-    receiver: Receiver<String>,
+    receiver: Receiver<OpenAudioRequested>,
 }
 
 impl OpenAudioBehavior {
-    pub fn new(sender: Sender<OpenAudioFileCommand>, receiver: Receiver<String>) -> Self {
+    pub fn new(
+        sender: Sender<OpenAudioFileCommand>,
+        receiver: Receiver<OpenAudioRequested>,
+    ) -> Self
+    {
         Self { sender, receiver }
     }
 
-    fn handle_open_audio(&self, path: String) {
-        let _ = self.sender.send(OpenAudioFileCommand { file_path: path });
+    fn handle_open_audio(&self, command: OpenAudioRequested) {
+        let _ = self.sender.send(OpenAudioFileCommand {
+            file_path: command.file_path,
+        });
     }
 }
 
@@ -40,8 +47,8 @@ impl Behavior<MainViewModel> for OpenAudioBehavior {
         let behavior = self.clone();
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
-            while let Ok(path) = receiver.try_recv() {
-                behavior.handle_open_audio(path);
+            while let Ok(command) = receiver.try_recv() {
+                behavior.handle_open_audio(command);
             }
         });
         disposables.add(Box::new(TimerDisposable::new(timer)));

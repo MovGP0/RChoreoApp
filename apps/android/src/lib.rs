@@ -15,17 +15,21 @@ fn android_main(app: slint::android::AndroidApp) {
 
     use crossbeam_channel::unbounded;
     use slint::ComponentHandle;
-    use choreo_components::audio_player::AudioPlayerViewModel;
-    use choreo_components::audio_player::CloseAudioFileCommand;
-    use choreo_components::audio_player::PlatformHapticFeedback;
+    use choreo_components::audio_player::{
+        build_audio_player_behaviors,
+        AudioPlayerBehaviorDependencies,
+        AudioPlayerViewModel,
+        CloseAudioFileCommand,
+        LinkSceneToPositionCommand,
+        PlatformHapticFeedback,
+    };
     use choreo_components::choreo_main::MainPageActionHandlers;
     use choreo_components::choreo_main::MainPageBinding;
     use choreo_components::choreo_main::MainPageDependencies;
-    use choreo_components::global::GlobalStateModel;
+    use choreo_components::global::GlobalProvider;
     use choreo_components::i18n;
-    use choreo_components::preferences::PlatformPreferences;
+    use choreo_components::preferences::{PlatformPreferences, Preferences};
     use choreo_components::shell;
-    use choreo_state_machine::ApplicationStateMachine;
     use choreo_i18n::detect_locale;
 
     if let Err(err) = slint::android::init(app) {
@@ -39,22 +43,29 @@ fn android_main(app: slint::android::AndroidApp) {
             return;
         }
     };
-    let global_state = Rc::new(RefCell::new(GlobalStateModel::default()));
-    let state_machine = Rc::new(RefCell::new(
-        ApplicationStateMachine::with_default_transitions(Box::new(
-            GlobalStateModel::default(),
-        )),
-    ));
+    let global_provider = GlobalProvider::new();
+    let global_state = global_provider.global_state();
+    let state_machine = global_provider.state_machine();
     let locale = detect_locale();
     i18n::apply_translations(&ui, &locale);
-    let audio_player = AudioPlayerViewModel::new(None);
-    let preferences = Rc::new(PlatformPreferences::new("ChoreoApp"));
-    let (open_audio_sender, _open_audio_receiver) = unbounded();
-    let (close_audio_sender, _close_audio_receiver) = unbounded::<CloseAudioFileCommand>();
-    let (_audio_position_sender, audio_position_receiver) = unbounded();
-    let (open_svg_sender, open_svg_receiver) = unbounded();
-    let (show_dialog_sender, show_dialog_receiver) = unbounded();
-    let (close_dialog_sender, close_dialog_receiver) = unbounded();
+    let preferences: Rc<dyn Preferences> = Rc::new(PlatformPreferences::new("ChoreoApp"));
+    let (open_audio_sender, open_audio_receiver) = unbounded();
+    let (close_audio_sender, close_audio_receiver) = unbounded::<CloseAudioFileCommand>();
+    let (audio_position_sender, audio_position_receiver) = unbounded();
+    let (link_scene_sender, link_scene_receiver) = unbounded::<LinkSceneToPositionCommand>();
+    let audio_player_behaviors = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
+        global_state: Rc::clone(&global_state),
+        open_audio_receiver,
+        close_audio_receiver,
+        position_changed_sender: audio_position_sender,
+        link_scene_receiver,
+        preferences: Rc::clone(&preferences),
+    });
+    let audio_player = Rc::new(RefCell::new(AudioPlayerViewModel::new(
+        None,
+        link_scene_sender,
+        audio_player_behaviors,
+    )));
     let (scenes_show_dialog_sender, _scenes_show_dialog_receiver) = unbounded();
     let (scenes_close_dialog_sender, _scenes_close_dialog_receiver) = unbounded();
     let (_redraw_floor_sender, redraw_floor_receiver) = unbounded();
@@ -75,12 +86,6 @@ fn android_main(app: slint::android::AndroidApp) {
             open_audio_sender,
             close_audio_sender,
             audio_position_receiver,
-            open_svg_sender,
-            open_svg_receiver,
-            show_dialog_sender,
-            show_dialog_receiver,
-            close_dialog_sender,
-            close_dialog_receiver,
             scenes_show_dialog_sender,
             scenes_close_dialog_sender,
             redraw_floor_receiver,

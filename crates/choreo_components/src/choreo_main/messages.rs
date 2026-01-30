@@ -7,6 +7,16 @@ pub struct OpenSvgFileCommand {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OpenAudioRequested {
+    pub file_path: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OpenImageRequested {
+    pub file_path: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ShowDialogCommand {
     pub content: Option<String>,
 }

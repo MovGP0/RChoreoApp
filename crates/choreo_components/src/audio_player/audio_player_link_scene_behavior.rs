@@ -1,66 +1,98 @@
-use crate::behavior::{Behavior, CompositeDisposable};
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::time::Duration;
+
+use crossbeam_channel::Receiver;
+use nject::injectable;
+use slint::TimerMode;
+
+use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateModel;
 use crate::logging::BehaviorLog;
 use crate::scenes::SceneViewModel;
 use crate::time::format_seconds;
-use nject::injectable;
 
 use super::audio_player_view_model::AudioPlayerViewModel;
+use super::messages::LinkSceneToPositionCommand;
 
 #[injectable]
-#[inject(|| Self)]
-pub struct AudioPlayerLinkSceneBehavior;
+#[inject(
+    |global_state: Rc<RefCell<GlobalStateModel>>,
+     receiver: Receiver<LinkSceneToPositionCommand>| {
+        Self::new(global_state, receiver)
+    }
+)]
+pub struct AudioPlayerLinkSceneBehavior {
+    global_state: Rc<RefCell<GlobalStateModel>>,
+    receiver: Receiver<LinkSceneToPositionCommand>,
+}
 
 impl AudioPlayerLinkSceneBehavior {
-    pub fn link_scene_to_position(
-        view_model: &mut AudioPlayerViewModel,
-        global_state: &mut GlobalStateModel,
-    ) {
-        let Some(selected_scene) = global_state.selected_scene.as_mut() else {
-            return;
-        };
-
-        let Some(rounded_timestamp) =
-            try_get_linked_timestamp(view_model, selected_scene, &global_state.scenes)
-        else {
-            return;
-        };
-
-        selected_scene.timestamp = Some(rounded_timestamp);
-
-        if let Some(model_scene) = global_state
-            .choreography
-            .scenes
-            .iter_mut()
-            .find(|scene| scene.scene_id == selected_scene.scene_id)
-        {
-            model_scene.timestamp = Some(format_seconds(rounded_timestamp));
+    pub fn new(
+        global_state: Rc<RefCell<GlobalStateModel>>,
+        receiver: Receiver<LinkSceneToPositionCommand>,
+    ) -> Self
+    {
+        Self {
+            global_state,
+            receiver,
         }
-
-        update_ticks(view_model, &global_state.scenes);
-    }
-
-    pub fn update_can_link(view_model: &mut AudioPlayerViewModel, global_state: &GlobalStateModel) {
-        let can_link = global_state
-            .selected_scene
-            .as_ref()
-            .and_then(|scene| try_get_linked_timestamp(view_model, scene, &global_state.scenes))
-            .is_some();
-        view_model.can_link_scene_to_position = can_link;
-    }
-
-    pub fn update_ticks(view_model: &mut AudioPlayerViewModel, global_state: &GlobalStateModel) {
-        update_ticks(view_model, &global_state.scenes);
     }
 }
 
 impl Behavior<AudioPlayerViewModel> for AudioPlayerLinkSceneBehavior {
-    fn activate(&self, _view_model: &mut AudioPlayerViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, view_model: &mut AudioPlayerViewModel, disposables: &mut CompositeDisposable)
+    {
         BehaviorLog::behavior_activated(
             "AudioPlayerLinkSceneBehavior",
             "AudioPlayerViewModel",
         );
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
+            return;
+        };
+        let global_state = Rc::clone(&self.global_state);
+        let receiver = self.receiver.clone();
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            while receiver.try_recv().is_ok() {
+                let mut global_state = global_state.borrow_mut();
+                let mut view_model = view_model_handle.borrow_mut();
+                handle_link_scene_to_position(&mut view_model, &mut global_state);
+            }
+        });
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
+}
+
+fn handle_link_scene_to_position(
+    view_model: &mut AudioPlayerViewModel,
+    global_state: &mut GlobalStateModel,
+)
+{
+    let Some(selected_scene) = global_state.selected_scene.as_mut() else {
+        return;
+    };
+
+    let Some(rounded_timestamp) =
+        try_get_linked_timestamp(view_model, selected_scene, &global_state.scenes)
+    else {
+        return;
+    };
+
+    selected_scene.timestamp = Some(rounded_timestamp);
+
+    if let Some(model_scene) = global_state
+        .choreography
+        .scenes
+        .iter_mut()
+        .find(|scene| scene.scene_id == selected_scene.scene_id)
+    {
+        model_scene.timestamp = Some(format_seconds(rounded_timestamp));
+    }
+
+    update_ticks(view_model, &global_state.scenes);
+    update_can_link(view_model, global_state);
 }
 
 fn try_get_linked_timestamp(
@@ -96,7 +128,8 @@ fn try_get_linked_timestamp(
     Some(rounded)
 }
 
-pub(crate) fn update_ticks(view_model: &mut AudioPlayerViewModel, scenes: &[SceneViewModel]) {
+pub(crate) fn update_ticks(view_model: &mut AudioPlayerViewModel, scenes: &[SceneViewModel])
+{
     let max = view_model.duration;
     let mut ticks: Vec<f64> = scenes
         .iter()
@@ -108,9 +141,18 @@ pub(crate) fn update_ticks(view_model: &mut AudioPlayerViewModel, scenes: &[Scen
     view_model.tick_values = ticks;
 }
 
+pub(crate) fn update_can_link(view_model: &mut AudioPlayerViewModel, global_state: &GlobalStateModel)
+{
+    let can_link = global_state
+        .selected_scene
+        .as_ref()
+        .and_then(|scene| try_get_linked_timestamp(view_model, scene, &global_state.scenes))
+        .is_some();
+    view_model.can_link_scene_to_position = can_link;
+}
+
 fn round_to_100_millis(seconds: f64) -> f64 {
     let milliseconds = seconds * 1000.0;
     let rounded = (milliseconds / 100.0).round() * 100.0;
     rounded / 1000.0
 }
-

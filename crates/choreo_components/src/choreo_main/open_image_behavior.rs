@@ -9,27 +9,33 @@ use crate::behavior::TimerDisposable;
 use crate::logging::BehaviorLog;
 
 use super::main_view_model::MainViewModel;
-use super::messages::OpenSvgFileCommand;
+use super::messages::{OpenImageRequested, OpenSvgFileCommand};
 
 #[derive(Clone)]
 #[injectable]
 #[inject(
-    |sender: Sender<OpenSvgFileCommand>, receiver: Receiver<String>| {
+    |sender: Sender<OpenSvgFileCommand>, receiver: Receiver<OpenImageRequested>| {
         Self { sender, receiver }
     }
 )]
 pub struct OpenImageBehavior {
     sender: Sender<OpenSvgFileCommand>,
-    receiver: Receiver<String>,
+    receiver: Receiver<OpenImageRequested>,
 }
 
 impl OpenImageBehavior {
-    pub fn new(sender: Sender<OpenSvgFileCommand>, receiver: Receiver<String>) -> Self {
+    pub fn new(
+        sender: Sender<OpenSvgFileCommand>,
+        receiver: Receiver<OpenImageRequested>,
+    ) -> Self
+    {
         Self { sender, receiver }
     }
 
-    fn handle_open_svg(&self, path: String) {
-        let _ = self.sender.send(OpenSvgFileCommand { file_path: path });
+    fn handle_open_svg(&self, command: OpenImageRequested) {
+        let _ = self.sender.send(OpenSvgFileCommand {
+            file_path: command.file_path,
+        });
     }
 }
 
@@ -40,8 +46,8 @@ impl Behavior<MainViewModel> for OpenImageBehavior {
         let behavior = self.clone();
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
-            while let Ok(path) = receiver.try_recv() {
-                behavior.handle_open_svg(path);
+            while let Ok(command) = receiver.try_recv() {
+                behavior.handle_open_svg(command);
             }
         });
         disposables.add(Box::new(TimerDisposable::new(timer)));

@@ -11,6 +11,7 @@ mod scenes_view_model;
 mod select_scene_behavior;
 mod select_scene_from_audio_position_behavior;
 mod show_scene_timestamps_behavior;
+mod scenes_provider;
 
 pub use apply_placement_mode_behavior::ApplyPlacementModeBehavior;
 pub use filter_scenes_behavior::FilterScenesBehavior;
@@ -30,6 +31,7 @@ pub use open_choreo_behavior::{OpenChoreoActions, OpenChoreoBehavior};
 pub use publish_scene_selected_behavior::PublishSceneSelectedBehavior;
 pub use save_choreo_behavior::SaveChoreoBehavior;
 pub use scenes_view_model::{SceneViewModel, ScenesPaneViewModel};
+pub use scenes_provider::ScenesProvider;
 pub use select_scene_behavior::SelectSceneBehavior;
 pub use select_scene_from_audio_position_behavior::SelectSceneFromAudioPositionBehavior;
 pub use show_scene_timestamps_behavior::ShowSceneTimestampsBehavior;
@@ -49,7 +51,7 @@ pub struct ScenesDependencies {
     pub preferences: Rc<dyn crate::preferences::Preferences>,
     pub show_dialog_sender: Sender<ShowDialogCommand>,
     pub close_dialog_sender: Sender<CloseDialogCommand>,
-    pub haptic_feedback: Option<Box<dyn crate::audio_player::HapticFeedback>>,
+    pub haptic_feedback: Option<Box<dyn crate::haptics::HapticFeedback>>,
     pub open_audio_sender: Sender<OpenAudioFileCommand>,
     pub close_audio_sender: Sender<CloseAudioFileCommand>,
     pub actions: OpenChoreoActions,

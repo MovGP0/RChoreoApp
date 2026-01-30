@@ -1,10 +1,28 @@
+use std::cell::RefCell;
+use std::rc::{Rc, Weak};
+
+use crossbeam_channel::Sender;
 use nject::injectable;
 
-use super::types::{AudioPlayer, HapticFeedback, StreamFactory};
+use crate::behavior::{Behavior, CompositeDisposable};
+
+use super::messages::LinkSceneToPositionCommand;
+use super::types::{AudioPlayer, StreamFactory};
+use crate::haptics::HapticFeedback;
 
 #[injectable]
-#[inject(|haptic_feedback: Option<Box<dyn HapticFeedback>>| Self::new(haptic_feedback))]
+#[inject(
+    |haptic_feedback: Option<Box<dyn HapticFeedback>>,
+     link_scene_sender: Sender<LinkSceneToPositionCommand>,
+     behaviors: Vec<Box<dyn Behavior<AudioPlayerViewModel>>>| {
+        Self::new(haptic_feedback, link_scene_sender, behaviors)
+    }
+)]
 pub struct AudioPlayerViewModel {
+    link_scene_sender: Sender<LinkSceneToPositionCommand>,
+    behaviors: Vec<Box<dyn Behavior<AudioPlayerViewModel>>>,
+    disposables: CompositeDisposable,
+    self_handle: Option<Weak<RefCell<AudioPlayerViewModel>>>,
     pub speed: f64,
     pub minimum_speed: f64,
     pub maximum_speed: f64,
@@ -28,8 +46,16 @@ pub struct AudioPlayerViewModel {
 }
 
 impl AudioPlayerViewModel {
-    pub fn new(haptic_feedback: Option<Box<dyn HapticFeedback>>) -> Self {
+    pub fn new(
+        haptic_feedback: Option<Box<dyn HapticFeedback>>,
+        link_scene_sender: Sender<LinkSceneToPositionCommand>,
+        behaviors: Vec<Box<dyn Behavior<AudioPlayerViewModel>>>,
+    ) -> Self {
         Self {
+            link_scene_sender,
+            behaviors,
+            disposables: CompositeDisposable::new(),
+            self_handle: None,
             speed: 1.0,
             minimum_speed: 0.8,
             maximum_speed: 1.1,
@@ -51,6 +77,45 @@ impl AudioPlayerViewModel {
             player: None,
             haptic_feedback,
         }
+    }
+
+    pub fn activate(view_model: &Rc<RefCell<AudioPlayerViewModel>>) {
+        let mut disposables = CompositeDisposable::new();
+        {
+            let mut view_model = view_model.borrow_mut();
+            let behaviors = std::mem::take(&mut view_model.behaviors);
+            for behavior in behaviors {
+                behavior.activate(&mut view_model, &mut disposables);
+            }
+        }
+
+        view_model.borrow_mut().disposables = disposables;
+    }
+
+    pub fn set_self_handle(&mut self, handle: Weak<RefCell<AudioPlayerViewModel>>) {
+        self.self_handle = Some(handle);
+    }
+
+    pub fn self_handle(&self) -> Option<Weak<RefCell<AudioPlayerViewModel>>> {
+        self.self_handle.clone()
+    }
+
+    pub fn set_player(&mut self, mut player: Box<dyn AudioPlayer>) {
+        self.sync_capabilities(player.as_ref());
+        self.sync_parameters(player.as_mut());
+        self.update_duration_label();
+        self.player = Some(player);
+    }
+
+    pub fn sync_from_player(&mut self) {
+        let Some(player) = self.player.as_ref() else {
+            return;
+        };
+
+        self.duration = player.duration();
+        self.position = player.current_position();
+        self.is_playing = player.is_playing();
+        self.update_duration_label();
     }
 
     pub fn toggle_play_pause(&mut self) {
@@ -107,7 +172,7 @@ impl AudioPlayerViewModel {
         {
             haptic.perform_click();
         }
-        // handled by behavior integration
+        let _ = self.link_scene_sender.try_send(LinkSceneToPositionCommand);
     }
 
     pub fn update_speed_label(&mut self) {
@@ -116,6 +181,20 @@ impl AudioPlayerViewModel {
 
     pub fn update_duration_label(&mut self) {
         self.duration_label = duration_to_time_text(self.duration);
+    }
+
+    fn sync_capabilities(&mut self, player: &dyn AudioPlayer) {
+        self.can_seek = player.can_seek();
+        self.can_set_speed = player.can_set_speed();
+        self.duration = player.duration();
+        self.update_duration_label();
+    }
+
+    fn sync_parameters(&self, player: &mut dyn AudioPlayer) {
+        player.set_speed(self.speed);
+        player.set_volume(self.volume);
+        player.set_balance(self.balance);
+        player.set_loop(self.loop_enabled);
     }
 }
 
@@ -208,6 +287,12 @@ impl AudioPlayerViewState {
 
     pub fn is_user_dragging(&self) -> bool {
         self.is_user_dragging
+    }
+}
+
+impl Drop for AudioPlayerViewModel {
+    fn drop(&mut self) {
+        self.disposables.dispose_all();
     }
 }
 

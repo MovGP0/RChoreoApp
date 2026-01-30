@@ -1,15 +1,27 @@
-use crate::behavior::{Behavior, CompositeDisposable};
-use crate::logging::BehaviorLog;
+use std::time::Duration;
+
+use crossbeam_channel::Receiver;
 use nject::injectable;
+use slint::TimerMode;
+
+use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
+use crate::logging::BehaviorLog;
 
 use super::dancer_settings_view_model::DancerSettingsViewModel;
+use super::messages::UpdateSwapSelectionCommand;
 
 #[injectable]
-#[inject(|| Self)]
-pub struct SwapDancerSelectionBehavior;
+#[inject(|receiver: Receiver<UpdateSwapSelectionCommand>| Self { receiver })]
+pub struct SwapDancerSelectionBehavior {
+    receiver: Receiver<UpdateSwapSelectionCommand>,
+}
 
 impl SwapDancerSelectionBehavior {
-    pub fn ensure_swap_selections(view_model: &mut DancerSettingsViewModel) {
+    pub(super) fn new(receiver: Receiver<UpdateSwapSelectionCommand>) -> Self {
+        Self { receiver }
+    }
+
+    fn ensure_swap_selections(view_model: &mut DancerSettingsViewModel) {
         if view_model.dancers.is_empty() {
             view_model.swap_from_dancer = None;
             view_model.swap_to_dancer = None;
@@ -57,7 +69,7 @@ impl SwapDancerSelectionBehavior {
         Self::update_can_swap(view_model);
     }
 
-    pub fn update_can_swap(view_model: &mut DancerSettingsViewModel) {
+    fn update_can_swap(view_model: &mut DancerSettingsViewModel) {
         view_model.can_swap_dancers = view_model.swap_from_dancer.is_some()
             && view_model.swap_to_dancer.is_some()
             && view_model
@@ -72,13 +84,25 @@ impl SwapDancerSelectionBehavior {
 impl Behavior<DancerSettingsViewModel> for SwapDancerSelectionBehavior {
     fn activate(
         &self,
-        _view_model: &mut DancerSettingsViewModel,
-        _disposables: &mut CompositeDisposable,
+        view_model: &mut DancerSettingsViewModel,
+        disposables: &mut CompositeDisposable,
     ) {
         BehaviorLog::behavior_activated(
             "SwapDancerSelectionBehavior",
             "DancerSettingsViewModel",
         );
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
+            return;
+        };
+        let receiver = self.receiver.clone();
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            while receiver.try_recv().is_ok() {
+                let mut view_model = view_model_handle.borrow_mut();
+                Self::ensure_swap_selections(&mut view_model);
+            }
+        });
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
