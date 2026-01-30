@@ -284,14 +284,20 @@ impl GestureHandlingBehavior {
 }
 
 impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
-    fn activate(&self, view_model: &mut FloorCanvasViewModel, _disposables: &mut CompositeDisposable) {
+    fn initialize(
+        &self,
+        _view_model: &mut FloorCanvasViewModel,
+        _disposables: &mut CompositeDisposable,
+    ) {
         BehaviorLog::behavior_activated("GestureHandlingBehavior", "FloorCanvasViewModel");
+    }
+
+    fn bind(
+        &self,
+        view_model: &Rc<RefCell<FloorCanvasViewModel>>,
+        disposables: &mut CompositeDisposable,
+    ) {
         let Some(state_machine) = self.state_machine.clone() else {
-            return;
-        };
-        let Some(view_model) = view_model
-            .self_handle()
-            .and_then(|handle| handle.upgrade()) else {
             return;
         };
 
@@ -299,7 +305,7 @@ impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
 
         {
             let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model);
+            let view_model = Rc::clone(view_model);
             let state_machine = Rc::clone(&state_machine);
             let subject = view_model.borrow().pointer_pressed_subject();
             let subscription = subject.subscribe(move |command| {
@@ -307,12 +313,12 @@ impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
                 let mut state_machine = state_machine.borrow_mut();
                 behavior.handle_pointer_pressed(&mut state_machine, command);
             });
-            _disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
+            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
         }
 
         {
             let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model);
+            let view_model = Rc::clone(view_model);
             let state_machine = Rc::clone(&state_machine);
             let subject = view_model.borrow().pointer_moved_subject();
             let subscription = subject.subscribe(move |command| {
@@ -322,12 +328,12 @@ impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
                 behavior.handle_pointer_moved(&mut view_model, &mut state_machine, command);
                 view_model.draw_floor();
             });
-            _disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
+            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
         }
 
         {
             let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model);
+            let view_model = Rc::clone(view_model);
             let state_machine = Rc::clone(&state_machine);
             let subject = view_model.borrow().pointer_released_subject();
             let subscription = subject.subscribe(move |command| {
@@ -335,12 +341,12 @@ impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
                 let mut state_machine = state_machine.borrow_mut();
                 behavior.handle_pointer_released(&mut state_machine, command);
             });
-            _disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
+            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
         }
 
         {
             let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model);
+            let view_model = Rc::clone(view_model);
             let state_machine = Rc::clone(&state_machine);
             let subject = view_model.borrow().pointer_wheel_changed_subject();
             let subscription = subject.subscribe(move |command| {
@@ -350,12 +356,12 @@ impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
                 behavior.handle_pointer_wheel_changed(&mut view_model, &mut state_machine, command);
                 view_model.draw_floor();
             });
-            _disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
+            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
         }
 
         {
             let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model);
+            let view_model = Rc::clone(view_model);
             let state_machine = Rc::clone(&state_machine);
             let subject = view_model.borrow().touch_subject();
             let subscription = subject.subscribe(move |command| {
@@ -365,8 +371,7 @@ impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
                 behavior.handle_touch(&mut view_model, &mut state_machine, command);
                 view_model.draw_floor();
             });
-            _disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
+            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
         }
     }
 }
-

@@ -37,7 +37,7 @@ impl UpdateVariationBehavior {
 }
 
 impl Behavior<ChoreographySettingsViewModel> for UpdateVariationBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

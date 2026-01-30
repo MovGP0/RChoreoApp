@@ -26,7 +26,7 @@ impl ShowSceneTimestampsBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for ShowSceneTimestampsBehavior {
-    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn initialize(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("ShowSceneTimestampsBehavior", "ScenesPaneViewModel");
         self.update_from_choreography(view_model);
     }

@@ -36,7 +36,7 @@ impl UpdateTransparencyBehavior {
 }
 
 impl Behavior<ChoreographySettingsViewModel> for UpdateTransparencyBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

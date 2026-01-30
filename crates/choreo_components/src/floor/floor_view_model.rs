@@ -77,7 +77,6 @@ pub struct FloorDependencies {
 pub fn build_floor_canvas_view_model(deps: FloorDependencies) -> Rc<RefCell<FloorCanvasViewModel>> {
     let view_model = Rc::new(RefCell::new(FloorCanvasViewModel::new(
         deps.draw_floor_sender,
-        Vec::new(),
     )));
     view_model
         .borrow_mut()
@@ -116,7 +115,7 @@ pub fn build_floor_canvas_view_model(deps: FloorDependencies) -> Rc<RefCell<Floo
         )),
     ];
 
-    view_model.borrow_mut().activate_behaviors(behaviors);
+    FloorCanvasViewModel::bind_behaviors(&view_model, behaviors);
     view_model
 }
 
@@ -127,9 +126,8 @@ impl FloorCanvasViewModel {
 
     pub fn new(
         draw_floor_command_sender: Sender<DrawFloorCommand>,
-        mut behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>>,
     ) -> Self {
-        let mut view_model = Self {
+        Self {
             draw_floor_command_sender,
             disposables: CompositeDisposable::new(),
             draw_floor_subject: LocalSubject::new(),
@@ -147,26 +145,30 @@ impl FloorCanvasViewModel {
             has_floor_bounds: false,
             floor_bounds: Rect::default(),
             canvas_size: Size::default(),
-        };
-
-        let mut disposables = CompositeDisposable::new();
-        for behavior in behaviors.drain(..) {
-            behavior.activate(&mut view_model, &mut disposables);
         }
-        view_model.disposables = disposables;
-        view_model
     }
 
     pub fn dispose(&mut self) {
         self.disposables.dispose_all();
     }
 
-    pub fn activate_behaviors(&mut self, mut behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>>) {
+    pub fn bind_behaviors(
+        view_model: &Rc<RefCell<FloorCanvasViewModel>>,
+        mut behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>>,
+    ) {
         let mut disposables = CompositeDisposable::new();
-        for behavior in behaviors.drain(..) {
-            behavior.activate(self, &mut disposables);
+        {
+            let mut view_model = view_model.borrow_mut();
+            for behavior in behaviors.iter() {
+                behavior.initialize(&mut view_model, &mut disposables);
+            }
         }
-        self.disposables = disposables;
+
+        for behavior in behaviors.drain(..) {
+            behavior.bind(view_model, &mut disposables);
+        }
+
+        view_model.borrow_mut().disposables = disposables;
     }
 
     pub fn draw_floor(&mut self) {

@@ -115,7 +115,7 @@ impl UpdateSelectedSceneBehavior {
 }
 
 impl Behavior<ChoreographySettingsViewModel> for UpdateSelectedSceneBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

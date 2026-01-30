@@ -37,7 +37,7 @@ impl UpdateSubtitleBehavior {
 }
 
 impl Behavior<ChoreographySettingsViewModel> for UpdateSubtitleBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

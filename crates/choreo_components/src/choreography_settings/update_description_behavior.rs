@@ -37,7 +37,7 @@ impl UpdateDescriptionBehavior {
 }
 
 impl Behavior<ChoreographySettingsViewModel> for UpdateDescriptionBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

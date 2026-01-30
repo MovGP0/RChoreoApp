@@ -457,17 +457,23 @@ impl RotateAroundCenterBehavior {
 }
 
 impl Behavior<FloorCanvasViewModel> for RotateAroundCenterBehavior {
-    fn activate(&self, view_model: &mut FloorCanvasViewModel, disposables: &mut CompositeDisposable) {
+    fn initialize(
+        &self,
+        _view_model: &mut FloorCanvasViewModel,
+        _disposables: &mut CompositeDisposable,
+    ) {
         BehaviorLog::behavior_activated("RotateAroundCenterBehavior", "FloorCanvasViewModel");
+    }
+
+    fn bind(
+        &self,
+        view_model: &Rc<RefCell<FloorCanvasViewModel>>,
+        disposables: &mut CompositeDisposable,
+    ) {
         let Some(global_state) = self.global_state.clone() else {
             return;
         };
         let Some(state_machine) = self.state_machine.clone() else {
-            return;
-        };
-        let Some(view_model) = view_model
-            .self_handle()
-            .and_then(|handle| handle.upgrade()) else {
             return;
         };
 
@@ -475,7 +481,7 @@ impl Behavior<FloorCanvasViewModel> for RotateAroundCenterBehavior {
 
         {
             let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model);
+            let view_model = Rc::clone(view_model);
             let global_state = Rc::clone(&global_state);
             let state_machine = Rc::clone(&state_machine);
             let subject = view_model.borrow().pointer_pressed_subject();
@@ -496,7 +502,7 @@ impl Behavior<FloorCanvasViewModel> for RotateAroundCenterBehavior {
 
         {
             let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model);
+            let view_model = Rc::clone(view_model);
             let global_state = Rc::clone(&global_state);
             let state_machine = Rc::clone(&state_machine);
             let subject = view_model.borrow().pointer_moved_subject();
@@ -519,7 +525,7 @@ impl Behavior<FloorCanvasViewModel> for RotateAroundCenterBehavior {
 
         {
             let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model);
+            let view_model = Rc::clone(view_model);
             let global_state = Rc::clone(&global_state);
             let state_machine = Rc::clone(&state_machine);
             let subject = view_model.borrow().pointer_released_subject();
@@ -541,4 +547,3 @@ impl Behavior<FloorCanvasViewModel> for RotateAroundCenterBehavior {
         }
     }
 }
-

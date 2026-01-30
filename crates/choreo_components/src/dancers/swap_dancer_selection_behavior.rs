@@ -70,7 +70,7 @@ impl SwapDancerSelectionBehavior {
 }
 
 impl Behavior<DancerSettingsViewModel> for SwapDancerSelectionBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut DancerSettingsViewModel,
         _disposables: &mut CompositeDisposable,

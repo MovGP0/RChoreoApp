@@ -37,7 +37,7 @@ impl UpdateFloorColorBehavior {
 }
 
 impl Behavior<ChoreographySettingsViewModel> for UpdateFloorColorBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

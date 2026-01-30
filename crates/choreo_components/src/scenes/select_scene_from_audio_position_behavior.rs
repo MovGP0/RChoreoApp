@@ -61,7 +61,7 @@ impl SelectSceneFromAudioPositionBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for SelectSceneFromAudioPositionBehavior {
-    fn activate(&self, _view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn initialize(&self, _view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("SelectSceneFromAudioPositionBehavior", "ScenesPaneViewModel");
     }
 }

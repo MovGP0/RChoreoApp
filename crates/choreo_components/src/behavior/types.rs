@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use rxrust::prelude::SubscriptionLike;
 
 pub trait Disposable {
@@ -27,7 +30,13 @@ impl CompositeDisposable {
 }
 
 pub trait Behavior<T> {
-    fn activate(&self, view_model: &mut T, disposables: &mut CompositeDisposable);
+    fn initialize(&self, _view_model: &mut T, _disposables: &mut CompositeDisposable)
+    {
+    }
+
+    fn bind(&self, _view_model: &Rc<RefCell<T>>, _disposables: &mut CompositeDisposable)
+    {
+    }
 }
 
 pub struct SubscriptionDisposable<T>

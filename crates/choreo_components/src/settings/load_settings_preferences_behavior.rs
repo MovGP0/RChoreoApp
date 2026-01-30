@@ -79,7 +79,7 @@ impl<P: Preferences, U: MaterialSchemeUpdater> LoadSettingsPreferencesBehavior<P
 impl<P: Preferences, U: MaterialSchemeUpdater> Behavior<SettingsViewModel>
     for LoadSettingsPreferencesBehavior<P, U>
 {
-    fn activate(&self, view_model: &mut SettingsViewModel, _disposables: &mut CompositeDisposable) {
+    fn initialize(&self, view_model: &mut SettingsViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated(
             "LoadSettingsPreferencesBehavior",
             "SettingsViewModel",

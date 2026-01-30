@@ -38,7 +38,7 @@ impl SelectedRoleBehavior {
 }
 
 impl Behavior<DancerSettingsViewModel> for SelectedRoleBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut DancerSettingsViewModel,
         _disposables: &mut CompositeDisposable,

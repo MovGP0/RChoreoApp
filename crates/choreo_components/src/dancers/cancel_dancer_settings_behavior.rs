@@ -15,7 +15,7 @@ impl CancelDancerSettingsBehavior {
 }
 
 impl Behavior<DancerSettingsViewModel> for CancelDancerSettingsBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut DancerSettingsViewModel,
         _disposables: &mut CompositeDisposable,

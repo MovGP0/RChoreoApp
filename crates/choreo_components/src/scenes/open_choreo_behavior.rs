@@ -161,7 +161,7 @@ impl OpenChoreoBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for OpenChoreoBehavior {
-    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn initialize(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("OpenChoreoBehavior", "ScenesPaneViewModel");
         self.load_last_opened(view_model);
         let behavior = self.clone();

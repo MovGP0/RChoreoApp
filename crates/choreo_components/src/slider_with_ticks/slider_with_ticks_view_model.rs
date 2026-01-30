@@ -28,7 +28,7 @@ impl SliderWithTicksViewModel {
 
         let mut disposables = CompositeDisposable::new();
         for behavior in behaviors.drain(..) {
-            behavior.activate(&mut view_model, &mut disposables);
+            behavior.initialize(&mut view_model, &mut disposables);
         }
 
         view_model.disposables = disposables;

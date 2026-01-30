@@ -9,7 +9,7 @@ use super::SliderWithTicksViewModel;
 pub struct SliderWithTicksBehavior;
 
 impl Behavior<SliderWithTicksViewModel> for SliderWithTicksBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut SliderWithTicksViewModel,
         _disposables: &mut CompositeDisposable,

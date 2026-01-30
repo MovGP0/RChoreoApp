@@ -35,7 +35,7 @@ impl HideDancerDialogBehavior {
 }
 
 impl Behavior<DancerSettingsViewModel> for HideDancerDialogBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut DancerSettingsViewModel,
         _disposables: &mut CompositeDisposable,

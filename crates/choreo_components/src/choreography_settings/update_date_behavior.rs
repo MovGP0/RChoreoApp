@@ -37,7 +37,7 @@ impl UpdateDateBehavior {
 }
 
 impl Behavior<ChoreographySettingsViewModel> for UpdateDateBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

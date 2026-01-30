@@ -75,7 +75,7 @@ impl SelectSceneBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for SelectSceneBehavior {
-    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn initialize(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("SelectSceneBehavior", "ScenesPaneViewModel");
 
         let receiver = self.receiver.clone();

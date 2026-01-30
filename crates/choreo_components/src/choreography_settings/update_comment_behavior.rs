@@ -37,7 +37,7 @@ impl UpdateCommentBehavior {
 }
 
 impl Behavior<ChoreographySettingsViewModel> for UpdateCommentBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

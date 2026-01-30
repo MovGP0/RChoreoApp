@@ -31,7 +31,7 @@ impl ShowDancerDialogBehavior {
 }
 
 impl Behavior<DancerSettingsViewModel> for ShowDancerDialogBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut DancerSettingsViewModel,
         _disposables: &mut CompositeDisposable,

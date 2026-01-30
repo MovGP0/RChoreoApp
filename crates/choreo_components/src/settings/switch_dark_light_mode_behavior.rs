@@ -35,7 +35,7 @@ impl<P: Preferences, U: MaterialSchemeUpdater> SwitchDarkLightModeBehavior<P, U>
 impl<P: Preferences, U: MaterialSchemeUpdater> Behavior<SettingsViewModel>
     for SwitchDarkLightModeBehavior<P, U>
 {
-    fn activate(&self, _view_model: &mut SettingsViewModel, _disposables: &mut CompositeDisposable) {
+    fn initialize(&self, _view_model: &mut SettingsViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated(
             "SwitchDarkLightModeBehavior",
             "SettingsViewModel",

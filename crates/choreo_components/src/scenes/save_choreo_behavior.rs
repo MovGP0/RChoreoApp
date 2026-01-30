@@ -90,7 +90,7 @@ impl SaveChoreoBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for SaveChoreoBehavior {
-    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn initialize(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("SaveChoreoBehavior", "ScenesPaneViewModel");
         let behavior = self.clone();
         view_model.set_save_choreo_handler(Some(Rc::new(move |view_model| {

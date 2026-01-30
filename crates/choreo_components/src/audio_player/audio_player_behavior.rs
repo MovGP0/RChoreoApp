@@ -27,7 +27,7 @@ impl AudioPlayerBehavior {
 }
 
 impl Behavior<AudioPlayerViewModel> for AudioPlayerBehavior {
-    fn activate(&self, _view_model: &mut AudioPlayerViewModel, _disposables: &mut CompositeDisposable) {
+    fn initialize(&self, _view_model: &mut AudioPlayerViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("AudioPlayerBehavior", "AudioPlayerViewModel");
     }
 }

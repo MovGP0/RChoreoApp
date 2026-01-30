@@ -40,7 +40,7 @@ impl SelectedIconBehavior {
 }
 
 impl Behavior<DancerSettingsViewModel> for SelectedIconBehavior {
-    fn activate(
+    fn initialize(
         &self,
         _view_model: &mut DancerSettingsViewModel,
         _disposables: &mut CompositeDisposable,

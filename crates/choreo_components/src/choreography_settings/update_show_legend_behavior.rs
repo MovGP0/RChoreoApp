@@ -37,7 +37,7 @@ impl<P: Preferences> UpdateShowLegendBehavior<P> {
 }
 
 impl<P: Preferences> Behavior<ChoreographySettingsViewModel> for UpdateShowLegendBehavior<P> {
-    fn activate(
+    fn initialize(
         &self,
         view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,
