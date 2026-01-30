@@ -40,7 +40,7 @@ impl CloseAudioFileBehavior {
 }
 
 impl Behavior<AudioPlayerViewModel> for CloseAudioFileBehavior {
-    fn initialize(&self, _view_model: &mut AudioPlayerViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, _view_model: &mut AudioPlayerViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("CloseAudioFileBehavior", "AudioPlayerViewModel");
     }
 }

@@ -29,7 +29,7 @@ impl<P: Preferences> LoadSettingsPreferencesBehavior<P> {
 }
 
 impl<P: Preferences> Behavior<SettingsModel> for LoadSettingsPreferencesBehavior<P> {
-    fn initialize(&self, settings: &mut SettingsModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, settings: &mut SettingsModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated(
             "LoadSettingsPreferencesBehavior",
             "SettingsModel",

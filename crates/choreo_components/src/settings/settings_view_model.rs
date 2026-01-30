@@ -47,7 +47,7 @@ impl SettingsViewModel {
 
         let mut disposables = CompositeDisposable::new();
         for behavior in behaviors.drain(..) {
-            behavior.initialize(&mut view_model, &mut disposables);
+            behavior.activate(&mut view_model, &mut disposables);
         }
 
         view_model.disposables = disposables;

@@ -51,7 +51,7 @@ impl LoadScenesBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for LoadScenesBehavior {
-    fn initialize(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("LoadScenesBehavior", "ScenesPaneViewModel");
         self.load(view_model);
     }

@@ -57,7 +57,7 @@ impl<P: Preferences> UpdateSnapToGridBehavior<P> {
 }
 
 impl<P: Preferences> Behavior<ChoreographySettingsViewModel> for UpdateSnapToGridBehavior<P> {
-    fn initialize(
+    fn activate(
         &self,
         view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

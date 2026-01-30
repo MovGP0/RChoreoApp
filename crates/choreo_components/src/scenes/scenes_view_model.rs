@@ -88,7 +88,7 @@ impl ScenesPaneViewModel {
         show_dialog_sender: Sender<ShowDialogCommand>,
         close_dialog_sender: Sender<CloseDialogCommand>,
         haptic_feedback: Option<Box<dyn HapticFeedback>>,
-        mut behaviors: Vec<Box<dyn Behavior<ScenesPaneViewModel>>>,
+        behaviors: Vec<Box<dyn Behavior<ScenesPaneViewModel>>>,
     ) -> Self {
         let mut view_model = Self {
             global_state,
@@ -112,8 +112,8 @@ impl ScenesPaneViewModel {
         view_model.update_can_save();
 
         let mut disposables = CompositeDisposable::new();
-        for behavior in behaviors.drain(..) {
-            behavior.initialize(&mut view_model, &mut disposables);
+        for behavior in behaviors.iter() {
+            behavior.activate(&mut view_model, &mut disposables);
         }
         view_model.disposables = disposables;
         view_model

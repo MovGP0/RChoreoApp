@@ -20,13 +20,13 @@ impl ShowSceneTimestampsBehavior {
         Self { global_state }
     }
 
-    pub fn update_from_choreography(&self, view_model: &mut ScenesPaneViewModel) {
+    fn update_from_choreography(&self, view_model: &mut ScenesPaneViewModel) {
         view_model.show_timestamps = self.global_state.borrow().choreography.settings.show_timestamps;
     }
 }
 
 impl Behavior<ScenesPaneViewModel> for ShowSceneTimestampsBehavior {
-    fn initialize(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("ShowSceneTimestampsBehavior", "ScenesPaneViewModel");
         self.update_from_choreography(view_model);
     }

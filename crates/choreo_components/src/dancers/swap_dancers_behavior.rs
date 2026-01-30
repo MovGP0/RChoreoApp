@@ -54,7 +54,7 @@ impl SwapDancersBehavior {
 }
 
 impl Behavior<DancerSettingsViewModel> for SwapDancersBehavior {
-    fn initialize(
+    fn activate(
         &self,
         _view_model: &mut DancerSettingsViewModel,
         _disposables: &mut CompositeDisposable,
@@ -62,4 +62,3 @@ impl Behavior<DancerSettingsViewModel> for SwapDancersBehavior {
         BehaviorLog::behavior_activated("SwapDancersBehavior", "DancerSettingsViewModel");
     }
 }
-

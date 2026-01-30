@@ -60,7 +60,7 @@ impl SelectSceneBehavior {
         }
     }
 
-    pub fn try_handle(&self, view_model: &mut ScenesPaneViewModel) -> bool {
+    fn try_handle(&self, view_model: &mut ScenesPaneViewModel) -> bool {
         match self.receiver.try_recv() {
             Ok(event) => {
                 view_model.set_selected_scene(Some(event.selected_scene.clone()));
@@ -75,7 +75,10 @@ impl SelectSceneBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for SelectSceneBehavior {
-    fn initialize(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(
+        &self,
+        view_model: &mut ScenesPaneViewModel,
+        _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("SelectSceneBehavior", "ScenesPaneViewModel");
 
         let receiver = self.receiver.clone();

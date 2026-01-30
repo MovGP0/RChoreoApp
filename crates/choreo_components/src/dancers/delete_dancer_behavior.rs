@@ -33,7 +33,7 @@ impl DeleteDancerBehavior {
 }
 
 impl Behavior<DancerSettingsViewModel> for DeleteDancerBehavior {
-    fn initialize(
+    fn activate(
         &self,
         _view_model: &mut DancerSettingsViewModel,
         _disposables: &mut CompositeDisposable,

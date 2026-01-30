@@ -55,7 +55,7 @@ impl AudioPlayerLinkSceneBehavior {
 }
 
 impl Behavior<AudioPlayerViewModel> for AudioPlayerLinkSceneBehavior {
-    fn initialize(&self, _view_model: &mut AudioPlayerViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, _view_model: &mut AudioPlayerViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated(
             "AudioPlayerLinkSceneBehavior",
             "AudioPlayerViewModel",

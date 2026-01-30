@@ -37,7 +37,7 @@ impl UpdateAuthorBehavior {
 }
 
 impl Behavior<ChoreographySettingsViewModel> for UpdateAuthorBehavior {
-    fn initialize(
+    fn activate(
         &self,
         _view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

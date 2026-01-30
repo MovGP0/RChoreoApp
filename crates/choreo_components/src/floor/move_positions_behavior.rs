@@ -443,23 +443,20 @@ impl MovePositionsBehavior {
 }
 
 impl Behavior<FloorCanvasViewModel> for MovePositionsBehavior {
-    fn initialize(
+    fn activate(
         &self,
-        _view_model: &mut FloorCanvasViewModel,
-        _disposables: &mut CompositeDisposable,
-    ) {
-        BehaviorLog::behavior_activated("MovePositionsBehavior", "FloorCanvasViewModel");
-    }
-
-    fn bind(
-        &self,
-        view_model: &Rc<RefCell<FloorCanvasViewModel>>,
+        view_model: &mut FloorCanvasViewModel,
         disposables: &mut CompositeDisposable,
     ) {
+        BehaviorLog::behavior_activated("MovePositionsBehavior", "FloorCanvasViewModel");
         let Some(global_state) = self.global_state.clone() else {
             return;
         };
         let Some(state_machine) = self.state_machine.clone() else {
+            return;
+        };
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
             return;
         };
 
@@ -467,7 +464,7 @@ impl Behavior<FloorCanvasViewModel> for MovePositionsBehavior {
 
         {
             let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(view_model);
+            let view_model = Rc::clone(&view_model_handle);
             let global_state = Rc::clone(&global_state);
             let state_machine = Rc::clone(&state_machine);
             let subject = view_model.borrow().pointer_pressed_subject();
@@ -475,6 +472,9 @@ impl Behavior<FloorCanvasViewModel> for MovePositionsBehavior {
                 let mut behavior = behavior.borrow_mut();
                 let mut global_state = global_state.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
+
+                // TODO: this crashes because the view_model is borrowed mutably in the caller
+                // change the design to use crossbeam-channel instead of rxrust
                 let view_model_ref = view_model.borrow();
                 behavior.handle_pointer_pressed(
                     &view_model_ref,
@@ -488,7 +488,7 @@ impl Behavior<FloorCanvasViewModel> for MovePositionsBehavior {
 
         {
             let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(view_model);
+            let view_model = Rc::clone(&view_model_handle);
             let global_state = Rc::clone(&global_state);
             let state_machine = Rc::clone(&state_machine);
             let subject = view_model.borrow().pointer_moved_subject();
@@ -496,6 +496,9 @@ impl Behavior<FloorCanvasViewModel> for MovePositionsBehavior {
                 let mut behavior = behavior.borrow_mut();
                 let mut global_state = global_state.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
+
+                // TODO: this crashes because the view_model is borrowed mutably in the caller
+                // change the design to use crossbeam-channel instead of rxrust
                 let view_model_ref = view_model.borrow();
                 behavior.handle_pointer_moved(
                     &view_model_ref,
@@ -511,7 +514,7 @@ impl Behavior<FloorCanvasViewModel> for MovePositionsBehavior {
 
         {
             let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(view_model);
+            let view_model = Rc::clone(&view_model_handle);
             let global_state = Rc::clone(&global_state);
             let state_machine = Rc::clone(&state_machine);
             let subject = view_model.borrow().pointer_released_subject();
@@ -519,6 +522,9 @@ impl Behavior<FloorCanvasViewModel> for MovePositionsBehavior {
                 let mut behavior = behavior.borrow_mut();
                 let mut global_state = global_state.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
+
+                // TODO: this crashes because the view_model is borrowed mutably in the caller
+                // change the design to use crossbeam-channel instead of rxrust
                 let view_model_ref = view_model.borrow();
                 behavior.handle_pointer_released(
                     &view_model_ref,

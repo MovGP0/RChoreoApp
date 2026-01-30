@@ -36,7 +36,7 @@ impl UpdateGridResolutionBehavior {
 }
 
 impl Behavior<ChoreographySettingsViewModel> for UpdateGridResolutionBehavior {
-    fn initialize(
+    fn activate(
         &self,
         _view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

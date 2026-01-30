@@ -23,7 +23,7 @@ impl PublishSceneSelectedBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for PublishSceneSelectedBehavior {
-    fn initialize(&self, _view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, _view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("PublishSceneSelectedBehavior", "ScenesPaneViewModel");
     }
 }

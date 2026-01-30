@@ -61,7 +61,7 @@ impl<P: Preferences> UpdateShowTimestampsBehavior<P> {
 }
 
 impl<P: Preferences> Behavior<ChoreographySettingsViewModel> for UpdateShowTimestampsBehavior<P> {
-    fn initialize(
+    fn activate(
         &self,
         view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

@@ -68,21 +68,14 @@ impl DrawFloorBehavior {
 }
 
 impl Behavior<FloorCanvasViewModel> for DrawFloorBehavior {
-    fn initialize(
+    fn activate(
         &self,
-        _view_model: &mut FloorCanvasViewModel,
-        _disposables: &mut CompositeDisposable,
-    ) {
-        BehaviorLog::behavior_activated("DrawFloorBehavior", "FloorCanvasViewModel");
-    }
-
-    fn bind(
-        &self,
-        view_model: &Rc<RefCell<FloorCanvasViewModel>>,
+        view_model: &mut FloorCanvasViewModel,
         disposables: &mut CompositeDisposable,
     ) {
+        BehaviorLog::behavior_activated("DrawFloorBehavior", "FloorCanvasViewModel");
         let behavior = Rc::new(RefCell::new(self.clone()));
-        let subject = view_model.borrow().draw_floor_subject();
+        let subject = view_model.draw_floor_subject();
         let subscription = subject.subscribe(move |_| {
             let mut behavior = behavior.borrow_mut();
             behavior.handle_draw_floor();
@@ -90,4 +83,3 @@ impl Behavior<FloorCanvasViewModel> for DrawFloorBehavior {
         disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
     }
 }
-

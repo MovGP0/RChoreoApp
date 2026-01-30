@@ -13,9 +13,7 @@ use crate::global::GlobalStateModel;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
-use super::load_scenes_behavior::LoadScenesBehavior;
 use super::scenes_view_model::ScenesPaneViewModel;
-use super::show_scene_timestamps_behavior::ShowSceneTimestampsBehavior;
 
 #[derive(Clone, Default)]
 pub struct OpenChoreoActions {
@@ -58,7 +56,7 @@ impl OpenChoreoBehavior {
         }
     }
 
-    pub fn open_choreo(&self, view_model: &mut ScenesPaneViewModel) {
+    fn open_choreo(&self, view_model: &mut ScenesPaneViewModel) {
         let Some(picker) = self.actions.pick_choreo_path.as_ref() else {
             return;
         };
@@ -103,17 +101,22 @@ impl OpenChoreoBehavior {
             global_state.choreography = mapped;
         }
 
+        view_model.refresh_scenes();
+        view_model.update_can_save();
+
         self.preferences.set_string(
             SettingsPreferenceKeys::LAST_OPENED_CHOREO_FILE,
             path.to_string_lossy().into_owned(),
         );
 
-        let load_scenes = LoadScenesBehavior::new(self.global_state.clone());
-        load_scenes.load(view_model);
+        // TODO: this needs to be done by sending an event to the other behavior instead
+        // let load_scenes = LoadScenesBehavior::new(self.global_state.clone());
+        // load_scenes.load(view_model);
 
-        let show_timestamps = ShowSceneTimestampsBehavior::new(self.global_state.clone());
-        show_timestamps.update_from_choreography(view_model);
-        view_model.update_can_save();
+        // TODO: this needs to be done by sending an event to the other behavior instead
+        // let show_timestamps = ShowSceneTimestampsBehavior::new(self.global_state.clone());
+        // show_timestamps.update_from_choreography(view_model);
+        // view_model.update_can_save();
 
         self.try_load_audio(path);
     }
@@ -161,7 +164,7 @@ impl OpenChoreoBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for OpenChoreoBehavior {
-    fn initialize(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("OpenChoreoBehavior", "ScenesPaneViewModel");
         self.load_last_opened(view_model);
         let behavior = self.clone();

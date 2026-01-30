@@ -36,7 +36,7 @@ impl UpdateFloorLeftBehavior {
 }
 
 impl Behavior<ChoreographySettingsViewModel> for UpdateFloorLeftBehavior {
-    fn initialize(
+    fn activate(
         &self,
         _view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

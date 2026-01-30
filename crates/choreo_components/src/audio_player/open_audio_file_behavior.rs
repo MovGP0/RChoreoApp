@@ -53,7 +53,7 @@ impl<P: Preferences> OpenAudioFileBehavior<P> {
 }
 
 impl<P: Preferences> Behavior<AudioPlayerViewModel> for OpenAudioFileBehavior<P> {
-    fn initialize(&self, _view_model: &mut AudioPlayerViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, _view_model: &mut AudioPlayerViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("OpenAudioFileBehavior", "AudioPlayerViewModel");
     }
 }

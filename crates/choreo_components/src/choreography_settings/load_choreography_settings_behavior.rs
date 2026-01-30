@@ -36,7 +36,7 @@ impl LoadChoreographySettingsBehavior {
 }
 
 impl Behavior<ChoreographySettingsViewModel> for LoadChoreographySettingsBehavior {
-    fn initialize(
+    fn activate(
         &self,
         view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

@@ -47,7 +47,7 @@ impl<P: Preferences> UpdatePositionsAtSideBehavior<P> {
 }
 
 impl<P: Preferences> Behavior<ChoreographySettingsViewModel> for UpdatePositionsAtSideBehavior<P> {
-    fn initialize(
+    fn activate(
         &self,
         _view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,

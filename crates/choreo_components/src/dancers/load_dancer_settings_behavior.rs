@@ -69,7 +69,7 @@ impl LoadDancerSettingsBehavior {
 }
 
 impl Behavior<DancerSettingsViewModel> for LoadDancerSettingsBehavior {
-    fn initialize(
+    fn activate(
         &self,
         view_model: &mut DancerSettingsViewModel,
         _disposables: &mut CompositeDisposable,

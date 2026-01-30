@@ -3,6 +3,7 @@ use nject::injectable;
 use rxrust::prelude::{LocalSubject, Observer};
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
+use std::time::Duration;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateModel;
@@ -82,6 +83,7 @@ pub fn build_floor_canvas_view_model(deps: FloorDependencies) -> Rc<RefCell<Floo
         .borrow_mut()
         .set_self_handle(Rc::downgrade(&view_model));
 
+    // TODO: behaviors should be injected in the constructor
     let behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>> = vec![
         Box::new(DrawFloorBehavior::new(
             deps.draw_floor_receiver,
@@ -115,7 +117,7 @@ pub fn build_floor_canvas_view_model(deps: FloorDependencies) -> Rc<RefCell<Floo
         )),
     ];
 
-    FloorCanvasViewModel::bind_behaviors(&view_model, behaviors);
+    FloorCanvasViewModel::activate(&view_model, behaviors);
     view_model
 }
 
@@ -152,20 +154,16 @@ impl FloorCanvasViewModel {
         self.disposables.dispose_all();
     }
 
-    pub fn bind_behaviors(
+    pub fn activate(
         view_model: &Rc<RefCell<FloorCanvasViewModel>>,
-        mut behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>>,
+        behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>>,
     ) {
         let mut disposables = CompositeDisposable::new();
         {
             let mut view_model = view_model.borrow_mut();
             for behavior in behaviors.iter() {
-                behavior.initialize(&mut view_model, &mut disposables);
+                behavior.activate(&mut view_model, &mut disposables);
             }
-        }
-
-        for behavior in behaviors.drain(..) {
-            behavior.bind(view_model, &mut disposables);
         }
 
         view_model.borrow_mut().disposables = disposables;
@@ -240,17 +238,20 @@ impl FloorCanvasViewModel {
     }
 
     pub fn pointer_pressed(&mut self, command: PointerPressedCommand) -> PointerPressedCommand {
-        self.pointer_pressed_subject.next(command.clone());
+        let command_clone = command.clone();
+        Self::dispatch_command(self.pointer_pressed_subject.clone(), command_clone);
         command
     }
 
     pub fn pointer_moved(&mut self, command: PointerMovedCommand) -> PointerMovedCommand {
-        self.pointer_moved_subject.next(command.clone());
+        let command_clone = command.clone();
+        Self::dispatch_command(self.pointer_moved_subject.clone(), command_clone);
         command
     }
 
     pub fn pointer_released(&mut self, command: PointerReleasedCommand) -> PointerReleasedCommand {
-        self.pointer_released_subject.next(command.clone());
+        let command_clone = command.clone();
+        Self::dispatch_command(self.pointer_released_subject.clone(), command_clone);
         command
     }
 
@@ -258,12 +259,14 @@ impl FloorCanvasViewModel {
         &mut self,
         command: PointerWheelChangedCommand,
     ) -> PointerWheelChangedCommand {
-        self.pointer_wheel_changed_subject.next(command.clone());
+        let command_clone = command.clone();
+        Self::dispatch_command(self.pointer_wheel_changed_subject.clone(), command_clone);
         command
     }
 
     pub fn touch(&mut self, command: TouchCommand) -> TouchCommand {
-        self.touch_subject.next(command.clone());
+        let command_clone = command.clone();
+        Self::dispatch_command(self.touch_subject.clone(), command_clone);
         command
     }
 
@@ -290,6 +293,15 @@ impl FloorCanvasViewModel {
 
     pub fn has_floor_bounds(&self) -> bool {
         self.has_floor_bounds
+    }
+
+    fn dispatch_command<T: Clone + 'static>(
+        mut subject: LocalSubject<'static, T, ()>,
+        command: T,
+    ) {
+        slint::Timer::single_shot(Duration::from_millis(0), move || {
+            subject.next(command);
+        });
     }
 }
 

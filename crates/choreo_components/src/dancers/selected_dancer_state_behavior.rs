@@ -28,7 +28,7 @@ impl SelectedDancerStateBehavior {
 }
 
 impl Behavior<DancerSettingsViewModel> for SelectedDancerStateBehavior {
-    fn initialize(
+    fn activate(
         &self,
         _view_model: &mut DancerSettingsViewModel,
         _disposables: &mut CompositeDisposable,

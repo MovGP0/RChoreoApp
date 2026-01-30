@@ -198,23 +198,21 @@ impl PlacePositionBehavior {
 }
 
 impl Behavior<FloorCanvasViewModel> for PlacePositionBehavior {
-    fn initialize(
+    fn activate(
         &self,
-        _view_model: &mut FloorCanvasViewModel,
-        _disposables: &mut CompositeDisposable,
-    ) {
-        BehaviorLog::behavior_activated("PlacePositionBehavior", "FloorCanvasViewModel");
-    }
-
-    fn bind(
-        &self,
-        view_model: &Rc<RefCell<FloorCanvasViewModel>>,
+        view_model: &mut FloorCanvasViewModel,
         disposables: &mut CompositeDisposable,
     ) {
+        BehaviorLog::behavior_activated("PlacePositionBehavior", "FloorCanvasViewModel");
+
         let Some(global_state) = self.global_state.clone() else {
             return;
         };
         let Some(state_machine) = self.state_machine.clone() else {
+            return;
+        };
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
             return;
         };
 
@@ -222,6 +220,7 @@ impl Behavior<FloorCanvasViewModel> for PlacePositionBehavior {
 
         {
             let behavior = Rc::clone(&behavior);
+            let view_model = Rc::clone(&view_model_handle);
             let subject = view_model.borrow().pointer_pressed_subject();
             let subscription = subject.subscribe(move |command| {
                 let mut behavior = behavior.borrow_mut();
@@ -232,6 +231,7 @@ impl Behavior<FloorCanvasViewModel> for PlacePositionBehavior {
 
         {
             let behavior = Rc::clone(&behavior);
+            let view_model = Rc::clone(&view_model_handle);
             let subject = view_model.borrow().pointer_moved_subject();
             let subscription = subject.subscribe(move |command| {
                 let mut behavior = behavior.borrow_mut();
@@ -242,7 +242,7 @@ impl Behavior<FloorCanvasViewModel> for PlacePositionBehavior {
 
         {
             let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(view_model);
+            let view_model = Rc::clone(&view_model_handle);
             let state_machine = Rc::clone(&state_machine);
             let global_state = Rc::clone(&global_state);
             let subject = view_model.borrow().pointer_released_subject();

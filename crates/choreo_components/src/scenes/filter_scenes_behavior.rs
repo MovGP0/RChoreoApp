@@ -17,7 +17,7 @@ impl FilterScenesBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for FilterScenesBehavior {
-    fn initialize(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("FilterScenesBehavior", "ScenesPaneViewModel");
         view_model.set_update_search_text_handler(Some(Rc::new(|view_model| {
             FilterScenesBehavior::apply(view_model);

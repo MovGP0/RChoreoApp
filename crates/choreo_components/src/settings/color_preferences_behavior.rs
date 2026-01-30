@@ -118,7 +118,7 @@ impl<P: Preferences, U: MaterialSchemeUpdater> ColorPreferencesBehavior<P, U> {
 impl<P: Preferences, U: MaterialSchemeUpdater> Behavior<SettingsViewModel>
     for ColorPreferencesBehavior<P, U>
 {
-    fn initialize(&self, _view_model: &mut SettingsViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, _view_model: &mut SettingsViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("ColorPreferencesBehavior", "SettingsViewModel");
     }
 }

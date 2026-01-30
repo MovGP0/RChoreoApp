@@ -104,7 +104,7 @@ impl ApplyPlacementModeBehavior {
 }
 
 impl Behavior<super::scenes_view_model::ScenesPaneViewModel> for ApplyPlacementModeBehavior {
-    fn initialize(
+    fn activate(
         &self,
         _view_model: &mut super::scenes_view_model::ScenesPaneViewModel,
         _disposables: &mut CompositeDisposable,

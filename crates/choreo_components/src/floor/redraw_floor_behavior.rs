@@ -43,24 +43,21 @@ impl RedrawFloorBehavior {
 }
 
 impl Behavior<FloorCanvasViewModel> for RedrawFloorBehavior {
-    fn initialize(
+    fn activate(
         &self,
-        _view_model: &mut FloorCanvasViewModel,
-        _disposables: &mut CompositeDisposable,
-    ) {
-        BehaviorLog::behavior_activated("RedrawFloorBehavior", "FloorCanvasViewModel");
-    }
-
-    fn bind(
-        &self,
-        view_model: &std::rc::Rc<std::cell::RefCell<FloorCanvasViewModel>>,
+        view_model: &mut FloorCanvasViewModel,
         disposables: &mut CompositeDisposable,
     ) {
+        BehaviorLog::behavior_activated("RedrawFloorBehavior", "FloorCanvasViewModel");
         let Some(receiver) = self.receiver.clone() else {
             return;
         };
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
+            return;
+        };
 
-        let view_model = std::rc::Rc::clone(view_model);
+        let view_model = std::rc::Rc::clone(&view_model_handle);
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
             let mut has_message = false;

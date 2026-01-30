@@ -68,7 +68,7 @@ impl InsertSceneBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for InsertSceneBehavior {
-    fn initialize(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("InsertSceneBehavior", "ScenesPaneViewModel");
         let before_behavior = self.global_state.clone();
         view_model.set_add_scene_before_handler(Some(Rc::new(move |view_model| {

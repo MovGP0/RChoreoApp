@@ -37,7 +37,7 @@ impl<P: Preferences> UpdateDrawPathToBehavior<P> {
 }
 
 impl<P: Preferences> Behavior<ChoreographySettingsViewModel> for UpdateDrawPathToBehavior<P> {
-    fn initialize(
+    fn activate(
         &self,
         view_model: &mut ChoreographySettingsViewModel,
         _disposables: &mut CompositeDisposable,
