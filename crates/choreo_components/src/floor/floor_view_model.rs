@@ -1,28 +1,12 @@
-use crossbeam_channel::{Receiver, Sender};
+use crossbeam_channel::Sender;
 use nject::injectable;
-use rxrust::prelude::{LocalSubject, Observer};
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
-use std::time::Duration;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateModel;
-use crate::preferences::Preferences;
-use choreo_state_machine::ApplicationStateMachine;
-
-use super::draw_floor_behavior::DrawFloorBehavior;
-use super::gesture_handling_behavior::GestureHandlingBehavior;
-use super::move_positions_behavior::MovePositionsBehavior;
-use super::place_position_behavior::PlacePositionBehavior;
-use super::redraw_floor_behavior::RedrawFloorBehavior;
-use super::rotate_around_center_behavior::RotateAroundCenterBehavior;
-use super::scale_around_dancer_behavior::ScaleAroundDancerBehavior;
-use super::scale_positions_behavior::ScalePositionsBehavior;
 
 use super::messages::{
     DrawFloorCommand,
-    PanUpdatedCommand,
-    PinchUpdatedCommand,
     PointerMovedCommand,
     PointerPressedCommand,
     PointerReleasedCommand,
@@ -30,32 +14,22 @@ use super::messages::{
     TouchCommand,
 };
 
-use super::types::{
-    CanvasViewHandle,
-    FloorRenderGate,
-    Matrix,
-    Rect,
-    Size,
-};
+use super::types::{CanvasViewHandle, Matrix, Rect, Size};
 
 #[injectable]
 #[inject(
-    |draw_floor_command_sender: Sender<DrawFloorCommand>,
-     behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>>| {
-        Self::new(draw_floor_command_sender, behaviors)
+    |draw_floor_command_sender: Sender<DrawFloorCommand>| {
+        Self::new(draw_floor_command_sender)
     }
 )]
 pub struct FloorCanvasViewModel {
     draw_floor_command_sender: Sender<DrawFloorCommand>,
     disposables: CompositeDisposable,
-    draw_floor_subject: LocalSubject<'static, DrawFloorCommand, ()>,
-    pan_updated_subject: LocalSubject<'static, PanUpdatedCommand, ()>,
-    pinch_updated_subject: LocalSubject<'static, PinchUpdatedCommand, ()>,
-    pointer_pressed_subject: LocalSubject<'static, PointerPressedCommand, ()>,
-    pointer_moved_subject: LocalSubject<'static, PointerMovedCommand, ()>,
-    pointer_released_subject: LocalSubject<'static, PointerReleasedCommand, ()>,
-    pointer_wheel_changed_subject: LocalSubject<'static, PointerWheelChangedCommand, ()>,
-    touch_subject: LocalSubject<'static, TouchCommand, ()>,
+    pointer_pressed_senders: Vec<Sender<PointerPressedCommand>>,
+    pointer_moved_senders: Vec<Sender<PointerMovedCommand>>,
+    pointer_released_senders: Vec<Sender<PointerReleasedCommand>>,
+    pointer_wheel_changed_senders: Vec<Sender<PointerWheelChangedCommand>>,
+    touch_senders: Vec<Sender<TouchCommand>>,
     on_redraw: Option<Rc<dyn Fn()>>,
     self_handle: Option<Weak<RefCell<FloorCanvasViewModel>>>,
     pub canvas_view: Option<CanvasViewHandle>,
@@ -65,62 +39,6 @@ pub struct FloorCanvasViewModel {
     canvas_size: Size,
 }
 
-pub struct FloorDependencies {
-    pub global_state: Rc<RefCell<GlobalStateModel>>,
-    pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
-    pub preferences: Rc<dyn Preferences>,
-    pub draw_floor_sender: Sender<DrawFloorCommand>,
-    pub draw_floor_receiver: Receiver<DrawFloorCommand>,
-    pub redraw_receiver: Receiver<crate::choreography_settings::RedrawFloorCommand>,
-    pub render_gate: Option<Box<dyn FloorRenderGate>>,
-}
-
-pub fn build_floor_canvas_view_model(deps: FloorDependencies) -> Rc<RefCell<FloorCanvasViewModel>> {
-    let view_model = Rc::new(RefCell::new(FloorCanvasViewModel::new(
-        deps.draw_floor_sender,
-    )));
-    view_model
-        .borrow_mut()
-        .set_self_handle(Rc::downgrade(&view_model));
-
-    // TODO: behaviors should be injected in the constructor
-    let behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>> = vec![
-        Box::new(DrawFloorBehavior::new(
-            deps.draw_floor_receiver,
-            deps.render_gate.map(Rc::from),
-        )),
-        Box::new(RedrawFloorBehavior::new(
-            deps.redraw_receiver,
-        )),
-        Box::new(GestureHandlingBehavior::new(
-            Rc::clone(&deps.state_machine),
-        )),
-        Box::new(PlacePositionBehavior::new(
-            Rc::clone(&deps.global_state),
-            Rc::clone(&deps.state_machine),
-        )),
-        Box::new(MovePositionsBehavior::new(
-            Rc::clone(&deps.global_state),
-            Rc::clone(&deps.state_machine),
-        )),
-        Box::new(RotateAroundCenterBehavior::new(
-            Rc::clone(&deps.global_state),
-            Rc::clone(&deps.state_machine),
-        )),
-        Box::new(ScalePositionsBehavior::new(
-            Rc::clone(&deps.global_state),
-            Rc::clone(&deps.state_machine),
-        )),
-        Box::new(ScaleAroundDancerBehavior::new(
-            Rc::clone(&deps.global_state),
-            Rc::clone(&deps.state_machine),
-        )),
-    ];
-
-    FloorCanvasViewModel::activate(&view_model, behaviors);
-    view_model
-}
-
 impl FloorCanvasViewModel {
     pub const MAX_ZOOM_FACTOR: f32 = 5.0;
     pub const MIN_ZOOM_FACTOR: f32 = 0.2;
@@ -128,18 +46,16 @@ impl FloorCanvasViewModel {
 
     pub fn new(
         draw_floor_command_sender: Sender<DrawFloorCommand>,
+        event_senders: FloorPointerEventSenders,
     ) -> Self {
         Self {
             draw_floor_command_sender,
             disposables: CompositeDisposable::new(),
-            draw_floor_subject: LocalSubject::new(),
-            pan_updated_subject: LocalSubject::new(),
-            pinch_updated_subject: LocalSubject::new(),
-            pointer_pressed_subject: LocalSubject::new(),
-            pointer_moved_subject: LocalSubject::new(),
-            pointer_released_subject: LocalSubject::new(),
-            pointer_wheel_changed_subject: LocalSubject::new(),
-            touch_subject: LocalSubject::new(),
+            pointer_pressed_senders: event_senders.pointer_pressed_senders,
+            pointer_moved_senders: event_senders.pointer_moved_senders,
+            pointer_released_senders: event_senders.pointer_released_senders,
+            pointer_wheel_changed_senders: event_senders.pointer_wheel_changed_senders,
+            touch_senders: event_senders.touch_senders,
             on_redraw: None,
             self_handle: None,
             canvas_view: None,
@@ -170,7 +86,6 @@ impl FloorCanvasViewModel {
     }
 
     pub fn draw_floor(&mut self) {
-        self.draw_floor_subject.next(DrawFloorCommand);
         let _ = self.draw_floor_command_sender.send(DrawFloorCommand);
         if let Some(handler) = self.on_redraw.as_ref() {
             handler();
@@ -179,40 +94,6 @@ impl FloorCanvasViewModel {
 
     pub fn draw_floor_command_sender(&self) -> &Sender<DrawFloorCommand> {
         &self.draw_floor_command_sender
-    }
-
-    pub fn draw_floor_subject(&self) -> LocalSubject<'static, DrawFloorCommand, ()> {
-        self.draw_floor_subject.clone()
-    }
-
-    pub fn pan_updated_subject(&self) -> LocalSubject<'static, PanUpdatedCommand, ()> {
-        self.pan_updated_subject.clone()
-    }
-
-    pub fn pinch_updated_subject(&self) -> LocalSubject<'static, PinchUpdatedCommand, ()> {
-        self.pinch_updated_subject.clone()
-    }
-
-    pub fn pointer_pressed_subject(&self) -> LocalSubject<'static, PointerPressedCommand, ()> {
-        self.pointer_pressed_subject.clone()
-    }
-
-    pub fn pointer_moved_subject(&self) -> LocalSubject<'static, PointerMovedCommand, ()> {
-        self.pointer_moved_subject.clone()
-    }
-
-    pub fn pointer_released_subject(&self) -> LocalSubject<'static, PointerReleasedCommand, ()> {
-        self.pointer_released_subject.clone()
-    }
-
-    pub fn pointer_wheel_changed_subject(
-        &self,
-    ) -> LocalSubject<'static, PointerWheelChangedCommand, ()> {
-        self.pointer_wheel_changed_subject.clone()
-    }
-
-    pub fn touch_subject(&self) -> LocalSubject<'static, TouchCommand, ()> {
-        self.touch_subject.clone()
     }
 
     pub fn set_on_redraw(&mut self, handler: Option<Rc<dyn Fn()>>) {
@@ -227,46 +108,31 @@ impl FloorCanvasViewModel {
         self.self_handle.clone()
     }
 
-    pub fn pan_updated(&mut self, command: PanUpdatedCommand) -> PanUpdatedCommand {
-        self.pan_updated_subject.next(command.clone());
+    pub fn pointer_pressed(&self, command: PointerPressedCommand) -> PointerPressedCommand {
+        Self::try_send_all(&self.pointer_pressed_senders, &command);
         command
     }
 
-    pub fn pinch_updated(&mut self, command: PinchUpdatedCommand) -> PinchUpdatedCommand {
-        self.pinch_updated_subject.next(command.clone());
+    pub fn pointer_moved(&self, command: PointerMovedCommand) -> PointerMovedCommand {
+        Self::try_send_all(&self.pointer_moved_senders, &command);
         command
     }
 
-    pub fn pointer_pressed(&mut self, command: PointerPressedCommand) -> PointerPressedCommand {
-        let command_clone = command.clone();
-        Self::dispatch_command(self.pointer_pressed_subject.clone(), command_clone);
-        command
-    }
-
-    pub fn pointer_moved(&mut self, command: PointerMovedCommand) -> PointerMovedCommand {
-        let command_clone = command.clone();
-        Self::dispatch_command(self.pointer_moved_subject.clone(), command_clone);
-        command
-    }
-
-    pub fn pointer_released(&mut self, command: PointerReleasedCommand) -> PointerReleasedCommand {
-        let command_clone = command.clone();
-        Self::dispatch_command(self.pointer_released_subject.clone(), command_clone);
+    pub fn pointer_released(&self, command: PointerReleasedCommand) -> PointerReleasedCommand {
+        Self::try_send_all(&self.pointer_released_senders, &command);
         command
     }
 
     pub fn pointer_wheel_changed(
-        &mut self,
+        &self,
         command: PointerWheelChangedCommand,
     ) -> PointerWheelChangedCommand {
-        let command_clone = command.clone();
-        Self::dispatch_command(self.pointer_wheel_changed_subject.clone(), command_clone);
+        Self::try_send_all(&self.pointer_wheel_changed_senders, &command);
         command
     }
 
-    pub fn touch(&mut self, command: TouchCommand) -> TouchCommand {
-        let command_clone = command.clone();
-        Self::dispatch_command(self.touch_subject.clone(), command_clone);
+    pub fn touch(&self, command: TouchCommand) -> TouchCommand {
+        Self::try_send_all(&self.touch_senders, &command);
         command
     }
 
@@ -295,14 +161,17 @@ impl FloorCanvasViewModel {
         self.has_floor_bounds
     }
 
-    fn dispatch_command<T: Clone + 'static>(
-        mut subject: LocalSubject<'static, T, ()>,
-        command: T,
-    ) {
-        slint::Timer::single_shot(Duration::from_millis(0), move || {
-            subject.next(command);
-        });
+    fn try_send_all<T: Clone>(senders: &[Sender<T>], command: &T) {
+        for sender in senders {
+            let _ = sender.try_send(command.clone());
+        }
     }
 }
 
-
+pub struct FloorPointerEventSenders {
+    pub pointer_pressed_senders: Vec<Sender<PointerPressedCommand>>,
+    pub pointer_moved_senders: Vec<Sender<PointerMovedCommand>>,
+    pub pointer_released_senders: Vec<Sender<PointerReleasedCommand>>,
+    pub pointer_wheel_changed_senders: Vec<Sender<PointerWheelChangedCommand>>,
+    pub touch_senders: Vec<Sender<TouchCommand>>,
+}

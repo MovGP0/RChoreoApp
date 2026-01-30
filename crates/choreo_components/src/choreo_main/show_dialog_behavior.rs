@@ -1,6 +1,9 @@
 use crossbeam_channel::Receiver;
 use nject::injectable;
 
+use crate::behavior::{Behavior, CompositeDisposable};
+use crate::logging::BehaviorLog;
+
 use super::messages::ShowDialogCommand;
 use super::main_view_model::MainViewModel;
 
@@ -18,11 +21,16 @@ impl ShowDialogBehavior {
     pub fn try_handle(&self, view_model: &mut MainViewModel) -> bool {
         match self.receiver.try_recv() {
             Ok(command) => {
-                view_model.dialog_content = command.content.clone();
-                view_model.is_dialog_open = command.content.is_some();
+                view_model.show_dialog(command.content);
                 true
             }
             Err(_) => false,
         }
+    }
+}
+
+impl Behavior<MainViewModel> for ShowDialogBehavior {
+    fn activate(&self, _view_model: &mut MainViewModel, _disposables: &mut CompositeDisposable) {
+        BehaviorLog::behavior_activated("ShowDialogBehavior", "MainViewModel");
     }
 }

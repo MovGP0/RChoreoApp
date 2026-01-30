@@ -48,4 +48,4 @@ pub use types::{
     Size,
 };
 
-pub use floor_view_model::{build_floor_canvas_view_model, FloorCanvasViewModel, FloorDependencies};
+pub use floor_view_model::{FloorCanvasViewModel, FloorPointerEventSenders};

@@ -4,9 +4,12 @@ use std::rc::Rc;
 use crossbeam_channel::Receiver;
 use nject::injectable;
 
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateModel;
+use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
+use super::main_view_model::MainViewModel;
 use super::messages::OpenSvgFileCommand;
 
 #[injectable]
@@ -47,5 +50,11 @@ impl OpenSvgFileBehavior {
             }
             Err(_) => false,
         }
+    }
+}
+
+impl Behavior<MainViewModel> for OpenSvgFileBehavior {
+    fn activate(&self, _view_model: &mut MainViewModel, _disposables: &mut CompositeDisposable) {
+        BehaviorLog::behavior_activated("OpenSvgFileBehavior", "MainViewModel");
     }
 }

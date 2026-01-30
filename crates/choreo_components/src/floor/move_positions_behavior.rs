@@ -1,8 +1,10 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Duration;
 
+use crossbeam_channel::Receiver;
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::behavior::SubscriptionDisposable;
+use crate::behavior::TimerDisposable;
 use crate::global::{GlobalStateModel, InteractionMode, SelectionRectangle};
 use crate::logging::BehaviorLog;
 use choreo_models::PositionModel;
@@ -15,7 +17,7 @@ use choreo_state_machine::{
     StateKind,
 };
 use nject::injectable;
-use rxrust::observable::SubscribeNext;
+use slint::TimerMode;
 
 use super::floor_view_model::FloorCanvasViewModel;
 use super::messages::{PointerButton, PointerMovedCommand, PointerPressedCommand, PointerReleasedCommand};
@@ -25,13 +27,25 @@ use super::types::Point;
 #[injectable]
 #[inject(
     |global_state: Rc<RefCell<GlobalStateModel>>,
-     state_machine: Rc<RefCell<ApplicationStateMachine>>| {
-        Self::new(global_state, state_machine)
+     state_machine: Rc<RefCell<ApplicationStateMachine>>,
+     pointer_pressed_receiver: Receiver<PointerPressedCommand>,
+     pointer_moved_receiver: Receiver<PointerMovedCommand>,
+     pointer_released_receiver: Receiver<PointerReleasedCommand>| {
+        Self::new(
+            global_state,
+            state_machine,
+            pointer_pressed_receiver,
+            pointer_moved_receiver,
+            pointer_released_receiver,
+        )
     }
 )]
 pub struct MovePositionsBehavior {
     global_state: Option<Rc<RefCell<GlobalStateModel>>>,
     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
+    pointer_pressed_receiver: Option<Receiver<PointerPressedCommand>>,
+    pointer_moved_receiver: Option<Receiver<PointerMovedCommand>>,
+    pointer_released_receiver: Option<Receiver<PointerReleasedCommand>>,
     pointer_pressed_position: Option<Point>,
     pointer_moved: bool,
     selection_active: bool,
@@ -46,16 +60,22 @@ impl MovePositionsBehavior {
     pub fn new(
         global_state: Rc<RefCell<GlobalStateModel>>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
+        pointer_pressed_receiver: Receiver<PointerPressedCommand>,
+        pointer_moved_receiver: Receiver<PointerMovedCommand>,
+        pointer_released_receiver: Receiver<PointerReleasedCommand>,
     ) -> Self
     {
         Self {
             global_state: Some(global_state),
             state_machine: Some(state_machine),
+            pointer_pressed_receiver: Some(pointer_pressed_receiver),
+            pointer_moved_receiver: Some(pointer_moved_receiver),
+            pointer_released_receiver: Some(pointer_released_receiver),
             ..Self::default()
         }
     }
 
-    pub fn handle_pointer_pressed(
+    fn handle_pointer_pressed(
         &mut self,
         view_model: &FloorCanvasViewModel,
         global_state: &mut GlobalStateModel,
@@ -89,7 +109,7 @@ impl MovePositionsBehavior {
         self.start_selection(global_state, state_machine, floor_point);
     }
 
-    pub fn handle_pointer_moved(
+    fn handle_pointer_moved(
         &mut self,
         view_model: &FloorCanvasViewModel,
         global_state: &mut GlobalStateModel,
@@ -129,7 +149,7 @@ impl MovePositionsBehavior {
         }
     }
 
-    pub fn handle_pointer_released(
+    fn handle_pointer_released(
         &mut self,
         view_model: &FloorCanvasViewModel,
         global_state: &mut GlobalStateModel,
@@ -460,46 +480,36 @@ impl Behavior<FloorCanvasViewModel> for MovePositionsBehavior {
             return;
         };
 
+        let Some(pointer_pressed_receiver) = self.pointer_pressed_receiver.clone() else {
+            return;
+        };
+        let Some(pointer_moved_receiver) = self.pointer_moved_receiver.clone() else {
+            return;
+        };
+        let Some(pointer_released_receiver) = self.pointer_released_receiver.clone() else {
+            return;
+        };
         let behavior = Rc::new(RefCell::new(self.clone()));
-
-        {
-            let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model_handle);
-            let global_state = Rc::clone(&global_state);
-            let state_machine = Rc::clone(&state_machine);
-            let subject = view_model.borrow().pointer_pressed_subject();
-            let subscription = subject.subscribe(move |command| {
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            while let Ok(command) = pointer_pressed_receiver.try_recv() {
                 let mut behavior = behavior.borrow_mut();
                 let mut global_state = global_state.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
-
-                // TODO: this crashes because the view_model is borrowed mutably in the caller
-                // change the design to use crossbeam-channel instead of rxrust
-                let view_model_ref = view_model.borrow();
+                let view_model_ref = view_model_handle.borrow();
                 behavior.handle_pointer_pressed(
                     &view_model_ref,
                     &mut global_state,
                     &mut state_machine,
                     command,
                 );
-            });
-            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
-        }
+            }
 
-        {
-            let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model_handle);
-            let global_state = Rc::clone(&global_state);
-            let state_machine = Rc::clone(&state_machine);
-            let subject = view_model.borrow().pointer_moved_subject();
-            let subscription = subject.subscribe(move |command| {
+            while let Ok(command) = pointer_moved_receiver.try_recv() {
                 let mut behavior = behavior.borrow_mut();
                 let mut global_state = global_state.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
-
-                // TODO: this crashes because the view_model is borrowed mutably in the caller
-                // change the design to use crossbeam-channel instead of rxrust
-                let view_model_ref = view_model.borrow();
+                let view_model_ref = view_model_handle.borrow();
                 behavior.handle_pointer_moved(
                     &view_model_ref,
                     &mut global_state,
@@ -507,25 +517,14 @@ impl Behavior<FloorCanvasViewModel> for MovePositionsBehavior {
                     command,
                 );
                 drop(view_model_ref);
-                view_model.borrow_mut().draw_floor();
-            });
-            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
-        }
+                view_model_handle.borrow_mut().draw_floor();
+            }
 
-        {
-            let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model_handle);
-            let global_state = Rc::clone(&global_state);
-            let state_machine = Rc::clone(&state_machine);
-            let subject = view_model.borrow().pointer_released_subject();
-            let subscription = subject.subscribe(move |command| {
+            while let Ok(command) = pointer_released_receiver.try_recv() {
                 let mut behavior = behavior.borrow_mut();
                 let mut global_state = global_state.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
-
-                // TODO: this crashes because the view_model is borrowed mutably in the caller
-                // change the design to use crossbeam-channel instead of rxrust
-                let view_model_ref = view_model.borrow();
+                let view_model_ref = view_model_handle.borrow();
                 behavior.handle_pointer_released(
                     &view_model_ref,
                     &mut global_state,
@@ -533,9 +532,10 @@ impl Behavior<FloorCanvasViewModel> for MovePositionsBehavior {
                     command,
                 );
                 drop(view_model_ref);
-                view_model.borrow_mut().draw_floor();
-            });
-            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
-        }
+                view_model_handle.borrow_mut().draw_floor();
+            }
+        });
+
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }

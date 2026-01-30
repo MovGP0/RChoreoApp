@@ -28,18 +28,6 @@ impl RedrawFloorBehavior {
             receiver: Some(receiver),
         }
     }
-
-    pub fn handle_choreography_changed(&self, view_model: &mut FloorCanvasViewModel) {
-        view_model.draw_floor();
-    }
-
-    pub fn handle_selected_scene_changed(&self, view_model: &mut FloorCanvasViewModel) {
-        view_model.draw_floor();
-    }
-
-    pub fn handle_redraw_command(&self, view_model: &mut FloorCanvasViewModel) {
-        view_model.draw_floor();
-    }
 }
 
 impl Behavior<FloorCanvasViewModel> for RedrawFloorBehavior {

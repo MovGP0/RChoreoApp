@@ -1,12 +1,13 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Duration;
 
 use crossbeam_channel::Receiver;
 use nject::injectable;
-use rxrust::observable::SubscribeNext;
+use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::behavior::SubscriptionDisposable;
+use crate::behavior::TimerDisposable;
 use crate::logging::BehaviorLog;
 
 use super::floor_view_model::FloorCanvasViewModel;
@@ -55,7 +56,7 @@ impl DrawFloorBehavior {
         }
     }
 
-    pub fn handle_draw_floor(&mut self) {
+    fn handle_draw_floor(&mut self) {
         if self.has_rendered {
             return;
         }
@@ -70,16 +71,23 @@ impl DrawFloorBehavior {
 impl Behavior<FloorCanvasViewModel> for DrawFloorBehavior {
     fn activate(
         &self,
-        view_model: &mut FloorCanvasViewModel,
+        _view_model: &mut FloorCanvasViewModel,
         disposables: &mut CompositeDisposable,
     ) {
         BehaviorLog::behavior_activated("DrawFloorBehavior", "FloorCanvasViewModel");
         let behavior = Rc::new(RefCell::new(self.clone()));
-        let subject = view_model.draw_floor_subject();
-        let subscription = subject.subscribe(move |_| {
-            let mut behavior = behavior.borrow_mut();
-            behavior.handle_draw_floor();
+        let receiver = self.receiver.clone();
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            let mut has_message = false;
+            while receiver.try_recv().is_ok() {
+                has_message = true;
+            }
+
+            if has_message {
+                behavior.borrow_mut().handle_draw_floor();
+            }
         });
-        disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }

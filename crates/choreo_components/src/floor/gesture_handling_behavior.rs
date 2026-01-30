@@ -1,9 +1,11 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::time::Duration;
 
+use crossbeam_channel::Receiver;
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::behavior::SubscriptionDisposable;
+use crate::behavior::TimerDisposable;
 use crate::logging::BehaviorLog;
 use choreo_state_machine::{
     ApplicationStateMachine,
@@ -14,7 +16,7 @@ use choreo_state_machine::{
     ZoomStartedTrigger,
 };
 use nject::injectable;
-use rxrust::observable::SubscribeNext;
+use slint::TimerMode;
 
 use super::floor_view_model::FloorCanvasViewModel;
 use super::messages::{
@@ -31,11 +33,30 @@ use super::types::{Matrix, Point};
 
 #[derive(Default, Clone)]
 #[injectable]
-#[inject(|state_machine: Rc<RefCell<ApplicationStateMachine>>| {
-    Self::new(state_machine)
-})]
+#[inject(
+    |state_machine: Rc<RefCell<ApplicationStateMachine>>,
+     pointer_pressed_receiver: Receiver<PointerPressedCommand>,
+     pointer_moved_receiver: Receiver<PointerMovedCommand>,
+     pointer_released_receiver: Receiver<PointerReleasedCommand>,
+     pointer_wheel_changed_receiver: Receiver<PointerWheelChangedCommand>,
+     touch_receiver: Receiver<TouchCommand>| {
+        Self::new(
+            state_machine,
+            pointer_pressed_receiver,
+            pointer_moved_receiver,
+            pointer_released_receiver,
+            pointer_wheel_changed_receiver,
+            touch_receiver,
+        )
+    }
+)]
 pub struct GestureHandlingBehavior {
     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
+    pointer_pressed_receiver: Option<Receiver<PointerPressedCommand>>,
+    pointer_moved_receiver: Option<Receiver<PointerMovedCommand>>,
+    pointer_released_receiver: Option<Receiver<PointerReleasedCommand>>,
+    pointer_wheel_changed_receiver: Option<Receiver<PointerWheelChangedCommand>>,
+    touch_receiver: Option<Receiver<TouchCommand>>,
     active_touches: HashMap<i64, Point>,
     last_hover_position: Option<Point>,
     last_pointer_position: Option<Point>,
@@ -51,15 +72,25 @@ impl GestureHandlingBehavior {
 
     pub fn new(
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
+        pointer_pressed_receiver: Receiver<PointerPressedCommand>,
+        pointer_moved_receiver: Receiver<PointerMovedCommand>,
+        pointer_released_receiver: Receiver<PointerReleasedCommand>,
+        pointer_wheel_changed_receiver: Receiver<PointerWheelChangedCommand>,
+        touch_receiver: Receiver<TouchCommand>,
     ) -> Self
     {
         Self {
             state_machine: Some(state_machine),
+            pointer_pressed_receiver: Some(pointer_pressed_receiver),
+            pointer_moved_receiver: Some(pointer_moved_receiver),
+            pointer_released_receiver: Some(pointer_released_receiver),
+            pointer_wheel_changed_receiver: Some(pointer_wheel_changed_receiver),
+            touch_receiver: Some(touch_receiver),
             ..Self::default()
         }
     }
 
-    pub fn handle_pointer_pressed(
+    fn handle_pointer_pressed(
         &mut self,
         state_machine: &mut ApplicationStateMachine,
         command: PointerPressedCommand,
@@ -78,7 +109,7 @@ impl GestureHandlingBehavior {
         self.last_pointer_position = Some(command.event_args.position);
     }
 
-    pub fn handle_pointer_moved(
+    fn handle_pointer_moved(
         &mut self,
         view_model: &mut FloorCanvasViewModel,
         state_machine: &mut ApplicationStateMachine,
@@ -101,7 +132,7 @@ impl GestureHandlingBehavior {
         self.last_pointer_position = Some(command.event_args.position);
     }
 
-    pub fn handle_pointer_released(
+    fn handle_pointer_released(
         &mut self,
         state_machine: &mut ApplicationStateMachine,
         _command: PointerReleasedCommand,
@@ -114,7 +145,7 @@ impl GestureHandlingBehavior {
         self.last_pointer_position = None;
     }
 
-    pub fn handle_pointer_wheel_changed(
+    fn handle_pointer_wheel_changed(
         &mut self,
         view_model: &mut FloorCanvasViewModel,
         state_machine: &mut ApplicationStateMachine,
@@ -141,7 +172,7 @@ impl GestureHandlingBehavior {
         let _ = state_machine.try_apply(&ZoomCompletedTrigger);
     }
 
-    pub fn handle_touch(
+    fn handle_touch(
         &mut self,
         view_model: &mut FloorCanvasViewModel,
         state_machine: &mut ApplicationStateMachine,
@@ -297,78 +328,65 @@ impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
         else {
             return;
         };
-
+        let Some(pointer_pressed_receiver) = self.pointer_pressed_receiver.clone() else {
+            return;
+        };
+        let Some(pointer_moved_receiver) = self.pointer_moved_receiver.clone() else {
+            return;
+        };
+        let Some(pointer_released_receiver) = self.pointer_released_receiver.clone() else {
+            return;
+        };
+        let Some(pointer_wheel_changed_receiver) = self.pointer_wheel_changed_receiver.clone() else {
+            return;
+        };
+        let Some(touch_receiver) = self.touch_receiver.clone() else {
+            return;
+        };
         let behavior = Rc::new(RefCell::new(self.clone()));
-
-        {
-            let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model_handle);
-            let state_machine = Rc::clone(&state_machine);
-            let subject = view_model.borrow().pointer_pressed_subject();
-            let subscription = subject.subscribe(move |command| {
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            while let Ok(command) = pointer_pressed_receiver.try_recv() {
                 let mut behavior = behavior.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
                 behavior.handle_pointer_pressed(&mut state_machine, command);
-            });
-            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
-        }
+            }
 
-        {
-            let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model_handle);
-            let state_machine = Rc::clone(&state_machine);
-            let subject = view_model.borrow().pointer_moved_subject();
-            let subscription = subject.subscribe(move |command| {
+            while let Ok(command) = pointer_moved_receiver.try_recv() {
                 let mut behavior = behavior.borrow_mut();
-                let mut view_model = view_model.borrow_mut();
+                let mut view_model = view_model_handle.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
                 behavior.handle_pointer_moved(&mut view_model, &mut state_machine, command);
                 view_model.draw_floor();
-            });
-            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
-        }
+            }
 
-        {
-            let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model_handle);
-            let state_machine = Rc::clone(&state_machine);
-            let subject = view_model.borrow().pointer_released_subject();
-            let subscription = subject.subscribe(move |command| {
+            while let Ok(command) = pointer_released_receiver.try_recv() {
                 let mut behavior = behavior.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
                 behavior.handle_pointer_released(&mut state_machine, command);
-            });
-            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
-        }
+            }
 
-        {
-            let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model_handle);
-            let state_machine = Rc::clone(&state_machine);
-            let subject = view_model.borrow().pointer_wheel_changed_subject();
-            let subscription = subject.subscribe(move |command| {
+            while let Ok(command) = pointer_wheel_changed_receiver.try_recv() {
                 let mut behavior = behavior.borrow_mut();
-                let mut view_model = view_model.borrow_mut();
+                let mut view_model = view_model_handle.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
-                behavior.handle_pointer_wheel_changed(&mut view_model, &mut state_machine, command);
+                behavior.handle_pointer_wheel_changed(
+                    &mut view_model,
+                    &mut state_machine,
+                    command,
+                );
                 view_model.draw_floor();
-            });
-            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
-        }
+            }
 
-        {
-            let behavior = Rc::clone(&behavior);
-            let view_model = Rc::clone(&view_model_handle);
-            let state_machine = Rc::clone(&state_machine);
-            let subject = view_model.borrow().touch_subject();
-            let subscription = subject.subscribe(move |command| {
+            while let Ok(command) = touch_receiver.try_recv() {
                 let mut behavior = behavior.borrow_mut();
-                let mut view_model = view_model.borrow_mut();
+                let mut view_model = view_model_handle.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
                 behavior.handle_touch(&mut view_model, &mut state_machine, command);
                 view_model.draw_floor();
-            });
-            disposables.add(Box::new(SubscriptionDisposable::new(subscription)));
-        }
+            }
+        });
+
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }

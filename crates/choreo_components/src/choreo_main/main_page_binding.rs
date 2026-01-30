@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
 use slint::{ComponentHandle, ModelRc, Timer, TimerMode, VecModel};
 
 use choreo_state_machine::ApplicationStateMachine;
@@ -14,11 +14,14 @@ use crate::audio_player::{
     OpenAudioFileCommand,
 };
 use crate::floor::{
-    build_floor_canvas_view_model,
     CanvasViewHandle,
+    DrawFloorBehavior,
     FloorAdapter,
     FloorCanvasViewModel,
-    FloorDependencies,
+    FloorPointerEventSenders,
+    GestureHandlingBehavior,
+    MovePositionsBehavior,
+    PlacePositionBehavior,
     Point,
     PointerButton,
     PointerEventArgs,
@@ -26,6 +29,10 @@ use crate::floor::{
     PointerPressedCommand,
     PointerReleasedCommand,
     PointerWheelChangedCommand,
+    RedrawFloorBehavior,
+    RotateAroundCenterBehavior,
+    ScaleAroundDancerBehavior,
+    ScalePositionsBehavior,
 };
 use crate::global::GlobalStateModel;
 use crate::scenes::{build_scenes_view_model, OpenChoreoActions, ScenesDependencies, ScenesPaneViewModel};
@@ -144,15 +151,126 @@ impl MainPageBinding {
         })));
 
         let (draw_floor_sender, draw_floor_receiver) = unbounded();
-        let floor_view_model = build_floor_canvas_view_model(FloorDependencies {
-            global_state: deps.global_state.clone(),
-            state_machine: deps.state_machine.clone(),
-            preferences: Rc::clone(&deps.preferences),
+        const POINTER_EVENT_BUFFER: usize = 256;
+        let (gesture_pressed_sender, gesture_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (gesture_moved_sender, gesture_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (gesture_released_sender, gesture_released_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (gesture_wheel_sender, gesture_wheel_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (gesture_touch_sender, gesture_touch_receiver) = bounded(POINTER_EVENT_BUFFER);
+
+        let (place_pressed_sender, place_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (place_moved_sender, place_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (place_released_sender, place_released_receiver) = bounded(POINTER_EVENT_BUFFER);
+
+        let (move_pressed_sender, move_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (move_moved_sender, move_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (move_released_sender, move_released_receiver) = bounded(POINTER_EVENT_BUFFER);
+
+        let (rotate_pressed_sender, rotate_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (rotate_moved_sender, rotate_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (rotate_released_sender, rotate_released_receiver) = bounded(POINTER_EVENT_BUFFER);
+
+        let (scale_pressed_sender, scale_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (scale_moved_sender, scale_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (scale_released_sender, scale_released_receiver) = bounded(POINTER_EVENT_BUFFER);
+
+        let (scale_dancer_pressed_sender, scale_dancer_pressed_receiver) =
+            bounded(POINTER_EVENT_BUFFER);
+        let (scale_dancer_moved_sender, scale_dancer_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (scale_dancer_released_sender, scale_dancer_released_receiver) =
+            bounded(POINTER_EVENT_BUFFER);
+
+        let floor_event_senders = FloorPointerEventSenders {
+            pointer_pressed_senders: vec![
+                gesture_pressed_sender,
+                place_pressed_sender,
+                move_pressed_sender,
+                rotate_pressed_sender,
+                scale_pressed_sender,
+                scale_dancer_pressed_sender,
+            ],
+            pointer_moved_senders: vec![
+                gesture_moved_sender,
+                place_moved_sender,
+                move_moved_sender,
+                rotate_moved_sender,
+                scale_moved_sender,
+                scale_dancer_moved_sender,
+            ],
+            pointer_released_senders: vec![
+                gesture_released_sender,
+                place_released_sender,
+                move_released_sender,
+                rotate_released_sender,
+                scale_released_sender,
+                scale_dancer_released_sender,
+            ],
+            pointer_wheel_changed_senders: vec![gesture_wheel_sender],
+            touch_senders: vec![gesture_touch_sender],
+        };
+
+        let floor_view_model = Rc::new(RefCell::new(FloorCanvasViewModel::new(
             draw_floor_sender,
-            draw_floor_receiver,
-            redraw_receiver: deps.redraw_floor_receiver,
-            render_gate: None,
-        });
+            floor_event_senders,
+        )));
+        floor_view_model
+            .borrow_mut()
+            .set_self_handle(Rc::downgrade(&floor_view_model));
+
+        let floor_behaviors: Vec<Box<dyn crate::behavior::Behavior<FloorCanvasViewModel>>> = vec![
+            Box::new(DrawFloorBehavior::new(
+                draw_floor_receiver,
+                None,
+            )),
+            Box::new(RedrawFloorBehavior::new(
+                deps.redraw_floor_receiver,
+            )),
+            Box::new(GestureHandlingBehavior::new(
+                Rc::clone(&deps.state_machine),
+                gesture_pressed_receiver,
+                gesture_moved_receiver,
+                gesture_released_receiver,
+                gesture_wheel_receiver,
+                gesture_touch_receiver,
+            )),
+            Box::new(PlacePositionBehavior::new(
+                Rc::clone(&deps.global_state),
+                Rc::clone(&deps.state_machine),
+                place_pressed_receiver,
+                place_moved_receiver,
+                place_released_receiver,
+            )),
+            Box::new(MovePositionsBehavior::new(
+                Rc::clone(&deps.global_state),
+                Rc::clone(&deps.state_machine),
+                move_pressed_receiver,
+                move_moved_receiver,
+                move_released_receiver,
+            )),
+            Box::new(RotateAroundCenterBehavior::new(
+                Rc::clone(&deps.global_state),
+                Rc::clone(&deps.state_machine),
+                rotate_pressed_receiver,
+                rotate_moved_receiver,
+                rotate_released_receiver,
+            )),
+            Box::new(ScalePositionsBehavior::new(
+                Rc::clone(&deps.global_state),
+                Rc::clone(&deps.state_machine),
+                scale_pressed_receiver,
+                scale_moved_receiver,
+                scale_released_receiver,
+            )),
+            Box::new(ScaleAroundDancerBehavior::new(
+                Rc::clone(&deps.global_state),
+                Rc::clone(&deps.state_machine),
+                scale_dancer_pressed_receiver,
+                scale_dancer_moved_receiver,
+                scale_dancer_released_receiver,
+            )),
+        ];
+
+        FloorCanvasViewModel::activate(&floor_view_model, floor_behaviors);
 
         let floor_adapter = Rc::new(RefCell::new(FloorAdapter::new(
             deps.global_state.clone(),
@@ -449,7 +567,7 @@ impl MainPageBinding {
         {
             let floor_view_model = Rc::clone(&floor_view_model);
             view.on_floor_pointer_pressed(move |x, y, is_primary, is_in_contact| {
-                let mut view_model = floor_view_model.borrow_mut();
+                let view_model = floor_view_model.borrow();
                 let button = if is_primary {
                     PointerButton::Primary
                 } else {
@@ -470,7 +588,7 @@ impl MainPageBinding {
         {
             let floor_view_model = Rc::clone(&floor_view_model);
             view.on_floor_pointer_moved(move |x, y, is_primary, is_in_contact| {
-                let mut view_model = floor_view_model.borrow_mut();
+                let view_model = floor_view_model.borrow();
                 let button = if is_primary {
                     PointerButton::Primary
                 } else {
@@ -491,7 +609,7 @@ impl MainPageBinding {
         {
             let floor_view_model = Rc::clone(&floor_view_model);
             view.on_floor_pointer_released(move |x, y, is_primary, is_in_contact| {
-                let mut view_model = floor_view_model.borrow_mut();
+                let view_model = floor_view_model.borrow();
                 let button = if is_primary {
                     PointerButton::Primary
                 } else {
@@ -512,7 +630,7 @@ impl MainPageBinding {
         {
             let floor_view_model = Rc::clone(&floor_view_model);
             view.on_floor_pointer_wheel_changed(move |delta, x, y| {
-                let mut view_model = floor_view_model.borrow_mut();
+                let view_model = floor_view_model.borrow();
                 let command = PointerWheelChangedCommand {
                     canvas_view: CanvasViewHandle,
                     delta: delta as f64,
