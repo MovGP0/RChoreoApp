@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 
 use crossbeam_channel::Sender;
 use choreo_master_mobile_json::{Color, SceneId};
@@ -51,15 +51,13 @@ pub struct ScenesPaneViewModelActions {
      preferences: Rc<dyn Preferences>,
      show_dialog_sender: Sender<ShowDialogCommand>,
      close_dialog_sender: Sender<CloseDialogCommand>,
-     haptic_feedback: Option<Box<dyn HapticFeedback>>,
-     behaviors: Vec<Box<dyn Behavior<ScenesPaneViewModel>>>| {
+     haptic_feedback: Option<Box<dyn HapticFeedback>>| {
         Self::new(
             global_state,
             preferences,
             show_dialog_sender,
             close_dialog_sender,
             haptic_feedback,
-            behaviors,
         )
     }
 )]
@@ -72,6 +70,7 @@ pub struct ScenesPaneViewModel {
     actions: ScenesPaneViewModelActions,
     on_change: Option<Rc<dyn Fn()>>,
     disposables: CompositeDisposable,
+    self_handle: Option<Weak<RefCell<ScenesPaneViewModel>>>,
     pub search_text: String,
     pub scenes: Vec<SceneViewModel>,
     pub can_save_choreo: bool,
@@ -88,7 +87,6 @@ impl ScenesPaneViewModel {
         show_dialog_sender: Sender<ShowDialogCommand>,
         close_dialog_sender: Sender<CloseDialogCommand>,
         haptic_feedback: Option<Box<dyn HapticFeedback>>,
-        behaviors: Vec<Box<dyn Behavior<ScenesPaneViewModel>>>,
     ) -> Self {
         let mut view_model = Self {
             global_state,
@@ -99,6 +97,7 @@ impl ScenesPaneViewModel {
             actions: ScenesPaneViewModelActions::default(),
             on_change: None,
             disposables: CompositeDisposable::new(),
+            self_handle: None,
             search_text: String::new(),
             scenes: Vec::new(),
             can_save_choreo: false,
@@ -111,16 +110,33 @@ impl ScenesPaneViewModel {
         view_model.refresh_scenes();
         view_model.update_can_save();
 
-        let mut disposables = CompositeDisposable::new();
-        for behavior in behaviors.iter() {
-            behavior.activate(&mut view_model, &mut disposables);
-        }
-        view_model.disposables = disposables;
         view_model
+    }
+
+    pub fn activate(
+        view_model: &Rc<RefCell<ScenesPaneViewModel>>,
+        behaviors: Vec<Box<dyn Behavior<ScenesPaneViewModel>>>,
+    ) {
+        let mut disposables = CompositeDisposable::new();
+        {
+            let mut view_model = view_model.borrow_mut();
+            for behavior in behaviors.iter() {
+                behavior.activate(&mut view_model, &mut disposables);
+            }
+        }
+        view_model.borrow_mut().disposables = disposables;
     }
 
     pub fn set_on_change(&mut self, handler: Option<Rc<dyn Fn()>>) {
         self.on_change = handler;
+    }
+
+    pub fn set_self_handle(&mut self, handle: Weak<RefCell<ScenesPaneViewModel>>) {
+        self.self_handle = Some(handle);
+    }
+
+    pub fn self_handle(&self) -> Option<Weak<RefCell<ScenesPaneViewModel>>> {
+        self.self_handle.clone()
     }
 
     pub fn set_actions(&mut self, actions: ScenesPaneViewModelActions) {
@@ -340,6 +356,12 @@ impl ScenesPaneViewModel {
     }
 
     pub fn dispose(&mut self) {
+        self.disposables.dispose_all();
+    }
+}
+
+impl Drop for ScenesPaneViewModel {
+    fn drop(&mut self) {
         self.disposables.dispose_all();
     }
 }

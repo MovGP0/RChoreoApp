@@ -54,7 +54,7 @@ pub struct ChoreographySettingsViewModel {
 impl ChoreographySettingsViewModel {
     pub(crate) const MAX_SCENE_TIMESTAMP_SECONDS: f64 = 1440.0 * 60.0;
 
-    pub fn new(mut behaviors: Vec<Box<dyn Behavior<ChoreographySettingsViewModel>>>) -> Self {
+    pub fn new(behaviors: Vec<Box<dyn Behavior<ChoreographySettingsViewModel>>>) -> Self {
         let floor_size_options = (0..=100).collect::<Vec<_>>();
         let grid_size_options = build_grid_size_options();
         let selected_grid_size_option = grid_size_options
@@ -104,7 +104,7 @@ impl ChoreographySettingsViewModel {
         };
 
         let mut disposables = CompositeDisposable::new();
-        for behavior in behaviors.drain(..) {
+        for behavior in behaviors.iter() {
             behavior.activate(&mut view_model, &mut disposables);
         }
         view_model.disposables = disposables;

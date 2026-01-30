@@ -32,7 +32,7 @@ pub struct SettingsViewModel {
 }
 
 impl SettingsViewModel {
-    pub fn new(mut behaviors: Vec<Box<dyn Behavior<SettingsViewModel>>>) -> Self {
+    pub fn new(behaviors: Vec<Box<dyn Behavior<SettingsViewModel>>>) -> Self {
         let mut view_model = Self {
             theme_mode: ThemeMode::Light,
             use_system_theme: false,
@@ -46,7 +46,7 @@ impl SettingsViewModel {
         };
 
         let mut disposables = CompositeDisposable::new();
-        for behavior in behaviors.drain(..) {
+        for behavior in behaviors.iter() {
             behavior.activate(&mut view_model, &mut disposables);
         }
 

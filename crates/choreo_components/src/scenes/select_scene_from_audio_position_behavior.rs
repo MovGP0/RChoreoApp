@@ -1,18 +1,43 @@
-use nject::injectable;
+use std::time::Duration;
 
-use crate::behavior::{Behavior, CompositeDisposable};
+use crossbeam_channel::{Receiver, Sender};
+use nject::injectable;
+use slint::TimerMode;
+
+use crate::audio_player::AudioPlayerPositionChangedEvent;
+use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::logging::BehaviorLog;
+use crate::scenes::SelectedSceneChangedEvent;
+
 use super::scenes_view_model::ScenesPaneViewModel;
 
 #[injectable]
-#[inject(|| Self)]
-pub struct SelectSceneFromAudioPositionBehavior;
+#[inject(
+    |receiver: Receiver<AudioPlayerPositionChangedEvent>,
+     selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>| {
+        Self::new(receiver, selected_scene_changed_sender)
+    }
+)]
+pub struct SelectSceneFromAudioPositionBehavior {
+    receiver: Receiver<AudioPlayerPositionChangedEvent>,
+    selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>,
+}
 
 impl SelectSceneFromAudioPositionBehavior {
-    #[allow(dead_code)]
-    fn update_selection(view_model: &mut ScenesPaneViewModel, position_seconds: f64) {
+    pub fn new(
+        receiver: Receiver<AudioPlayerPositionChangedEvent>,
+        selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>,
+    ) -> Self {
+        Self {
+            receiver,
+            selected_scene_changed_sender,
+        }
+    }
+
+    fn update_selection(view_model: &mut ScenesPaneViewModel, position_seconds: f64) -> bool {
+        let previous_id = view_model.selected_scene().map(|scene| scene.scene_id);
         if view_model.scenes.is_empty() {
-            return;
+            return false;
         }
 
         let mut first_index = None;
@@ -24,45 +49,71 @@ impl SelectSceneFromAudioPositionBehavior {
         }
 
         let Some(start_index) = first_index else {
-            return;
+            return false;
         };
 
-        let first_scene = &view_model.scenes[start_index];
+        let first_scene = view_model.scenes[start_index].clone();
         let Some(first_timestamp) = first_scene.timestamp else {
-            return;
+            return false;
         };
 
         if position_seconds < first_timestamp {
             view_model.set_selected_scene(Some(first_scene.clone()));
-            return;
+            return previous_id != Some(first_scene.scene_id);
         }
 
         for index in start_index..view_model.scenes.len() {
-            let current_scene = &view_model.scenes[index];
+            let current_scene = view_model.scenes[index].clone();
             let Some(current_timestamp) = current_scene.timestamp else {
                 continue;
             };
 
             let next_index = index + 1;
             if next_index >= view_model.scenes.len() {
-                return;
+                return false;
             }
 
-            let next_scene = &view_model.scenes[next_index];
+            let next_scene = view_model.scenes[next_index].clone();
             let Some(next_timestamp) = next_scene.timestamp else {
                 continue;
             };
 
             if position_seconds >= current_timestamp && position_seconds < next_timestamp {
                 view_model.set_selected_scene(Some(current_scene.clone()));
-                return;
+                return previous_id != Some(current_scene.scene_id);
             }
         }
+
+        false
     }
 }
 
 impl Behavior<ScenesPaneViewModel> for SelectSceneFromAudioPositionBehavior {
-    fn activate(&self, _view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(
+        &self,
+        view_model: &mut ScenesPaneViewModel,
+        disposables: &mut CompositeDisposable,
+    ) {
         BehaviorLog::behavior_activated("SelectSceneFromAudioPositionBehavior", "ScenesPaneViewModel");
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
+            return;
+        };
+
+        let receiver = self.receiver.clone();
+        let selected_scene_changed_sender = self.selected_scene_changed_sender.clone();
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            while let Ok(event) = receiver.try_recv() {
+                let mut view_model = view_model_handle.borrow_mut();
+                let changed = Self::update_selection(&mut view_model, event.position_seconds);
+                if changed {
+                    let _ = selected_scene_changed_sender.send(SelectedSceneChangedEvent {
+                        selected_scene: view_model.selected_scene(),
+                    });
+                }
+            }
+        });
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }

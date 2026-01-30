@@ -21,7 +21,7 @@ impl InsertSceneBehavior {
         Self { global_state }
     }
 
-    pub fn insert_scene(&self, view_model: &mut ScenesPaneViewModel, insert_after: bool) {
+    fn insert_scene(&self, view_model: &mut ScenesPaneViewModel, insert_after: bool) {
         let selected_scene_id = self
             .global_state
             .borrow()

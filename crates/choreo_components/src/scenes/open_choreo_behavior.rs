@@ -9,10 +9,12 @@ use choreo_models::{ChoreographyModelMapper, SettingsPreferenceKeys};
 
 use crate::audio_player::{CloseAudioFileCommand, OpenAudioFileCommand};
 use crate::behavior::{Behavior, CompositeDisposable};
+use crate::choreography_settings::ShowTimestampsChangedEvent;
 use crate::global::GlobalStateModel;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
+use super::messages::ReloadScenesCommand;
 use super::scenes_view_model::ScenesPaneViewModel;
 
 #[derive(Clone, Default)]
@@ -27,8 +29,18 @@ pub struct OpenChoreoActions {
      preferences: Rc<dyn Preferences>,
      open_audio_sender: Sender<OpenAudioFileCommand>,
      close_audio_sender: Sender<CloseAudioFileCommand>,
+     reload_scenes_sender: Sender<ReloadScenesCommand>,
+     show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,
      actions: OpenChoreoActions| {
-        Self::new(global_state, preferences, open_audio_sender, close_audio_sender, actions)
+        Self::new(
+            global_state,
+            preferences,
+            open_audio_sender,
+            close_audio_sender,
+            reload_scenes_sender,
+            show_timestamps_sender,
+            actions,
+        )
     }
 )]
 pub struct OpenChoreoBehavior {
@@ -36,6 +48,8 @@ pub struct OpenChoreoBehavior {
     preferences: Rc<dyn Preferences>,
     open_audio_sender: Sender<OpenAudioFileCommand>,
     close_audio_sender: Sender<CloseAudioFileCommand>,
+    reload_scenes_sender: Sender<ReloadScenesCommand>,
+    show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,
     actions: OpenChoreoActions,
 }
 
@@ -45,6 +59,8 @@ impl OpenChoreoBehavior {
         preferences: Rc<dyn Preferences>,
         open_audio_sender: Sender<OpenAudioFileCommand>,
         close_audio_sender: Sender<CloseAudioFileCommand>,
+        reload_scenes_sender: Sender<ReloadScenesCommand>,
+        show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,
         actions: OpenChoreoActions,
     ) -> Self {
         Self {
@@ -52,6 +68,8 @@ impl OpenChoreoBehavior {
             preferences,
             open_audio_sender,
             close_audio_sender,
+            reload_scenes_sender,
+            show_timestamps_sender,
             actions,
         }
     }
@@ -101,22 +119,22 @@ impl OpenChoreoBehavior {
             global_state.choreography = mapped;
         }
 
-        view_model.refresh_scenes();
         view_model.update_can_save();
+        let _ = self.reload_scenes_sender.send(ReloadScenesCommand);
+        let value = self
+            .global_state
+            .borrow()
+            .choreography
+            .settings
+            .show_timestamps;
+        let _ = self.show_timestamps_sender.send(ShowTimestampsChangedEvent {
+            is_enabled: value,
+        });
 
         self.preferences.set_string(
             SettingsPreferenceKeys::LAST_OPENED_CHOREO_FILE,
             path.to_string_lossy().into_owned(),
         );
-
-        // TODO: this needs to be done by sending an event to the other behavior instead
-        // let load_scenes = LoadScenesBehavior::new(self.global_state.clone());
-        // load_scenes.load(view_model);
-
-        // TODO: this needs to be done by sending an event to the other behavior instead
-        // let show_timestamps = ShowSceneTimestampsBehavior::new(self.global_state.clone());
-        // show_timestamps.update_from_choreography(view_model);
-        // view_model.update_can_save();
 
         self.try_load_audio(path);
     }

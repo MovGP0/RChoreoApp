@@ -1,76 +1,47 @@
-use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Duration;
 
 use crossbeam_channel::{Receiver, Sender};
 use nject::injectable;
+use slint::TimerMode;
 
-use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateModel;
+use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::logging::BehaviorLog;
-use choreo_state_machine::ApplicationStateMachine;
-
-use super::apply_placement_mode_behavior::ApplyPlacementModeBehavior;
-use super::messages::{SceneSelectedEvent, SelectedSceneChangedEvent};
-use super::publish_scene_selected_behavior::PublishSceneSelectedBehavior;
+use crate::scenes::SceneViewModel;
+use super::messages::{SelectSceneCommand, SelectedSceneChangedEvent};
 use super::scenes_view_model::ScenesPaneViewModel;
 
 #[injectable]
 #[inject(
-    |receiver: Receiver<SceneSelectedEvent>,
-     sender: Sender<SelectedSceneChangedEvent>,
-     selected_scene_changed_receiver: Receiver<SelectedSceneChangedEvent>,
-     global_state: Rc<RefCell<GlobalStateModel>>,
-     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
-     scene_selected_sender: Sender<SceneSelectedEvent>| {
-        Self::new(
-            receiver,
-            sender,
-            selected_scene_changed_receiver,
-            global_state,
-            state_machine,
-            scene_selected_sender,
-        )
+    |select_scene_sender: Sender<SelectSceneCommand>,
+     select_scene_receiver: Receiver<SelectSceneCommand>,
+     selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>| {
+        Self::new(select_scene_sender, select_scene_receiver, selected_scene_changed_sender)
     }
 )]
 pub struct SelectSceneBehavior {
-    receiver: Receiver<SceneSelectedEvent>,
-    sender: Sender<SelectedSceneChangedEvent>,
-    selected_scene_changed_receiver: Receiver<SelectedSceneChangedEvent>,
-    global_state: Rc<RefCell<GlobalStateModel>>,
-    state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
-    scene_selected_sender: Sender<SceneSelectedEvent>,
+    select_scene_sender: Sender<SelectSceneCommand>,
+    receiver: Receiver<SelectSceneCommand>,
+    selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>,
 }
 
 impl SelectSceneBehavior {
     pub fn new(
-        receiver: Receiver<SceneSelectedEvent>,
-        sender: Sender<SelectedSceneChangedEvent>,
-        selected_scene_changed_receiver: Receiver<SelectedSceneChangedEvent>,
-        global_state: Rc<RefCell<GlobalStateModel>>,
-        state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
-        scene_selected_sender: Sender<SceneSelectedEvent>,
+        select_scene_sender: Sender<SelectSceneCommand>,
+        receiver: Receiver<SelectSceneCommand>,
+        selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>,
     ) -> Self {
         Self {
+            select_scene_sender,
             receiver,
-            sender,
-            selected_scene_changed_receiver,
-            global_state,
-            state_machine,
-            scene_selected_sender,
+            selected_scene_changed_sender,
         }
     }
 
-    fn try_handle(&self, view_model: &mut ScenesPaneViewModel) -> bool {
-        match self.receiver.try_recv() {
-            Ok(event) => {
-                view_model.set_selected_scene(Some(event.selected_scene.clone()));
-                let _ = self.sender.send(SelectedSceneChangedEvent {
-                    selected_scene: view_model.selected_scene().clone(),
-                });
-                true
-            }
-            Err(_) => false,
-        }
+    fn handle_selection(view_model: &mut ScenesPaneViewModel, index: usize) -> Option<SceneViewModel> {
+        let scene = view_model.scenes.get(index).cloned()?;
+        view_model.set_selected_scene(Some(scene));
+        view_model.selected_scene()
     }
 }
 
@@ -78,40 +49,33 @@ impl Behavior<ScenesPaneViewModel> for SelectSceneBehavior {
     fn activate(
         &self,
         view_model: &mut ScenesPaneViewModel,
-        _disposables: &mut CompositeDisposable) {
+        disposables: &mut CompositeDisposable,
+    ) {
         BehaviorLog::behavior_activated("SelectSceneBehavior", "ScenesPaneViewModel");
 
-        let receiver = self.receiver.clone();
-        let sender = self.sender.clone();
-        let selected_scene_changed_receiver = self.selected_scene_changed_receiver.clone();
-        let global_state = self.global_state.clone();
-        let state_machine = self.state_machine.clone();
-        let scene_selected_sender = self.scene_selected_sender.clone();
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
+            return;
+        };
 
-        view_model.set_select_scene_handler(Some(Rc::new(move |view_model, index| {
-            let Some(selected_scene) = view_model.scenes.get(index).cloned() else {
-                return;
-            };
-
-            let publisher = PublishSceneSelectedBehavior::new(scene_selected_sender.clone());
-            publisher.publish(selected_scene);
-
-            let selection = SelectSceneBehavior::new(
-                receiver.clone(),
-                sender.clone(),
-                selected_scene_changed_receiver.clone(),
-                global_state.clone(),
-                state_machine.clone(),
-                scene_selected_sender.clone(),
-            );
-            let _ = selection.try_handle(view_model);
-
-            let mut apply_behavior = ApplyPlacementModeBehavior::new(
-                global_state.clone(),
-                state_machine.clone(),
-                selected_scene_changed_receiver.clone(),
-            );
-            let _ = apply_behavior.try_handle();
+        let select_scene_sender = self.select_scene_sender.clone();
+        view_model.set_select_scene_handler(Some(Rc::new(move |_view_model, index| {
+            let _ = select_scene_sender.send(SelectSceneCommand { index });
         })));
+
+        let receiver = self.receiver.clone();
+        let selected_scene_changed_sender = self.selected_scene_changed_sender.clone();
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            while let Ok(command) = receiver.try_recv() {
+                let mut view_model = view_model_handle.borrow_mut();
+                if let Some(selected_scene) = Self::handle_selection(&mut view_model, command.index) {
+                    let _ = selected_scene_changed_sender.send(SelectedSceneChangedEvent {
+                        selected_scene: Some(selected_scene),
+                    });
+                }
+            }
+        });
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }

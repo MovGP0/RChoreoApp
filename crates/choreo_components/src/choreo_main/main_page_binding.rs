@@ -32,7 +32,12 @@ use crate::scenes::{
     ScenesPaneViewModel,
     ScenesProvider,
 };
-use crate::settings::{build_settings_view_model, MaterialSchemeHelper, SettingsDependencies, SettingsViewModel};
+use crate::settings::{
+    build_settings_view_model,
+    MaterialSchemeHelper,
+    SettingsDependencies,
+    SettingsViewModel
+};
 use crate::shell::ShellMaterialSchemeApplier;
 use crate::time::format_seconds;
 use crate::{SceneListItem, ShellHost};
@@ -101,6 +106,8 @@ impl MainPageBinding {
                 scheme_updater: MaterialSchemeHelper::new(ShellMaterialSchemeApplier::new(&view)),
             },
         )));
+        let (show_timestamps_sender, show_timestamps_receiver) = crossbeam_channel::unbounded();
+        let audio_position_receiver_for_scenes = deps.audio_position_receiver.clone();
         let scenes_provider = ScenesProvider::new(ScenesDependencies {
             global_state: deps.global_state.clone(),
             state_machine: Some(deps.state_machine.clone()),
@@ -110,6 +117,9 @@ impl MainPageBinding {
             haptic_feedback: None,
             open_audio_sender,
             close_audio_sender,
+            audio_position_receiver: audio_position_receiver_for_scenes,
+            show_timestamps_sender,
+            show_timestamps_receiver,
             actions: OpenChoreoActions {
                 pick_choreo_path: actions.pick_choreo_path.clone(),
             },

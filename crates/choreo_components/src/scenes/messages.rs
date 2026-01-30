@@ -15,10 +15,13 @@ pub struct ShowDialogCommand {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CloseDialogCommand;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct SceneSelectedEvent {
-    pub selected_scene: SceneViewModel,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SelectSceneCommand {
+    pub index: usize,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ReloadScenesCommand;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CopyScenePositionsDecision {

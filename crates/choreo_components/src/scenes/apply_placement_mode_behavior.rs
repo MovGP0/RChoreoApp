@@ -7,9 +7,10 @@ use choreo_state_machine::{
     PlacePositionsStartedTrigger,
 };
 use nject::injectable;
+use slint::TimerMode;
 
 use crate::global::GlobalStateModel;
-use crate::behavior::{Behavior, CompositeDisposable};
+use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::logging::BehaviorLog;
 
 use super::messages::SelectedSceneChangedEvent;
@@ -42,21 +43,15 @@ impl ApplyPlacementModeBehavior {
         }
     }
 
-    pub fn try_handle(&mut self) -> bool {
-        match self.receiver.try_recv() {
-            Ok(event) => {
-                self.apply_for_scene(event.selected_scene.as_ref());
-                true
-            }
-            Err(_) => false,
-        }
-    }
-
-    fn apply_for_scene(&self, selected_scene: Option<&SceneViewModel>) {
+    fn apply_for_scene(
+        global_state: &Rc<RefCell<GlobalStateModel>>,
+        state_machine: &Option<Rc<RefCell<ApplicationStateMachine>>>,
+        selected_scene: Option<&SceneViewModel>,
+    ) {
         if selected_scene.is_none() {
-            let mut global_state = self.global_state.borrow_mut();
+            let mut global_state = global_state.borrow_mut();
             global_state.is_place_mode = false;
-            if let Some(state_machine) = &self.state_machine {
+            if let Some(state_machine) = state_machine {
                 state_machine
                     .borrow_mut()
                     .try_apply(&PlacePositionsCompletedTrigger);
@@ -66,7 +61,7 @@ impl ApplyPlacementModeBehavior {
 
         let selected_scene = selected_scene.unwrap();
         let (dancer_count, position_count, scene_id) = {
-            let global_state = self.global_state.borrow();
+            let global_state = global_state.borrow();
             let choreography = &global_state.choreography;
             let position_count = choreography
                 .scenes
@@ -78,9 +73,9 @@ impl ApplyPlacementModeBehavior {
         };
 
         let should_place = dancer_count > 0 && position_count < dancer_count;
-        let mut global_state = self.global_state.borrow_mut();
+        let mut global_state = global_state.borrow_mut();
         global_state.is_place_mode = should_place;
-        if let Some(state_machine) = &self.state_machine {
+        if let Some(state_machine) = state_machine {
             let trigger: &dyn ApplicationTrigger = if should_place {
                 &PlacePositionsStartedTrigger
             } else {
@@ -107,8 +102,28 @@ impl Behavior<super::scenes_view_model::ScenesPaneViewModel> for ApplyPlacementM
     fn activate(
         &self,
         _view_model: &mut super::scenes_view_model::ScenesPaneViewModel,
-        _disposables: &mut CompositeDisposable,
+        disposables: &mut CompositeDisposable,
     ) {
         BehaviorLog::behavior_activated("ApplyPlacementModeBehavior", "ScenesPaneViewModel");
+        let receiver = self.receiver.clone();
+        let global_state = self.global_state.clone();
+        let state_machine = self.state_machine.clone();
+        let selected_scene = global_state.borrow().selected_scene.clone();
+        ApplyPlacementModeBehavior::apply_for_scene(
+            &global_state,
+            &state_machine,
+            selected_scene.as_ref(),
+        );
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, std::time::Duration::from_millis(16), move || {
+            while let Ok(event) = receiver.try_recv() {
+                ApplyPlacementModeBehavior::apply_for_scene(
+                    &global_state,
+                    &state_machine,
+                    event.selected_scene.as_ref(),
+                );
+            }
+        });
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }

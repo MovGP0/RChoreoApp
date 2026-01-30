@@ -15,7 +15,7 @@ pub struct SliderWithTicksViewModel {
 }
 
 impl SliderWithTicksViewModel {
-    pub fn new(mut behaviors: Vec<Box<dyn Behavior<SliderWithTicksViewModel>>>) -> Self {
+    pub fn new(behaviors: Vec<Box<dyn Behavior<SliderWithTicksViewModel>>>) -> Self {
         let mut view_model = Self {
             minimum: 0.0,
             maximum: 1.0,
@@ -27,7 +27,7 @@ impl SliderWithTicksViewModel {
         };
 
         let mut disposables = CompositeDisposable::new();
-        for behavior in behaviors.drain(..) {
+        for behavior in behaviors.iter() {
             behavior.activate(&mut view_model, &mut disposables);
         }
 

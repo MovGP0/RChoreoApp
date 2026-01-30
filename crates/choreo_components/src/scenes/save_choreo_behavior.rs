@@ -31,7 +31,7 @@ impl SaveChoreoBehavior {
         }
     }
 
-    pub fn save(&self, view_model: &mut ScenesPaneViewModel) {
+    fn save(&self, view_model: &mut ScenesPaneViewModel) {
         let path = self
             .preferences
             .get_string(SettingsPreferenceKeys::LAST_OPENED_CHOREO_FILE, "");
