@@ -33,6 +33,7 @@ We also have additional components:
 - ViewModels only know about Models and Behaviors.
 - ViewModels get the behaviors injected, but do not know any specific behavior.
 - ViewModels do not know about Views or Adapters.
+- do not make injected behaviors mutable and use `behaviors.drain(..)` for enumeration; use `behaviors.iter()` for non-mutable access.
 
 ## Behaviors
 
@@ -130,7 +131,7 @@ impl MainViewModel {
     }
 
     pub fn activate(&mut self, disposables: &mut CompositeDisposable) {
-        for behavior in &self.behaviors {
+        for behavior in behaviors.iter() {
             behavior.activate(self, disposables);
         }
     }
