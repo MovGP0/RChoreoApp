@@ -171,7 +171,10 @@ impl ChoreographySettingsViewModel {
         self.is_updating_scene_timestamp = false;
     }
 
-    pub fn dispose(&mut self) {
+}
+
+impl Drop for ChoreographySettingsViewModel {
+    fn drop(&mut self) {
         self.disposables.dispose_all();
     }
 }

@@ -45,7 +45,10 @@ impl SliderWithTicksViewModel {
         self.value = value.clamp(self.minimum, self.maximum);
     }
 
-    pub fn dispose(&mut self) {
+}
+
+impl Drop for SliderWithTicksViewModel {
+    fn drop(&mut self) {
         self.disposables.dispose_all();
     }
 }

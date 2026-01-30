@@ -18,8 +18,8 @@ use super::types::{CanvasViewHandle, Matrix, Rect, Size};
 
 #[injectable]
 #[inject(
-    |draw_floor_command_sender: Sender<DrawFloorCommand>| {
-        Self::new(draw_floor_command_sender)
+    |draw_floor_command_sender: Sender<DrawFloorCommand>, event_senders: FloorPointerEventSenders| {
+        Self::new(draw_floor_command_sender, event_senders)
     }
 )]
 pub struct FloorCanvasViewModel {
@@ -64,10 +64,6 @@ impl FloorCanvasViewModel {
             floor_bounds: Rect::default(),
             canvas_size: Size::default(),
         }
-    }
-
-    pub fn dispose(&mut self) {
-        self.disposables.dispose_all();
     }
 
     pub fn activate(
@@ -165,6 +161,12 @@ impl FloorCanvasViewModel {
         for sender in senders {
             let _ = sender.try_send(command.clone());
         }
+    }
+}
+
+impl Drop for FloorCanvasViewModel {
+    fn drop(&mut self) {
+        self.disposables.dispose_all();
     }
 }
 

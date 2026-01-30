@@ -355,9 +355,6 @@ impl ScenesPaneViewModel {
         }
     }
 
-    pub fn dispose(&mut self) {
-        self.disposables.dispose_all();
-    }
 }
 
 impl Drop for ScenesPaneViewModel {

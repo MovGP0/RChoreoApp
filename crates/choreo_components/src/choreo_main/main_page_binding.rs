@@ -33,9 +33,9 @@ use crate::scenes::{
     ScenesProvider,
 };
 use crate::settings::{
-    build_settings_view_model,
     MaterialSchemeHelper,
     SettingsDependencies,
+    SettingsProvider,
     SettingsViewModel
 };
 use crate::shell::ShellMaterialSchemeApplier;
@@ -100,12 +100,11 @@ impl MainPageBinding {
 
         let actions = deps.actions;
         let view_weak = view.as_weak();
-        let settings_view_model = Rc::new(RefCell::new(build_settings_view_model(
-            SettingsDependencies {
-                preferences: SharedPreferences::new(Rc::clone(&deps.preferences)),
-                scheme_updater: MaterialSchemeHelper::new(ShellMaterialSchemeApplier::new(&view)),
-            },
-        )));
+        let settings_view_model = SettingsProvider::new(SettingsDependencies {
+            preferences: SharedPreferences::new(Rc::clone(&deps.preferences)),
+            scheme_updater: MaterialSchemeHelper::new(ShellMaterialSchemeApplier::new(&view)),
+        })
+        .settings_view_model();
         let (show_timestamps_sender, show_timestamps_receiver) = crossbeam_channel::unbounded();
         let audio_position_receiver_for_scenes = deps.audio_position_receiver.clone();
         let scenes_provider = ScenesProvider::new(ScenesDependencies {
