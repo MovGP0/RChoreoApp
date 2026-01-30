@@ -1,10 +1,11 @@
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 
 use choreo_state_machine::ApplicationStateMachine;
 use nject::injectable;
 
 use crate::audio_player::{AudioPlayerViewModel, HapticFeedback};
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::{GlobalStateModel, InteractionMode};
 use crate::scenes::SceneViewModel;
 
@@ -32,16 +33,27 @@ const MODE_OPTIONS: [InteractionMode; 6] = [
      state_machine: Rc<RefCell<ApplicationStateMachine>>,
      audio_player: AudioPlayerViewModel,
      haptic_feedback: Option<Box<dyn HapticFeedback>>,
+     behaviors: Vec<Box<dyn Behavior<MainViewModel>>>,
      actions: MainViewModelActions| {
-        Self::new(global_state, state_machine, audio_player, haptic_feedback, actions)
+        Self::new(
+            global_state,
+            state_machine,
+            audio_player,
+            haptic_feedback,
+            behaviors,
+            actions,
+        )
     }
 )]
 pub struct MainViewModel {
+    disposables: CompositeDisposable,
     global_state: Rc<RefCell<GlobalStateModel>>,
     _state_machine: Rc<RefCell<ApplicationStateMachine>>,
     haptic_feedback: Option<Box<dyn HapticFeedback>>,
+    behaviors: Vec<Box<dyn Behavior<MainViewModel>>>,
     actions: MainViewModelActions,
     on_change: Option<Rc<dyn Fn()>>,
+    self_handle: Option<Weak<RefCell<MainViewModel>>>,
     pub audio_player: AudioPlayerViewModel,
     pub selected_mode: InteractionMode,
     pub is_mode_selection_enabled: bool,
@@ -61,17 +73,21 @@ impl MainViewModel {
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
         audio_player: AudioPlayerViewModel,
         haptic_feedback: Option<Box<dyn HapticFeedback>>,
+        behaviors: Vec<Box<dyn Behavior<MainViewModel>>>,
         actions: MainViewModelActions,
     ) -> Self
     {
         let selected_mode = global_state.borrow().interaction_mode;
 
         Self {
+            disposables: CompositeDisposable::new(),
             global_state,
             _state_machine: state_machine,
             haptic_feedback,
+            behaviors,
             actions,
             on_change: None,
+            self_handle: None,
             audio_player,
             selected_mode,
             is_mode_selection_enabled: true,
@@ -82,6 +98,19 @@ impl MainViewModel {
             is_dialog_open: false,
             dialog_content: None,
         }
+    }
+
+    pub fn activate(view_model: &Rc<RefCell<MainViewModel>>) {
+        let mut disposables = CompositeDisposable::new();
+        {
+            let mut view_model = view_model.borrow_mut();
+            let behaviors = std::mem::take(&mut view_model.behaviors);
+            for behavior in behaviors {
+                behavior.activate(&mut view_model, &mut disposables);
+            }
+        }
+
+        view_model.borrow_mut().disposables = disposables;
     }
 
     pub fn open_audio(&mut self) {
@@ -192,6 +221,14 @@ impl MainViewModel {
         self.on_change = handler;
     }
 
+    pub fn set_self_handle(&mut self, handle: Weak<RefCell<MainViewModel>>) {
+        self.self_handle = Some(handle);
+    }
+
+    pub fn self_handle(&self) -> Option<Weak<RefCell<MainViewModel>>> {
+        self.self_handle.clone()
+    }
+
     fn perform_click(&self) {
         if let Some(haptic) = &self.haptic_feedback
             && haptic.is_supported()
@@ -207,11 +244,18 @@ impl MainViewModel {
     }
 }
 
+impl Drop for MainViewModel {
+    fn drop(&mut self) {
+        self.disposables.dispose_all();
+    }
+}
+
 pub struct MainDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub audio_player: AudioPlayerViewModel,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
+    pub behaviors: Vec<Box<dyn Behavior<MainViewModel>>>,
     pub actions: MainViewModelActions,
 }
 
@@ -221,6 +265,7 @@ pub fn build_main_view_model(deps: MainDependencies) -> MainViewModel {
         deps.state_machine,
         deps.audio_player,
         deps.haptic_feedback,
+        deps.behaviors,
         deps.actions,
     )
 }

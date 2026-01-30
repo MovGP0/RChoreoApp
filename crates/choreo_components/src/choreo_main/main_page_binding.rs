@@ -43,18 +43,21 @@ use crate::{SceneListItem, ShellHost};
 use crate::preferences::SharedPreferences;
 
 use super::{
-    build_main_behaviors,
     build_main_view_model,
+    ApplyInteractionModeBehavior,
     CloseDialogCommand,
-    MainBehaviorDependencies,
-    MainBehaviors,
+    HideDialogBehavior,
     MainDependencies,
+    OpenAudioBehavior,
+    OpenImageBehavior,
+    OpenSvgFileBehavior,
     MainViewModelActions,
     MainViewModel,
     mode_index,
     mode_option_from_index,
     OpenSvgFileCommand,
     ShowDialogCommand,
+    ShowDialogBehavior,
 };
 
 #[derive(Clone, Default)]
@@ -89,7 +92,6 @@ pub struct MainPageBinding {
     view: ShellHost,
     view_model: Rc<RefCell<MainViewModel>>,
     scenes_view_model: Rc<RefCell<ScenesPaneViewModel>>,
-    behaviors: Rc<MainBehaviors>,
     #[allow(dead_code)]
     settings_view_model: Rc<RefCell<SettingsViewModel>>,
     #[allow(dead_code)]
@@ -109,24 +111,10 @@ impl MainPageBinding {
         let close_audio_sender = deps.close_audio_sender.clone();
         let scenes_show_dialog_sender = deps.scenes_show_dialog_sender.clone();
         let scenes_close_dialog_sender = deps.scenes_close_dialog_sender.clone();
-        let view_model = Rc::new(RefCell::new(build_main_view_model(MainDependencies {
-            global_state: global_state.clone(),
-            state_machine: state_machine.clone(),
-            audio_player: deps.audio_player,
-            haptic_feedback: deps.haptic_feedback,
-            actions: MainViewModelActions::default(),
-        })));
-
-        let behaviors = Rc::new(build_main_behaviors(MainBehaviorDependencies {
-            global_state,
-            state_machine,
-            open_audio_sender: deps.open_audio_sender,
-            open_svg_sender: deps.open_svg_sender,
-            open_svg_receiver: deps.open_svg_receiver,
-            show_dialog_receiver: deps.show_dialog_receiver,
-            close_dialog_receiver: deps.close_dialog_receiver,
-            preferences,
-        }));
+        const MAIN_EVENT_BUFFER: usize = 64;
+        let (interaction_mode_sender, interaction_mode_receiver) = bounded(MAIN_EVENT_BUFFER);
+        let (open_audio_request_sender, open_audio_request_receiver) = bounded(MAIN_EVENT_BUFFER);
+        let (open_image_request_sender, open_image_request_receiver) = bounded(MAIN_EVENT_BUFFER);
 
         let actions = deps.actions;
         let view_weak = view.as_weak();
@@ -151,6 +139,37 @@ impl MainPageBinding {
         })));
 
         let (draw_floor_sender, draw_floor_receiver) = unbounded();
+        let main_behaviors: Vec<Box<dyn crate::behavior::Behavior<MainViewModel>>> = vec![
+            Box::new(ApplyInteractionModeBehavior::new(
+                Rc::clone(&global_state),
+                Rc::clone(&state_machine),
+                interaction_mode_receiver,
+            )),
+            Box::new(OpenAudioBehavior::new(
+                deps.open_audio_sender,
+                open_audio_request_receiver,
+            )),
+            Box::new(OpenImageBehavior::new(
+                deps.open_svg_sender,
+                open_image_request_receiver,
+            )),
+            Box::new(OpenSvgFileBehavior::new(
+                Rc::clone(&global_state),
+                Rc::clone(&preferences),
+                deps.open_svg_receiver,
+                draw_floor_sender.clone(),
+            )),
+            Box::new(ShowDialogBehavior::new(deps.show_dialog_receiver)),
+            Box::new(HideDialogBehavior::new(deps.close_dialog_receiver)),
+        ];
+        let view_model = Rc::new(RefCell::new(build_main_view_model(MainDependencies {
+            global_state: global_state.clone(),
+            state_machine: state_machine.clone(),
+            audio_player: deps.audio_player,
+            haptic_feedback: deps.haptic_feedback,
+            behaviors: main_behaviors,
+            actions: MainViewModelActions::default(),
+        })));
         const POINTER_EVENT_BUFFER: usize = 256;
         let (gesture_pressed_sender, gesture_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
         let (gesture_moved_sender, gesture_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
@@ -321,13 +340,11 @@ impl MainPageBinding {
             let view_model_for_change = Rc::clone(&view_model);
             let floor_view_model_for_change = Rc::clone(&floor_view_model);
             let floor_adapter_for_change = Rc::clone(&floor_adapter);
-            let behaviors_for_dialog = Rc::clone(&behaviors);
             let view_weak = view_weak.clone();
             let on_change = Rc::new(move || {
                 let view_model = Rc::clone(&view_model_for_change);
                 let floor_view_model = Rc::clone(&floor_view_model_for_change);
                 let floor_adapter = Rc::clone(&floor_adapter_for_change);
-                let behaviors = Rc::clone(&behaviors_for_dialog);
                 let view_weak = view_weak.clone();
                 slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
                     if let Some(view) = view_weak.upgrade()
@@ -336,7 +353,6 @@ impl MainPageBinding {
                         apply_view_model(&view, &view_model_snapshot);
                         drop(view_model_snapshot);
                         apply_floor_view(&view, &floor_adapter, &floor_view_model);
-                        drain_dialog_commands(&view, &view_model, &behaviors);
                     }
                 });
             });
@@ -347,15 +363,11 @@ impl MainPageBinding {
             let scenes_view_model_for_change = Rc::clone(&scenes_view_model);
             let floor_view_model_for_change = Rc::clone(&floor_view_model);
             let floor_adapter_for_change = Rc::clone(&floor_adapter);
-            let view_model_for_dialog = Rc::clone(&view_model);
-            let behaviors_for_dialog = Rc::clone(&behaviors);
             let view_weak = view_weak.clone();
             let on_change = Rc::new(move || {
                 let scenes_view_model = Rc::clone(&scenes_view_model_for_change);
                 let floor_view_model = Rc::clone(&floor_view_model_for_change);
                 let floor_adapter = Rc::clone(&floor_adapter_for_change);
-                let view_model = Rc::clone(&view_model_for_dialog);
-                let behaviors = Rc::clone(&behaviors_for_dialog);
                 let view_weak = view_weak.clone();
                 slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
                     if let Some(view) = view_weak.upgrade()
@@ -364,7 +376,6 @@ impl MainPageBinding {
                         apply_scenes_view_model(&view, &scenes_view_model_snapshot);
                         drop(scenes_view_model_snapshot);
                         apply_floor_view(&view, &floor_adapter, &floor_view_model);
-                        drain_dialog_commands(&view, &view_model, &behaviors);
                     }
                 });
             });
@@ -375,16 +386,13 @@ impl MainPageBinding {
             let view_model = Rc::clone(&view_model);
             let actions_for_audio = actions.clone();
             let actions_for_image = actions.clone();
-            let behaviors_for_audio = Rc::clone(&behaviors);
-            let behaviors_for_image = Rc::clone(&behaviors);
-            let behaviors_for_mode = Rc::clone(&behaviors);
             let floor_view_model_for_image = Rc::clone(&floor_view_model);
             let actions = MainViewModelActions {
                 open_audio_requested: Some(Rc::new(move || {
                     if let Some(picker) = actions_for_audio.pick_audio_path.as_ref()
                         && let Some(path) = picker()
                     {
-                        behaviors_for_audio.open_audio.open_audio(path);
+                        let _ = open_audio_request_sender.try_send(path);
                         return true;
                     }
                     false
@@ -393,18 +401,22 @@ impl MainPageBinding {
                     if let Some(picker) = actions_for_image.pick_image_path.as_ref()
                         && let Some(path) = picker()
                     {
-                        behaviors_for_image.open_image.open_svg(path);
-                        let _ = behaviors_for_image.open_svg_file.try_handle();
+                        let _ = open_image_request_sender.try_send(path);
                         floor_view_model_for_image.borrow_mut().draw_floor();
                     }
                 })),
                 interaction_mode_changed: Some(Rc::new(move |mode| {
-                    behaviors_for_mode.apply_interaction_mode.apply_mode(mode);
+                    let _ = interaction_mode_sender.try_send(mode);
                 })),
             };
 
             view_model.borrow_mut().set_actions(actions);
         }
+
+        view_model
+            .borrow_mut()
+            .set_self_handle(Rc::downgrade(&view_model));
+        MainViewModel::activate(&view_model);
 
         apply_view_model(&view, &view_model.borrow());
         apply_scenes_view_model(&view, &scenes_view_model.borrow());
@@ -644,7 +656,6 @@ impl MainPageBinding {
             view,
             view_model,
             scenes_view_model,
-            behaviors,
             settings_view_model,
             floor_view_model,
             floor_adapter,
@@ -664,9 +675,6 @@ impl MainPageBinding {
         Rc::clone(&self.scenes_view_model)
     }
 
-    pub fn behaviors(&self) -> Rc<MainBehaviors> {
-        Rc::clone(&self.behaviors)
-    }
 }
 
 fn apply_view_model(view: &ShellHost, view_model: &MainViewModel) {
@@ -704,34 +712,6 @@ fn apply_floor_view(
 ) {
     let mut floor_view_model = floor_view_model.borrow_mut();
     floor_adapter.borrow_mut().apply(view, &mut floor_view_model);
-}
-
-fn drain_dialog_commands(
-    view: &ShellHost,
-    view_model: &Rc<RefCell<MainViewModel>>,
-    behaviors: &Rc<MainBehaviors>,
-)
-{
-    let mut view_model_ref = view_model.borrow_mut();
-    let mut updated = false;
-
-    while behaviors.show_dialog.try_handle(&mut view_model_ref)
-    {
-        updated = true;
-    }
-
-    while behaviors.hide_dialog.try_handle(&mut view_model_ref)
-    {
-        updated = true;
-    }
-
-    drop(view_model_ref);
-
-    if updated
-    {
-        let view_model_snapshot = view_model.borrow();
-        apply_view_model(view, &view_model_snapshot);
-    }
 }
 
 fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneListItem> {

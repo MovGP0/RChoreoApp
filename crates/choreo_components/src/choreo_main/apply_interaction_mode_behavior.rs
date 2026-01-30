@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Duration;
 
+use crossbeam_channel::Receiver;
 use choreo_state_machine::{
     ApplicationStateMachine, MovePositionsCompletedTrigger, MovePositionsStartedTrigger,
     RotateAroundCenterCompletedTrigger, RotateAroundCenterSelectionCompletedTrigger,
@@ -10,36 +12,44 @@ use choreo_state_machine::{
     ScalePositionsStartedTrigger,
 };
 use nject::injectable;
+use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable};
+use crate::behavior::TimerDisposable;
 use crate::global::{GlobalStateModel, InteractionMode};
 use crate::logging::BehaviorLog;
 
 use super::main_view_model::MainViewModel;
 
+#[derive(Clone)]
 #[injectable]
 #[inject(
-    |global_state: Rc<RefCell<GlobalStateModel>>, state_machine: Rc<RefCell<ApplicationStateMachine>>| {
-        Self::new(global_state, state_machine)
+    |global_state: Rc<RefCell<GlobalStateModel>>,
+     state_machine: Rc<RefCell<ApplicationStateMachine>>,
+     receiver: Receiver<InteractionMode>| {
+        Self::new(global_state, state_machine, receiver)
     }
 )]
 pub struct ApplyInteractionModeBehavior {
     global_state: Rc<RefCell<GlobalStateModel>>,
     state_machine: Rc<RefCell<ApplicationStateMachine>>,
+    receiver: Receiver<InteractionMode>,
 }
 
 impl ApplyInteractionModeBehavior {
     pub fn new(
         global_state: Rc<RefCell<GlobalStateModel>>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
+        receiver: Receiver<InteractionMode>,
     ) -> Self {
         Self {
             global_state,
             state_machine,
+            receiver,
         }
     }
 
-    pub fn apply_mode(&self, mode: InteractionMode) {
+    fn apply_mode(&self, mode: InteractionMode) {
         let selected_positions = self.global_state.borrow().selected_positions.len();
         let mut state_machine = self.state_machine.borrow_mut();
 
@@ -94,7 +104,16 @@ impl ApplyInteractionModeBehavior {
 }
 
 impl Behavior<MainViewModel> for ApplyInteractionModeBehavior {
-    fn activate(&self, _view_model: &mut MainViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, _view_model: &mut MainViewModel, disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("ApplyInteractionModeBehavior", "MainViewModel");
+        let receiver = self.receiver.clone();
+        let behavior = self.clone();
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            while let Ok(mode) = receiver.try_recv() {
+                behavior.apply_mode(mode);
+            }
+        });
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
