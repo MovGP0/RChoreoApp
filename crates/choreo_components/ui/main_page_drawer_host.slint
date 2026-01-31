@@ -2,6 +2,67 @@ import { MaterialAnimations, MaterialPalette, ScrollView } from "@material";
 import { ChoreographySettingsView } from "choreography_settings_view.slint";
 import { SceneListItem, ScenesPaneView } from "scenes_pane_view.slint";
 
+component MainPageLeftDrawer inherits Rectangle {
+    in property <[SceneListItem]> scenes;
+    in property <string> scenes_search_text;
+    in property <bool> scenes_show_timestamps;
+    in property <bool> scenes_can_save_choreo;
+    in property <bool> scenes_can_delete_scene;
+    in property <bool> scenes_can_navigate_to_settings;
+    in property <bool> scenes_can_navigate_to_dancer_settings;
+
+    callback scenes_select_scene(int);
+    callback scenes_update_search_text(string);
+    callback scenes_add_scene_before();
+    callback scenes_add_scene_after();
+    callback scenes_delete_scene();
+    callback scenes_open_choreo();
+    callback scenes_save_choreo();
+    callback scenes_navigate_to_settings();
+    callback scenes_navigate_to_dancer_settings();
+
+    background: transparent;
+
+    ScenesPaneView {
+        width: parent.width;
+        height: parent.height;
+        scenes: root.scenes;
+        search_text: root.scenes_search_text;
+        show_timestamps: root.scenes_show_timestamps;
+        can_save_choreo: root.scenes_can_save_choreo;
+        can_delete_scene: root.scenes_can_delete_scene;
+        can_navigate_to_settings: root.scenes_can_navigate_to_settings;
+        can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
+
+        select_scene(index) => { root.scenes_select_scene(index); }
+        update_search_text(value) => { root.scenes_update_search_text(value); }
+        add_scene_before => { root.scenes_add_scene_before(); }
+        add_scene_after => { root.scenes_add_scene_after(); }
+        delete_scene => { root.scenes_delete_scene(); }
+        open_choreo => { root.scenes_open_choreo(); }
+        save_choreo => { root.scenes_save_choreo(); }
+        navigate_to_settings => { root.scenes_navigate_to_settings(); }
+        navigate_to_dancer_settings => { root.scenes_navigate_to_dancer_settings(); }
+    }
+}
+
+component MainPageRightDrawer inherits Rectangle {
+    background: transparent;
+
+    ScrollView {
+        width: parent.width;
+        height: parent.height;
+        vertical_scrollbar_policy: ScrollBarPolicy.always_on;
+        horizontal_scrollbar_policy: ScrollBarPolicy.always_off;
+
+        settings_view := ChoreographySettingsView {
+            width: parent.width;
+        }
+
+        viewport_height: settings_view.height;
+    }
+}
+
 export component MainPageDrawerHost inherits Rectangle {
     in property <length> left_drawer_width: 320px;
     in property <length> right_drawer_width: 320px;
@@ -105,27 +166,28 @@ export component MainPageDrawerHost inherits Rectangle {
                 easing: MaterialAnimations.standard_easing;
             }
 
-        ScenesPaneView {
-            width: parent.width;
-            scenes: root.scenes;
-            search_text: root.scenes_search_text;
-            show_timestamps: root.scenes_show_timestamps;
-            can_save_choreo: root.scenes_can_save_choreo;
-            can_delete_scene: root.scenes_can_delete_scene;
-            can_navigate_to_settings: root.scenes_can_navigate_to_settings;
-            can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
+            MainPageLeftDrawer {
+                width: parent.width;
+                height: parent.height;
+                scenes: root.scenes;
+                scenes_search_text: root.scenes_search_text;
+                scenes_show_timestamps: root.scenes_show_timestamps;
+                scenes_can_save_choreo: root.scenes_can_save_choreo;
+                scenes_can_delete_scene: root.scenes_can_delete_scene;
+                scenes_can_navigate_to_settings: root.scenes_can_navigate_to_settings;
+                scenes_can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
 
-            select_scene(index) => { root.scenes_select_scene(index); }
-            update_search_text(value) => { root.scenes_update_search_text(value); }
-            add_scene_before => { root.scenes_add_scene_before(); }
-            add_scene_after => { root.scenes_add_scene_after(); }
-            delete_scene => { root.scenes_delete_scene(); }
-            open_choreo => { root.scenes_open_choreo(); }
-            save_choreo => { root.scenes_save_choreo(); }
-            navigate_to_settings => { root.scenes_navigate_to_settings(); }
-            navigate_to_dancer_settings => { root.scenes_navigate_to_dancer_settings(); }
+                scenes_select_scene(index) => { root.scenes_select_scene(index); }
+                scenes_update_search_text(value) => { root.scenes_update_search_text(value); }
+                scenes_add_scene_before => { root.scenes_add_scene_before(); }
+                scenes_add_scene_after => { root.scenes_add_scene_after(); }
+                scenes_delete_scene => { root.scenes_delete_scene(); }
+                scenes_open_choreo => { root.scenes_open_choreo(); }
+                scenes_save_choreo => { root.scenes_save_choreo(); }
+                scenes_navigate_to_settings => { root.scenes_navigate_to_settings(); }
+                scenes_navigate_to_dancer_settings => { root.scenes_navigate_to_dancer_settings(); }
+            }
         }
-    }
 
         right_panel := Rectangle {
             visible: root.is_right_open;
@@ -141,17 +203,9 @@ export component MainPageDrawerHost inherits Rectangle {
                 easing: MaterialAnimations.standard_easing;
             }
 
-            ScrollView {
+            MainPageRightDrawer {
                 width: parent.width;
                 height: parent.height;
-                vertical_scrollbar_policy: ScrollBarPolicy.always_on;
-                horizontal_scrollbar_policy: ScrollBarPolicy.always_off;
-
-                settings_view := ChoreographySettingsView {
-                    width: parent.width;
-                }
-
-                viewport_height: settings_view.height;
             }
         }
     }

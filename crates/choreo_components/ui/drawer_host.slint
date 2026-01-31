@@ -5,6 +5,7 @@ export component DrawerHost inherits Rectangle {
     in property <length> right_drawer_width: 320px;
     in property <length> top_drawer_height: 320px;
     in property <length> bottom_drawer_height: 320px;
+    in property <length> top_inset: 0px;
     in property <bool> inline_left: false;
     in-out property <bool> is_left_open: false;
     in-out property <bool> is_right_open: false;
@@ -72,75 +73,83 @@ export component DrawerHost inherits Rectangle {
         }
     }
 
-    left_panel := Rectangle {
-        visible: root.inline_left || root.is_left_open;
-        x: root.inline_left ? 0px : (root.is_left_open ? 0px : -self.width);
-        y: 0px;
-        width: root.left_drawer_width;
-        height: parent.height;
-        background: root.drawer_background;
-
-        animate x {
-            duration: MaterialAnimations.standard_decelerate_duration;
-            easing: MaterialAnimations.standard_easing;
-        }
-
-        ComponentContainer {
-            component-factory: root.left_drawer;
-        }
-    }
-
-    right_panel := Rectangle {
-        visible: root.is_right_open;
-        x: root.is_right_open ? parent.width - root.right_drawer_width : parent.width;
-        y: 0px;
-        width: root.right_drawer_width;
-        height: parent.height;
-        background: root.drawer_background;
-
-        animate x {
-            duration: MaterialAnimations.standard_decelerate_duration;
-            easing: MaterialAnimations.standard_easing;
-        }
-
-        ComponentContainer {
-            component-factory: root.right_drawer;
-        }
-    }
-
-    top_panel := Rectangle {
-        visible: root.is_top_open;
+    panel_area := Rectangle {
         x: 0px;
-        y: root.is_top_open ? 0px : -self.height;
+        y: root.top_inset;
         width: parent.width;
-        height: root.top_drawer_height;
-        background: root.drawer_background;
+        height: parent.height - root.top_inset;
+        background: transparent;
 
-        animate y {
-            duration: MaterialAnimations.standard_decelerate_duration;
-            easing: MaterialAnimations.standard_easing;
+        left_panel := Rectangle {
+            visible: root.inline_left || root.is_left_open;
+            x: root.inline_left ? 0px : (root.is_left_open ? 0px : -self.width);
+            y: 0px;
+            width: root.left_drawer_width;
+            height: parent.height;
+            background: root.drawer_background;
+
+            animate x {
+                duration: MaterialAnimations.standard_decelerate_duration;
+                easing: MaterialAnimations.standard_easing;
+            }
+
+            ComponentContainer {
+                component-factory: root.left_drawer;
+            }
         }
 
-        ComponentContainer {
-            component-factory: root.top_drawer;
+        right_panel := Rectangle {
+            visible: root.is_right_open;
+            x: root.is_right_open ? parent.width - root.right_drawer_width : parent.width;
+            y: 0px;
+            width: root.right_drawer_width;
+            height: parent.height;
+            background: root.drawer_background;
+
+            animate x {
+                duration: MaterialAnimations.standard_decelerate_duration;
+                easing: MaterialAnimations.standard_easing;
+            }
+
+            ComponentContainer {
+                component-factory: root.right_drawer;
+            }
         }
-    }
 
-    bottom_panel := Rectangle {
-        visible: root.is_bottom_open;
-        x: 0px;
-        y: root.is_bottom_open ? parent.height - root.bottom_drawer_height : parent.height;
-        width: parent.width;
-        height: root.bottom_drawer_height;
-        background: root.drawer_background;
+        top_panel := Rectangle {
+            visible: root.is_top_open;
+            x: 0px;
+            y: root.is_top_open ? 0px : -self.height;
+            width: parent.width;
+            height: root.top_drawer_height;
+            background: root.drawer_background;
 
-        animate y {
-            duration: MaterialAnimations.standard_decelerate_duration;
-            easing: MaterialAnimations.standard_easing;
+            animate y {
+                duration: MaterialAnimations.standard_decelerate_duration;
+                easing: MaterialAnimations.standard_easing;
+            }
+
+            ComponentContainer {
+                component-factory: root.top_drawer;
+            }
         }
 
-        ComponentContainer {
-            component-factory: root.bottom_drawer;
+        bottom_panel := Rectangle {
+            visible: root.is_bottom_open;
+            x: 0px;
+            y: root.is_bottom_open ? parent.height - root.bottom_drawer_height : parent.height;
+            width: parent.width;
+            height: root.bottom_drawer_height;
+            background: root.drawer_background;
+
+            animate y {
+                duration: MaterialAnimations.standard_decelerate_duration;
+                easing: MaterialAnimations.standard_easing;
+            }
+
+            ComponentContainer {
+                component-factory: root.bottom_drawer;
+            }
         }
     }
 }

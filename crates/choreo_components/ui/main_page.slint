@@ -176,39 +176,39 @@ export component MainPage inherits Rectangle {
                 }
             }
 
-//            MainPageDrawerHost {
-//                y: 0px;
-//                width: parent.width;
-//                height: parent.height - root.audio_player_height;
-//                top_inset: root.top_bar_height;
-//                inline_left: false;
-//                left_drawer_width: root.nav_width;
-//                right_drawer_width: 480px;
-//                drawer_background: MaterialPalette.surface_variant;
-//                overlay_color: MaterialPalette.background_modal;
-//                is_left_open <=> root.is_nav_open;
-//                is_right_open <=> root.is_choreography_settings_open;
-//                left_close_on_click_away: true;
-//                right_close_on_click_away: true;
-//                scenes: root.scenes;
-//                scenes_search_text: root.scenes_search_text;
-//                scenes_show_timestamps: root.scenes_show_timestamps;
-//                scenes_can_save_choreo: root.scenes_can_save_choreo;
-//                scenes_can_delete_scene: root.scenes_can_delete_scene;
-//                scenes_can_navigate_to_settings: root.scenes_can_navigate_to_settings;
-//                scenes_can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
-//
-//                left_close_requested => { root.close_nav(); }
-//                right_close_requested => { root.close_settings(); }
-//                scenes_select_scene(index) => { root.scenes_select_scene(index); }
-//                scenes_update_search_text(value) => { root.scenes_update_search_text(value); }
-//                scenes_add_scene_before => { root.scenes_add_scene_before(); }
-//                scenes_add_scene_after => { root.scenes_add_scene_after(); }
-//                scenes_delete_scene => { root.scenes_delete_scene(); }
-//                scenes_open_choreo => { root.scenes_open_choreo(); }
-//                scenes_save_choreo => { root.scenes_save_choreo(); }
-//                scenes_navigate_to_settings => { root.scenes_navigate_to_settings(); }
-//                scenes_navigate_to_dancer_settings => { root.scenes_navigate_to_dancer_settings(); }
+            MainPageDrawerHost {
+                y: 0px;
+                width: parent.width;
+                height: parent.height - root.audio_player_height;
+                top_inset: root.top_bar_height;
+                inline_left: false;
+                left_drawer_width: root.nav_width;
+                right_drawer_width: 480px;
+                drawer_background: MaterialPalette.surface_variant;
+                overlay_color: MaterialPalette.background_modal;
+                is_left_open <=> root.is_nav_open;
+                is_right_open <=> root.is_choreography_settings_open;
+                left_close_on_click_away: true;
+                right_close_on_click_away: true;
+                scenes: root.scenes;
+                scenes_search_text: root.scenes_search_text;
+                scenes_show_timestamps: root.scenes_show_timestamps;
+                scenes_can_save_choreo: root.scenes_can_save_choreo;
+                scenes_can_delete_scene: root.scenes_can_delete_scene;
+                scenes_can_navigate_to_settings: root.scenes_can_navigate_to_settings;
+                scenes_can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
+
+                left_close_requested => { root.close_nav(); }
+                right_close_requested => { root.close_settings(); }
+                scenes_select_scene(index) => { root.scenes_select_scene(index); }
+                scenes_update_search_text(value) => { root.scenes_update_search_text(value); }
+                scenes_add_scene_before => { root.scenes_add_scene_before(); }
+                scenes_add_scene_after => { root.scenes_add_scene_after(); }
+                scenes_delete_scene => { root.scenes_delete_scene(); }
+                scenes_open_choreo => { root.scenes_open_choreo(); }
+                scenes_save_choreo => { root.scenes_save_choreo(); }
+                scenes_navigate_to_settings => { root.scenes_navigate_to_settings(); }
+                scenes_navigate_to_dancer_settings => { root.scenes_navigate_to_dancer_settings(); }
 
                 floor_canvas := FloorCanvasView {
                     choreography_name: root.floor_choreography_name;
@@ -261,5 +261,5 @@ export component MainPage inherits Rectangle {
                 z: 2;
             }
         }
-    //}
+    }
 }
