@@ -1,11 +1,10 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crossbeam_channel::{Receiver, Sender};
+use crossbeam_channel::{bounded, Receiver, Sender};
 use slint::{ComponentHandle, ModelRc, VecModel};
 
 use choreo_state_machine::ApplicationStateMachine;
-
 use crate::audio_player::{
     AudioPlayerPositionChangedEvent,
     AudioPlayerViewModel,
@@ -42,16 +41,22 @@ use crate::shell::ShellMaterialSchemeApplier;
 use crate::time::format_seconds;
 use crate::{SceneListItem, ShellHost};
 use crate::preferences::SharedPreferences;
+use crate::nav_bar::{
+    apply_nav_bar_view_model,
+    bind_nav_bar,
+    InteractionModeChangedCommand,
+    NavBarSenders,
+    OpenAudioRequestedCommand as NavBarOpenAudioRequestedCommand,
+    OpenImageRequestedCommand as NavBarOpenImageRequestedCommand,
+    NavBarViewModel,
+};
 
 use super::{
     MainViewModel,
-    MainViewModelActions,
     MainViewModelProvider,
     MainViewModelProviderDependencies,
     OpenAudioRequested,
     OpenImageRequested,
-    mode_index,
-    mode_option_from_index,
 };
 
 #[derive(Clone, Default)]
@@ -86,6 +91,8 @@ pub struct MainPageBinding {
     floor_view_model: Rc<RefCell<FloorCanvasViewModel>>,
     #[allow(dead_code)]
     floor_provider: Rc<RefCell<FloorProvider>>,
+    #[allow(dead_code)]
+    nav_bar_timer: slint::Timer,
 }
 
 impl MainPageBinding {
@@ -148,16 +155,36 @@ impl MainPageBinding {
         let mut main_provider = MainViewModelProvider::new(MainViewModelProviderDependencies {
             global_state: global_state.clone(),
             state_machine: state_machine.clone(),
-            audio_player,
             open_audio_sender: deps.open_audio_sender,
             preferences: Rc::clone(&preferences),
             draw_floor_sender: draw_floor_sender.clone(),
-            haptic_feedback: deps.haptic_feedback,
         });
         let interaction_mode_sender = main_provider.interaction_mode_sender();
         let open_audio_request_sender = main_provider.open_audio_request_sender();
         let open_image_request_sender = main_provider.open_image_request_sender();
-        let view_model = Rc::new(RefCell::new(main_provider.create_main_view_model()));
+
+        const NAV_BAR_EVENT_BUFFER: usize = 64;
+        let (nav_bar_open_audio_sender, nav_bar_open_audio_receiver) =
+            bounded::<NavBarOpenAudioRequestedCommand>(NAV_BAR_EVENT_BUFFER);
+        let (nav_bar_open_image_sender, nav_bar_open_image_receiver) =
+            bounded::<NavBarOpenImageRequestedCommand>(NAV_BAR_EVENT_BUFFER);
+        let (nav_bar_mode_sender, nav_bar_mode_receiver) =
+            bounded::<InteractionModeChangedCommand>(NAV_BAR_EVENT_BUFFER);
+
+        let nav_bar = Rc::new(RefCell::new(NavBarViewModel::new(
+            global_state.clone(),
+            deps.haptic_feedback,
+            Vec::new(),
+            NavBarSenders {
+                open_audio_requested: nav_bar_open_audio_sender,
+                open_image_requested: nav_bar_open_image_sender,
+                interaction_mode_changed: nav_bar_mode_sender,
+            },
+        )));
+
+        let view_model = Rc::new(RefCell::new(main_provider.create_main_view_model(
+            Rc::clone(&nav_bar),
+        )));
         {
             let view_model_for_change = Rc::clone(&view_model);
             let floor_provider_for_change = Rc::clone(&floor_provider);
@@ -201,39 +228,66 @@ impl MainPageBinding {
         }
 
         {
-            let view_model = Rc::clone(&view_model);
+            let view_model_for_change = Rc::clone(&view_model);
+            let view_weak = view_weak.clone();
+            let on_change = Rc::new(move || {
+                let view_model = Rc::clone(&view_model_for_change);
+                let view_weak = view_weak.clone();
+                slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
+                    if let Some(view) = view_weak.upgrade() {
+                        let view_model_snapshot = view_model.borrow();
+                        apply_view_model(&view, &view_model_snapshot);
+                    }
+                });
+            });
+            nav_bar.borrow_mut().set_on_change(Some(on_change));
+        }
+
+        let nav_bar_timer = {
+            let nav_bar = Rc::clone(&nav_bar);
             let actions_for_audio = actions.clone();
             let actions_for_image = actions.clone();
             let floor_view_model_for_image = Rc::clone(&floor_view_model);
-            let actions = MainViewModelActions {
-                open_audio_requested: Some(Rc::new(move || {
-                    if let Some(picker) = actions_for_audio.pick_audio_path.as_ref()
-                        && let Some(path) = picker()
-                    {
-                        let _ = open_audio_request_sender.try_send(OpenAudioRequested {
-                            file_path: path,
-                        });
-                        return true;
+            let open_audio_request_sender = open_audio_request_sender.clone();
+            let open_image_request_sender = open_image_request_sender.clone();
+            let interaction_mode_sender = interaction_mode_sender.clone();
+            let nav_bar_open_audio_receiver = nav_bar_open_audio_receiver.clone();
+            let nav_bar_open_image_receiver = nav_bar_open_image_receiver.clone();
+            let nav_bar_mode_receiver = nav_bar_mode_receiver.clone();
+            let timer = slint::Timer::default();
+            timer.start(
+                slint::TimerMode::Repeated,
+                std::time::Duration::from_millis(16),
+                move || {
+                    while nav_bar_open_audio_receiver.try_recv().is_ok() {
+                        if let Some(picker) = actions_for_audio.pick_audio_path.as_ref()
+                            && let Some(path) = picker()
+                        {
+                            let _ = open_audio_request_sender.try_send(OpenAudioRequested {
+                                file_path: path,
+                            });
+                            nav_bar.borrow_mut().set_audio_player_opened(true);
+                        }
                     }
-                    false
-                })),
-                open_image_requested: Some(Rc::new(move || {
-                    if let Some(picker) = actions_for_image.pick_image_path.as_ref()
-                        && let Some(path) = picker()
-                    {
-                        let _ = open_image_request_sender.try_send(OpenImageRequested {
-                            file_path: path,
-                        });
-                        floor_view_model_for_image.borrow_mut().draw_floor();
-                    }
-                })),
-                interaction_mode_changed: Some(Rc::new(move |mode| {
-                    let _ = interaction_mode_sender.try_send(mode);
-                })),
-            };
 
-            view_model.borrow_mut().set_actions(actions);
-        }
+                    while nav_bar_open_image_receiver.try_recv().is_ok() {
+                        if let Some(picker) = actions_for_image.pick_image_path.as_ref()
+                            && let Some(path) = picker()
+                        {
+                            let _ = open_image_request_sender.try_send(OpenImageRequested {
+                                file_path: path,
+                            });
+                            floor_view_model_for_image.borrow_mut().draw_floor();
+                        }
+                    }
+
+                    while let Ok(mode_command) = nav_bar_mode_receiver.try_recv() {
+                        let _ = interaction_mode_sender.try_send(mode_command.mode);
+                    }
+                },
+            );
+            timer
+        };
 
         view_model
             .borrow_mut()
@@ -244,65 +298,7 @@ impl MainPageBinding {
         apply_scenes_view_model(&view, &scenes_view_model.borrow());
         floor_provider.borrow().apply_to_view(&view);
 
-        {
-            let view_model = Rc::clone(&view_model);
-            view.on_toggle_nav(move || {
-                let mut view_model = view_model.borrow_mut();
-                view_model.toggle_navigation();
-            });
-        }
-
-        {
-            let view_model = Rc::clone(&view_model);
-            view.on_close_nav(move || {
-                let mut view_model = view_model.borrow_mut();
-                view_model.close_navigation();
-            });
-        }
-
-        {
-            let view_model = Rc::clone(&view_model);
-            view.on_open_audio(move || {
-                let mut view_model = view_model.borrow_mut();
-                view_model.open_audio();
-            });
-        }
-
-        {
-            let view_model = Rc::clone(&view_model);
-            view.on_open_image(move || {
-                let view_model = view_model.borrow_mut();
-                view_model.open_image();
-            });
-        }
-
-        {
-            let view_model = Rc::clone(&view_model);
-            view.on_open_settings(move || {
-                let mut view_model = view_model.borrow_mut();
-                view_model.open_choreography_settings();
-            });
-        }
-
-        {
-            let view_model = Rc::clone(&view_model);
-            view.on_close_settings(move || {
-                let mut view_model = view_model.borrow_mut();
-                view_model.close_choreography_settings();
-            });
-        }
-
-        {
-            let view_model = Rc::clone(&view_model);
-            view.on_select_mode(move |index| {
-                let mut view_model = view_model.borrow_mut();
-                let Some(mode) = mode_option_from_index(index) else {
-                    return;
-                };
-
-                view_model.set_selected_mode(mode);
-            });
-        }
+        bind_nav_bar(&view, Rc::clone(&nav_bar));
 
         {
             let view_model = Rc::clone(&view_model);
@@ -469,6 +465,7 @@ impl MainPageBinding {
             settings_view_model,
             floor_view_model,
             floor_provider,
+            nav_bar_timer,
         }
     }
 
@@ -487,12 +484,8 @@ impl MainPageBinding {
 }
 
 fn apply_view_model(view: &ShellHost, view_model: &MainViewModel) {
-    view.set_selected_mode_index(selected_mode_index(view_model));
-    view.set_is_mode_selection_enabled(view_model.is_mode_selection_enabled);
-    view.set_nav_width(view_model.nav_width);
-    view.set_is_nav_open(view_model.is_nav_open);
-    view.set_is_choreography_settings_open(view_model.is_choreography_settings_open);
-    view.set_is_audio_player_open(view_model.is_audio_player_open);
+    let nav_bar = view_model.nav_bar.borrow();
+    apply_nav_bar_view_model(view, &nav_bar);
     view.set_is_dialog_open(view_model.is_dialog_open);
 
     view.set_dialog_content(
@@ -530,9 +523,5 @@ fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneL
         .collect::<Vec<_>>();
 
     ModelRc::new(VecModel::from(items))
-}
-
-fn selected_mode_index(view_model: &MainViewModel) -> i32 {
-    mode_index(view_model.selected_mode)
 }
 

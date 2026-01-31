@@ -5,7 +5,7 @@ use crossbeam_channel::{bounded, unbounded, Sender};
 
 use choreo_state_machine::ApplicationStateMachine;
 
-use crate::audio_player::{AudioPlayerViewModel, OpenAudioFileCommand};
+use crate::audio_player::OpenAudioFileCommand;
 use crate::behavior::Behavior;
 use crate::global::{GlobalStateModel, InteractionMode};
 use crate::preferences::Preferences;
@@ -15,7 +15,6 @@ use super::{
     ApplyInteractionModeBehavior,
     HideDialogBehavior,
     MainViewModel,
-    MainViewModelActions,
     OpenAudioBehavior,
     OpenImageBehavior,
     OpenSvgFileBehavior,
@@ -25,22 +24,18 @@ use super::{
 pub struct MainViewModelProviderDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
-    pub audio_player: Rc<RefCell<AudioPlayerViewModel>>,
     pub open_audio_sender: Sender<OpenAudioFileCommand>,
     pub preferences: Rc<dyn Preferences>,
     pub draw_floor_sender: Sender<crate::floor::DrawFloorCommand>,
-    pub haptic_feedback: Option<Box<dyn crate::haptics::HapticFeedback>>,
 }
 
 pub struct MainViewModelProvider {
     global_state: Rc<RefCell<GlobalStateModel>>,
     state_machine: Rc<RefCell<ApplicationStateMachine>>,
-    audio_player: Rc<RefCell<AudioPlayerViewModel>>,
     interaction_mode_sender: Sender<InteractionMode>,
     open_audio_request_sender: Sender<OpenAudioRequested>,
     open_image_request_sender: Sender<OpenImageRequested>,
     main_behaviors: Vec<Box<dyn Behavior<MainViewModel>>>,
-    haptic_feedback: Option<Box<dyn crate::haptics::HapticFeedback>>,
 }
 
 impl MainViewModelProvider {
@@ -80,25 +75,23 @@ impl MainViewModelProvider {
         Self {
             global_state: deps.global_state,
             state_machine: deps.state_machine,
-            audio_player: deps.audio_player,
             interaction_mode_sender,
             open_audio_request_sender,
             open_image_request_sender,
             main_behaviors,
-            haptic_feedback: deps.haptic_feedback,
         }
     }
 
-    pub fn create_main_view_model(&mut self) -> MainViewModel {
+    pub fn create_main_view_model(
+        &mut self,
+        nav_bar: Rc<RefCell<crate::nav_bar::NavBarViewModel>>,
+    ) -> MainViewModel {
         let behaviors = std::mem::take(&mut self.main_behaviors);
-        let haptic_feedback = self.haptic_feedback.take();
         MainViewModel::new(
             Rc::clone(&self.global_state),
             Rc::clone(&self.state_machine),
-            Rc::clone(&self.audio_player),
-            haptic_feedback,
             behaviors,
-            MainViewModelActions::default(),
+            nav_bar,
         )
     }
 

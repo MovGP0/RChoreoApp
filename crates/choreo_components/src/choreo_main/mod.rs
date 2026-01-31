@@ -13,9 +13,7 @@ pub use apply_interaction_mode_behavior::ApplyInteractionModeBehavior;
 pub use hide_dialog_behavior::HideDialogBehavior;
 pub use main_page_binding::{MainPageActionHandlers, MainPageBinding, MainPageDependencies};
 pub use main_view_model_provider::{MainViewModelProvider, MainViewModelProviderDependencies};
-pub use main_view_model::{
-    mode_index, mode_option_from_index, MainViewModel, MainViewModelActions,
-};
+pub use main_view_model::MainViewModel;
 pub use messages::{
     CloseDialogCommand,
     OpenAudioRequested,

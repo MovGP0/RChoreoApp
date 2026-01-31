@@ -166,27 +166,27 @@ export component MainPageDrawerHost inherits Rectangle {
                 easing: MaterialAnimations.standard_easing;
             }
 
-            MainPageLeftDrawer {
-                width: parent.width;
-                height: parent.height;
-                scenes: root.scenes;
-                scenes_search_text: root.scenes_search_text;
-                scenes_show_timestamps: root.scenes_show_timestamps;
-                scenes_can_save_choreo: root.scenes_can_save_choreo;
-                scenes_can_delete_scene: root.scenes_can_delete_scene;
-                scenes_can_navigate_to_settings: root.scenes_can_navigate_to_settings;
-                scenes_can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
-
-                scenes_select_scene(index) => { root.scenes_select_scene(index); }
-                scenes_update_search_text(value) => { root.scenes_update_search_text(value); }
-                scenes_add_scene_before => { root.scenes_add_scene_before(); }
-                scenes_add_scene_after => { root.scenes_add_scene_after(); }
-                scenes_delete_scene => { root.scenes_delete_scene(); }
-                scenes_open_choreo => { root.scenes_open_choreo(); }
-                scenes_save_choreo => { root.scenes_save_choreo(); }
-                scenes_navigate_to_settings => { root.scenes_navigate_to_settings(); }
-                scenes_navigate_to_dancer_settings => { root.scenes_navigate_to_dancer_settings(); }
-            }
+//            MainPageLeftDrawer {
+//                width: parent.width;
+//                height: parent.height;
+//                scenes: root.scenes;
+//                scenes_search_text: root.scenes_search_text;
+//                scenes_show_timestamps: root.scenes_show_timestamps;
+//                scenes_can_save_choreo: root.scenes_can_save_choreo;
+//                scenes_can_delete_scene: root.scenes_can_delete_scene;
+//                scenes_can_navigate_to_settings: root.scenes_can_navigate_to_settings;
+//                scenes_can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
+//
+//                scenes_select_scene(index) => { root.scenes_select_scene(index); }
+//                scenes_update_search_text(value) => { root.scenes_update_search_text(value); }
+//                scenes_add_scene_before => { root.scenes_add_scene_before(); }
+//                scenes_add_scene_after => { root.scenes_add_scene_after(); }
+//                scenes_delete_scene => { root.scenes_delete_scene(); }
+//                scenes_open_choreo => { root.scenes_open_choreo(); }
+//                scenes_save_choreo => { root.scenes_save_choreo(); }
+//                scenes_navigate_to_settings => { root.scenes_navigate_to_settings(); }
+//                scenes_navigate_to_dancer_settings => { root.scenes_navigate_to_dancer_settings(); }
+//            }
         }
 
         right_panel := Rectangle {
