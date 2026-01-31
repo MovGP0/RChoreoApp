@@ -11,20 +11,12 @@ export struct SceneListItem {
 
 export component ScenesPaneView inherits Rectangle {
     in property <[SceneListItem]> scenes;
-    in property <string> search_text;
+    in-out property <string> search_text;
     in property <bool> show_timestamps;
     in property <bool> can_save_choreo;
     in property <bool> can_delete_scene;
     in property <bool> can_navigate_to_settings;
     in property <bool> can_navigate_to_dancer_settings;
-    in property <string> search_placeholder: Translations.search_placeholder;
-    in property <string> add_before_text: Translations.scenes_add_before;
-    in property <string> add_after_text: Translations.scenes_add_after;
-    in property <string> delete_text: Translations.delete_scene_dialog_title;
-    in property <string> open_text: Translations.scenes_open;
-    in property <string> save_text: Translations.scenes_save;
-    in property <string> settings_text: Translations.settings_title;
-    in property <string> dancers_text: Translations.dancers_title;
 
     callback select_scene(int);
     callback update_search_text(string);
@@ -61,24 +53,57 @@ export component ScenesPaneView inherits Rectangle {
         }
 
         SearchBar {
-            placeholder_text: search_placeholder;
-            text: search_text;
+            placeholder_text: Translations.search_placeholder;
+            text <=> search_text;
             edited(value) => { update_search_text(value); }
         }
 
         Horizontal {
             spacing: 8px;
-            IconButton { icon: @image-url("icons/TableRowPlusBefore.svg"); tooltip: add_before_text; clicked => { add_scene_before(); } }
-            IconButton { icon: @image-url("icons/TableRowPlusAfter.svg"); tooltip: add_after_text; clicked => { add_scene_after(); } }
-            IconButton { icon: @image-url("icons/Delete.svg"); tooltip: delete_text; enabled: can_delete_scene; clicked => { delete_scene(); } }
+
+            IconButton {
+                icon: @image-url("icons/TableRowPlusBefore.svg");
+                tooltip: Translations.scenes_add_before;
+                clicked => { add_scene_before(); }
+            }
+            IconButton {
+                icon: @image-url("icons/TableRowPlusAfter.svg");
+                tooltip: Translations.scenes_add_after;
+                clicked => { add_scene_after(); }
+            }
+            IconButton {
+                icon: @image-url("icons/Delete.svg");
+                tooltip: Translations.delete_scene_dialog_title;
+                enabled: can_delete_scene;
+                clicked => { delete_scene(); }
+            }
         }
 
         Horizontal {
             spacing: 8px;
-            IconButton { icon: @image-url("icons/FolderOpen.svg"); tooltip: open_text; clicked => { open_choreo(); } }
-            IconButton { icon: @image-url("icons/ContentSave.svg"); tooltip: save_text; enabled: can_save_choreo; clicked => { save_choreo(); } }
-            IconButton { icon: @image-url("icons/Cog.svg"); tooltip: settings_text; enabled: can_navigate_to_settings; clicked => { navigate_to_settings(); } }
-            IconButton { icon: @image-url("icons/AccountGroup.svg"); tooltip: dancers_text; enabled: can_navigate_to_dancer_settings; clicked => { navigate_to_dancer_settings(); } }
+            IconButton {
+                icon: @image-url("icons/FolderOpen.svg");
+                tooltip: Translations.scenes_open;
+                clicked => { open_choreo(); }
+            }
+            IconButton {
+                icon: @image-url("icons/ContentSave.svg");
+                tooltip: Translations.scenes_save;
+                enabled: can_save_choreo;
+                clicked => { save_choreo(); }
+            }
+            IconButton {
+                icon: @image-url("icons/Cog.svg");
+                tooltip: Translations.settings_title;
+                enabled: can_navigate_to_settings;
+                clicked => { navigate_to_settings(); }
+            }
+            IconButton {
+                icon: @image-url("icons/AccountGroup.svg");
+                tooltip: Translations.dancers_title;
+                enabled: can_navigate_to_dancer_settings;
+                clicked => { navigate_to_dancer_settings(); }
+            }
         }
     }
 }
