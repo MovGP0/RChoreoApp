@@ -1,5 +1,3 @@
-use rxrust::prelude::SubscriptionLike;
-
 pub trait Disposable {
     fn dispose(&mut self);
 }
@@ -29,33 +27,6 @@ impl CompositeDisposable {
 pub trait Behavior<T> {
     fn activate(&self, _view_model: &mut T, _disposables: &mut CompositeDisposable)
     {
-    }
-}
-
-pub struct SubscriptionDisposable<T>
-where
-    T: SubscriptionLike,
-{
-    subscription: T,
-}
-
-impl<T> SubscriptionDisposable<T>
-where
-    T: SubscriptionLike,
-{
-    pub fn new(subscription: T) -> Self
-    {
-        Self { subscription }
-    }
-}
-
-impl<T> Disposable for SubscriptionDisposable<T>
-where
-    T: SubscriptionLike,
-{
-    fn dispose(&mut self)
-    {
-        self.subscription.unsubscribe();
     }
 }
 
