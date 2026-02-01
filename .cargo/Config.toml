@@ -1,11 +1,14 @@
-[target.x86_64-pc-windows-msvc]
-rustflags = [
-    "-C",
-    "link-arg=/STACK:8388608" # increases the stack size to 8 MiB (= 8,388,608 bytes)
-]
+[ui]
+stack_size_bytes = 8388608
 
-[target.aarch64-pc-windows-msvc]
-rustflags = [
-    "-C",
-    "link-arg=/STACK:8388608" # increases the stack size to 8 MiB
-]
+#[target.x86_64-pc-windows-msvc]
+#rustflags = [
+#    "-C",
+#    "link-arg=/STACK:8388608"
+#]
+
+#[target.aarch64-pc-windows-msvc]
+#rustflags = [
+#    "-C",
+#    "link-arg=/STACK:8388608"
+#]

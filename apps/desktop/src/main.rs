@@ -31,6 +31,20 @@ use choreo_components::shell;
 use choreo_i18n::detect_locale;
 
 fn main() -> Result<(), slint::PlatformError> {
+    let ui_thread = std::thread::Builder::new()
+        .name("ui".to_string())
+        .stack_size(8 * 1024 * 1024)
+        .spawn(run_ui)
+        .map_err(|err| {
+            slint::PlatformError::from(format!("Failed to spawn UI thread: {err}"))
+        })?;
+    match ui_thread.join() {
+        Ok(result) => result,
+        Err(_) => Err(slint::PlatformError::from("UI thread panicked")),
+    }
+}
+
+fn run_ui() -> Result<(), slint::PlatformError> {
     let ui = shell::create_shell_host()?;
     let global_provider = GlobalProvider::new();
     let global_state = global_provider.global_state();

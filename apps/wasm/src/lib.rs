@@ -34,6 +34,9 @@ use wasm_bindgen::prelude::*;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub fn main() {
+    // WASM runs on the browser main thread. There is no per-thread stack size
+    // configuration at runtime. If stack usage becomes an issue, reduce stack
+    // allocations (move large locals to heap) or adjust toolchain stack settings.
     let ui = match shell::create_shell_host() {
         Ok(ui) => ui,
         Err(err) => {

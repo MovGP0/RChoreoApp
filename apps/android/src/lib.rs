@@ -10,6 +10,9 @@
 #[unsafe(no_mangle)]
 #[cfg(target_os = "android")]
 fn android_main(app: slint::android::AndroidApp) {
+    // Android UI must run on the main (Looper) thread. The main thread stack
+    // size is controlled by the OS and is not adjustable from Rust. Keep stack
+    // usage low and offload heavy work to background threads when needed.
     use std::cell::RefCell;
     use std::rc::Rc;
 
