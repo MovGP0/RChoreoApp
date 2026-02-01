@@ -10,6 +10,21 @@ use crate::models::role::RoleModel;
 use crate::models::scene::SceneModel;
 use crate::models::settings::SettingsModel;
 
+fn now_utc() -> OffsetDateTime {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let millis = js_sys::Date::now();
+        let nanos = (millis * 1_000_000.0) as i128;
+        OffsetDateTime::from_unix_timestamp_nanos(nanos)
+            .unwrap_or(OffsetDateTime::UNIX_EPOCH)
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        OffsetDateTime::now_utc()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct ChoreographyModel {
     pub comment: Option<String>,
@@ -88,7 +103,7 @@ impl Default for ChoreographyModel {
             variation: None,
             author: None,
             description: None,
-            last_save_date: OffsetDateTime::now_utc(),
+            last_save_date: now_utc(),
         }
     }
 }

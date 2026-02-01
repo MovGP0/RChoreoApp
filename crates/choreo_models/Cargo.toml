@@ -8,3 +8,6 @@ publish = false
 choreo_master_mobile_json = { path = "../choreo_master_mobile_json" }
 crossbeam-channel = "0.5"
 time = { version = "0.3.46", features = ["formatting", "parsing"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+js-sys = "0.3"

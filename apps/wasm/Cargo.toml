@@ -6,6 +6,9 @@ edition = "2024"
 [lib]
 crate-type = ["cdylib"]
 
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
 [dependencies]
 slint = "1.14.1"
 crossbeam-channel = "0.5"
