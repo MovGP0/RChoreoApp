@@ -1,6 +1,4 @@
-# RChoreoApp (Slint Hello World)
-
-This workspace contains a minimal Slint hello world app for desktop, Android, and Web (WASM), plus shared Rust logic.
+# ChoreoApp (Rust+Slint Version)
 
 ## Crates
 
