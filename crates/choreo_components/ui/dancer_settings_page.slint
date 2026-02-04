@@ -28,20 +28,23 @@ export component DancerSettingsPage inherits Rectangle {
     callback cancel();
 
     background: MaterialPalette.surface_container_low;
-    padding: 8px;
 
     Vertical {
         spacing: 12px;
+        padding: 8px;
+        horizontal-stretch: 1;
+        vertical-stretch: 1;
 
         Rectangle {
             background: MaterialPalette.surface;
             border-width: 1px;
             border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
-            padding: 12px;
-
             Vertical {
                 spacing: 6px;
+                padding: 12px;
+                horizontal-stretch: 1;
+                vertical-stretch: 1;
                 MaterialText { text: title_text; font-size: 18px; }
                 ListView {
                     for name in dancer_names: MaterialText { text: name; }
@@ -56,10 +59,11 @@ export component DancerSettingsPage inherits Rectangle {
             border-width: 1px;
             border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
-            padding: 12px;
-
             Vertical {
                 spacing: 6px;
+                padding: 12px;
+                horizontal-stretch: 1;
+                vertical-stretch: 1;
                 TextField { label: Translations.dancer_name_label; text: dancer_name; edited(v) => { update_dancer_name(v); } }
                 TextField { label: Translations.dancer_shortcut_label; text: dancer_shortcut; edited(v) => { update_dancer_shortcut(v); } }
                 TextField { label: Translations.dancer_icon_label; text: dancer_icon_name; edited(v) => { update_dancer_icon(v); } }
@@ -71,10 +75,11 @@ export component DancerSettingsPage inherits Rectangle {
             border-width: 1px;
             border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
-            padding: 12px;
-
             Vertical {
                 spacing: 6px;
+                padding: 12px;
+                horizontal-stretch: 1;
+                vertical-stretch: 1;
                 MaterialText { text: swap_title_text; }
                 TextButton { text: Translations.dancer_swap_button; enabled: can_swap_dancers; clicked => { swap_dancers(); } }
             }
@@ -85,10 +90,11 @@ export component DancerSettingsPage inherits Rectangle {
             border-width: 1px;
             border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
-            padding: 12px;
-
             Vertical {
                 spacing: 6px;
+                padding: 12px;
+                horizontal-stretch: 1;
+                vertical-stretch: 1;
                 TextButton { text: cancel_text; clicked => { cancel(); } }
                 TextButton { text: save_text; clicked => { save(); } }
             }
