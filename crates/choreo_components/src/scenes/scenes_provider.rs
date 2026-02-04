@@ -8,7 +8,7 @@ use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::audio_player::{CloseAudioFileCommand, OpenAudioFileCommand};
 use crate::behavior::Behavior;
 use crate::choreography_settings::ShowTimestampsChangedEvent;
-use crate::global::GlobalStateModel;
+use crate::global::{GlobalStateModel, GlobalStateStore};
 
 use super::apply_placement_mode_behavior::ApplyPlacementModeBehavior;
 use super::filter_scenes_behavior::FilterScenesBehavior;
@@ -28,6 +28,7 @@ use super::show_scene_timestamps_behavior::ShowSceneTimestampsBehavior;
 
 pub struct ScenesDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
+    pub global_state_store: Rc<GlobalStateStore>,
     pub state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
     pub preferences: Rc<dyn crate::preferences::Preferences>,
     pub show_dialog_sender: Sender<ShowDialogCommand>,
@@ -56,14 +57,14 @@ impl ScenesProvider {
 
         let behaviors: Vec<Box<dyn Behavior<ScenesPaneViewModel>>> = vec![
             Box::new(LoadScenesBehavior::new(
-                deps.global_state.clone(),
+                deps.global_state_store.clone(),
                 reload_scenes_receiver,
                 selected_scene_changed_sender.clone(),
             )),
             Box::new(FilterScenesBehavior),
-            Box::new(InsertSceneBehavior::new(deps.global_state.clone())),
+            Box::new(InsertSceneBehavior::new(deps.global_state_store.clone())),
             Box::new(ShowSceneTimestampsBehavior::new(
-                deps.global_state.clone(),
+                deps.global_state_store.clone(),
                 deps.show_timestamps_receiver,
             )),
             Box::new(SelectSceneBehavior::new(
@@ -72,7 +73,7 @@ impl ScenesProvider {
                 selected_scene_changed_sender.clone(),
             )),
             Box::new(ApplyPlacementModeBehavior::new(
-                deps.global_state.clone(),
+                deps.global_state_store.clone(),
                 deps.state_machine.clone(),
                 selected_scene_changed_receiver,
             )),
@@ -81,7 +82,7 @@ impl ScenesProvider {
                 selected_scene_changed_sender,
             )),
             Box::new(OpenChoreoBehavior::new(OpenChoreoBehaviorDependencies {
-                global_state: deps.global_state.clone(),
+                global_state: deps.global_state_store.clone(),
                 preferences: deps.preferences.clone(),
                 open_audio_sender: deps.open_audio_sender,
                 close_audio_sender: deps.close_audio_sender,
@@ -92,7 +93,7 @@ impl ScenesProvider {
                 open_choreo_receiver,
             })),
             Box::new(SaveChoreoBehavior::new(
-                deps.global_state.clone(),
+                deps.global_state_store.clone(),
                 deps.preferences.clone(),
             )),
         ];

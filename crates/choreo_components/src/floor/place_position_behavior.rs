@@ -5,7 +5,7 @@ use std::time::Duration;
 use crossbeam_channel::Receiver;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
-use crate::global::GlobalStateModel;
+use crate::global::{GlobalStateModel, GlobalStateStore};
 use crate::logging::BehaviorLog;
 use choreo_models::PositionModel;
 use choreo_state_machine::{ApplicationStateMachine, StateKind};
@@ -19,7 +19,7 @@ use super::types::Point;
 #[derive(Default, Clone)]
 #[injectable]
 #[inject(
-    |global_state: Rc<RefCell<GlobalStateModel>>,
+    |global_state: Rc<GlobalStateStore>,
      state_machine: Rc<RefCell<ApplicationStateMachine>>,
      pointer_pressed_receiver: Receiver<PointerPressedCommand>,
      pointer_moved_receiver: Receiver<PointerMovedCommand>,
@@ -34,7 +34,7 @@ use super::types::Point;
     }
 )]
 pub struct PlacePositionBehavior {
-    global_state: Option<Rc<RefCell<GlobalStateModel>>>,
+    global_state: Option<Rc<GlobalStateStore>>,
     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
     pointer_pressed_receiver: Option<Receiver<PointerPressedCommand>>,
     pointer_moved_receiver: Option<Receiver<PointerMovedCommand>>,
@@ -45,7 +45,7 @@ pub struct PlacePositionBehavior {
 
 impl PlacePositionBehavior {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
         pointer_pressed_receiver: Receiver<PointerPressedCommand>,
         pointer_moved_receiver: Receiver<PointerMovedCommand>,
@@ -259,17 +259,17 @@ impl Behavior<FloorCanvasViewModel> for PlacePositionBehavior {
             }
 
             while let Ok(command) = pointer_released_receiver.try_recv() {
-                let mut behavior = behavior.borrow_mut();
-                let view_model_ref = view_model_handle.borrow();
-                let mut global_state = global_state.borrow_mut();
-                let mut state_machine = state_machine.borrow_mut();
-                behavior.handle_pointer_released(
-                    &view_model_ref,
-                    &mut global_state,
-                    &mut state_machine,
-                    command,
-                );
-                drop(view_model_ref);
+                let _ = global_state.try_update(|state| {
+                    let mut behavior = behavior.borrow_mut();
+                    let view_model_ref = view_model_handle.borrow();
+                    let mut state_machine = state_machine.borrow_mut();
+                    behavior.handle_pointer_released(
+                        &view_model_ref,
+                        state,
+                        &mut state_machine,
+                        command,
+                    );
+                });
                 view_model_handle.borrow_mut().draw_floor();
             }
         });

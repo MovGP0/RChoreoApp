@@ -27,17 +27,16 @@ pub use messages::{
 pub use open_audio_file_behavior::OpenAudioFileBehavior;
 pub use types::{AudioPlayer, StreamFactory};
 
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use crossbeam_channel::{Receiver, Sender};
 
 use crate::behavior::Behavior;
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::preferences::Preferences;
 
 pub struct AudioPlayerBehaviorDependencies {
-    pub global_state: Rc<RefCell<GlobalStateModel>>,
+    pub global_state_store: Rc<GlobalStateStore>,
     pub open_audio_receiver: Receiver<OpenAudioFileCommand>,
     pub close_audio_receiver: Receiver<CloseAudioFileCommand>,
     pub position_changed_sender: Sender<AudioPlayerPositionChangedEvent>,
@@ -55,9 +54,11 @@ pub fn build_audio_player_behaviors(
             deps.preferences,
         )),
         Box::new(CloseAudioFileBehavior::new(deps.close_audio_receiver)),
-        Box::new(AudioPlayerTicksBehavior::new(deps.global_state.clone())),
+        Box::new(AudioPlayerTicksBehavior::new(
+            deps.global_state_store.clone(),
+        )),
         Box::new(AudioPlayerLinkSceneBehavior::new(
-            deps.global_state,
+            deps.global_state_store,
             deps.link_scene_receiver,
         )),
         Box::new(AudioPlayerPositionChangedBehavior::new(

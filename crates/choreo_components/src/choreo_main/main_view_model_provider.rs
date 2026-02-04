@@ -7,7 +7,7 @@ use choreo_state_machine::ApplicationStateMachine;
 
 use crate::audio_player::OpenAudioFileCommand;
 use crate::behavior::Behavior;
-use crate::global::{GlobalStateModel, InteractionMode};
+use crate::global::{GlobalStateModel, GlobalStateStore, InteractionMode};
 use crate::preferences::Preferences;
 
 use super::messages::{OpenAudioRequested, OpenImageRequested};
@@ -23,6 +23,7 @@ use super::{
 
 pub struct MainViewModelProviderDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
+    pub global_state_store: Rc<GlobalStateStore>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub open_audio_sender: Sender<OpenAudioFileCommand>,
     pub preferences: Rc<dyn Preferences>,
@@ -50,7 +51,7 @@ impl MainViewModelProvider {
         let (_close_dialog_sender, close_dialog_receiver) = unbounded();
         let main_behaviors: Vec<Box<dyn Behavior<MainViewModel>>> = vec![
             Box::new(ApplyInteractionModeBehavior::new(
-                Rc::clone(&deps.global_state),
+                Rc::clone(&deps.global_state_store),
                 Rc::clone(&deps.state_machine),
                 interaction_mode_receiver.clone(),
             )),
@@ -63,7 +64,7 @@ impl MainViewModelProvider {
                 open_image_request_receiver.clone(),
             )),
             Box::new(OpenSvgFileBehavior::new(
-                Rc::clone(&deps.global_state),
+                Rc::clone(&deps.global_state_store),
                 Rc::clone(&deps.preferences),
                 open_svg_receiver.clone(),
                 deps.draw_floor_sender.clone(),

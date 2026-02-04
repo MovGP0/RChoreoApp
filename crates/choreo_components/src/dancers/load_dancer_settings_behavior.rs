@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -7,7 +6,7 @@ use crossbeam_channel::Sender;
 use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 
 use super::mapper::{default_role, ensure_default_roles};
@@ -16,21 +15,21 @@ use super::messages::{DancerSelectionCommand, UpdateSwapSelectionCommand};
 
 #[injectable]
 #[inject(
-    |global_state: Rc<RefCell<GlobalStateModel>>,
+    |global_state: Rc<GlobalStateStore>,
      selection_sender: Sender<DancerSelectionCommand>,
      swap_selection_sender: Sender<UpdateSwapSelectionCommand>| {
         Self::new(global_state, selection_sender, swap_selection_sender)
     }
 )]
 pub struct LoadDancerSettingsBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     selection_sender: Sender<DancerSelectionCommand>,
     swap_selection_sender: Sender<UpdateSwapSelectionCommand>,
 }
 
 impl LoadDancerSettingsBehavior {
     pub(super) fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         selection_sender: Sender<DancerSelectionCommand>,
         swap_selection_sender: Sender<UpdateSwapSelectionCommand>,
     ) -> Self {
@@ -45,9 +44,17 @@ impl LoadDancerSettingsBehavior {
         view_model.roles.clear();
         view_model.dancers.clear();
 
+        let Some(snapshot) = self.global_state.try_with_state(|global_state| {
+            (
+                global_state.choreography.roles.clone(),
+                global_state.choreography.dancers.clone(),
+            )
+        }) else {
+            return;
+        };
+
         let mut role_map: HashMap<usize, Rc<RoleModel>> = HashMap::new();
-        let global_state = self.global_state.borrow();
-        for role in &global_state.choreography.roles {
+        for role in &snapshot.0 {
             let copy = Rc::new(RoleModel {
                 name: role.name.clone(),
                 color: role.color.clone(),
@@ -59,7 +66,7 @@ impl LoadDancerSettingsBehavior {
 
         ensure_default_roles(&mut view_model.roles);
 
-        for dancer in &global_state.choreography.dancers {
+        for dancer in &snapshot.1 {
             let role = role_map
                 .get(&(Rc::as_ptr(&dancer.role) as usize))
                 .cloned()

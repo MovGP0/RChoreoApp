@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crossbeam_channel::{unbounded, Sender};
 
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::haptics::HapticFeedback;
 
 use super::add_dancer_behavior::AddDancerBehavior;
@@ -34,7 +34,7 @@ use super::swap_dancer_selection_behavior::SwapDancerSelectionBehavior;
 use super::swap_dancers_behavior::SwapDancersBehavior;
 
 pub struct DancersProviderDependencies {
-    pub global_state: Rc<RefCell<GlobalStateModel>>,
+    pub global_state: Rc<GlobalStateStore>,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
 }
 
@@ -61,7 +61,7 @@ impl DancersProvider {
 
         let behaviors: Vec<Box<dyn crate::behavior::Behavior<DancerSettingsViewModel>>> = vec![
             Box::new(LoadDancerSettingsBehavior::new(
-                Rc::clone(&deps.global_state),
+                deps.global_state.clone(),
                 selection_sender.clone(),
                 swap_selection_sender.clone(),
             )),
@@ -84,7 +84,7 @@ impl DancersProvider {
             Box::new(ShowDancerDialogBehavior::new(show_dialog_receiver)),
             Box::new(CancelDancerSettingsBehavior::new(cancel_receiver)),
             Box::new(SaveDancerSettingsBehavior::new(
-                Rc::clone(&deps.global_state),
+                deps.global_state.clone(),
                 save_receiver,
             )),
         ];

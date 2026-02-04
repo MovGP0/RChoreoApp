@@ -24,7 +24,7 @@ use crate::floor::{
     PointerReleasedCommand,
     PointerWheelChangedCommand,
 };
-use crate::global::GlobalStateModel;
+use crate::global::{GlobalStateModel, GlobalStateStore};
 use crate::scenes::{
     OpenChoreoActions,
     ScenesDependencies,
@@ -68,6 +68,7 @@ pub struct MainPageActionHandlers {
 
 pub struct MainPageDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
+    pub global_state_store: Rc<GlobalStateStore>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub audio_player: Rc<RefCell<AudioPlayerViewModel>>,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
@@ -98,6 +99,7 @@ pub struct MainPageBinding {
 impl MainPageBinding {
     pub fn new(view: ShellHost, deps: MainPageDependencies) -> Self {
         let global_state = deps.global_state.clone();
+        let global_state_store = deps.global_state_store.clone();
         let state_machine = deps.state_machine.clone();
         let preferences = Rc::clone(&deps.preferences);
         let open_audio_sender = deps.open_audio_sender.clone();
@@ -116,6 +118,7 @@ impl MainPageBinding {
         let audio_position_receiver_for_scenes = deps.audio_position_receiver.clone();
         let scenes_provider = ScenesProvider::new(ScenesDependencies {
             global_state: deps.global_state.clone(),
+            global_state_store,
             state_machine: Some(deps.state_machine.clone()),
             preferences: Rc::clone(&deps.preferences),
             show_dialog_sender: scenes_show_dialog_sender,
@@ -141,6 +144,7 @@ impl MainPageBinding {
 
         let floor_provider = Rc::new(RefCell::new(FloorProvider::new(FloorProviderDependencies {
             global_state: Rc::clone(&deps.global_state),
+            global_state_store: Rc::clone(&deps.global_state_store),
             state_machine: Rc::clone(&deps.state_machine),
             preferences: Rc::clone(&deps.preferences),
             audio_position_receiver: deps.audio_position_receiver,
@@ -154,6 +158,7 @@ impl MainPageBinding {
 
         let mut main_provider = MainViewModelProvider::new(MainViewModelProviderDependencies {
             global_state: global_state.clone(),
+            global_state_store: deps.global_state_store.clone(),
             state_machine: state_machine.clone(),
             open_audio_sender: deps.open_audio_sender,
             preferences: Rc::clone(&preferences),

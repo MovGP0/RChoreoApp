@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
 
@@ -8,7 +7,7 @@ use nject::injectable;
 use time::OffsetDateTime;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
@@ -17,14 +16,14 @@ use super::scenes_view_model::ScenesPaneViewModel;
 
 #[derive(Clone)]
 #[injectable]
-#[inject(|global_state: Rc<RefCell<GlobalStateModel>>, preferences: Rc<dyn Preferences>| Self::new(global_state, preferences))]
+#[inject(|global_state: Rc<GlobalStateStore>, preferences: Rc<dyn Preferences>| Self::new(global_state, preferences))]
 pub struct SaveChoreoBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     preferences: Rc<dyn Preferences>,
 }
 
 impl SaveChoreoBehavior {
-    pub fn new(global_state: Rc<RefCell<GlobalStateModel>>, preferences: Rc<dyn Preferences>) -> Self {
+    pub fn new(global_state: Rc<GlobalStateStore>, preferences: Rc<dyn Preferences>) -> Self {
         Self {
             global_state,
             preferences,
@@ -44,47 +43,54 @@ impl SaveChoreoBehavior {
             return;
         }
 
-        let mut global_state = self.global_state.borrow_mut();
-        let mapper = SceneMapper;
-        let mut scenes = Vec::with_capacity(global_state.scenes.len());
-        for scene_view_model in &global_state.scenes {
-            let mut model_scene = global_state
-                .choreography
-                .scenes
-                .iter()
-                .find(|scene| scene.scene_id == scene_view_model.scene_id)
-                .cloned()
-                .or_else(|| {
-                    global_state
-                        .choreography
-                        .scenes
-                        .iter()
-                        .find(|scene| scene.name == scene_view_model.name)
-                        .cloned()
-                })
-                .unwrap_or_else(|| SceneModel {
-                    scene_id: scene_view_model.scene_id,
-                    positions: Vec::new(),
-                    name: scene_view_model.name.clone(),
-                    text: None,
-                    fixed_positions: false,
-                    timestamp: None,
-                    variation_depth: 0,
-                    variations: Vec::new(),
-                    current_variation: Vec::new(),
-                    color: Colors::transparent(),
-                });
+        let mut json_model = None;
+        let updated = self.global_state.try_update(|global_state| {
+            let mapper = SceneMapper;
+            let mut scenes = Vec::with_capacity(global_state.scenes.len());
+            for scene_view_model in &global_state.scenes {
+                let mut model_scene = global_state
+                    .choreography
+                    .scenes
+                    .iter()
+                    .find(|scene| scene.scene_id == scene_view_model.scene_id)
+                    .cloned()
+                    .or_else(|| {
+                        global_state
+                            .choreography
+                            .scenes
+                            .iter()
+                            .find(|scene| scene.name == scene_view_model.name)
+                            .cloned()
+                    })
+                    .unwrap_or_else(|| SceneModel {
+                        scene_id: scene_view_model.scene_id,
+                        positions: Vec::new(),
+                        name: scene_view_model.name.clone(),
+                        text: None,
+                        fixed_positions: false,
+                        timestamp: None,
+                        variation_depth: 0,
+                        variations: Vec::new(),
+                        current_variation: Vec::new(),
+                        color: Colors::transparent(),
+                    });
 
-            mapper.map_view_model_to_model(scene_view_model, &mut model_scene);
-            scenes.push(model_scene);
+                mapper.map_view_model_to_model(scene_view_model, &mut model_scene);
+                scenes.push(model_scene);
+            }
+
+            global_state.choreography.scenes = scenes;
+            global_state.choreography.last_save_date = OffsetDateTime::now_utc();
+
+            let json_mapper = ChoreographyModelMapper;
+            json_model = Some(json_mapper.map_to_json(&global_state.choreography));
+        });
+        if !updated {
+            return;
         }
-
-        global_state.choreography.scenes = scenes;
-        global_state.choreography.last_save_date = OffsetDateTime::now_utc();
-
-        let json_mapper = ChoreographyModelMapper;
-        let json_model = json_mapper.map_to_json(&global_state.choreography);
-        let _ = export_to_file(path, &json_model);
+        if let Some(json_model) = json_model {
+            let _ = export_to_file(path, &json_model);
+        }
         view_model.update_can_save();
     }
 }

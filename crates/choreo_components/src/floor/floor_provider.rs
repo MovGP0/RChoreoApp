@@ -9,7 +9,7 @@ use choreo_state_machine::ApplicationStateMachine;
 
 use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::behavior::Behavior;
-use crate::global::GlobalStateModel;
+use crate::global::{GlobalStateModel, GlobalStateStore};
 use crate::preferences::Preferences;
 use crate::ShellHost;
 
@@ -27,6 +27,7 @@ use super::scale_positions_behavior::ScalePositionsBehavior;
 
 pub struct FloorProviderDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
+    pub global_state_store: Rc<GlobalStateStore>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub preferences: Rc<dyn Preferences>,
     pub audio_position_receiver: Receiver<AudioPlayerPositionChangedEvent>,
@@ -124,35 +125,35 @@ impl FloorProvider {
                 gesture_touch_receiver,
             )),
             Box::new(PlacePositionBehavior::new(
-                Rc::clone(&deps.global_state),
+                Rc::clone(&deps.global_state_store),
                 Rc::clone(&deps.state_machine),
                 place_pressed_receiver,
                 place_moved_receiver,
                 place_released_receiver,
             )),
             Box::new(MovePositionsBehavior::new(
-                Rc::clone(&deps.global_state),
+                Rc::clone(&deps.global_state_store),
                 Rc::clone(&deps.state_machine),
                 move_pressed_receiver,
                 move_moved_receiver,
                 move_released_receiver,
             )),
             Box::new(RotateAroundCenterBehavior::new(
-                Rc::clone(&deps.global_state),
+                Rc::clone(&deps.global_state_store),
                 Rc::clone(&deps.state_machine),
                 rotate_pressed_receiver,
                 rotate_moved_receiver,
                 rotate_released_receiver,
             )),
             Box::new(ScalePositionsBehavior::new(
-                Rc::clone(&deps.global_state),
+                Rc::clone(&deps.global_state_store),
                 Rc::clone(&deps.state_machine),
                 scale_pressed_receiver,
                 scale_moved_receiver,
                 scale_released_receiver,
             )),
             Box::new(ScaleAroundDancerBehavior::new(
-                Rc::clone(&deps.global_state),
+                Rc::clone(&deps.global_state_store),
                 Rc::clone(&deps.state_machine),
                 scale_dancer_pressed_receiver,
                 scale_dancer_moved_receiver,

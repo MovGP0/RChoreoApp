@@ -53,16 +53,15 @@ pub use update_subtitle_behavior::UpdateSubtitleBehavior;
 pub use update_transparency_behavior::UpdateTransparencyBehavior;
 pub use update_variation_behavior::UpdateVariationBehavior;
 
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use crossbeam_channel::Sender;
 
 use crate::behavior::Behavior;
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 
 pub struct ChoreographySettingsDependencies<P: crate::preferences::Preferences> {
-    pub global_state: Rc<RefCell<GlobalStateModel>>,
+    pub global_state: Rc<GlobalStateStore>,
     pub preferences: P,
     pub redraw_sender: Sender<RedrawFloorCommand>,
     pub show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,

@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::time::Duration;
@@ -10,7 +9,7 @@ use nject::injectable;
 use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 
 use super::mapper::update_scene_dancers;
@@ -19,46 +18,47 @@ use super::messages::SaveDancerSettingsCommand;
 
 #[injectable]
 #[inject(
-    |global_state: Rc<RefCell<GlobalStateModel>>,
+    |global_state: Rc<GlobalStateStore>,
      receiver: Receiver<SaveDancerSettingsCommand>| {
         Self::new(global_state, receiver)
     }
 )]
 pub struct SaveDancerSettingsBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     receiver: Receiver<SaveDancerSettingsCommand>,
 }
 
 impl SaveDancerSettingsBehavior {
     pub(super) fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         receiver: Receiver<SaveDancerSettingsCommand>,
     ) -> Self {
         Self { global_state, receiver }
     }
 
-    fn apply_changes(global_state: &Rc<RefCell<GlobalStateModel>>, view_model: &DancerSettingsViewModel) {
-        let mut global_state = global_state.borrow_mut();
-        let choreography = &mut global_state.choreography;
-        choreography.roles.clear();
-        choreography
-            .roles
-            .extend(view_model.roles.iter().cloned());
+    fn apply_changes(global_state: &GlobalStateStore, view_model: &DancerSettingsViewModel) -> bool {
+        global_state.try_update(|global_state| {
+            let choreography = &mut global_state.choreography;
+            choreography.roles.clear();
+            choreography
+                .roles
+                .extend(view_model.roles.iter().cloned());
 
-        choreography.dancers.clear();
-        choreography
-            .dancers
-            .extend(view_model.dancers.iter().cloned());
+            choreography.dancers.clear();
+            choreography
+                .dancers
+                .extend(view_model.dancers.iter().cloned());
 
-        let dancer_map: HashMap<DancerId, Rc<DancerModel>> = view_model
-            .dancers
-            .iter()
-            .map(|dancer| (dancer.dancer_id, dancer.clone()))
-            .collect();
+            let dancer_map: HashMap<DancerId, Rc<DancerModel>> = view_model
+                .dancers
+                .iter()
+                .map(|dancer| (dancer.dancer_id, dancer.clone()))
+                .collect();
 
-        for scene in &mut choreography.scenes {
-            update_scene_dancers(scene, &dancer_map);
-        }
+            for scene in &mut choreography.scenes {
+                update_scene_dancers(scene, &dancer_map);
+            }
+        })
     }
 }
 
@@ -82,7 +82,9 @@ impl Behavior<DancerSettingsViewModel> for SaveDancerSettingsBehavior {
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
             while receiver.try_recv().is_ok() {
                 let view_model = view_model_handle.borrow();
-                Self::apply_changes(&global_state, &view_model);
+                if !Self::apply_changes(&global_state, &view_model) {
+                    return;
+                }
             }
         });
         disposables.add(Box::new(TimerDisposable::new(timer)));

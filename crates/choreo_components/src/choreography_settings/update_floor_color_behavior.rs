@@ -1,11 +1,10 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use choreo_master_mobile_json::Color;
 use crossbeam_channel::Sender;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
@@ -14,13 +13,13 @@ use nject::injectable;
 
 #[injectable]
 pub struct UpdateFloorColorBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     redraw_sender: Sender<RedrawFloorCommand>,
 }
 
 impl UpdateFloorColorBehavior {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         redraw_sender: Sender<RedrawFloorCommand>,
     ) -> Self {
         Self {
@@ -30,8 +29,12 @@ impl UpdateFloorColorBehavior {
     }
 
     pub fn update_floor_color(&self, color: Color) {
-        let mut global_state = self.global_state.borrow_mut();
-        global_state.choreography.settings.floor_color = color;
+        let updated = self.global_state.try_update(|global_state| {
+            global_state.choreography.settings.floor_color = color;
+        });
+        if !updated {
+            return;
+        }
         let _ = self.redraw_sender.send(RedrawFloorCommand);
     }
 }

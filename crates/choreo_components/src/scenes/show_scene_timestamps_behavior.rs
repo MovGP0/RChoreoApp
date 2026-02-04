@@ -1,9 +1,8 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
 use crossbeam_channel::Receiver;
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use nject::injectable;
 use slint::TimerMode;
 
@@ -15,26 +14,31 @@ use super::scenes_view_model::ScenesPaneViewModel;
 
 #[injectable]
 #[inject(
-    |global_state: Rc<RefCell<GlobalStateModel>>,
+    |global_state: Rc<GlobalStateStore>,
      receiver: Receiver<ShowTimestampsChangedEvent>| {
         Self::new(global_state, receiver)
     }
 )]
 pub struct ShowSceneTimestampsBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     receiver: Receiver<ShowTimestampsChangedEvent>,
 }
 
 impl ShowSceneTimestampsBehavior {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         receiver: Receiver<ShowTimestampsChangedEvent>,
     ) -> Self {
         Self { global_state, receiver }
     }
 
     fn update_from_choreography(&self, view_model: &mut ScenesPaneViewModel) {
-        view_model.show_timestamps = self.global_state.borrow().choreography.settings.show_timestamps;
+        let Some(value) = self.global_state.try_with_state(|global_state| {
+            global_state.choreography.settings.show_timestamps
+        }) else {
+            return;
+        };
+        view_model.show_timestamps = value;
     }
 }
 
@@ -55,8 +59,12 @@ impl Behavior<ScenesPaneViewModel> for ShowSceneTimestampsBehavior {
                 let value = event.is_enabled;
                 view_model.show_timestamps = value;
                 view_model.notify_changed();
-                let mut global_state = global_state.borrow_mut();
-                global_state.choreography.settings.show_timestamps = value;
+                let updated = global_state.try_update(|global_state| {
+                    global_state.choreography.settings.show_timestamps = value;
+                });
+                if !updated {
+                    return;
+                }
             }
         });
         disposables.add(Box::new(TimerDisposable::new(timer)));

@@ -1,10 +1,9 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use crossbeam_channel::Sender;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
@@ -14,14 +13,14 @@ use nject::injectable;
 
 #[injectable]
 pub struct UpdateSnapToGridBehavior<P: Preferences> {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     preferences: P,
     redraw_sender: Sender<RedrawFloorCommand>,
 }
 
 impl<P: Preferences> UpdateSnapToGridBehavior<P> {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         preferences: P,
         redraw_sender: Sender<RedrawFloorCommand>,
     ) -> Self {
@@ -37,18 +36,18 @@ impl<P: Preferences> UpdateSnapToGridBehavior<P> {
             .preferences
             .get_bool(choreo_models::SettingsPreferenceKeys::SNAP_TO_GRID, true);
         view_model.snap_to_grid = snap_to_grid;
-        self.global_state
-            .borrow_mut()
-            .choreography
-            .settings
-            .snap_to_grid = snap_to_grid;
+        self.global_state.try_update(|global_state| {
+            global_state.choreography.settings.snap_to_grid = snap_to_grid;
+        });
     }
 
     pub fn update_snap_to_grid(&self, view_model: &mut ChoreographySettingsViewModel, value: bool) {
         view_model.snap_to_grid = value;
-        {
-            let mut global_state = self.global_state.borrow_mut();
+        let updated = self.global_state.try_update(|global_state| {
             global_state.choreography.settings.snap_to_grid = value;
+        });
+        if !updated {
+            return;
         }
         self.preferences
             .set_bool(choreo_models::SettingsPreferenceKeys::SNAP_TO_GRID, value);

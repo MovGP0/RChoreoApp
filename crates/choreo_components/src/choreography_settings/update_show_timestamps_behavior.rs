@@ -1,10 +1,9 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use crossbeam_channel::Sender;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
@@ -14,7 +13,7 @@ use nject::injectable;
 
 #[injectable]
 pub struct UpdateShowTimestampsBehavior<P: Preferences> {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     preferences: P,
     redraw_sender: Sender<RedrawFloorCommand>,
     show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,
@@ -22,7 +21,7 @@ pub struct UpdateShowTimestampsBehavior<P: Preferences> {
 
 impl<P: Preferences> UpdateShowTimestampsBehavior<P> {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         preferences: P,
         redraw_sender: Sender<RedrawFloorCommand>,
         show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,
@@ -40,18 +39,18 @@ impl<P: Preferences> UpdateShowTimestampsBehavior<P> {
             .preferences
             .get_bool(choreo_models::SettingsPreferenceKeys::SHOW_TIMESTAMPS, true);
         view_model.show_timestamps = value;
-        self.global_state
-            .borrow_mut()
-            .choreography
-            .settings
-            .show_timestamps = value;
+        self.global_state.try_update(|global_state| {
+            global_state.choreography.settings.show_timestamps = value;
+        });
     }
 
     pub fn update_show_timestamps(&self, view_model: &mut ChoreographySettingsViewModel, value: bool) {
         view_model.show_timestamps = value;
-        {
-            let mut global_state = self.global_state.borrow_mut();
+        let updated = self.global_state.try_update(|global_state| {
             global_state.choreography.settings.show_timestamps = value;
+        });
+        if !updated {
+            return;
         }
         let _ = self.redraw_sender.send(RedrawFloorCommand);
         let _ = self

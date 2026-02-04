@@ -1,36 +1,38 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use choreo_models::{Colors, SceneModel};
 use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 use super::mapper::{build_scene_name, next_scene_id};
 use super::scenes_view_model::{SceneViewModel, ScenesPaneViewModel};
 
 #[injectable]
-#[inject(|global_state: Rc<RefCell<GlobalStateModel>>| Self::new(global_state))]
+#[inject(|global_state: Rc<GlobalStateStore>| Self::new(global_state))]
 pub struct InsertSceneBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
 }
 
 impl InsertSceneBehavior {
-    pub fn new(global_state: Rc<RefCell<GlobalStateModel>>) -> Self {
+    pub fn new(global_state: Rc<GlobalStateStore>) -> Self {
         Self { global_state }
     }
 
     fn insert_scene(&self, view_model: &mut ScenesPaneViewModel, insert_after: bool) {
         let selected_scene_id = self
             .global_state
-            .borrow()
-            .selected_scene
-            .as_ref()
-            .map(|scene| scene.scene_id);
+            .try_with_state(|global_state| {
+                global_state
+                    .selected_scene
+                    .as_ref()
+                    .map(|scene| scene.scene_id)
+            })
+            .flatten();
 
-        let selected_scene = {
-            let mut global_state = self.global_state.borrow_mut();
+        let mut selected_scene = None;
+        let updated = self.global_state.try_update(|global_state| {
             let scenes = &mut global_state.scenes;
             let insert_index = match selected_scene_id {
                 None => scenes.len(),
@@ -63,8 +65,11 @@ impl InsertSceneBehavior {
             let model_insert = insert_index.min(global_state.choreography.scenes.len());
             global_state.choreography.scenes.insert(model_insert, model_scene);
 
-            global_state.selected_scene.clone()
-        };
+            selected_scene = global_state.selected_scene.clone();
+        });
+        if !updated {
+            return;
+        }
 
         view_model.refresh_scenes();
         view_model.set_selected_scene(selected_scene);

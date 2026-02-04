@@ -1,8 +1,7 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 
 use super::mapper::{map_from_choreography, reset_view_model, update_selected_scene};
@@ -11,17 +10,21 @@ use nject::injectable;
 
 #[injectable]
 pub struct LoadChoreographySettingsBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
 }
 
 impl LoadChoreographySettingsBehavior {
-    pub fn new(global_state: Rc<RefCell<GlobalStateModel>>) -> Self {
+    pub fn new(global_state: Rc<GlobalStateStore>) -> Self {
         Self { global_state }
     }
 
     pub fn load(&self, view_model: &mut ChoreographySettingsViewModel) {
-        let global_state = self.global_state.borrow();
-        let choreography = &global_state.choreography;
+        let Some(snapshot) = self.global_state.try_with_state(|global_state| {
+            (global_state.choreography.clone(), global_state.selected_scene.clone())
+        }) else {
+            return;
+        };
+        let choreography = &snapshot.0;
         if choreography.name.is_empty()
             && choreography.scenes.is_empty()
             && choreography.comment.is_none()
@@ -31,7 +34,7 @@ impl LoadChoreographySettingsBehavior {
         }
 
         map_from_choreography(choreography, view_model);
-        update_selected_scene(view_model, &global_state.selected_scene, choreography);
+        update_selected_scene(view_model, &snapshot.1, choreography);
     }
 }
 

@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -7,7 +6,7 @@ use nject::injectable;
 use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 
 use super::mapper::SceneMapper;
@@ -16,21 +15,21 @@ use super::scenes_view_model::{SceneViewModel, ScenesPaneViewModel};
 
 #[injectable]
 #[inject(
-    |global_state: Rc<RefCell<GlobalStateModel>>,
+    |global_state: Rc<GlobalStateStore>,
      receiver: Receiver<ReloadScenesCommand>,
      selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>| {
         Self::new(global_state, receiver, selected_scene_changed_sender)
     }
 )]
 pub struct LoadScenesBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     receiver: Receiver<ReloadScenesCommand>,
     selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>,
 }
 
 impl LoadScenesBehavior {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         receiver: Receiver<ReloadScenesCommand>,
         selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>,
     ) -> Self {
@@ -42,11 +41,10 @@ impl LoadScenesBehavior {
     }
 
     fn load(
-        global_state: &Rc<RefCell<GlobalStateModel>>,
+        global_state: &Rc<GlobalStateStore>,
         view_model: &mut ScenesPaneViewModel,
     ) -> Option<SceneViewModel> {
-        let scenes = {
-            let global_state = global_state.borrow();
+        let scenes = global_state.try_with_state(|global_state| {
             let mapper = SceneMapper;
             global_state
                 .choreography
@@ -59,13 +57,15 @@ impl LoadScenesBehavior {
                     view_model
                 })
                 .collect::<Vec<_>>()
-        };
+        })?;
 
         let selected_scene = scenes.first().cloned();
-        {
-            let mut global_state = global_state.borrow_mut();
+        let updated = global_state.try_update(|global_state| {
             global_state.scenes = scenes;
             global_state.selected_scene = selected_scene.clone();
+        });
+        if !updated {
+            return None;
         }
 
         view_model.refresh_scenes();

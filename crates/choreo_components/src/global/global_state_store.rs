@@ -41,6 +41,23 @@ impl GlobalStateStore {
         Rc::clone(&self.state)
     }
 
+    pub fn try_with_state<T>(&self, handler: impl FnOnce(&GlobalStateModel) -> T) -> Option<T>
+    {
+        self.state
+            .try_borrow()
+            .ok()
+            .map(|state| handler(&state))
+    }
+
+    pub fn try_update(&self, handler: impl FnOnce(&mut GlobalStateModel)) -> bool
+    {
+        let Ok(mut state) = self.state.try_borrow_mut() else {
+            return false;
+        };
+        handler(&mut state);
+        true
+    }
+
     pub fn dispatch<F>(&self, command: F)
     where
         F: FnOnce(&mut GlobalStateModel) + 'static,

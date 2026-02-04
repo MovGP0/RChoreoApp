@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use std::rc::Rc;
@@ -11,7 +10,7 @@ use choreo_models::{ChoreographyModelMapper, SettingsPreferenceKeys};
 use crate::audio_player::{CloseAudioFileCommand, OpenAudioFileCommand};
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::choreography_settings::ShowTimestampsChangedEvent;
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
@@ -25,7 +24,7 @@ pub struct OpenChoreoActions {
 
 #[derive(Clone)]
 pub struct OpenChoreoBehaviorDependencies {
-    pub global_state: Rc<RefCell<GlobalStateModel>>,
+    pub global_state: Rc<GlobalStateStore>,
     pub preferences: Rc<dyn Preferences>,
     pub open_audio_sender: Sender<OpenAudioFileCommand>,
     pub close_audio_sender: Sender<CloseAudioFileCommand>,
@@ -44,7 +43,7 @@ pub struct OpenChoreoBehaviorDependencies {
     }
 )]
 pub struct OpenChoreoBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     preferences: Rc<dyn Preferences>,
     open_audio_sender: Sender<OpenAudioFileCommand>,
     close_audio_sender: Sender<CloseAudioFileCommand>,
@@ -106,19 +105,20 @@ impl OpenChoreoBehavior {
         let mapper = ChoreographyModelMapper;
         let mapped = mapper.map_to_model(&json_model);
 
-        {
-            let mut global_state = self.global_state.borrow_mut();
+        let updated = self.global_state.try_update(|global_state| {
             global_state.choreography = mapped;
+        });
+        if !updated {
+            return;
         }
 
         view_model.update_can_save();
         let _ = self.reload_scenes_sender.send(ReloadScenesCommand);
-        let value = self
-            .global_state
-            .borrow()
-            .choreography
-            .settings
-            .show_timestamps;
+        let Some(value) = self.global_state.try_with_state(|global_state| {
+            global_state.choreography.settings.show_timestamps
+        }) else {
+            return;
+        };
         let _ = self.show_timestamps_sender.send(ShowTimestampsChangedEvent {
             is_enabled: value,
         });
@@ -145,19 +145,20 @@ impl OpenChoreoBehavior {
         let mapper = ChoreographyModelMapper;
         let mapped = mapper.map_to_model(&json_model);
 
-        {
-            let mut global_state = self.global_state.borrow_mut();
+        let updated = self.global_state.try_update(|global_state| {
             global_state.choreography = mapped;
+        });
+        if !updated {
+            return;
         }
 
         view_model.update_can_save();
         let _ = self.reload_scenes_sender.send(ReloadScenesCommand);
-        let value = self
-            .global_state
-            .borrow()
-            .choreography
-            .settings
-            .show_timestamps;
+        let Some(value) = self.global_state.try_with_state(|global_state| {
+            global_state.choreography.settings.show_timestamps
+        }) else {
+            return;
+        };
         let _ = self.show_timestamps_sender.send(ShowTimestampsChangedEvent {
             is_enabled: value,
         });
@@ -178,7 +179,11 @@ impl OpenChoreoBehavior {
     }
 
     fn try_load_audio(&self, choreography_path: &Path) {
-        let settings = self.global_state.borrow().choreography.settings.clone();
+        let Some(settings) = self.global_state.try_with_state(|global_state| {
+            global_state.choreography.settings.clone()
+        }) else {
+            return;
+        };
         let mut candidates = Vec::new();
 
         if let Some(path) = settings.music_path_absolute.as_ref()

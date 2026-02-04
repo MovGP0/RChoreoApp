@@ -6,7 +6,7 @@ use web_time::Instant;
 use crossbeam_channel::Receiver;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
-use crate::global::{GlobalStateModel, InteractionMode, SelectionRectangle};
+use crate::global::{GlobalStateModel, GlobalStateStore, InteractionMode, SelectionRectangle};
 use crate::logging::BehaviorLog;
 use choreo_models::PositionModel;
 use choreo_state_machine::{
@@ -56,7 +56,7 @@ impl TimeProvider for SystemTimeProvider {
 #[derive(Clone)]
 #[injectable]
 #[inject(
-    |global_state: Rc<RefCell<GlobalStateModel>>,
+    |global_state: Rc<GlobalStateStore>,
      state_machine: Rc<RefCell<ApplicationStateMachine>>,
      pointer_pressed_receiver: Receiver<PointerPressedCommand>,
      pointer_moved_receiver: Receiver<PointerMovedCommand>,
@@ -71,7 +71,7 @@ impl TimeProvider for SystemTimeProvider {
     }
 )]
 pub struct ScaleAroundDancerBehavior {
-    global_state: Option<Rc<RefCell<GlobalStateModel>>>,
+    global_state: Option<Rc<GlobalStateStore>>,
     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
     time_provider: Rc<dyn TimeProvider>,
     pointer_pressed_receiver: Option<Receiver<PointerPressedCommand>>,
@@ -120,7 +120,7 @@ impl Default for ScaleAroundDancerBehavior {
 
 impl ScaleAroundDancerBehavior {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
         pointer_pressed_receiver: Receiver<PointerPressedCommand>,
         pointer_moved_receiver: Receiver<PointerMovedCommand>,
@@ -704,45 +704,46 @@ impl Behavior<FloorCanvasViewModel> for ScaleAroundDancerBehavior {
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
             while let Ok(command) = pointer_pressed_receiver.try_recv() {
-                let mut behavior = behavior.borrow_mut();
-                let view_model_ref = view_model_handle.borrow();
-                let mut global_state = global_state.borrow_mut();
-                let mut state_machine = state_machine.borrow_mut();
-                behavior.handle_pointer_pressed(
-                    &view_model_ref,
-                    &mut global_state,
-                    &mut state_machine,
-                    command,
-                );
+                let _ = global_state.try_update(|state| {
+                    let mut behavior = behavior.borrow_mut();
+                    let view_model_ref = view_model_handle.borrow();
+                    let mut state_machine = state_machine.borrow_mut();
+                    behavior.handle_pointer_pressed(
+                        &view_model_ref,
+                        state,
+                        &mut state_machine,
+                        command,
+                    );
+                });
             }
 
             while let Ok(command) = pointer_moved_receiver.try_recv() {
-                let mut behavior = behavior.borrow_mut();
-                let view_model_ref = view_model_handle.borrow();
-                let mut global_state = global_state.borrow_mut();
-                let mut state_machine = state_machine.borrow_mut();
-                behavior.handle_pointer_moved(
-                    &view_model_ref,
-                    &mut global_state,
-                    &mut state_machine,
-                    command,
-                );
-                drop(view_model_ref);
+                let _ = global_state.try_update(|state| {
+                    let mut behavior = behavior.borrow_mut();
+                    let view_model_ref = view_model_handle.borrow();
+                    let mut state_machine = state_machine.borrow_mut();
+                    behavior.handle_pointer_moved(
+                        &view_model_ref,
+                        state,
+                        &mut state_machine,
+                        command,
+                    );
+                });
                 view_model_handle.borrow_mut().draw_floor();
             }
 
             while let Ok(command) = pointer_released_receiver.try_recv() {
-                let mut behavior = behavior.borrow_mut();
-                let view_model_ref = view_model_handle.borrow();
-                let mut global_state = global_state.borrow_mut();
-                let mut state_machine = state_machine.borrow_mut();
-                behavior.handle_pointer_released(
-                    &view_model_ref,
-                    &mut global_state,
-                    &mut state_machine,
-                    command,
-                );
-                drop(view_model_ref);
+                let _ = global_state.try_update(|state| {
+                    let mut behavior = behavior.borrow_mut();
+                    let view_model_ref = view_model_handle.borrow();
+                    let mut state_machine = state_machine.borrow_mut();
+                    behavior.handle_pointer_released(
+                        &view_model_ref,
+                        state,
+                        &mut state_machine,
+                        command,
+                    );
+                });
                 view_model_handle.borrow_mut().draw_floor();
             }
         });

@@ -1,10 +1,9 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use crossbeam_channel::Sender;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 
 use crate::date;
@@ -14,13 +13,13 @@ use nject::injectable;
 
 #[injectable]
 pub struct UpdateDateBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     redraw_sender: Sender<RedrawFloorCommand>,
 }
 
 impl UpdateDateBehavior {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         redraw_sender: Sender<RedrawFloorCommand>,
     ) -> Self {
         Self {
@@ -30,8 +29,12 @@ impl UpdateDateBehavior {
     }
 
     pub fn update_date_parts(&self, year: i32, month: i32, day: i32) {
-        let mut global_state = self.global_state.borrow_mut();
-        global_state.choreography.date = date::build_date(year, month, day);
+        let updated = self.global_state.try_update(|global_state| {
+            global_state.choreography.date = date::build_date(year, month, day);
+        });
+        if !updated {
+            return;
+        }
         let _ = self.redraw_sender.send(RedrawFloorCommand);
     }
 }

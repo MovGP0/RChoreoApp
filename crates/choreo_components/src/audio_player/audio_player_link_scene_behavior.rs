@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -7,7 +6,7 @@ use nject::injectable;
 use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::{GlobalStateModel, GlobalStateStore};
 use crate::logging::BehaviorLog;
 use crate::scenes::SceneViewModel;
 use crate::time::format_seconds;
@@ -17,19 +16,19 @@ use super::messages::LinkSceneToPositionCommand;
 
 #[injectable]
 #[inject(
-    |global_state: Rc<RefCell<GlobalStateModel>>,
+    |global_state: Rc<GlobalStateStore>,
      receiver: Receiver<LinkSceneToPositionCommand>| {
         Self::new(global_state, receiver)
     }
 )]
 pub struct AudioPlayerLinkSceneBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     receiver: Receiver<LinkSceneToPositionCommand>,
 }
 
 impl AudioPlayerLinkSceneBehavior {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         receiver: Receiver<LinkSceneToPositionCommand>,
     ) -> Self
     {
@@ -56,9 +55,13 @@ impl Behavior<AudioPlayerViewModel> for AudioPlayerLinkSceneBehavior {
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
             while receiver.try_recv().is_ok() {
-                let mut global_state = global_state.borrow_mut();
                 let mut view_model = view_model_handle.borrow_mut();
-                handle_link_scene_to_position(&mut view_model, &mut global_state);
+                let updated = global_state.try_update(|global_state| {
+                    handle_link_scene_to_position(&mut view_model, global_state);
+                });
+                if !updated {
+                    return;
+                }
             }
         });
         disposables.add(Box::new(TimerDisposable::new(timer)));
@@ -92,7 +95,7 @@ fn handle_link_scene_to_position(
     }
 
     update_ticks(view_model, &global_state.scenes);
-    update_can_link(view_model, global_state);
+    update_can_link(view_model, global_state.selected_scene.as_ref(), &global_state.scenes);
 }
 
 fn try_get_linked_timestamp(
@@ -141,12 +144,14 @@ pub(crate) fn update_ticks(view_model: &mut AudioPlayerViewModel, scenes: &[Scen
     view_model.tick_values = ticks;
 }
 
-pub(crate) fn update_can_link(view_model: &mut AudioPlayerViewModel, global_state: &GlobalStateModel)
+pub(crate) fn update_can_link(
+    view_model: &mut AudioPlayerViewModel,
+    selected_scene: Option<&SceneViewModel>,
+    scenes: &[SceneViewModel],
+)
 {
-    let can_link = global_state
-        .selected_scene
-        .as_ref()
-        .and_then(|scene| try_get_linked_timestamp(view_model, scene, &global_state.scenes))
+    let can_link = selected_scene
+        .and_then(|scene| try_get_linked_timestamp(view_model, scene, scenes))
         .is_some();
     view_model.can_link_scene_to_position = can_link;
 }

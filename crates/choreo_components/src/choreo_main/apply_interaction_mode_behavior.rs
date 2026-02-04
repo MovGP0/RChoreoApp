@@ -16,7 +16,7 @@ use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
-use crate::global::{GlobalStateModel, InteractionMode};
+use crate::global::{GlobalStateStore, InteractionMode};
 use crate::logging::BehaviorLog;
 
 use super::main_view_model::MainViewModel;
@@ -24,21 +24,21 @@ use super::main_view_model::MainViewModel;
 #[derive(Clone)]
 #[injectable]
 #[inject(
-    |global_state: Rc<RefCell<GlobalStateModel>>,
+    |global_state: Rc<GlobalStateStore>,
      state_machine: Rc<RefCell<ApplicationStateMachine>>,
      receiver: Receiver<InteractionMode>| {
         Self::new(global_state, state_machine, receiver)
     }
 )]
 pub struct ApplyInteractionModeBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     state_machine: Rc<RefCell<ApplicationStateMachine>>,
     receiver: Receiver<InteractionMode>,
 }
 
 impl ApplyInteractionModeBehavior {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
         receiver: Receiver<InteractionMode>,
     ) -> Self {
@@ -50,7 +50,11 @@ impl ApplyInteractionModeBehavior {
     }
 
     fn apply_mode(&self, mode: InteractionMode) {
-        let selected_positions = self.global_state.borrow().selected_positions.len();
+        let Some(selected_positions) = self.global_state.try_with_state(|global_state| {
+            global_state.selected_positions.len()
+        }) else {
+            return;
+        };
         let mut state_machine = self.state_machine.borrow_mut();
 
         match mode {

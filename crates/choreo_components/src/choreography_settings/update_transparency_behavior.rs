@@ -1,10 +1,9 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use crossbeam_channel::Sender;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
@@ -13,13 +12,13 @@ use nject::injectable;
 
 #[injectable]
 pub struct UpdateTransparencyBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     redraw_sender: Sender<RedrawFloorCommand>,
 }
 
 impl UpdateTransparencyBehavior {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         redraw_sender: Sender<RedrawFloorCommand>,
     ) -> Self {
         Self {
@@ -29,8 +28,12 @@ impl UpdateTransparencyBehavior {
     }
 
     pub fn update_transparency(&self, value: f64) {
-        let mut global_state = self.global_state.borrow_mut();
-        global_state.choreography.settings.transparency = value.clamp(0.0, 1.0);
+        let updated = self.global_state.try_update(|global_state| {
+            global_state.choreography.settings.transparency = value.clamp(0.0, 1.0);
+        });
+        if !updated {
+            return;
+        }
         let _ = self.redraw_sender.send(RedrawFloorCommand);
     }
 }

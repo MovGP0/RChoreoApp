@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -9,7 +8,7 @@ use slint::TimerMode;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
 use crate::floor::DrawFloorCommand;
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
@@ -18,7 +17,7 @@ use super::messages::OpenSvgFileCommand;
 
 #[injectable]
 #[inject(
-    |global_state: Rc<RefCell<GlobalStateModel>>,
+    |global_state: Rc<GlobalStateStore>,
      preferences: Rc<dyn Preferences>,
      receiver: Receiver<OpenSvgFileCommand>,
      draw_floor_sender: Sender<DrawFloorCommand>| {
@@ -26,7 +25,7 @@ use super::messages::OpenSvgFileCommand;
     }
 )]
 pub struct OpenSvgFileBehavior {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     preferences: Rc<dyn Preferences>,
     receiver: Receiver<OpenSvgFileCommand>,
     draw_floor_sender: Sender<DrawFloorCommand>,
@@ -34,7 +33,7 @@ pub struct OpenSvgFileBehavior {
 
 impl OpenSvgFileBehavior {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         preferences: Rc<dyn Preferences>,
         receiver: Receiver<OpenSvgFileCommand>,
         draw_floor_sender: Sender<DrawFloorCommand>,
@@ -59,8 +58,12 @@ impl Behavior<MainViewModel> for OpenSvgFileBehavior {
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
             while let Ok(command) = receiver.try_recv() {
-                let mut global_state = global_state.borrow_mut();
-                global_state.svg_file_path = Some(command.file_path.clone());
+                let updated = global_state.try_update(|global_state| {
+                    global_state.svg_file_path = Some(command.file_path.clone());
+                });
+                if !updated {
+                    return;
+                }
                 preferences.set_string(
                     choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE,
                     command.file_path,

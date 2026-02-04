@@ -1,10 +1,9 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use crossbeam_channel::Sender;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateModel;
+use crate::global::GlobalStateStore;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
@@ -14,14 +13,14 @@ use nject::injectable;
 
 #[injectable]
 pub struct UpdatePositionsAtSideBehavior<P: Preferences> {
-    global_state: Rc<RefCell<GlobalStateModel>>,
+    global_state: Rc<GlobalStateStore>,
     preferences: P,
     redraw_sender: Sender<RedrawFloorCommand>,
 }
 
 impl<P: Preferences> UpdatePositionsAtSideBehavior<P> {
     pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
+        global_state: Rc<GlobalStateStore>,
         preferences: P,
         redraw_sender: Sender<RedrawFloorCommand>,
     ) -> Self {
@@ -33,15 +32,20 @@ impl<P: Preferences> UpdatePositionsAtSideBehavior<P> {
     }
 
     pub fn initialize(&self) {
-        let mut global_state = self.global_state.borrow_mut();
-        global_state.choreography.settings.positions_at_side = self
-            .preferences
-            .get_bool(choreo_models::SettingsPreferenceKeys::POSITIONS_AT_SIDE, true);
+        self.global_state.try_update(|global_state| {
+            global_state.choreography.settings.positions_at_side = self
+                .preferences
+                .get_bool(choreo_models::SettingsPreferenceKeys::POSITIONS_AT_SIDE, true);
+        });
     }
 
     pub fn update_positions_at_side(&self, value: bool) {
-        let mut global_state = self.global_state.borrow_mut();
-        global_state.choreography.settings.positions_at_side = value;
+        let updated = self.global_state.try_update(|global_state| {
+            global_state.choreography.settings.positions_at_side = value;
+        });
+        if !updated {
+            return;
+        }
         let _ = self.redraw_sender.send(RedrawFloorCommand);
     }
 }

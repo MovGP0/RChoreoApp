@@ -51,6 +51,7 @@ pub fn main() {
     };
     let global_provider = GlobalProvider::new();
     let global_state = global_provider.global_state();
+    let global_state_store = global_provider.global_state_store();
     let state_machine = global_provider.state_machine();
     let locale = detect_locale();
     i18n::apply_translations(&ui, &locale);
@@ -60,7 +61,7 @@ pub fn main() {
     let (audio_position_sender, audio_position_receiver) = unbounded();
     let (link_scene_sender, link_scene_receiver) = unbounded::<LinkSceneToPositionCommand>();
     let audio_player_behaviors = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
-        global_state: Rc::clone(&global_state),
+        global_state_store: Rc::clone(&global_state_store),
         open_audio_receiver,
         close_audio_receiver,
         position_changed_sender: audio_position_sender,
@@ -86,6 +87,7 @@ pub fn main() {
         ui,
         MainPageDependencies {
             global_state,
+            global_state_store,
             state_machine,
             audio_player,
             haptic_feedback: Some(Box::new(PlatformHapticFeedback::new())),
