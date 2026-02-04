@@ -64,13 +64,13 @@ export component AudioPlayerView inherits Rectangle {
         }
 
         IconButton {
-            icon: @image-url("icons/link.svg");
+            icon: @image-url("icons/Link.svg");
             enabled: can_link_scene_to_position;
             clicked => { link_scene_to_position(); }
         }
 
         IconButton {
-            icon: is_playing ? @image-url("icons/pause.svg") : @image-url("icons/play.svg");
+            icon: is_playing ? @image-url("icons/Pause.svg") : @image-url("icons/Play.svg");
             clicked => { toggle_play_pause(); }
         }
     }
