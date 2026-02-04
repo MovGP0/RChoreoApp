@@ -29,17 +29,47 @@ python -m http.server
 
 ## Android
 
-Install the Android SDK/NDK and set `ANDROID_HOME`, `ANDROID_NDK_ROOT`, and optionally `JAVA_HOME`.
+### Android prerequisites
+
+1. Install Rust with rustup and add the Android targets you plan to build.
+2. Install the Android SDK and NDK (Android Studio is fine). Set:
+   - `ANDROID_HOME` to the SDK path (or `ANDROID_SDK_ROOT`, though it is deprecated).
+   - `ANDROID_NDK_HOME` if you want to pin the NDK path (otherwise `cargo-ndk` auto-detects the latest NDK from the SDK).
+
+Example (PowerShell):
+```powershell
+$env:ANDROID_HOME = "C:\Users\<you>\AppData\Local\Android\Sdk"
+$env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
+$env:ANDROID_NDK_HOME = "C:\Users\<you>\AppData\Local\Android\Sdk\ndk\<version>"
+```
+
 Then build the `rchoreo_android` crate as a `cdylib`
 using your preferred Android tooling (for example `cargo-apk` or `cargo-ndk`)
 and target an Android ABI such as `aarch64-linux-android`.
 
-Example with `cargo-apk`:
+### Android APK builds (cargo-apk)
+
+Use `cargo-apk` when you want a straightforward APK build/run workflow. After
+installing it, target an Android ABI such as `aarch64-linux-android`:
 
 ```sh
 cargo install cargo-apk
-cargo apk run --target aarch64-linux-android --lib -p rchoreo_android
+cargo apk build --target aarch64-linux-android --lib -p rchoreo_android
 ```
+
+### Android NDK builds (cargo-ndk)
+
+Install the Rust targets you need, then install `cargo-ndk`, and build for the
+desired Android ABIs. If you installed the NDK via Android Studio, `cargo-ndk`
+auto-detects the latest NDK; you can override with `ANDROID_NDK_HOME`.
+
+```sh
+rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+cargo install cargo-ndk
+cargo ndk -t armeabi-v7a -t arm64-v8a -o ./jniLibs build --release
+```
+
+Reference: cargo-ndk README (https://github.com/bbqsrc/cargo-ndk)
 
 ## iOS
 
