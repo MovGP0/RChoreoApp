@@ -1,5 +1,6 @@
 ﻿# IDE
 .idea/
+.idea/workspace.xml
 
 # Build
 /target
