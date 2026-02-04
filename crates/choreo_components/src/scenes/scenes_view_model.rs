@@ -325,8 +325,15 @@ impl ScenesPaneViewModel {
         let has_path = !path.trim().is_empty();
         let has_file = has_path && std::path::Path::new(&path).exists();
 
-        let has_choreo = !self.global_state.borrow().choreography.name.is_empty()
-            || !self.global_state.borrow().choreography.scenes.is_empty();
+        let has_choreo = match self.global_state.try_borrow() {
+            Ok(global_state) => {
+                !global_state.choreography.name.is_empty()
+                    || !global_state.choreography.scenes.is_empty()
+            }
+            Err(_) => {
+                return;
+            }
+        };
         self.can_save_choreo = has_choreo && has_file;
         self.notify_changed();
     }
