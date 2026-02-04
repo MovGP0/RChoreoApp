@@ -144,9 +144,10 @@ fn request_open_choreo(sender: Sender<OpenChoreoRequested>) {
         let Ok(reader) = web_sys::FileReader::new() else {
             return;
         };
+        let reader_for_load = reader.clone();
         let sender_for_load = sender_for_change.clone();
         let onloadend = Closure::wrap(Box::new(move |_event: web_sys::ProgressEvent| {
-            let Ok(result) = reader.result() else {
+            let Ok(result) = reader_for_load.result() else {
                 return;
             };
             let Some(contents) = result.as_string() else {
@@ -227,7 +228,11 @@ fn request_open_file(
     input.set_type("file");
     input.set_accept(accept);
 
+    let mut on_selected = Some(on_selected);
     let onchange = Closure::wrap(Box::new(move |event: web_sys::Event| {
+        let Some(on_selected) = on_selected.take() else {
+            return;
+        };
         let target = match event.target() {
             Some(target) => target,
             None => return,
