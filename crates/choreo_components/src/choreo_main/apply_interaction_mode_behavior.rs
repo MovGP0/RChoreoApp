@@ -16,7 +16,7 @@ use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
-use crate::global::{GlobalStateStore, InteractionMode};
+use crate::global::{GlobalStateActor, InteractionMode};
 use crate::logging::BehaviorLog;
 
 use super::main_view_model::MainViewModel;
@@ -24,21 +24,21 @@ use super::main_view_model::MainViewModel;
 #[derive(Clone)]
 #[injectable]
 #[inject(
-    |global_state: Rc<GlobalStateStore>,
+    |global_state: Rc<GlobalStateActor>,
      state_machine: Rc<RefCell<ApplicationStateMachine>>,
      receiver: Receiver<InteractionMode>| {
         Self::new(global_state, state_machine, receiver)
     }
 )]
 pub struct ApplyInteractionModeBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     state_machine: Rc<RefCell<ApplicationStateMachine>>,
     receiver: Receiver<InteractionMode>,
 }
 
 impl ApplyInteractionModeBehavior {
     pub fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
         receiver: Receiver<InteractionMode>,
     ) -> Self {

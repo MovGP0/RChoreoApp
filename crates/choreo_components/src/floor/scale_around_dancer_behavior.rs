@@ -6,7 +6,7 @@ use web_time::Instant;
 use crossbeam_channel::Receiver;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
-use crate::global::{GlobalStateModel, GlobalStateStore, InteractionMode, SelectionRectangle};
+use crate::global::{GlobalStateModel, GlobalStateActor, InteractionMode, SelectionRectangle};
 use crate::logging::BehaviorLog;
 use choreo_models::PositionModel;
 use choreo_state_machine::{
@@ -56,7 +56,7 @@ impl TimeProvider for SystemTimeProvider {
 #[derive(Clone)]
 #[injectable]
 #[inject(
-    |global_state: Rc<GlobalStateStore>,
+    |global_state: Rc<GlobalStateActor>,
      state_machine: Rc<RefCell<ApplicationStateMachine>>,
      pointer_pressed_receiver: Receiver<PointerPressedCommand>,
      pointer_moved_receiver: Receiver<PointerMovedCommand>,
@@ -71,7 +71,7 @@ impl TimeProvider for SystemTimeProvider {
     }
 )]
 pub struct ScaleAroundDancerBehavior {
-    global_state: Option<Rc<GlobalStateStore>>,
+    global_state: Option<Rc<GlobalStateActor>>,
     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
     time_provider: Rc<dyn TimeProvider>,
     pointer_pressed_receiver: Option<Receiver<PointerPressedCommand>>,
@@ -120,7 +120,7 @@ impl Default for ScaleAroundDancerBehavior {
 
 impl ScaleAroundDancerBehavior {
     pub fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
         pointer_pressed_receiver: Receiver<PointerPressedCommand>,
         pointer_moved_receiver: Receiver<PointerMovedCommand>,

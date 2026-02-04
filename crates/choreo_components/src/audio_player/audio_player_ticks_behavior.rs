@@ -5,20 +5,20 @@ use nject::injectable;
 use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
 use super::audio_player_link_scene_behavior::{update_can_link, update_ticks};
 use super::audio_player_view_model::AudioPlayerViewModel;
 
 #[injectable]
-#[inject(|global_state: Rc<GlobalStateStore>| Self::new(global_state))]
+#[inject(|global_state: Rc<GlobalStateActor>| Self::new(global_state))]
 pub struct AudioPlayerTicksBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
 }
 
 impl AudioPlayerTicksBehavior {
-    pub fn new(global_state: Rc<GlobalStateStore>) -> Self
+    pub fn new(global_state: Rc<GlobalStateActor>) -> Self
     {
         Self { global_state }
     }

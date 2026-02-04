@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crossbeam_channel::Sender;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
@@ -13,14 +13,14 @@ use nject::injectable;
 
 #[injectable]
 pub struct UpdateSnapToGridBehavior<P: Preferences> {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     preferences: P,
     redraw_sender: Sender<RedrawFloorCommand>,
 }
 
 impl<P: Preferences> UpdateSnapToGridBehavior<P> {
     pub fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         preferences: P,
         redraw_sender: Sender<RedrawFloorCommand>,
     ) -> Self {

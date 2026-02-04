@@ -4,19 +4,19 @@ use choreo_models::{Colors, SceneModel};
 use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 use super::mapper::{build_scene_name, next_scene_id};
 use super::scenes_view_model::{SceneViewModel, ScenesPaneViewModel};
 
 #[injectable]
-#[inject(|global_state: Rc<GlobalStateStore>| Self::new(global_state))]
+#[inject(|global_state: Rc<GlobalStateActor>| Self::new(global_state))]
 pub struct InsertSceneBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
 }
 
 impl InsertSceneBehavior {
-    pub fn new(global_state: Rc<GlobalStateStore>) -> Self {
+    pub fn new(global_state: Rc<GlobalStateActor>) -> Self {
         Self { global_state }
     }
 

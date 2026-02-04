@@ -32,11 +32,11 @@ use std::rc::Rc;
 use crossbeam_channel::{Receiver, Sender};
 
 use crate::behavior::Behavior;
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::preferences::Preferences;
 
 pub struct AudioPlayerBehaviorDependencies {
-    pub global_state_store: Rc<GlobalStateStore>,
+    pub global_state_store: Rc<GlobalStateActor>,
     pub open_audio_receiver: Receiver<OpenAudioFileCommand>,
     pub close_audio_receiver: Receiver<CloseAudioFileCommand>,
     pub position_changed_sender: Sender<AudioPlayerPositionChangedEvent>,

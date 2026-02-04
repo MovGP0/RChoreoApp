@@ -24,7 +24,7 @@ use crate::floor::{
     PointerReleasedCommand,
     PointerWheelChangedCommand,
 };
-use crate::global::{GlobalStateModel, GlobalStateStore};
+use crate::global::{GlobalStateModel, GlobalStateActor};
 use crate::scenes::{
     OpenChoreoActions,
     ScenesDependencies,
@@ -68,7 +68,7 @@ pub struct MainPageActionHandlers {
 
 pub struct MainPageDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
-    pub global_state_store: Rc<GlobalStateStore>,
+    pub global_state_store: Rc<GlobalStateActor>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub audio_player: Rc<RefCell<AudioPlayerViewModel>>,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,

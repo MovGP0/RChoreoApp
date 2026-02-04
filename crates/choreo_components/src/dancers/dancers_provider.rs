@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crossbeam_channel::{unbounded, Sender};
 
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::haptics::HapticFeedback;
 
 use super::add_dancer_behavior::AddDancerBehavior;
@@ -34,7 +34,7 @@ use super::swap_dancer_selection_behavior::SwapDancerSelectionBehavior;
 use super::swap_dancers_behavior::SwapDancersBehavior;
 
 pub struct DancersProviderDependencies {
-    pub global_state: Rc<GlobalStateStore>,
+    pub global_state: Rc<GlobalStateActor>,
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
 }
 

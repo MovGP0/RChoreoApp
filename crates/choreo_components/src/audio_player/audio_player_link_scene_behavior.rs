@@ -6,7 +6,7 @@ use nject::injectable;
 use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
-use crate::global::{GlobalStateModel, GlobalStateStore};
+use crate::global::{GlobalStateModel, GlobalStateActor};
 use crate::logging::BehaviorLog;
 use crate::scenes::SceneViewModel;
 use crate::time::format_seconds;
@@ -16,19 +16,19 @@ use super::messages::LinkSceneToPositionCommand;
 
 #[injectable]
 #[inject(
-    |global_state: Rc<GlobalStateStore>,
+    |global_state: Rc<GlobalStateActor>,
      receiver: Receiver<LinkSceneToPositionCommand>| {
         Self::new(global_state, receiver)
     }
 )]
 pub struct AudioPlayerLinkSceneBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     receiver: Receiver<LinkSceneToPositionCommand>,
 }
 
 impl AudioPlayerLinkSceneBehavior {
     pub fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         receiver: Receiver<LinkSceneToPositionCommand>,
     ) -> Self
     {

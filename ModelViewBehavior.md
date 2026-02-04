@@ -69,6 +69,44 @@ Example:
 use crossbeam_channel::{Sender, Receiver, unbounded, bounded};
 ```
 
+## Shared Global State (Actor Model)
+
+We use an actor-style wrapper for shared global state to avoid borrow conflicts and to keep
+mutations centralized.
+
+**Key points**
+- The shared state is owned by `GlobalStateActor`, created by `GlobalProvider`.
+- Read access uses `try_with_state` (non-blocking, returns `Option<T>`).
+- Write access uses `try_update` (non-blocking, returns `bool`).
+- For queued work, use `dispatch` to push mutations onto the actor queue.
+- Behaviors should prefer `GlobalStateActor` over direct `Rc<RefCell<GlobalStateModel>>` access.
+
+**Read example**
+```rust
+let Some(snapshot) = global_state_actor.try_with_state(|state| {
+    (state.selected_scene.clone(), state.choreography.clone())
+}) else {
+    return;
+};
+```
+
+**Write example**
+```rust
+let updated = global_state_actor.try_update(|state| {
+    state.interaction_mode = InteractionMode::Move;
+});
+if !updated {
+    return;
+}
+```
+
+**Queued update example**
+```rust
+global_state_actor.dispatch(|state| {
+    state.choreography.settings.show_timestamps = true;
+});
+```
+
 ## Slint Views and Adapters
 
 Slint properties belong to the View. They are a UI-runtime reactive state and should not be used as ViewModel state.

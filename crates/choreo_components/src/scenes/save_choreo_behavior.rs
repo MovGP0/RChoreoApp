@@ -7,7 +7,7 @@ use nject::injectable;
 use time::OffsetDateTime;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
@@ -16,14 +16,14 @@ use super::scenes_view_model::ScenesPaneViewModel;
 
 #[derive(Clone)]
 #[injectable]
-#[inject(|global_state: Rc<GlobalStateStore>, preferences: Rc<dyn Preferences>| Self::new(global_state, preferences))]
+#[inject(|global_state: Rc<GlobalStateActor>, preferences: Rc<dyn Preferences>| Self::new(global_state, preferences))]
 pub struct SaveChoreoBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     preferences: Rc<dyn Preferences>,
 }
 
 impl SaveChoreoBehavior {
-    pub fn new(global_state: Rc<GlobalStateStore>, preferences: Rc<dyn Preferences>) -> Self {
+    pub fn new(global_state: Rc<GlobalStateActor>, preferences: Rc<dyn Preferences>) -> Self {
         Self {
             global_state,
             preferences,

@@ -9,7 +9,7 @@ use choreo_state_machine::{
 use nject::injectable;
 use slint::TimerMode;
 
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::logging::BehaviorLog;
 
@@ -18,21 +18,21 @@ use super::scenes_view_model::SceneViewModel;
 
 #[injectable]
 #[inject(
-    |global_state: Rc<GlobalStateStore>,
+    |global_state: Rc<GlobalStateActor>,
      state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
      receiver: Receiver<SelectedSceneChangedEvent>| {
         Self::new(global_state, state_machine, receiver)
     }
 )]
 pub struct ApplyPlacementModeBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
     receiver: Receiver<SelectedSceneChangedEvent>,
 }
 
 impl ApplyPlacementModeBehavior {
     pub fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
         receiver: Receiver<SelectedSceneChangedEvent>,
     ) -> Self {
@@ -44,7 +44,7 @@ impl ApplyPlacementModeBehavior {
     }
 
     fn apply_for_scene(
-        global_state: &Rc<GlobalStateStore>,
+        global_state: &Rc<GlobalStateActor>,
         state_machine: &Option<Rc<RefCell<ApplicationStateMachine>>>,
         selected_scene: Option<&SceneViewModel>,
     ) {

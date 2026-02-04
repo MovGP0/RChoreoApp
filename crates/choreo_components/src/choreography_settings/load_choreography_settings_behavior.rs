@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
 use super::mapper::{map_from_choreography, reset_view_model, update_selected_scene};
@@ -10,11 +10,11 @@ use nject::injectable;
 
 #[injectable]
 pub struct LoadChoreographySettingsBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
 }
 
 impl LoadChoreographySettingsBehavior {
-    pub fn new(global_state: Rc<GlobalStateStore>) -> Self {
+    pub fn new(global_state: Rc<GlobalStateActor>) -> Self {
         Self { global_state }
     }
 

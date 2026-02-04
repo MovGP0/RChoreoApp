@@ -2,7 +2,7 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use crossbeam_channel::Receiver;
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use nject::injectable;
 use slint::TimerMode;
 
@@ -14,19 +14,19 @@ use super::scenes_view_model::ScenesPaneViewModel;
 
 #[injectable]
 #[inject(
-    |global_state: Rc<GlobalStateStore>,
+    |global_state: Rc<GlobalStateActor>,
      receiver: Receiver<ShowTimestampsChangedEvent>| {
         Self::new(global_state, receiver)
     }
 )]
 pub struct ShowSceneTimestampsBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     receiver: Receiver<ShowTimestampsChangedEvent>,
 }
 
 impl ShowSceneTimestampsBehavior {
     pub fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         receiver: Receiver<ShowTimestampsChangedEvent>,
     ) -> Self {
         Self { global_state, receiver }

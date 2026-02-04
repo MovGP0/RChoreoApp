@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
 use super::mapper::{find_scene_mut, format_seconds, normalize_text, update_selected_scene};
@@ -10,12 +10,12 @@ use nject::injectable;
 
 #[injectable]
 pub struct UpdateSelectedSceneBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     is_updating: bool,
 }
 
 impl UpdateSelectedSceneBehavior {
-    pub fn new(global_state: Rc<GlobalStateStore>) -> Self {
+    pub fn new(global_state: Rc<GlobalStateActor>) -> Self {
         Self {
             global_state,
             is_updating: false,

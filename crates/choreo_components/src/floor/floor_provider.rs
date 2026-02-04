@@ -9,7 +9,7 @@ use choreo_state_machine::ApplicationStateMachine;
 
 use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::behavior::Behavior;
-use crate::global::{GlobalStateModel, GlobalStateStore};
+use crate::global::{GlobalStateModel, GlobalStateActor};
 use crate::preferences::Preferences;
 use crate::ShellHost;
 
@@ -27,7 +27,7 @@ use super::scale_positions_behavior::ScalePositionsBehavior;
 
 pub struct FloorProviderDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
-    pub global_state_store: Rc<GlobalStateStore>,
+    pub global_state_store: Rc<GlobalStateActor>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub preferences: Rc<dyn Preferences>,
     pub audio_position_receiver: Receiver<AudioPlayerPositionChangedEvent>,

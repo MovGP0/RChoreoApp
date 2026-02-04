@@ -6,7 +6,7 @@ use nject::injectable;
 use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
 use super::mapper::SceneMapper;
@@ -15,21 +15,21 @@ use super::scenes_view_model::{SceneViewModel, ScenesPaneViewModel};
 
 #[injectable]
 #[inject(
-    |global_state: Rc<GlobalStateStore>,
+    |global_state: Rc<GlobalStateActor>,
      receiver: Receiver<ReloadScenesCommand>,
      selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>| {
         Self::new(global_state, receiver, selected_scene_changed_sender)
     }
 )]
 pub struct LoadScenesBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     receiver: Receiver<ReloadScenesCommand>,
     selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>,
 }
 
 impl LoadScenesBehavior {
     pub fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         receiver: Receiver<ReloadScenesCommand>,
         selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>,
     ) -> Self {
@@ -41,7 +41,7 @@ impl LoadScenesBehavior {
     }
 
     fn load(
-        global_state: &Rc<GlobalStateStore>,
+        global_state: &Rc<GlobalStateActor>,
         view_model: &mut ScenesPaneViewModel,
     ) -> Option<SceneViewModel> {
         let scenes = global_state.try_with_state(|global_state| {

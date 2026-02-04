@@ -8,7 +8,7 @@ use slint::TimerMode;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
 use crate::floor::DrawFloorCommand;
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
@@ -17,7 +17,7 @@ use super::messages::OpenSvgFileCommand;
 
 #[injectable]
 #[inject(
-    |global_state: Rc<GlobalStateStore>,
+    |global_state: Rc<GlobalStateActor>,
      preferences: Rc<dyn Preferences>,
      receiver: Receiver<OpenSvgFileCommand>,
      draw_floor_sender: Sender<DrawFloorCommand>| {
@@ -25,7 +25,7 @@ use super::messages::OpenSvgFileCommand;
     }
 )]
 pub struct OpenSvgFileBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     preferences: Rc<dyn Preferences>,
     receiver: Receiver<OpenSvgFileCommand>,
     draw_floor_sender: Sender<DrawFloorCommand>,
@@ -33,7 +33,7 @@ pub struct OpenSvgFileBehavior {
 
 impl OpenSvgFileBehavior {
     pub fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         preferences: Rc<dyn Preferences>,
         receiver: Receiver<OpenSvgFileCommand>,
         draw_floor_sender: Sender<DrawFloorCommand>,

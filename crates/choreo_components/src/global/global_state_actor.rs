@@ -9,14 +9,14 @@ use super::GlobalStateModel;
 
 type GlobalStateCommand = Box<dyn FnOnce(&mut GlobalStateModel) + 'static>;
 
-pub struct GlobalStateStore {
+pub struct GlobalStateActor {
     state: Rc<RefCell<GlobalStateModel>>,
     queue: RefCell<VecDeque<GlobalStateCommand>>,
     subscribers: RefCell<Vec<Weak<dyn Fn()>>>,
     _timer: Timer,
 }
 
-impl GlobalStateStore {
+impl GlobalStateActor {
     pub fn new() -> Rc<Self>
     {
         let store = Rc::new(Self {

@@ -7,7 +7,7 @@ use choreo_state_machine::ApplicationStateMachine;
 
 use crate::audio_player::OpenAudioFileCommand;
 use crate::behavior::Behavior;
-use crate::global::{GlobalStateModel, GlobalStateStore, InteractionMode};
+use crate::global::{GlobalStateModel, GlobalStateActor, InteractionMode};
 use crate::preferences::Preferences;
 
 use super::messages::{OpenAudioRequested, OpenImageRequested};
@@ -23,7 +23,7 @@ use super::{
 
 pub struct MainViewModelProviderDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
-    pub global_state_store: Rc<GlobalStateStore>,
+    pub global_state_store: Rc<GlobalStateActor>,
     pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
     pub open_audio_sender: Sender<OpenAudioFileCommand>,
     pub preferences: Rc<dyn Preferences>,

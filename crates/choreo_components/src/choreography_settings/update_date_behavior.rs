@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crossbeam_channel::Sender;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
 use crate::date;
@@ -13,13 +13,13 @@ use nject::injectable;
 
 #[injectable]
 pub struct UpdateDateBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     redraw_sender: Sender<RedrawFloorCommand>,
 }
 
 impl UpdateDateBehavior {
     pub fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         redraw_sender: Sender<RedrawFloorCommand>,
     ) -> Self {
         Self {

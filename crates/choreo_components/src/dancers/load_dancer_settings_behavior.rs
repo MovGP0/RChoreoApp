@@ -6,7 +6,7 @@ use crossbeam_channel::Sender;
 use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
 use super::mapper::{default_role, ensure_default_roles};
@@ -15,21 +15,21 @@ use super::messages::{DancerSelectionCommand, UpdateSwapSelectionCommand};
 
 #[injectable]
 #[inject(
-    |global_state: Rc<GlobalStateStore>,
+    |global_state: Rc<GlobalStateActor>,
      selection_sender: Sender<DancerSelectionCommand>,
      swap_selection_sender: Sender<UpdateSwapSelectionCommand>| {
         Self::new(global_state, selection_sender, swap_selection_sender)
     }
 )]
 pub struct LoadDancerSettingsBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     selection_sender: Sender<DancerSelectionCommand>,
     swap_selection_sender: Sender<UpdateSwapSelectionCommand>,
 }
 
 impl LoadDancerSettingsBehavior {
     pub(super) fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         selection_sender: Sender<DancerSelectionCommand>,
         swap_selection_sender: Sender<UpdateSwapSelectionCommand>,
     ) -> Self {

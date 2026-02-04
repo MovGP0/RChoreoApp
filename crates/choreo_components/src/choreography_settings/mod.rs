@@ -58,10 +58,10 @@ use std::rc::Rc;
 use crossbeam_channel::Sender;
 
 use crate::behavior::Behavior;
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 
 pub struct ChoreographySettingsDependencies<P: crate::preferences::Preferences> {
-    pub global_state: Rc<GlobalStateStore>,
+    pub global_state: Rc<GlobalStateActor>,
     pub preferences: P,
     pub redraw_sender: Sender<RedrawFloorCommand>,
     pub show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,

@@ -9,7 +9,7 @@ use nject::injectable;
 use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
 use super::mapper::update_scene_dancers;
@@ -18,25 +18,25 @@ use super::messages::SaveDancerSettingsCommand;
 
 #[injectable]
 #[inject(
-    |global_state: Rc<GlobalStateStore>,
+    |global_state: Rc<GlobalStateActor>,
      receiver: Receiver<SaveDancerSettingsCommand>| {
         Self::new(global_state, receiver)
     }
 )]
 pub struct SaveDancerSettingsBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     receiver: Receiver<SaveDancerSettingsCommand>,
 }
 
 impl SaveDancerSettingsBehavior {
     pub(super) fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         receiver: Receiver<SaveDancerSettingsCommand>,
     ) -> Self {
         Self { global_state, receiver }
     }
 
-    fn apply_changes(global_state: &GlobalStateStore, view_model: &DancerSettingsViewModel) -> bool {
+    fn apply_changes(global_state: &GlobalStateActor, view_model: &DancerSettingsViewModel) -> bool {
         global_state.try_update(|global_state| {
             let choreography = &mut global_state.choreography;
             choreography.roles.clear();

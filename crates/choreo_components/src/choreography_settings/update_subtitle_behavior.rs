@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crossbeam_channel::Sender;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
 use super::mapper::normalize_text;
@@ -13,13 +13,13 @@ use nject::injectable;
 
 #[injectable]
 pub struct UpdateSubtitleBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     redraw_sender: Sender<RedrawFloorCommand>,
 }
 
 impl UpdateSubtitleBehavior {
     pub fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         redraw_sender: Sender<RedrawFloorCommand>,
     ) -> Self {
         Self {

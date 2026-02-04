@@ -10,7 +10,7 @@ use choreo_models::{ChoreographyModelMapper, SettingsPreferenceKeys};
 use crate::audio_player::{CloseAudioFileCommand, OpenAudioFileCommand};
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::choreography_settings::ShowTimestampsChangedEvent;
-use crate::global::GlobalStateStore;
+use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
@@ -24,7 +24,7 @@ pub struct OpenChoreoActions {
 
 #[derive(Clone)]
 pub struct OpenChoreoBehaviorDependencies {
-    pub global_state: Rc<GlobalStateStore>,
+    pub global_state: Rc<GlobalStateActor>,
     pub preferences: Rc<dyn Preferences>,
     pub open_audio_sender: Sender<OpenAudioFileCommand>,
     pub close_audio_sender: Sender<CloseAudioFileCommand>,
@@ -43,7 +43,7 @@ pub struct OpenChoreoBehaviorDependencies {
     }
 )]
 pub struct OpenChoreoBehavior {
-    global_state: Rc<GlobalStateStore>,
+    global_state: Rc<GlobalStateActor>,
     preferences: Rc<dyn Preferences>,
     open_audio_sender: Sender<OpenAudioFileCommand>,
     close_audio_sender: Sender<CloseAudioFileCommand>,

@@ -5,7 +5,7 @@ use std::time::Duration;
 use crossbeam_channel::Receiver;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
-use crate::global::{GlobalStateModel, GlobalStateStore};
+use crate::global::{GlobalStateModel, GlobalStateActor};
 use crate::logging::BehaviorLog;
 use choreo_models::PositionModel;
 use choreo_state_machine::{ApplicationStateMachine, StateKind};
@@ -19,7 +19,7 @@ use super::types::Point;
 #[derive(Default, Clone)]
 #[injectable]
 #[inject(
-    |global_state: Rc<GlobalStateStore>,
+    |global_state: Rc<GlobalStateActor>,
      state_machine: Rc<RefCell<ApplicationStateMachine>>,
      pointer_pressed_receiver: Receiver<PointerPressedCommand>,
      pointer_moved_receiver: Receiver<PointerMovedCommand>,
@@ -34,7 +34,7 @@ use super::types::Point;
     }
 )]
 pub struct PlacePositionBehavior {
-    global_state: Option<Rc<GlobalStateStore>>,
+    global_state: Option<Rc<GlobalStateActor>>,
     state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
     pointer_pressed_receiver: Option<Receiver<PointerPressedCommand>>,
     pointer_moved_receiver: Option<Receiver<PointerMovedCommand>>,
@@ -45,7 +45,7 @@ pub struct PlacePositionBehavior {
 
 impl PlacePositionBehavior {
     pub fn new(
-        global_state: Rc<GlobalStateStore>,
+        global_state: Rc<GlobalStateActor>,
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
         pointer_pressed_receiver: Receiver<PointerPressedCommand>,
         pointer_moved_receiver: Receiver<PointerMovedCommand>,

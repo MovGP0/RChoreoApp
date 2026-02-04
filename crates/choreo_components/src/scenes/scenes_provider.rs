@@ -8,7 +8,7 @@ use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::audio_player::{CloseAudioFileCommand, OpenAudioFileCommand};
 use crate::behavior::Behavior;
 use crate::choreography_settings::ShowTimestampsChangedEvent;
-use crate::global::{GlobalStateModel, GlobalStateStore};
+use crate::global::{GlobalStateModel, GlobalStateActor};
 
 use super::apply_placement_mode_behavior::ApplyPlacementModeBehavior;
 use super::filter_scenes_behavior::FilterScenesBehavior;
@@ -28,7 +28,7 @@ use super::show_scene_timestamps_behavior::ShowSceneTimestampsBehavior;
 
 pub struct ScenesDependencies {
     pub global_state: Rc<RefCell<GlobalStateModel>>,
-    pub global_state_store: Rc<GlobalStateStore>,
+    pub global_state_store: Rc<GlobalStateActor>,
     pub state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
     pub preferences: Rc<dyn crate::preferences::Preferences>,
     pub show_dialog_sender: Sender<ShowDialogCommand>,
