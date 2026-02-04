@@ -23,6 +23,13 @@ pub struct SelectSceneCommand {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ReloadScenesCommand;
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct OpenChoreoRequested {
+    pub file_path: Option<String>,
+    pub file_name: Option<String>,
+    pub contents: String,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CopyScenePositionsDecision {
     CopyPositions,

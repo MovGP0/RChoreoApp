@@ -9,7 +9,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crossbeam_channel::unbounded;
+use crossbeam_channel::{unbounded, Sender};
 use slint::ComponentHandle;
 
 use choreo_components::audio_player::{
@@ -26,11 +26,16 @@ use choreo_components::choreo_main::MainPageDependencies;
 use choreo_components::global::GlobalProvider;
 use choreo_components::i18n;
 use choreo_components::preferences::{PlatformPreferences, Preferences};
+use choreo_components::scenes::OpenChoreoRequested;
 use choreo_components::shell;
 use choreo_i18n::detect_locale;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::closure::Closure;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub fn main() {
@@ -74,7 +79,7 @@ pub fn main() {
     let actions = MainPageActionHandlers {
         pick_audio_path: None,
         pick_image_path: None,
-        pick_choreo_path: None,
+        request_open_choreo: Some(Rc::new(request_open_choreo)),
     };
 
     let binding = MainPageBinding::new(
@@ -97,4 +102,68 @@ pub fn main() {
     if let Err(err) = binding.view().run() {
         eprintln!("failed to run UI: {err}");
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn request_open_choreo(sender: Sender<OpenChoreoRequested>) {
+    let Some(window) = web_sys::window() else {
+        return;
+    };
+    let Some(document) = window.document() else {
+        return;
+    };
+    let Ok(element) = document.create_element("input") else {
+        return;
+    };
+    let Ok(input) = element.dyn_into::<web_sys::HtmlInputElement>() else {
+        return;
+    };
+    input.set_type("file");
+    input.set_accept(".choreo,application/json");
+
+    let sender_for_change = sender.clone();
+    let onchange = Closure::wrap(Box::new(move |event: web_sys::Event| {
+        let target = match event.target() {
+            Some(target) => target,
+            None => return,
+        };
+        let Ok(input) = target.dyn_into::<web_sys::HtmlInputElement>() else {
+            return;
+        };
+        let Some(files) = input.files() else {
+            return;
+        };
+        let Some(file) = files.get(0) else {
+            return;
+        };
+        let file_name = file.name();
+        let Ok(reader) = web_sys::FileReader::new() else {
+            return;
+        };
+        let sender_for_load = sender_for_change.clone();
+        let onloadend = Closure::wrap(Box::new(move |_event: web_sys::ProgressEvent| {
+            let Ok(result) = reader.result() else {
+                return;
+            };
+            let Some(contents) = result.as_string() else {
+                return;
+            };
+            let _ = sender_for_load.send(OpenChoreoRequested {
+                file_path: None,
+                file_name: Some(file_name.clone()),
+                contents,
+            });
+        }) as Box<dyn FnMut(_)>);
+
+        reader.set_onloadend(Some(onloadend.as_ref().unchecked_ref()));
+        let _ = reader.read_as_text(&file);
+        onloadend.forget();
+    }) as Box<dyn FnMut(_)>);
+
+    input.set_onchange(Some(onchange.as_ref().unchecked_ref()));
+    if let Some(body) = document.body() {
+        let _ = body.append_child(&input);
+    }
+    input.click();
+    onchange.forget();
 }

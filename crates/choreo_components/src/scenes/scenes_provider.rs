@@ -15,7 +15,11 @@ use super::filter_scenes_behavior::FilterScenesBehavior;
 use super::insert_scene_behavior::InsertSceneBehavior;
 use super::load_scenes_behavior::LoadScenesBehavior;
 use super::messages::{CloseDialogCommand, ShowDialogCommand};
-use super::open_choreo_behavior::{OpenChoreoActions, OpenChoreoBehavior};
+use super::open_choreo_behavior::{
+    OpenChoreoActions,
+    OpenChoreoBehavior,
+    OpenChoreoBehaviorDependencies,
+};
 use super::save_choreo_behavior::SaveChoreoBehavior;
 use super::scenes_view_model::ScenesPaneViewModel;
 use super::select_scene_behavior::SelectSceneBehavior;
@@ -48,6 +52,7 @@ impl ScenesProvider {
         let (selected_scene_changed_sender, selected_scene_changed_receiver) =
             crossbeam_channel::unbounded();
         let (reload_scenes_sender, reload_scenes_receiver) = crossbeam_channel::unbounded();
+        let (open_choreo_sender, open_choreo_receiver) = crossbeam_channel::unbounded();
 
         let behaviors: Vec<Box<dyn Behavior<ScenesPaneViewModel>>> = vec![
             Box::new(LoadScenesBehavior::new(
@@ -75,15 +80,17 @@ impl ScenesProvider {
                 deps.audio_position_receiver,
                 selected_scene_changed_sender,
             )),
-            Box::new(OpenChoreoBehavior::new(
-                deps.global_state.clone(),
-                deps.preferences.clone(),
-                deps.open_audio_sender,
-                deps.close_audio_sender,
+            Box::new(OpenChoreoBehavior::new(OpenChoreoBehaviorDependencies {
+                global_state: deps.global_state.clone(),
+                preferences: deps.preferences.clone(),
+                open_audio_sender: deps.open_audio_sender,
+                close_audio_sender: deps.close_audio_sender,
                 reload_scenes_sender,
-                deps.show_timestamps_sender,
-                deps.actions,
-            )),
+                show_timestamps_sender: deps.show_timestamps_sender,
+                actions: deps.actions,
+                open_choreo_sender,
+                open_choreo_receiver,
+            })),
             Box::new(SaveChoreoBehavior::new(
                 deps.global_state.clone(),
                 deps.preferences.clone(),

@@ -22,6 +22,7 @@ pub use messages::{
     CopyScenePositionsDecision,
     CopyScenePositionsDecisionEvent,
     DialogRequest,
+    OpenChoreoRequested,
     ReloadScenesCommand,
     SelectSceneCommand,
     SelectedSceneChangedEvent,

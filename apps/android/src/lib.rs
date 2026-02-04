@@ -76,7 +76,7 @@ fn android_main(app: slint::android::AndroidApp) {
     let actions = MainPageActionHandlers {
         pick_audio_path: None,
         pick_image_path: None,
-        pick_choreo_path: None,
+        request_open_choreo: None,
     };
 
     let binding = MainPageBinding::new(

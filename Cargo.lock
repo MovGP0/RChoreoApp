@@ -4270,6 +4270,7 @@ dependencies = [
  "crossbeam-channel",
  "slint",
  "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

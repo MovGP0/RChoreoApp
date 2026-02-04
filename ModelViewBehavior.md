@@ -191,10 +191,10 @@ fn main()
 }
 ```
 
-## RxRust ViewModel and Slint Adapter Example
+## Crossbeam Channel ViewModel and Slint Adapter Example
 
 This example keeps the Model and ViewModel independent of Slint and uses an Adapter to bind to the view.
-RxRust provides observable "properties" with a current value (BehaviorSubject style).
+The ViewModel receives user events and publishes state updates through `crossbeam-channel`.
 
 **Slint view**
 - UI owns properties + callbacks
@@ -207,7 +207,7 @@ export component AppWindow {
     callback title_edited(string);
 
     VerticalLayout {
-        Text { text: "Title:" }
+        Text { text: "Title:"; }
         LineEdit {
             text <=> root.title;
             edited(text) => { root.title_edited(text); }
@@ -266,58 +266,70 @@ impl DomainModel
 ```
 
 **ViewModel**
-- RxRust subjects
+- crossbeam channels
 - no Slint types
 ```rust
-use nject::inject;
-use rxrust::prelude::*;
-use rxrust::subject::LocalBehaviorSubject;
-use std::cell::RefCell;
+use crossbeam_channel::{Receiver, Sender};
 
-#[inject(|model: DomainModel| Self::from_model(model))]
+pub enum ViewEvent
+{
+    Increment,
+    TitleEdited(String),
+}
+
+#[derive(Debug, Clone)]
+pub struct ViewState
+{
+    pub title: String,
+    pub counter: i32,
+}
+
 pub struct AppViewModel
 {
-    model: RefCell<DomainModel>,
-
-    title: RefCell<LocalBehaviorSubject<'static, String, ()>>,
-    counter: RefCell<LocalBehaviorSubject<'static, i32, ()>>,
+    model: DomainModel,
+    event_rx: Receiver<ViewEvent>,
+    state_tx: Sender<ViewState>,
 }
 
 impl AppViewModel
 {
-    fn from_model(model: DomainModel) -> Self
+    pub fn new(
+        model: DomainModel,
+        event_rx: Receiver<ViewEvent>,
+        state_tx: Sender<ViewState>,
+    ) -> Self
     {
-        let title_seed = model.title().to_owned();
-        let counter_seed = model.counter();
-
-        Self {
-            model: RefCell::new(model),
-            title: RefCell::new(LocalBehaviorSubject::<'static, _, ()>::new(title_seed)),
-            counter: RefCell::new(LocalBehaviorSubject::<'static, _, ()>::new(counter_seed)),
+        Self
+        {
+            model,
+            event_rx,
+            state_tx,
         }
     }
 
-    pub fn title_stream(&self) -> LocalBehaviorSubject<'static, String, ()>
+    pub fn run(mut self)
     {
-        self.title.borrow().clone()
+        self.publish_state();
+
+        for event in self.event_rx.iter()
+        {
+            match event
+            {
+                ViewEvent::Increment => self.model.increment(),
+                ViewEvent::TitleEdited(new_title) => self.model.set_title(new_title),
+            }
+
+            self.publish_state();
+        }
     }
 
-    pub fn counter_stream(&self) -> LocalBehaviorSubject<'static, i32, ()>
+    fn publish_state(&self)
     {
-        self.counter.borrow().clone()
-    }
-
-    pub fn set_title(&self, new_title: String)
-    {
-        self.model.borrow_mut().set_title(new_title.clone());
-        self.title.borrow_mut().next(new_title);
-    }
-
-    pub fn increment(&self)
-    {
-        self.model.borrow_mut().increment();
-        let new_value = self.model.borrow().counter();
-        self.counter.borrow_mut().next(new_value);
+        let _ = self.state_tx.send(ViewState
+        {
+            title: self.model.title().to_owned(),
+            counter: self.model.counter(),
+        });
     }
 }
 ```
@@ -325,80 +337,85 @@ impl AppViewModel
 **Adapter**
 - binds UI and ViewModel
 ```rust
-use nject::injectable;
-use std::rc::Rc;
+use crossbeam_channel::{Receiver, Sender};
 
 use crate::ui::AppWindow;
 
-#[injectable]
 pub struct AppAdapter
 {
     ui: AppWindow,
-    view_model: Rc<AppViewModel>,
+    event_tx: Sender<ViewEvent>,
+    state_rx: Receiver<ViewState>,
 }
 
 impl AppAdapter
 {
+    pub fn new(ui: AppWindow, event_tx: Sender<ViewEvent>, state_rx: Receiver<ViewState>) -> Self
+    {
+        Self
+        {
+            ui,
+            event_tx,
+            state_rx,
+        }
+    }
+
     pub fn wire_up(&self)
     {
         // ViewModel -> View
         {
             let ui_weak = self.ui.as_weak();
-            self.view_model.title_stream().subscribe(move |title_value| {
-                if let Some(ui) = ui_weak.upgrade() {
-                    ui.set_title(title_value.into());
-                }
-            });
+            let state_rx = self.state_rx.clone();
 
-            let ui_weak = self.ui.as_weak();
-            self.view_model.counter_stream().subscribe(move |counter_value| {
-                if let Some(ui) = ui_weak.upgrade() {
-                    ui.set_counter(counter_value);
+            std::thread::spawn(move ||
+            {
+                for state in state_rx.iter()
+                {
+                    let ui_weak = ui_weak.clone();
+
+                    let _ = slint::invoke_from_event_loop(move ||
+                    {
+                        if let Some(ui) = ui_weak.upgrade()
+                        {
+                            ui.set_title(state.title.into());
+                            ui.set_counter(state.counter);
+                        }
+                    });
                 }
             });
         }
 
         // View -> ViewModel
         {
-            let view_model = self.view_model.clone();
-            self.ui.on_increment_clicked(move || view_model.increment());
+            let event_tx = self.event_tx.clone();
+            self.ui.on_increment_clicked(move ||
+            {
+                let _ = event_tx.send(ViewEvent::Increment);
+            });
 
-            let view_model = self.view_model.clone();
-            self.ui.on_title_edited(move |new_title| view_model.set_title(new_title.to_string()));
+            let event_tx = self.event_tx.clone();
+            self.ui.on_title_edited(move |new_title|
+            {
+                let _ = event_tx.send(ViewEvent::TitleEdited(new_title.to_string()));
+            });
         }
     }
 }
 ```
 
-**Startup with nject**
+**Startup**
 ```rust
-use nject::provider;
-use std::rc::Rc;
-
-#[provider]
-struct AppProvider
-{
-    #[provide]
-    ui: AppWindow,
-
-    #[provide]
-    model: DomainModel,
-
-    #[provide(Rc<AppViewModel>, |vm: AppViewModel| Rc::new(vm))]
-    _vm_rc: (),
-}
-
 fn main() -> Result<(), slint::PlatformError>
 {
     let ui = AppWindow::new()?;
 
-    let provider = AppProvider {
-        ui: ui.clone(),
-        model: DomainModel::new(),
-        _vm_rc: (),
-    };
+    let (event_tx, event_rx) = crossbeam_channel::bounded::<ViewEvent>(32);
+    let (state_tx, state_rx) = crossbeam_channel::bounded::<ViewState>(32);
 
-    let adapter: AppAdapter = provider.provide();
+    let view_model = AppViewModel::new(DomainModel::new(), event_rx, state_tx);
+    std::thread::spawn(move || view_model.run());
+
+    let adapter = AppAdapter::new(ui.clone(), event_tx, state_rx);
     adapter.wire_up();
 
     ui.run()

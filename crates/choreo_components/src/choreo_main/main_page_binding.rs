@@ -63,7 +63,7 @@ use super::{
 pub struct MainPageActionHandlers {
     pub pick_audio_path: Option<Rc<dyn Fn() -> Option<String>>>,
     pub pick_image_path: Option<Rc<dyn Fn() -> Option<String>>>,
-    pub pick_choreo_path: Option<Rc<dyn Fn() -> Option<String>>>,
+    pub request_open_choreo: Option<Rc<dyn Fn(Sender<crate::scenes::OpenChoreoRequested>)>>,
 }
 
 pub struct MainPageDependencies {
@@ -127,7 +127,7 @@ impl MainPageBinding {
             show_timestamps_sender,
             show_timestamps_receiver,
             actions: OpenChoreoActions {
-                pick_choreo_path: actions.pick_choreo_path.clone(),
+                request_open_choreo: actions.request_open_choreo.clone(),
             },
         });
         let scenes_view_model = scenes_provider.scenes_view_model();

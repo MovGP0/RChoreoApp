@@ -9,7 +9,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crossbeam_channel::unbounded;
+use crossbeam_channel::{unbounded, Sender};
 use rfd::FileDialog;
 use slint::ComponentHandle;
 
@@ -27,6 +27,7 @@ use choreo_components::choreo_main::MainPageDependencies;
 use choreo_components::global::GlobalProvider;
 use choreo_components::i18n;
 use choreo_components::preferences::{PlatformPreferences, Preferences};
+use choreo_components::scenes::OpenChoreoRequested;
 use choreo_components::shell;
 use choreo_i18n::detect_locale;
 
@@ -76,7 +77,7 @@ fn run_ui() -> Result<(), slint::PlatformError> {
     let actions = MainPageActionHandlers {
         pick_audio_path: Some(Rc::new(pick_audio_path)),
         pick_image_path: Some(Rc::new(pick_image_path)),
-        pick_choreo_path: Some(Rc::new(pick_choreo_path)),
+        request_open_choreo: Some(Rc::new(request_open_choreo)),
     };
 
     let binding = MainPageBinding::new(
@@ -117,11 +118,27 @@ fn pick_image_path() -> Option<String> {
         .map(|path| path.to_string_lossy().into_owned())
 }
 
-fn pick_choreo_path() -> Option<String> {
-    FileDialog::new()
+fn request_open_choreo(sender: Sender<OpenChoreoRequested>) {
+    let path = FileDialog::new()
         .set_title("Open choreography file")
         .add_filter("Choreo", &["choreo"])
         .add_filter("All files", &["*"])
-        .pick_file()
-        .map(|path| path.to_string_lossy().into_owned())
+        .pick_file();
+
+    let Some(path) = path else {
+        return;
+    };
+
+    let contents = match std::fs::read_to_string(&path) {
+        Ok(contents) => contents,
+        Err(_) => return,
+    };
+
+    let file_name = path.file_name().map(|name| name.to_string_lossy().into_owned());
+    let file_path = Some(path.to_string_lossy().into_owned());
+    let _ = sender.send(OpenChoreoRequested {
+        file_path,
+        file_name,
+        contents,
+    });
 }

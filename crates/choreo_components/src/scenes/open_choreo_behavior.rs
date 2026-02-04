@@ -1,46 +1,46 @@
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 use std::rc::Rc;
 
-use crossbeam_channel::Sender;
+use crossbeam_channel::{Receiver, Sender};
 use nject::injectable;
-use choreo_master_mobile_json::import_from_file;
+use choreo_master_mobile_json::import;
 use choreo_models::{ChoreographyModelMapper, SettingsPreferenceKeys};
 
 use crate::audio_player::{CloseAudioFileCommand, OpenAudioFileCommand};
-use crate::behavior::{Behavior, CompositeDisposable};
+use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::choreography_settings::ShowTimestampsChangedEvent;
 use crate::global::GlobalStateModel;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
-use super::messages::ReloadScenesCommand;
+use super::messages::{OpenChoreoRequested, ReloadScenesCommand};
 use super::scenes_view_model::ScenesPaneViewModel;
 
 #[derive(Clone, Default)]
 pub struct OpenChoreoActions {
-    pub pick_choreo_path: Option<Rc<dyn Fn() -> Option<String>>>,
+    pub request_open_choreo: Option<Rc<dyn Fn(Sender<OpenChoreoRequested>)>>,
+}
+
+#[derive(Clone)]
+pub struct OpenChoreoBehaviorDependencies {
+    pub global_state: Rc<RefCell<GlobalStateModel>>,
+    pub preferences: Rc<dyn Preferences>,
+    pub open_audio_sender: Sender<OpenAudioFileCommand>,
+    pub close_audio_sender: Sender<CloseAudioFileCommand>,
+    pub reload_scenes_sender: Sender<ReloadScenesCommand>,
+    pub show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,
+    pub actions: OpenChoreoActions,
+    pub open_choreo_sender: Sender<OpenChoreoRequested>,
+    pub open_choreo_receiver: Receiver<OpenChoreoRequested>,
 }
 
 #[derive(Clone)]
 #[injectable]
 #[inject(
-    |global_state: Rc<RefCell<GlobalStateModel>>,
-     preferences: Rc<dyn Preferences>,
-     open_audio_sender: Sender<OpenAudioFileCommand>,
-     close_audio_sender: Sender<CloseAudioFileCommand>,
-     reload_scenes_sender: Sender<ReloadScenesCommand>,
-     show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,
-     actions: OpenChoreoActions| {
-        Self::new(
-            global_state,
-            preferences,
-            open_audio_sender,
-            close_audio_sender,
-            reload_scenes_sender,
-            show_timestamps_sender,
-            actions,
-        )
+    |deps: OpenChoreoBehaviorDependencies| {
+        Self::new(deps)
     }
 )]
 pub struct OpenChoreoBehavior {
@@ -51,43 +51,31 @@ pub struct OpenChoreoBehavior {
     reload_scenes_sender: Sender<ReloadScenesCommand>,
     show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,
     actions: OpenChoreoActions,
+    open_choreo_sender: Sender<OpenChoreoRequested>,
+    open_choreo_receiver: Receiver<OpenChoreoRequested>,
 }
 
 impl OpenChoreoBehavior {
-    pub fn new(
-        global_state: Rc<RefCell<GlobalStateModel>>,
-        preferences: Rc<dyn Preferences>,
-        open_audio_sender: Sender<OpenAudioFileCommand>,
-        close_audio_sender: Sender<CloseAudioFileCommand>,
-        reload_scenes_sender: Sender<ReloadScenesCommand>,
-        show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,
-        actions: OpenChoreoActions,
-    ) -> Self {
+    pub fn new(deps: OpenChoreoBehaviorDependencies) -> Self {
         Self {
-            global_state,
-            preferences,
-            open_audio_sender,
-            close_audio_sender,
-            reload_scenes_sender,
-            show_timestamps_sender,
-            actions,
+            global_state: deps.global_state,
+            preferences: deps.preferences,
+            open_audio_sender: deps.open_audio_sender,
+            close_audio_sender: deps.close_audio_sender,
+            reload_scenes_sender: deps.reload_scenes_sender,
+            show_timestamps_sender: deps.show_timestamps_sender,
+            actions: deps.actions,
+            open_choreo_sender: deps.open_choreo_sender,
+            open_choreo_receiver: deps.open_choreo_receiver,
         }
     }
 
-    fn open_choreo(&self, view_model: &mut ScenesPaneViewModel) {
-        let Some(picker) = self.actions.pick_choreo_path.as_ref() else {
+    fn open_choreo(&self) {
+        let Some(request_open) = self.actions.request_open_choreo.as_ref() else {
             return;
         };
 
-        let Some(path) = picker() else {
-            return;
-        };
-
-        if !is_choreo_file(&path) {
-            return;
-        }
-
-        self.load_choreo(Path::new(&path), view_model);
+        request_open(self.open_choreo_sender.clone());
     }
 
     fn load_last_opened(&self, view_model: &mut ScenesPaneViewModel) {
@@ -107,7 +95,11 @@ impl OpenChoreoBehavior {
     }
 
     fn load_choreo(&self, path: &Path, view_model: &mut ScenesPaneViewModel) {
-        let Ok(json_model) = import_from_file(path) else {
+        let Ok(contents) = std::fs::read_to_string(path) else {
+            return;
+        };
+
+        let Ok(json_model) = import(&contents) else {
             return;
         };
 
@@ -137,6 +129,52 @@ impl OpenChoreoBehavior {
         );
 
         self.try_load_audio(path);
+    }
+
+    fn load_choreo_from_contents(
+        &self,
+        file_path: Option<String>,
+        file_name: Option<String>,
+        contents: String,
+        view_model: &mut ScenesPaneViewModel,
+    ) {
+        let Ok(json_model) = import(&contents) else {
+            return;
+        };
+
+        let mapper = ChoreographyModelMapper;
+        let mapped = mapper.map_to_model(&json_model);
+
+        {
+            let mut global_state = self.global_state.borrow_mut();
+            global_state.choreography = mapped;
+        }
+
+        view_model.update_can_save();
+        let _ = self.reload_scenes_sender.send(ReloadScenesCommand);
+        let value = self
+            .global_state
+            .borrow()
+            .choreography
+            .settings
+            .show_timestamps;
+        let _ = self.show_timestamps_sender.send(ShowTimestampsChangedEvent {
+            is_enabled: value,
+        });
+
+        if let Some(path) = file_path {
+            self.preferences.set_string(
+                SettingsPreferenceKeys::LAST_OPENED_CHOREO_FILE,
+                path.clone(),
+            );
+            self.try_load_audio(Path::new(&path));
+        } else if let Some(name) = file_name {
+            self.preferences
+                .set_string(SettingsPreferenceKeys::LAST_OPENED_CHOREO_FILE, name);
+            let _ = self.close_audio_sender.send(CloseAudioFileCommand);
+        } else {
+            let _ = self.close_audio_sender.send(CloseAudioFileCommand);
+        }
     }
 
     fn try_load_audio(&self, choreography_path: &Path) {
@@ -182,20 +220,33 @@ impl OpenChoreoBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for OpenChoreoBehavior {
-    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(&self, view_model: &mut ScenesPaneViewModel, disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("OpenChoreoBehavior", "ScenesPaneViewModel");
         self.load_last_opened(view_model);
         let behavior = self.clone();
-        view_model.set_open_choreo_handler(Some(Rc::new(move |view_model| {
-            behavior.open_choreo(view_model);
+        view_model.set_open_choreo_handler(Some(Rc::new(move |_view_model| {
+            behavior.open_choreo();
         })));
-    }
-}
 
-fn is_choreo_file(path: &str) -> bool {
-    Path::new(path)
-        .extension()
-        .and_then(|ext| ext.to_str())
-        .map(|ext| ext.eq_ignore_ascii_case("choreo"))
-        .unwrap_or(false)
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
+            return;
+        };
+
+        let receiver = self.open_choreo_receiver.clone();
+        let behavior = self.clone();
+        let timer = slint::Timer::default();
+        timer.start(slint::TimerMode::Repeated, Duration::from_millis(16), move || {
+            while let Ok(request) = receiver.try_recv() {
+                let mut view_model = view_model_handle.borrow_mut();
+                behavior.load_choreo_from_contents(
+                    request.file_path,
+                    request.file_name,
+                    request.contents,
+                    &mut view_model,
+                );
+            }
+        });
+        disposables.add(Box::new(TimerDisposable::new(timer)));
+    }
 }
