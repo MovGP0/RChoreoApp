@@ -1,0 +1,61 @@
+name: Build WASM
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build WASM
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install wasm-pack
+        run: |
+          cargo install wasm-pack
+      - name: Build
+        run: |
+          wasm-pack build --release --target web apps/wasm
+      - name: Prepare Pages
+        run: |
+          rm -rf dist
+          mkdir -p dist
+          cp apps/wasm/index.html dist/index.html
+          cp -R apps/wasm/pkg dist/pkg
+      - name: Upload Artifact (ZIP)
+        run: |
+          zip -r rchoreo_wasm-web.zip dist
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rchoreo_wasm-web
+          path: rchoreo_wasm-web.zip
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy Pages
+    runs-on: ubuntu-24.04
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
