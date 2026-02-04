@@ -11,7 +11,8 @@
 - use [rspec](https://github.com/rust-rspec/rspec) for BDD testing
 - use [material-color-utilities](https://github.com/deminearchiver/material-color-utilities-rust) for material colors
 - use [nject](https://github.com/nicolascotton/nject) for dependency injection
-- use [rodio](https://docs.rs/rodio/latest/rodio/) for audio playback
+- use [rodio](https://docs.rs/rodio/latest/rodio/) for audio playback on desktop/mobile
+- use [web-audio-api](https://docs.rs/web-audio-api/latest/web_audio_api/) for audio playback on WASM
 - use [log](https://crates.io/crates/log) and [env_logger](https://crates.io/crates/env_logger) for logging
 
 ## Dependency Injection
