@@ -368,7 +368,12 @@ impl MainPageBinding {
 
         {
             let scenes_view_model = Rc::clone(&scenes_view_model);
+            let view_weak = view_weak.clone();
             view.on_scenes_navigate_to_settings(move || {
+                if let Some(view) = view_weak.upgrade() {
+                    let next_index = if view.get_content_index() == 1 { 0 } else { 1 };
+                    view.set_content_index(next_index);
+                }
                 let mut view_model = scenes_view_model.borrow_mut();
                 view_model.navigate_to_settings();
             });
@@ -376,7 +381,12 @@ impl MainPageBinding {
 
         {
             let scenes_view_model = Rc::clone(&scenes_view_model);
+            let view_weak = view_weak.clone();
             view.on_scenes_navigate_to_dancer_settings(move || {
+                if let Some(view) = view_weak.upgrade() {
+                    let next_index = if view.get_content_index() == 2 { 0 } else { 2 };
+                    view.set_content_index(next_index);
+                }
                 let mut view_model = scenes_view_model.borrow_mut();
                 view_model.navigate_to_dancer_settings();
             });

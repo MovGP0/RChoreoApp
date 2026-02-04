@@ -7,6 +7,7 @@ import {
     LineSegment
 } from "floor_canvas_view.slint";
 import { MainPage } from "main_page.slint";
+import { DancerSettingsPage } from "dancer_settings_page.slint";
 import { SettingsPage } from "settings_page.slint";
 import { SceneListItem } from "scenes_pane_view.slint";
 import { Translations } from "translations.slint";
@@ -168,6 +169,9 @@ export component ShellHost inherits MaterialWindow {
         }
         settings_page := SettingsPage {
             visible: root.content_index == 1;
+        }
+        dancer_settings_page := DancerSettingsPage {
+            visible: root.content_index == 2;
         }
     }
 }
