@@ -79,6 +79,8 @@ fn run_ui() -> Result<(), slint::PlatformError> {
         pick_audio_path: Some(Rc::new(pick_audio_path)),
         pick_image_path: Some(Rc::new(pick_image_path)),
         request_open_choreo: Some(Rc::new(request_open_choreo)),
+        request_open_audio: None,
+        request_open_image: None,
     };
 
     let binding = MainPageBinding::new(

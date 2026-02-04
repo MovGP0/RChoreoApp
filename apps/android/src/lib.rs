@@ -78,6 +78,8 @@ fn android_main(app: slint::android::AndroidApp) {
         pick_audio_path: None,
         pick_image_path: None,
         request_open_choreo: None,
+        request_open_audio: None,
+        request_open_image: None,
     };
 
     let binding = MainPageBinding::new(

@@ -81,6 +81,8 @@ pub fn main() {
         pick_audio_path: None,
         pick_image_path: None,
         request_open_choreo: Some(Rc::new(request_open_choreo)),
+        request_open_audio: Some(Rc::new(request_open_audio)),
+        request_open_image: Some(Rc::new(request_open_image)),
     };
 
     let binding = MainPageBinding::new(
@@ -160,6 +162,92 @@ fn request_open_choreo(sender: Sender<OpenChoreoRequested>) {
         reader.set_onloadend(Some(onloadend.as_ref().unchecked_ref()));
         let _ = reader.read_as_text(&file);
         onloadend.forget();
+    }) as Box<dyn FnMut(_)>);
+
+    input.set_onchange(Some(onchange.as_ref().unchecked_ref()));
+    if let Some(body) = document.body() {
+        let _ = body.append_child(&input);
+    }
+    input.click();
+    onchange.forget();
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn request_open_choreo(_: Sender<OpenChoreoRequested>) {}
+
+#[cfg(target_arch = "wasm32")]
+fn request_open_audio(sender: Sender<choreo_components::choreo_main::OpenAudioRequested>) {
+    request_open_file(
+        "audio/*",
+        move |file, object_url| {
+            let _ = sender.send(choreo_components::choreo_main::OpenAudioRequested {
+                file_path: object_url,
+            });
+            drop(file);
+        },
+    );
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn request_open_audio(_: Sender<choreo_components::choreo_main::OpenAudioRequested>) {}
+
+#[cfg(target_arch = "wasm32")]
+fn request_open_image(sender: Sender<choreo_components::choreo_main::OpenImageRequested>) {
+    request_open_file(
+        ".svg,image/svg+xml",
+        move |file, object_url| {
+            let _ = sender.send(choreo_components::choreo_main::OpenImageRequested {
+                file_path: object_url,
+            });
+            drop(file);
+        },
+    );
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn request_open_image(_: Sender<choreo_components::choreo_main::OpenImageRequested>) {}
+
+#[cfg(target_arch = "wasm32")]
+fn request_open_file(
+    accept: &str,
+    on_selected: impl FnOnce(web_sys::File, String) + 'static,
+) {
+    let Some(window) = web_sys::window() else {
+        return;
+    };
+    let Some(document) = window.document() else {
+        return;
+    };
+    let Ok(element) = document.create_element("input") else {
+        return;
+    };
+    let Ok(input) = element.dyn_into::<web_sys::HtmlInputElement>() else {
+        return;
+    };
+    input.set_type("file");
+    input.set_accept(accept);
+
+    let onchange = Closure::wrap(Box::new(move |event: web_sys::Event| {
+        let target = match event.target() {
+            Some(target) => target,
+            None => return,
+        };
+        let Ok(input) = target.dyn_into::<web_sys::HtmlInputElement>() else {
+            return;
+        };
+        let Some(files) = input.files() else {
+            return;
+        };
+        let Some(file) = files.get(0) else {
+            return;
+        };
+
+        let object_url = match web_sys::Url::create_object_url_with_blob(&file) {
+            Ok(url) => url,
+            Err(_) => return,
+        };
+
+        on_selected(file, object_url);
     }) as Box<dyn FnMut(_)>);
 
     input.set_onchange(Some(onchange.as_ref().unchecked_ref()));

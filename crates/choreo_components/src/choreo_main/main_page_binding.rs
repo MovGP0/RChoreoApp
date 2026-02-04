@@ -64,6 +64,8 @@ pub struct MainPageActionHandlers {
     pub pick_audio_path: Option<Rc<dyn Fn() -> Option<String>>>,
     pub pick_image_path: Option<Rc<dyn Fn() -> Option<String>>>,
     pub request_open_choreo: Option<Rc<dyn Fn(Sender<crate::scenes::OpenChoreoRequested>)>>,
+    pub request_open_audio: Option<Rc<dyn Fn(Sender<OpenAudioRequested>)>>,
+    pub request_open_image: Option<Rc<dyn Fn(Sender<OpenImageRequested>)>>,
 }
 
 pub struct MainPageDependencies {
@@ -265,6 +267,12 @@ impl MainPageBinding {
                 std::time::Duration::from_millis(16),
                 move || {
                     while nav_bar_open_audio_receiver.try_recv().is_ok() {
+                        if let Some(requester) = actions_for_audio.request_open_audio.as_ref() {
+                            requester(open_audio_request_sender.clone());
+                            nav_bar.borrow_mut().set_audio_player_opened(true);
+                            continue;
+                        }
+
                         if let Some(picker) = actions_for_audio.pick_audio_path.as_ref()
                             && let Some(path) = picker()
                         {
@@ -276,6 +284,12 @@ impl MainPageBinding {
                     }
 
                     while nav_bar_open_image_receiver.try_recv().is_ok() {
+                        if let Some(requester) = actions_for_image.request_open_image.as_ref() {
+                            requester(open_image_request_sender.clone());
+                            floor_view_model_for_image.borrow_mut().draw_floor();
+                            continue;
+                        }
+
                         if let Some(picker) = actions_for_image.pick_image_path.as_ref()
                             && let Some(path) = picker()
                         {
