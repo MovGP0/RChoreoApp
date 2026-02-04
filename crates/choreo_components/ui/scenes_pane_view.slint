@@ -29,25 +29,33 @@ export component ScenesPaneView inherits Rectangle {
     callback navigate_to_dancer_settings();
 
     background: MaterialPalette.surface;
-    padding: 12px;
 
-    Vertical {
+    content := Vertical {
+        width: parent.width;
+        height: parent.height;
+        padding: 12px;
         spacing: 12px;
 
         Rectangle {
             background: MaterialPalette.surface_container;
             border-radius: 12px;
-            padding: 8px;
             vertical-stretch: 1;
 
-            ListView {
-                for scene[index] in scenes: SceneItemView {
-                    scene_name: scene.name;
-                    timestamp_text: scene.timestamp_text;
-                    scene_color: scene.color;
-                    show_timestamps: root.show_timestamps;
-                    is_selected: scene.is_selected;
-                    select_scene => { root.select_scene(index); }
+            Vertical {
+                width: parent.width;
+                height: parent.height;
+                padding: 8px;
+
+                ListView {
+                    vertical-stretch: 1;
+                    for scene[index] in scenes: SceneItemView {
+                        scene_name: scene.name;
+                        timestamp_text: scene.timestamp_text;
+                        scene_color: scene.color;
+                        show_timestamps: root.show_timestamps;
+                        is_selected: scene.is_selected;
+                        select_scene => { root.select_scene(index); }
+                    }
                 }
             }
         }

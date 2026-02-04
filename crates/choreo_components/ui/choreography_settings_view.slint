@@ -67,12 +67,14 @@ export component ChoreographySettingsView inherits Rectangle {
     callback update_grid_resolution(int);
 
     background: MaterialPalette.surface_variant;
-    padding: 8px;
 
     preferred-height: content.preferred-height;
     height: self.preferred-height;
 
     content := Vertical {
+        width: parent.width;
+        height: parent.height;
+        padding: 8px;
         spacing: 12px;
 
         Rectangle {
@@ -80,9 +82,9 @@ export component ChoreographySettingsView inherits Rectangle {
             border-width: 1px;
             border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
-            padding: 12px;
 
             Vertical {
+                padding: 12px;
                 spacing: 8px;
                 MaterialText {
                     text: Translations.scene_section_title;
@@ -124,9 +126,9 @@ export component ChoreographySettingsView inherits Rectangle {
             border-width: 1px;
             border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
-            padding: 12px;
 
             Vertical {
+                padding: 12px;
                 spacing: 8px;
                 MaterialText { text: Translations.choreography_section_title; font-size: 18px; }
                 TextField { label: Translations.choreography_name_placeholder; text: name; edited(v) => { update_name(v); } }
@@ -161,9 +163,9 @@ export component ChoreographySettingsView inherits Rectangle {
             border-width: 1px;
             border-color: MaterialPalette.outline_variant;
             border-radius: 8px;
-            padding: 12px;
 
             Vertical {
+                padding: 12px;
                 spacing: 8px;
                 MaterialText { text: Translations.choreography_floor_title; font-size: 18px; }
                 CheckBoxTile {

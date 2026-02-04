@@ -25,9 +25,11 @@ export component AudioPlayerView inherits Rectangle {
     border-width: 1px;
     border-color: MaterialPalette.outline;
     border-radius: 8px;
-    padding: 12px;
 
-    Horizontal {
+    content := Horizontal {
+        width: parent.width;
+        height: parent.height;
+        padding: 12px;
         spacing: 12px;
 
         Slider {

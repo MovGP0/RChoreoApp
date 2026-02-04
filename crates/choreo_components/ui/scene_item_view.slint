@@ -21,9 +21,11 @@ export component SceneItemView inherits Rectangle {
     border-width: is_selected ? 2px : 1px;
     border-color: is_selected ? selected_stroke : unselected_stroke;
     border-radius: 6px;
-    padding: 8px;
 
-    Vertical {
+    content := Vertical {
+        width: parent.width;
+        height: parent.height;
+        padding: 8px;
         spacing: 4px;
         Horizontal {
             spacing: 6px;
