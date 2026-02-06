@@ -165,8 +165,14 @@ export component FloorCanvasView inherits Rectangle {
             property <float> content_width_px: self.width / 1px;
             property <float> content_height_px: self.height / 1px;
             property <float> padding_px: root.grid_padding / 1px;
-            property <float> available_width_px: content_width_px > 2.0 * padding_px
-                ? content_width_px - 2.0 * padding_px
+            property <length> legend_reserved_width: root.show_legend && root.legend_entries.length > 0
+                ? root.legend_panel_width + root.legend_margin
+                : 0px;
+            property <float> layout_width_px: content_width_px > legend_reserved_width / 1px
+                ? content_width_px - legend_reserved_width / 1px
+                : 0.0;
+            property <float> available_width_px: layout_width_px > 2.0 * padding_px
+                ? layout_width_px - 2.0 * padding_px
                 : 0.0;
             property <float> available_height_px: content_height_px > 2.0 * padding_px
                 ? content_height_px - 2.0 * padding_px
@@ -186,7 +192,7 @@ export component FloorCanvasView inherits Rectangle {
             property <length> floor_height: root.floor_height_meters > 0.0
                 ? root.floor_height_meters * scale * 1px
                 : 0px;
-            property <length> floor_x: (parent.width - floor_width) / 2 + root.pan_x * 1px;
+            property <length> floor_x: (layout_width_px * 1px - floor_width) / 2 + root.pan_x * 1px;
             property <length> floor_y: (parent.height - floor_height) / 2 + root.pan_y * 1px;
             property <length> center_x: floor_x + floor_width / 2;
             property <length> center_y: floor_y + floor_height / 2;
