@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::path::Path;
 use std::rc::Rc;
 
 use crossbeam_channel::{bounded, Receiver, Sender};
@@ -27,6 +28,7 @@ use crate::floor::{
 use crate::global::{GlobalStateModel, GlobalStateActor};
 use crate::scenes::{
     OpenChoreoActions,
+    OpenChoreoRequested,
     ScenesDependencies,
     ScenesPaneViewModel,
     ScenesProvider,
@@ -96,6 +98,9 @@ pub struct MainPageBinding {
     floor_provider: Rc<RefCell<FloorProvider>>,
     #[allow(dead_code)]
     nav_bar_timer: slint::Timer,
+    open_choreo_sender: Sender<OpenChoreoRequested>,
+    open_audio_request_sender: Sender<OpenAudioRequested>,
+    open_image_request_sender: Sender<OpenImageRequested>,
 }
 
 impl MainPageBinding {
@@ -135,6 +140,7 @@ impl MainPageBinding {
                 request_open_choreo: actions.request_open_choreo.clone(),
             },
         });
+        let open_choreo_sender = scenes_provider.open_choreo_sender();
         let scenes_view_model = scenes_provider.scenes_view_model();
 
         let audio_player = Rc::clone(&deps.audio_player);
@@ -495,6 +501,9 @@ impl MainPageBinding {
             floor_view_model,
             floor_provider,
             nav_bar_timer,
+            open_choreo_sender,
+            open_audio_request_sender,
+            open_image_request_sender,
         }
     }
 
@@ -508,6 +517,62 @@ impl MainPageBinding {
 
     pub fn scenes_view_model(&self) -> Rc<RefCell<ScenesPaneViewModel>> {
         Rc::clone(&self.scenes_view_model)
+    }
+
+    pub fn open_choreo_sender(&self) -> Sender<OpenChoreoRequested> {
+        self.open_choreo_sender.clone()
+    }
+
+    pub fn open_audio_request_sender(&self) -> Sender<OpenAudioRequested> {
+        self.open_audio_request_sender.clone()
+    }
+
+    pub fn open_image_request_sender(&self) -> Sender<OpenImageRequested> {
+        self.open_image_request_sender.clone()
+    }
+
+    pub fn route_external_file_path(&self, file_path: &str) {
+        if file_path.trim().is_empty() {
+            return;
+        }
+
+        let extension = Path::new(file_path)
+            .extension()
+            .and_then(|value| value.to_str())
+            .unwrap_or_default()
+            .to_ascii_lowercase();
+
+        if extension == "choreo" {
+            let Ok(contents) = std::fs::read_to_string(file_path) else {
+                return;
+            };
+            let file_name = Path::new(file_path)
+                .file_name()
+                .map(|value| value.to_string_lossy().into_owned());
+            let _ = self.open_choreo_sender.try_send(OpenChoreoRequested {
+                file_path: Some(file_path.to_string()),
+                file_name,
+                contents,
+            });
+            return;
+        }
+
+        if extension == "svg" {
+            let _ = self
+                .open_image_request_sender
+                .try_send(OpenImageRequested {
+                    file_path: file_path.to_string(),
+                });
+            return;
+        }
+
+        if extension == "mp3" {
+            let _ = self
+                .open_audio_request_sender
+                .try_send(OpenAudioRequested {
+                    file_path: file_path.to_string(),
+                });
+        }
     }
 
 }

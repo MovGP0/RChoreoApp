@@ -20,6 +20,7 @@ use super::open_choreo_behavior::{
     OpenChoreoBehavior,
     OpenChoreoBehaviorDependencies,
 };
+use super::OpenChoreoRequested;
 use super::save_choreo_behavior::SaveChoreoBehavior;
 use super::scenes_view_model::ScenesPaneViewModel;
 use super::select_scene_behavior::SelectSceneBehavior;
@@ -44,6 +45,7 @@ pub struct ScenesDependencies {
 
 pub struct ScenesProvider {
     scenes_view_model: Rc<RefCell<ScenesPaneViewModel>>,
+    open_choreo_sender: Sender<OpenChoreoRequested>,
 }
 
 impl ScenesProvider {
@@ -89,7 +91,7 @@ impl ScenesProvider {
                 reload_scenes_sender,
                 show_timestamps_sender: deps.show_timestamps_sender,
                 actions: deps.actions,
-                open_choreo_sender,
+                open_choreo_sender: open_choreo_sender.clone(),
                 open_choreo_receiver,
             })),
             Box::new(SaveChoreoBehavior::new(
@@ -111,10 +113,17 @@ impl ScenesProvider {
             .set_self_handle(Rc::downgrade(&scenes_view_model));
         ScenesPaneViewModel::activate(&scenes_view_model, behaviors);
 
-        Self { scenes_view_model }
+        Self {
+            scenes_view_model,
+            open_choreo_sender,
+        }
     }
 
     pub fn scenes_view_model(&self) -> Rc<RefCell<ScenesPaneViewModel>> {
         Rc::clone(&self.scenes_view_model)
+    }
+
+    pub fn open_choreo_sender(&self) -> Sender<OpenChoreoRequested> {
+        self.open_choreo_sender.clone()
     }
 }

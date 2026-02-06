@@ -7,9 +7,13 @@
 #![deny(clippy::all)]
 
 use std::cell::RefCell;
+use std::path::PathBuf;
 use std::rc::Rc;
 
 use crossbeam_channel::{unbounded, Sender};
+use i_slint_backend_winit::winit;
+use i_slint_backend_winit::EventResult;
+use i_slint_backend_winit::WinitWindowAccessor;
 use rfd::FileDialog;
 use slint::ComponentHandle;
 
@@ -101,6 +105,7 @@ fn run_ui() -> Result<(), slint::PlatformError> {
             actions,
         },
     );
+    install_desktop_drop_handler(&binding);
     binding.view().run()
 }
 
@@ -145,4 +150,78 @@ fn request_open_choreo(sender: Sender<OpenChoreoRequested>) {
         file_name,
         contents,
     });
+}
+
+fn install_desktop_drop_handler(binding: &MainPageBinding) {
+    let open_choreo_sender = binding.open_choreo_sender();
+    let open_audio_request_sender = binding.open_audio_request_sender();
+    let open_image_request_sender = binding.open_image_request_sender();
+
+    binding
+        .view()
+        .window()
+        .on_winit_window_event(move |_window, event| {
+            let winit::event::WindowEvent::DroppedFile(path) = event else {
+                return EventResult::Propagate;
+            };
+
+            route_dropped_file(
+                path,
+                &open_choreo_sender,
+                &open_audio_request_sender,
+                &open_image_request_sender,
+            );
+
+            EventResult::PreventDefault
+        });
+}
+
+fn route_dropped_file(
+    path: &PathBuf,
+    open_choreo_sender: &Sender<OpenChoreoRequested>,
+    open_audio_request_sender: &Sender<choreo_components::choreo_main::OpenAudioRequested>,
+    open_image_request_sender: &Sender<choreo_components::choreo_main::OpenImageRequested>,
+) {
+    let extension = path
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+
+    if extension == "choreo" {
+        let contents = match std::fs::read_to_string(path) {
+            Ok(contents) => contents,
+            Err(_) => {
+                eprintln!("desktop drop: failed to read .choreo file");
+                return;
+            }
+        };
+        let file_name = path.file_name().map(|value| value.to_string_lossy().into_owned());
+        let file_path = Some(path.to_string_lossy().into_owned());
+        let _ = open_choreo_sender.try_send(OpenChoreoRequested {
+            file_path,
+            file_name,
+            contents,
+        });
+        eprintln!("desktop drop: loaded .choreo file");
+        return;
+    }
+
+    if extension == "svg" {
+        let _ = open_image_request_sender.try_send(choreo_components::choreo_main::OpenImageRequested {
+            file_path: path.to_string_lossy().into_owned(),
+        });
+        eprintln!("desktop drop: loaded .svg file");
+        return;
+    }
+
+    if extension == "mp3" {
+        let _ = open_audio_request_sender.try_send(choreo_components::choreo_main::OpenAudioRequested {
+            file_path: path.to_string_lossy().into_owned(),
+        });
+        eprintln!("desktop drop: loaded .mp3 file");
+        return;
+    }
+
+    eprintln!("desktop drop: unsupported file type");
 }

@@ -148,12 +148,17 @@ struct WebFilePickerActor {
     choreo_input: web_sys::HtmlInputElement,
     audio_input: web_sys::HtmlInputElement,
     image_input: web_sys::HtmlInputElement,
+    _drop_overlay: web_sys::HtmlElement,
     choreo_sender: Rc<RefCell<Option<Sender<OpenChoreoRequested>>>>,
     audio_sender: Rc<RefCell<Option<Sender<OpenAudioRequested>>>>,
     image_sender: Rc<RefCell<Option<Sender<OpenImageRequested>>>>,
     _choreo_onchange: Closure<dyn FnMut(web_sys::Event)>,
     _audio_onchange: Closure<dyn FnMut(web_sys::Event)>,
     _image_onchange: Closure<dyn FnMut(web_sys::Event)>,
+    _dragenter: Closure<dyn FnMut(web_sys::Event)>,
+    _dragover: Closure<dyn FnMut(web_sys::Event)>,
+    _dragleave: Closure<dyn FnMut(web_sys::Event)>,
+    _drop: Closure<dyn FnMut(web_sys::Event)>,
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -179,12 +184,8 @@ impl WebFilePickerActor {
 #[cfg(target_arch = "wasm32")]
 impl WebFilePickerActor {
     fn new() -> Option<Self> {
-        let Some(window) = web_sys::window() else {
-            return None;
-        };
-        let Some(document) = window.document() else {
-            return None;
-        };
+        let window = web_sys::window()?;
+        let document = window.document()?;
 
         let choreo_input = Self::create_hidden_file_input(
             &document,
@@ -198,6 +199,7 @@ impl WebFilePickerActor {
             "wasm-image-picker",
             ".svg,image/svg+xml",
         )?;
+        let drop_overlay = Self::create_drop_overlay(&document)?;
 
         let choreo_sender = Rc::new(RefCell::new(None));
         let audio_sender = Rc::new(RefCell::new(None));
@@ -219,29 +221,12 @@ impl WebFilePickerActor {
                 let Some(file) = files.get(0) else {
                     return;
                 };
-                let Some(sender) = choreo_sender.borrow().as_ref().cloned() else {
-                    return;
-                };
-                let file_name = file.name();
-                let Ok(reader) = web_sys::FileReader::new() else {
-                    return;
-                };
-                let onloadend = Closure::wrap(Box::new(move |_event: web_sys::ProgressEvent| {
-                    let Ok(result) = reader.result() else {
-                        return;
-                    };
-                    let Some(contents) = result.as_string() else {
-                        return;
-                    };
-                    let _ = sender.send(OpenChoreoRequested {
-                        file_path: None,
-                        file_name: Some(file_name.clone()),
-                        contents,
-                    });
-                }) as Box<dyn FnMut(_)>);
-                reader.set_onloadend(Some(onloadend.as_ref().unchecked_ref()));
-                let _ = reader.read_as_text(&file);
-                onloadend.forget();
+                Self::handle_dropped_file(
+                    file,
+                    Rc::clone(&choreo_sender),
+                    Rc::new(RefCell::new(None)),
+                    Rc::new(RefCell::new(None)),
+                );
             }) as Box<dyn FnMut(_)>)
         };
         choreo_input.set_onchange(Some(choreo_onchange.as_ref().unchecked_ref()));
@@ -262,16 +247,12 @@ impl WebFilePickerActor {
                 let Some(file) = files.get(0) else {
                     return;
                 };
-                let Some(sender) = audio_sender.borrow().as_ref().cloned() else {
-                    return;
-                };
-                let object_url = match web_sys::Url::create_object_url_with_blob(&file) {
-                    Ok(url) => url,
-                    Err(_) => return,
-                };
-                let _ = sender.send(OpenAudioRequested {
-                    file_path: object_url,
-                });
+                Self::handle_dropped_file(
+                    file,
+                    Rc::new(RefCell::new(None)),
+                    Rc::clone(&audio_sender),
+                    Rc::new(RefCell::new(None)),
+                );
             }) as Box<dyn FnMut(_)>)
         };
         audio_input.set_onchange(Some(audio_onchange.as_ref().unchecked_ref()));
@@ -292,30 +273,104 @@ impl WebFilePickerActor {
                 let Some(file) = files.get(0) else {
                     return;
                 };
-                let Some(sender) = image_sender.borrow().as_ref().cloned() else {
-                    return;
-                };
-                let object_url = match web_sys::Url::create_object_url_with_blob(&file) {
-                    Ok(url) => url,
-                    Err(_) => return,
-                };
-                let _ = sender.send(OpenImageRequested {
-                    file_path: object_url,
-                });
+                Self::handle_dropped_file(
+                    file,
+                    Rc::new(RefCell::new(None)),
+                    Rc::new(RefCell::new(None)),
+                    Rc::clone(&image_sender),
+                );
             }) as Box<dyn FnMut(_)>)
         };
         image_input.set_onchange(Some(image_onchange.as_ref().unchecked_ref()));
+
+        let dragenter = {
+            let drop_overlay = drop_overlay.clone();
+            Closure::wrap(Box::new(move |event: web_sys::Event| {
+                event.prevent_default();
+                Self::set_overlay_visible(&drop_overlay, true);
+            }) as Box<dyn FnMut(_)>)
+        };
+        let dragover = {
+            let drop_overlay = drop_overlay.clone();
+            Closure::wrap(Box::new(move |event: web_sys::Event| {
+                event.prevent_default();
+                Self::set_overlay_visible(&drop_overlay, true);
+            }) as Box<dyn FnMut(_)>)
+        };
+        let dragleave = {
+            let drop_overlay = drop_overlay.clone();
+            Closure::wrap(Box::new(move |event: web_sys::Event| {
+                event.prevent_default();
+                Self::set_overlay_visible(&drop_overlay, false);
+            }) as Box<dyn FnMut(_)>)
+        };
+        let drop = {
+            let drop_overlay = drop_overlay.clone();
+            let choreo_sender = Rc::clone(&choreo_sender);
+            let audio_sender = Rc::clone(&audio_sender);
+            let image_sender = Rc::clone(&image_sender);
+            Closure::wrap(Box::new(move |event: web_sys::Event| {
+                event.prevent_default();
+                Self::set_overlay_visible(&drop_overlay, false);
+
+                let Some(drag_event) = event.dyn_ref::<web_sys::DragEvent>() else {
+                    return;
+                };
+                let Some(data_transfer) = drag_event.data_transfer() else {
+                    return;
+                };
+                let Some(files) = data_transfer.files() else {
+                    return;
+                };
+
+                let length = files.length();
+                for index in 0..length {
+                    let Some(file) = files.get(index) else {
+                        continue;
+                    };
+                    Self::handle_dropped_file(
+                        file,
+                        Rc::clone(&choreo_sender),
+                        Rc::clone(&audio_sender),
+                        Rc::clone(&image_sender),
+                    );
+                }
+            }) as Box<dyn FnMut(_)>)
+        };
+
+        let body = document.body()?;
+        let _ = body.add_event_listener_with_callback(
+            "dragenter",
+            dragenter.as_ref().unchecked_ref(),
+        );
+        let _ = body.add_event_listener_with_callback(
+            "dragover",
+            dragover.as_ref().unchecked_ref(),
+        );
+        let _ = body.add_event_listener_with_callback(
+            "dragleave",
+            dragleave.as_ref().unchecked_ref(),
+        );
+        let _ = body.add_event_listener_with_callback(
+            "drop",
+            drop.as_ref().unchecked_ref(),
+        );
 
         Some(Self {
             choreo_input,
             audio_input,
             image_input,
+            _drop_overlay: drop_overlay,
             choreo_sender,
             audio_sender,
             image_sender,
             _choreo_onchange: choreo_onchange,
             _audio_onchange: audio_onchange,
             _image_onchange: image_onchange,
+            _dragenter: dragenter,
+            _dragover: dragover,
+            _dragleave: dragleave,
+            _drop: drop,
         })
     }
 
@@ -341,6 +396,112 @@ impl WebFilePickerActor {
             return Some(input);
         }
         None
+    }
+
+    fn create_drop_overlay(document: &web_sys::Document) -> Option<web_sys::HtmlElement> {
+        let Ok(element) = document.create_element("div") else {
+            return None;
+        };
+        let Ok(overlay) = element.dyn_into::<web_sys::HtmlElement>() else {
+            return None;
+        };
+        overlay.set_id("wasm-drop-overlay");
+        overlay.set_inner_text("Drop .choreo, .svg or .mp3 files");
+        let _ = overlay.set_attribute(
+            "style",
+            "position:fixed;inset:0;display:none;align-items:center;justify-content:center;\
+             background:rgba(0,0,0,0.35);color:white;font:600 24px sans-serif;z-index:2147483647;",
+        );
+        if let Some(body) = document.body() {
+            let _ = body.append_child(&overlay);
+            return Some(overlay);
+        }
+        None
+    }
+
+    fn set_overlay_visible(overlay: &web_sys::HtmlElement, visible: bool) {
+        let style = if visible {
+            "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;\
+             background:rgba(0,0,0,0.35);color:white;font:600 24px sans-serif;z-index:2147483647;"
+        } else {
+            "position:fixed;inset:0;display:none;align-items:center;justify-content:center;\
+             background:rgba(0,0,0,0.35);color:white;font:600 24px sans-serif;z-index:2147483647;"
+        };
+        let _ = overlay.set_attribute("style", style);
+    }
+
+    fn handle_dropped_file(
+        file: web_sys::File,
+        choreo_sender: Rc<RefCell<Option<Sender<OpenChoreoRequested>>>>,
+        audio_sender: Rc<RefCell<Option<Sender<OpenAudioRequested>>>>,
+        image_sender: Rc<RefCell<Option<Sender<OpenImageRequested>>>>,
+    ) {
+        let file_name = file.name();
+        let extension = file_name
+            .rsplit('.')
+            .next()
+            .unwrap_or_default()
+            .to_ascii_lowercase();
+
+        if extension == "choreo" {
+            let Some(sender) = choreo_sender.borrow().as_ref().cloned() else {
+                return;
+            };
+            web_sys::console::log_1(&"drop: handling .choreo".into());
+            let Ok(reader) = web_sys::FileReader::new() else {
+                return;
+            };
+            let reader_for_callback = reader.clone();
+            let onloadend = Closure::wrap(Box::new(move |_event: web_sys::ProgressEvent| {
+                let Ok(result) = reader_for_callback.result() else {
+                    return;
+                };
+                let Some(contents) = result.as_string() else {
+                    return;
+                };
+                let _ = sender.send(OpenChoreoRequested {
+                    file_path: None,
+                    file_name: Some(file_name.clone()),
+                    contents,
+                });
+            }) as Box<dyn FnMut(_)>);
+            reader.set_onloadend(Some(onloadend.as_ref().unchecked_ref()));
+            let _ = reader.read_as_text(&file);
+            onloadend.forget();
+            return;
+        }
+
+        if extension == "svg" {
+            let Some(sender) = image_sender.borrow().as_ref().cloned() else {
+                return;
+            };
+            web_sys::console::log_1(&"drop: handling .svg".into());
+            let object_url = match web_sys::Url::create_object_url_with_blob(&file) {
+                Ok(url) => url,
+                Err(_) => return,
+            };
+            let _ = sender.send(OpenImageRequested {
+                file_path: object_url,
+            });
+            return;
+        }
+
+        if extension == "mp3" {
+            let Some(sender) = audio_sender.borrow().as_ref().cloned() else {
+                return;
+            };
+            web_sys::console::log_1(&"drop: handling .mp3".into());
+            let object_url = match web_sys::Url::create_object_url_with_blob(&file) {
+                Ok(url) => url,
+                Err(_) => return,
+            };
+            let _ = sender.send(OpenAudioRequested {
+                file_path: object_url,
+            });
+            return;
+        }
+
+        web_sys::console::log_1(&format!("drop: unsupported file type ({file_name})").into());
     }
 
     fn request_open_choreo(&self, sender: Sender<OpenChoreoRequested>) {

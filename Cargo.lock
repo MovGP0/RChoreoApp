@@ -4298,6 +4298,7 @@ dependencies = [
  "choreo_models",
  "choreo_state_machine",
  "crossbeam-channel",
+ "i-slint-backend-winit",
  "rfd",
  "slint",
 ]
