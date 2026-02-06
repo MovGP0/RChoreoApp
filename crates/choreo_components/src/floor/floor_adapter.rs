@@ -368,14 +368,16 @@ impl FloorAdapter {
 
 struct FloorRenderTransform {
     scale: f32,
+    offset_x: f32,
+    offset_y: f32,
     width_px: f32,
     height_px: f32,
 }
 
 impl FloorRenderTransform {
     fn to_local(&self, point: Point) -> (f32, f32) {
-        let center_x = self.width_px / 2.0;
-        let center_y = self.height_px / 2.0;
+        let center_x = self.offset_x + self.width_px / 2.0;
+        let center_y = self.offset_y + self.height_px / 2.0;
         let x = center_x + point.x as f32 * self.scale;
         let y = center_y - point.y as f32 * self.scale;
         (x, y)
@@ -409,6 +411,8 @@ fn build_floor_render_transform(
 
     Some(FloorRenderTransform {
         scale,
+        offset_x: bounds.left,
+        offset_y: bounds.top,
         width_px,
         height_px,
     })

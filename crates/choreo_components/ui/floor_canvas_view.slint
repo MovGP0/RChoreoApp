@@ -348,12 +348,11 @@ export component FloorCanvasView inherits Rectangle {
             }
 
             curve_layer := Rectangle {
-                x: floor_rect.x;
-                y: floor_rect.y;
-                width: floor_rect.width;
-                height: floor_rect.height;
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: parent.height;
                 background: transparent;
-                clip: true;
 
                 for curve in root.curves: Path {
                     width: parent.width;
@@ -379,12 +378,11 @@ export component FloorCanvasView inherits Rectangle {
             }
 
             position_layer := Rectangle {
-                x: floor_rect.x;
-                y: floor_rect.y;
-                width: floor_rect.width;
-                height: floor_rect.height;
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: parent.height;
                 background: transparent;
-                clip: true;
 
                 for position in root.positions: Rectangle {
                     width: root.dancer_size * content.scale * 1px;
@@ -420,12 +418,11 @@ export component FloorCanvasView inherits Rectangle {
             }
 
             selection_layer := Rectangle {
-                x: floor_rect.x;
-                y: floor_rect.y;
-                width: floor_rect.width;
-                height: floor_rect.height;
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: parent.height;
                 background: transparent;
-                clip: true;
 
                 for segment in root.selection_segments: Path {
                     width: parent.width;
