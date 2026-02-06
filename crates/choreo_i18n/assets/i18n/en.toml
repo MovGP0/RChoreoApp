@@ -60,7 +60,7 @@ ScenesAddAfter = "Add after"
 ScenesOpen = "Open"
 ScenesSave = "Save"
 MainToggleNavTooltip = "Toggle navigation"
-
+MainOpenSettingsTooltip = "Choreography Settings"
 MainOpenImageTooltip = "Open floor SVG"
 MainOpenFloorPlanTooltip = "Open floor plan"
 MainOpenAudioTooltip = "Open audio file"
