@@ -37,28 +37,51 @@ use crate::scenes::{
 use crate::choreography_settings::{
     ChoreographySettingsViewModel,
     LoadChoreographySettingsBehavior,
+    ReloadChoreographySettingsCommand,
     UpdateAuthorBehavior,
+    UpdateAuthorCommand,
     UpdateCommentBehavior,
+    UpdateCommentCommand,
     UpdateDateBehavior,
+    UpdateDateCommand,
     UpdateDescriptionBehavior,
+    UpdateDescriptionCommand,
     UpdateDrawPathFromBehavior,
+    UpdateDrawPathFromCommand,
     UpdateDrawPathToBehavior,
+    UpdateDrawPathToCommand,
     UpdateFloorBackBehavior,
+    UpdateFloorBackCommand,
     UpdateFloorColorBehavior,
+    UpdateFloorColorCommand,
     UpdateFloorFrontBehavior,
+    UpdateFloorFrontCommand,
     UpdateFloorLeftBehavior,
+    UpdateFloorLeftCommand,
     UpdateFloorRightBehavior,
+    UpdateFloorRightCommand,
     UpdateGridLinesBehavior,
+    UpdateGridLinesCommand,
     UpdateGridResolutionBehavior,
+    UpdateGridResolutionCommand,
     UpdateNameBehavior,
+    UpdateNameCommand,
     UpdatePositionsAtSideBehavior,
+    UpdatePositionsAtSideCommand,
     UpdateSelectedSceneBehavior,
+    UpdateSelectedSceneCommand,
     UpdateShowLegendBehavior,
+    UpdateShowLegendCommand,
     UpdateShowTimestampsBehavior,
+    UpdateShowTimestampsCommand,
     UpdateSnapToGridBehavior,
+    UpdateSnapToGridCommand,
     UpdateSubtitleBehavior,
+    UpdateSubtitleCommand,
     UpdateTransparencyBehavior,
+    UpdateTransparencyCommand,
     UpdateVariationBehavior,
+    UpdateVariationCommand,
 };
 use crate::settings::{
     MaterialSchemeHelper,
@@ -79,6 +102,7 @@ use crate::nav_bar::{
     OpenImageRequestedCommand as NavBarOpenImageRequestedCommand,
     NavBarViewModel,
 };
+use crate::behavior::{Behavior, CompositeDisposable};
 
 use super::{
     MainViewModel,
@@ -128,6 +152,8 @@ pub struct MainPageBinding {
     floor_provider: Rc<RefCell<FloorProvider>>,
     #[allow(dead_code)]
     nav_bar_timer: slint::Timer,
+    #[allow(dead_code)]
+    choreography_settings_disposables: CompositeDisposable,
     open_choreo_sender: Sender<OpenChoreoRequested>,
     open_audio_request_sender: Sender<OpenAudioRequested>,
     open_image_request_sender: Sender<OpenImageRequested>,
@@ -198,113 +224,253 @@ impl MainPageBinding {
 
         let choreography_settings_view_model =
             Rc::new(RefCell::new(ChoreographySettingsViewModel::default()));
-        let load_choreography_settings_behavior = Rc::new(
-            LoadChoreographySettingsBehavior::new(Rc::clone(&deps.global_state_store)),
+        choreography_settings_view_model
+            .borrow_mut()
+            .set_self_handle(Rc::downgrade(&choreography_settings_view_model));
+
+        let (reload_settings_sender, reload_settings_receiver) = crossbeam_channel::unbounded();
+        let (update_selected_scene_sender, update_selected_scene_receiver) =
+            crossbeam_channel::unbounded();
+        let (update_comment_sender, update_comment_receiver) = crossbeam_channel::unbounded();
+        let (update_name_sender, update_name_receiver) = crossbeam_channel::unbounded();
+        let (update_subtitle_sender, update_subtitle_receiver) = crossbeam_channel::unbounded();
+        let (update_date_sender, update_date_receiver) = crossbeam_channel::unbounded();
+        let (update_variation_sender, update_variation_receiver) = crossbeam_channel::unbounded();
+        let (update_author_sender, update_author_receiver) = crossbeam_channel::unbounded();
+        let (update_description_sender, update_description_receiver) = crossbeam_channel::unbounded();
+        let (update_floor_front_sender, update_floor_front_receiver) = crossbeam_channel::unbounded();
+        let (update_floor_back_sender, update_floor_back_receiver) = crossbeam_channel::unbounded();
+        let (update_floor_left_sender, update_floor_left_receiver) = crossbeam_channel::unbounded();
+        let (update_floor_right_sender, update_floor_right_receiver) = crossbeam_channel::unbounded();
+        let (update_grid_resolution_sender, update_grid_resolution_receiver) =
+            crossbeam_channel::unbounded();
+        let (update_draw_path_from_sender, update_draw_path_from_receiver) =
+            crossbeam_channel::unbounded();
+        let (update_draw_path_to_sender, update_draw_path_to_receiver) = crossbeam_channel::unbounded();
+        let (update_grid_lines_sender, update_grid_lines_receiver) = crossbeam_channel::unbounded();
+        let (update_snap_to_grid_sender, update_snap_to_grid_receiver) =
+            crossbeam_channel::unbounded();
+        let (update_floor_color_sender, update_floor_color_receiver) = crossbeam_channel::unbounded();
+        let (update_show_timestamps_sender, update_show_timestamps_receiver) =
+            crossbeam_channel::unbounded();
+        let (update_show_legend_sender, update_show_legend_receiver) = crossbeam_channel::unbounded();
+        let (update_positions_at_side_sender, update_positions_at_side_receiver) =
+            crossbeam_channel::unbounded();
+        let (update_transparency_sender, update_transparency_receiver) = crossbeam_channel::unbounded();
+
+        let load_choreography_settings_behavior = LoadChoreographySettingsBehavior::new_with_receiver(
+            Rc::clone(&deps.global_state_store),
+            reload_settings_receiver,
         );
-        let update_selected_scene_behavior = Rc::new(RefCell::new(
-            UpdateSelectedSceneBehavior::new(Rc::clone(&deps.global_state_store)),
-        ));
-        let update_comment_behavior = Rc::new(UpdateCommentBehavior::new(
+        let update_selected_scene_behavior = UpdateSelectedSceneBehavior::new_with_receiver(
+            Rc::clone(&deps.global_state_store),
+            update_selected_scene_receiver,
+        );
+        let update_comment_behavior = UpdateCommentBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_name_behavior = Rc::new(UpdateNameBehavior::new(
+            update_comment_receiver,
+        );
+        let update_name_behavior = UpdateNameBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_subtitle_behavior = Rc::new(UpdateSubtitleBehavior::new(
+            update_name_receiver,
+        );
+        let update_subtitle_behavior = UpdateSubtitleBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_date_behavior = Rc::new(UpdateDateBehavior::new(
+            update_subtitle_receiver,
+        );
+        let update_date_behavior = UpdateDateBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_variation_behavior = Rc::new(UpdateVariationBehavior::new(
+            update_date_receiver,
+        );
+        let update_variation_behavior = UpdateVariationBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_author_behavior = Rc::new(UpdateAuthorBehavior::new(
+            update_variation_receiver,
+        );
+        let update_author_behavior = UpdateAuthorBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_description_behavior = Rc::new(UpdateDescriptionBehavior::new(
+            update_author_receiver,
+        );
+        let update_description_behavior = UpdateDescriptionBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_floor_front_behavior = Rc::new(UpdateFloorFrontBehavior::new(
+            update_description_receiver,
+        );
+        let update_floor_front_behavior = UpdateFloorFrontBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_floor_back_behavior = Rc::new(UpdateFloorBackBehavior::new(
+            update_floor_front_receiver,
+        );
+        let update_floor_back_behavior = UpdateFloorBackBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_floor_left_behavior = Rc::new(UpdateFloorLeftBehavior::new(
+            update_floor_back_receiver,
+        );
+        let update_floor_left_behavior = UpdateFloorLeftBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_floor_right_behavior = Rc::new(UpdateFloorRightBehavior::new(
+            update_floor_left_receiver,
+        );
+        let update_floor_right_behavior = UpdateFloorRightBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_grid_resolution_behavior = Rc::new(UpdateGridResolutionBehavior::new(
+            update_floor_right_receiver,
+        );
+        let update_grid_resolution_behavior = UpdateGridResolutionBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_draw_path_from_behavior = Rc::new(UpdateDrawPathFromBehavior::new(
+            update_grid_resolution_receiver,
+        );
+        let update_draw_path_from_behavior = UpdateDrawPathFromBehavior::new_with_receiver(
             shared_preferences.clone(),
             redraw_floor_sender.clone(),
-        ));
-        let update_draw_path_to_behavior = Rc::new(UpdateDrawPathToBehavior::new(
+            update_draw_path_from_receiver,
+        );
+        let update_draw_path_to_behavior = UpdateDrawPathToBehavior::new_with_receiver(
             shared_preferences.clone(),
             redraw_floor_sender.clone(),
-        ));
-        let update_grid_lines_behavior = Rc::new(UpdateGridLinesBehavior::new(
+            update_draw_path_to_receiver,
+        );
+        let update_grid_lines_behavior = UpdateGridLinesBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_snap_to_grid_behavior = Rc::new(UpdateSnapToGridBehavior::new(
+            update_grid_lines_receiver,
+        );
+        let update_snap_to_grid_behavior = UpdateSnapToGridBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             shared_preferences.clone(),
             redraw_floor_sender.clone(),
-        ));
-        let update_floor_color_behavior = Rc::new(UpdateFloorColorBehavior::new(
+            update_snap_to_grid_receiver,
+        );
+        let update_floor_color_behavior = UpdateFloorColorBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
-        let update_show_timestamps_behavior = Rc::new(UpdateShowTimestampsBehavior::new(
+            update_floor_color_receiver,
+        );
+        let update_show_timestamps_behavior = UpdateShowTimestampsBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             shared_preferences.clone(),
             redraw_floor_sender.clone(),
             show_timestamps_sender.clone(),
-        ));
-        let update_show_legend_behavior = Rc::new(UpdateShowLegendBehavior::new(
+            update_show_timestamps_receiver,
+        );
+        let update_show_legend_behavior = UpdateShowLegendBehavior::new_with_receiver(
             shared_preferences.clone(),
             redraw_floor_sender.clone(),
-        ));
-        let update_positions_at_side_behavior = Rc::new(UpdatePositionsAtSideBehavior::new(
+            update_show_legend_receiver,
+        );
+        let update_positions_at_side_behavior = UpdatePositionsAtSideBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             shared_preferences,
             redraw_floor_sender.clone(),
-        ));
-        let update_transparency_behavior = Rc::new(UpdateTransparencyBehavior::new(
+            update_positions_at_side_receiver,
+        );
+        let update_transparency_behavior = UpdateTransparencyBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             redraw_floor_sender.clone(),
-        ));
+            update_transparency_receiver,
+        );
 
+        let mut choreography_settings_disposables = CompositeDisposable::new();
         {
             let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
-            load_choreography_settings_behavior.load(&mut choreography_settings_view_model);
-            update_draw_path_from_behavior.initialize(&mut choreography_settings_view_model);
-            update_draw_path_to_behavior.initialize(&mut choreography_settings_view_model);
-            update_snap_to_grid_behavior.initialize(&mut choreography_settings_view_model);
-            update_show_timestamps_behavior.initialize(&mut choreography_settings_view_model);
-            update_show_legend_behavior.initialize(&mut choreography_settings_view_model);
-            update_positions_at_side_behavior.initialize();
-            update_selected_scene_behavior
-                .borrow_mut()
-                .sync_from_selected(&mut choreography_settings_view_model);
+            load_choreography_settings_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_selected_scene_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_comment_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_name_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_subtitle_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_date_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_variation_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_author_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_description_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_floor_front_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_floor_back_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_floor_left_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_floor_right_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_grid_resolution_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_draw_path_from_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_draw_path_to_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_grid_lines_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_snap_to_grid_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_floor_color_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_show_timestamps_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_show_legend_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_positions_at_side_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
+            update_transparency_behavior.activate(
+                &mut choreography_settings_view_model,
+                &mut choreography_settings_disposables,
+            );
         }
 
         let mut main_provider = MainViewModelProvider::new(MainViewModelProviderDependencies {
@@ -367,20 +533,16 @@ impl MainPageBinding {
             let floor_provider_for_change = Rc::clone(&floor_provider);
             let choreography_settings_view_model_for_change =
                 Rc::clone(&choreography_settings_view_model);
-            let load_choreography_settings_behavior_for_change =
-                Rc::clone(&load_choreography_settings_behavior);
-            let update_selected_scene_behavior_for_change =
-                Rc::clone(&update_selected_scene_behavior);
+            let reload_settings_sender = reload_settings_sender.clone();
+            let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             let on_change = Rc::new(move || {
                 let scenes_view_model = Rc::clone(&scenes_view_model_for_change);
                 let floor_provider = Rc::clone(&floor_provider_for_change);
                 let choreography_settings_view_model =
                     Rc::clone(&choreography_settings_view_model_for_change);
-                let load_choreography_settings_behavior =
-                    Rc::clone(&load_choreography_settings_behavior_for_change);
-                let update_selected_scene_behavior =
-                    Rc::clone(&update_selected_scene_behavior_for_change);
+                let reload_settings_sender = reload_settings_sender.clone();
+                let update_selected_scene_sender = update_selected_scene_sender.clone();
                 let view_weak = view_weak.clone();
                 slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
                     if let Some(view) = view_weak.upgrade()
@@ -389,13 +551,11 @@ impl MainPageBinding {
                         apply_scenes_view_model(&view, &scenes_view_model_snapshot);
                         drop(scenes_view_model_snapshot);
                         floor_provider.borrow().apply_to_view(&view);
-                        let mut choreography_settings_view_model =
-                            choreography_settings_view_model.borrow_mut();
-                        load_choreography_settings_behavior
-                            .load(&mut choreography_settings_view_model);
-                        update_selected_scene_behavior
-                            .borrow_mut()
-                            .sync_from_selected(&mut choreography_settings_view_model);
+                        let _ = reload_settings_sender.send(ReloadChoreographySettingsCommand);
+                        let _ = update_selected_scene_sender
+                            .send(UpdateSelectedSceneCommand::SyncFromSelected);
+                        let choreography_settings_view_model =
+                            choreography_settings_view_model.borrow();
                         apply_choreography_settings_view_model(
                             &view,
                             &choreography_settings_view_model,
@@ -420,6 +580,26 @@ impl MainPageBinding {
                 });
             });
             nav_bar.borrow_mut().set_on_change(Some(on_change));
+        }
+
+        {
+            let choreography_settings_view_model_for_change =
+                Rc::clone(&choreography_settings_view_model);
+            let view_weak = view_weak.clone();
+            let on_change = Rc::new(move || {
+                let choreography_settings_view_model =
+                    Rc::clone(&choreography_settings_view_model_for_change);
+                let view_weak = view_weak.clone();
+                slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
+                    if let Some(view) = view_weak.upgrade() {
+                        let choreography_settings_view_model = choreography_settings_view_model.borrow();
+                        apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    }
+                });
+            });
+            choreography_settings_view_model
+                .borrow_mut()
+                .set_on_change(Some(on_change));
         }
 
         let nav_bar_timer = {
@@ -586,14 +766,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_selected_scene_behavior = Rc::clone(&update_selected_scene_behavior);
+            let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_scene_name(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_name = value.to_string();
-                update_selected_scene_behavior
-                    .borrow_mut()
-                    .update_scene_name(&mut choreography_settings_view_model);
+                let _ = update_selected_scene_sender.send(UpdateSelectedSceneCommand::SceneName(
+                    choreography_settings_view_model.scene_name.clone(),
+                ));
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -602,14 +782,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_selected_scene_behavior = Rc::clone(&update_selected_scene_behavior);
+            let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_scene_text(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_text = value.to_string();
-                update_selected_scene_behavior
-                    .borrow_mut()
-                    .update_scene_text(&mut choreography_settings_view_model);
+                let _ = update_selected_scene_sender.send(UpdateSelectedSceneCommand::SceneText(
+                    choreography_settings_view_model.scene_text.clone(),
+                ));
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -618,14 +798,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_selected_scene_behavior = Rc::clone(&update_selected_scene_behavior);
+            let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_scene_fixed_positions(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_fixed_positions = value;
-                update_selected_scene_behavior
-                    .borrow_mut()
-                    .update_scene_fixed_positions(&mut choreography_settings_view_model);
+                let _ = update_selected_scene_sender.send(
+                    UpdateSelectedSceneCommand::SceneFixedPositions(value),
+                );
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -634,14 +814,15 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_selected_scene_behavior = Rc::clone(&update_selected_scene_behavior);
+            let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_scene_has_timestamp(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_has_timestamp = value;
-                update_selected_scene_behavior
-                    .borrow_mut()
-                    .update_scene_timestamp(&mut choreography_settings_view_model);
+                let _ = update_selected_scene_sender.send(UpdateSelectedSceneCommand::SceneTimestamp {
+                    has_timestamp: choreography_settings_view_model.scene_has_timestamp,
+                    seconds: choreography_settings_view_model.scene_timestamp_seconds,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -650,14 +831,15 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_selected_scene_behavior = Rc::clone(&update_selected_scene_behavior);
+            let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_scene_timestamp_parts(move |minutes, seconds, millis| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.set_scene_timestamp_parts(minutes, seconds, millis);
-                update_selected_scene_behavior
-                    .borrow_mut()
-                    .update_scene_timestamp(&mut choreography_settings_view_model);
+                let _ = update_selected_scene_sender.send(UpdateSelectedSceneCommand::SceneTimestamp {
+                    has_timestamp: choreography_settings_view_model.scene_has_timestamp,
+                    seconds: choreography_settings_view_model.scene_timestamp_seconds,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -666,14 +848,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_selected_scene_behavior = Rc::clone(&update_selected_scene_behavior);
+            let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_scene_color(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_color = choreo_color_from_slint(value);
-                update_selected_scene_behavior
-                    .borrow_mut()
-                    .update_scene_color(&mut choreography_settings_view_model);
+                let _ = update_selected_scene_sender.send(UpdateSelectedSceneCommand::SceneColor(
+                    choreography_settings_view_model.scene_color.clone(),
+                ));
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -682,12 +864,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_comment_behavior = Rc::clone(&update_comment_behavior);
+            let update_comment_sender = update_comment_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_comment(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.comment = value.to_string();
-                update_comment_behavior.update_comment(choreography_settings_view_model.comment.as_str());
+                let _ = update_comment_sender.send(UpdateCommentCommand {
+                    value: choreography_settings_view_model.comment.clone(),
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -696,12 +880,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_name_behavior = Rc::clone(&update_name_behavior);
+            let update_name_sender = update_name_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_name(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.name = value.to_string();
-                update_name_behavior.update_name(choreography_settings_view_model.name.as_str());
+                let _ = update_name_sender.send(UpdateNameCommand {
+                    value: choreography_settings_view_model.name.clone(),
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -710,13 +896,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_subtitle_behavior = Rc::clone(&update_subtitle_behavior);
+            let update_subtitle_sender = update_subtitle_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_subtitle(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.subtitle = value.to_string();
-                update_subtitle_behavior
-                    .update_subtitle(choreography_settings_view_model.subtitle.as_str());
+                let _ = update_subtitle_sender.send(UpdateSubtitleCommand {
+                    value: choreography_settings_view_model.subtitle.clone(),
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -725,7 +912,7 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_date_behavior = Rc::clone(&update_date_behavior);
+            let update_date_sender = update_date_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_date_parts(move |year, month, day| {
                 let Some(new_date) = crate::date::build_date(year, month, day) else {
@@ -733,7 +920,9 @@ impl MainPageBinding {
                 };
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.date = new_date;
-                update_date_behavior.update_date_parts(year, month, day);
+                let _ = update_date_sender.send(UpdateDateCommand {
+                    value: choreography_settings_view_model.date,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -742,13 +931,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_variation_behavior = Rc::clone(&update_variation_behavior);
+            let update_variation_sender = update_variation_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_variation(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.variation = value.to_string();
-                update_variation_behavior
-                    .update_variation(choreography_settings_view_model.variation.as_str());
+                let _ = update_variation_sender.send(UpdateVariationCommand {
+                    value: choreography_settings_view_model.variation.clone(),
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -757,12 +947,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_author_behavior = Rc::clone(&update_author_behavior);
+            let update_author_sender = update_author_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_author(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.author = value.to_string();
-                update_author_behavior.update_author(choreography_settings_view_model.author.as_str());
+                let _ = update_author_sender.send(UpdateAuthorCommand {
+                    value: choreography_settings_view_model.author.clone(),
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -771,13 +963,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_description_behavior = Rc::clone(&update_description_behavior);
+            let update_description_sender = update_description_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_description(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.description = value.to_string();
-                update_description_behavior
-                    .update_description(choreography_settings_view_model.description.as_str());
+                let _ = update_description_sender.send(UpdateDescriptionCommand {
+                    value: choreography_settings_view_model.description.clone(),
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -786,12 +979,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_positions_at_side_behavior = Rc::clone(&update_positions_at_side_behavior);
+            let update_positions_at_side_sender = update_positions_at_side_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_positions_at_side(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.positions_at_side = value;
-                update_positions_at_side_behavior.update_positions_at_side(value);
+                let _ = update_positions_at_side_sender.send(UpdatePositionsAtSideCommand {
+                    value,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -800,12 +995,13 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_draw_path_from_behavior = Rc::clone(&update_draw_path_from_behavior);
+            let update_draw_path_from_sender = update_draw_path_from_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_draw_path_from(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
-                update_draw_path_from_behavior
-                    .update_draw_path_from(&mut choreography_settings_view_model, value);
+                let choreography_settings_view_model = choreography_settings_view_model.borrow();
+                let _ = update_draw_path_from_sender.send(UpdateDrawPathFromCommand {
+                    value,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -814,12 +1010,13 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_draw_path_to_behavior = Rc::clone(&update_draw_path_to_behavior);
+            let update_draw_path_to_sender = update_draw_path_to_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_draw_path_to(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
-                update_draw_path_to_behavior
-                    .update_draw_path_to(&mut choreography_settings_view_model, value);
+                let choreography_settings_view_model = choreography_settings_view_model.borrow();
+                let _ = update_draw_path_to_sender.send(UpdateDrawPathToCommand {
+                    value,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -828,12 +1025,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_grid_lines_behavior = Rc::clone(&update_grid_lines_behavior);
+            let update_grid_lines_sender = update_grid_lines_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_grid_lines(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.grid_lines = value;
-                update_grid_lines_behavior.update_grid_lines(value);
+                let _ = update_grid_lines_sender.send(UpdateGridLinesCommand {
+                    value,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -842,12 +1041,13 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_snap_to_grid_behavior = Rc::clone(&update_snap_to_grid_behavior);
+            let update_snap_to_grid_sender = update_snap_to_grid_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_snap_to_grid(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
-                update_snap_to_grid_behavior
-                    .update_snap_to_grid(&mut choreography_settings_view_model, value);
+                let choreography_settings_view_model = choreography_settings_view_model.borrow();
+                let _ = update_snap_to_grid_sender.send(UpdateSnapToGridCommand {
+                    value,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -856,12 +1056,13 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_show_timestamps_behavior = Rc::clone(&update_show_timestamps_behavior);
+            let update_show_timestamps_sender = update_show_timestamps_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_show_timestamps(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
-                update_show_timestamps_behavior
-                    .update_show_timestamps(&mut choreography_settings_view_model, value);
+                let choreography_settings_view_model = choreography_settings_view_model.borrow();
+                let _ = update_show_timestamps_sender.send(UpdateShowTimestampsCommand {
+                    value,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -870,12 +1071,13 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_show_legend_behavior = Rc::clone(&update_show_legend_behavior);
+            let update_show_legend_sender = update_show_legend_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_show_legend(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
-                update_show_legend_behavior
-                    .update_show_legend(&mut choreography_settings_view_model, value);
+                let choreography_settings_view_model = choreography_settings_view_model.borrow();
+                let _ = update_show_legend_sender.send(UpdateShowLegendCommand {
+                    value,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -884,12 +1086,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_transparency_behavior = Rc::clone(&update_transparency_behavior);
+            let update_transparency_sender = update_transparency_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_transparency(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.transparency = value as f64;
-                update_transparency_behavior.update_transparency(value as f64);
+                let _ = update_transparency_sender.send(UpdateTransparencyCommand {
+                    value: value as f64,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -898,13 +1102,15 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_floor_color_behavior = Rc::clone(&update_floor_color_behavior);
+            let update_floor_color_sender = update_floor_color_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_floor_color(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 let floor_color = choreo_color_from_slint(value);
                 choreography_settings_view_model.floor_color = floor_color.clone();
-                update_floor_color_behavior.update_floor_color(floor_color);
+                let _ = update_floor_color_sender.send(UpdateFloorColorCommand {
+                    value: floor_color,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -913,13 +1119,15 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_floor_front_behavior = Rc::clone(&update_floor_front_behavior);
+            let update_floor_front_sender = update_floor_front_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_floor_front(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 let clamped = value.clamp(1, 100);
                 choreography_settings_view_model.floor_front = clamped;
-                update_floor_front_behavior.update_floor_front(clamped);
+                let _ = update_floor_front_sender.send(UpdateFloorFrontCommand {
+                    value: clamped,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -928,13 +1136,15 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_floor_back_behavior = Rc::clone(&update_floor_back_behavior);
+            let update_floor_back_sender = update_floor_back_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_floor_back(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 let clamped = value.clamp(1, 100);
                 choreography_settings_view_model.floor_back = clamped;
-                update_floor_back_behavior.update_floor_back(clamped);
+                let _ = update_floor_back_sender.send(UpdateFloorBackCommand {
+                    value: clamped,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -943,13 +1153,15 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_floor_left_behavior = Rc::clone(&update_floor_left_behavior);
+            let update_floor_left_sender = update_floor_left_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_floor_left(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 let clamped = value.clamp(1, 100);
                 choreography_settings_view_model.floor_left = clamped;
-                update_floor_left_behavior.update_floor_left(clamped);
+                let _ = update_floor_left_sender.send(UpdateFloorLeftCommand {
+                    value: clamped,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -958,13 +1170,15 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_floor_right_behavior = Rc::clone(&update_floor_right_behavior);
+            let update_floor_right_sender = update_floor_right_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_floor_right(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 let clamped = value.clamp(1, 100);
                 choreography_settings_view_model.floor_right = clamped;
-                update_floor_right_behavior.update_floor_right(clamped);
+                let _ = update_floor_right_sender.send(UpdateFloorRightCommand {
+                    value: clamped,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -973,12 +1187,14 @@ impl MainPageBinding {
 
         {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
-            let update_grid_resolution_behavior = Rc::clone(&update_grid_resolution_behavior);
+            let update_grid_resolution_sender = update_grid_resolution_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_grid_resolution(move |value| {
                 let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.set_grid_resolution(value);
-                update_grid_resolution_behavior.update_grid_resolution(value);
+                let _ = update_grid_resolution_sender.send(UpdateGridResolutionCommand {
+                    value,
+                });
                 if let Some(view) = view_weak.upgrade() {
                     apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
                 }
@@ -1077,6 +1293,7 @@ impl MainPageBinding {
             floor_view_model,
             floor_provider,
             nav_bar_timer,
+            choreography_settings_disposables,
             open_choreo_sender,
             open_audio_request_sender,
             open_image_request_sender,

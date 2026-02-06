@@ -1,24 +1,43 @@
 use std::rc::Rc;
+use std::time::Duration;
 
-use crate::behavior::{Behavior, CompositeDisposable};
+use crossbeam_channel::Receiver;
+use slint::TimerMode;
+
+use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
 use super::mapper::{map_from_choreography, reset_view_model, update_selected_scene};
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
+use super::messages::ReloadChoreographySettingsCommand;
 use nject::injectable;
 
 #[injectable]
 pub struct LoadChoreographySettingsBehavior {
     global_state: Rc<GlobalStateActor>,
+    receiver: Option<Receiver<ReloadChoreographySettingsCommand>>,
 }
 
 impl LoadChoreographySettingsBehavior {
     pub fn new(global_state: Rc<GlobalStateActor>) -> Self {
-        Self { global_state }
+        Self {
+            global_state,
+            receiver: None,
+        }
     }
 
-    pub fn load(&self, view_model: &mut ChoreographySettingsViewModel) {
+    pub fn new_with_receiver(
+        global_state: Rc<GlobalStateActor>,
+        receiver: Receiver<ReloadChoreographySettingsCommand>,
+    ) -> Self {
+        Self {
+            global_state,
+            receiver: Some(receiver),
+        }
+    }
+
+    fn load(&self, view_model: &mut ChoreographySettingsViewModel) {
         let Some(snapshot) = self.global_state.try_with_state(|global_state| {
             (global_state.choreography.clone(), global_state.selected_scene.clone())
         }) else {
@@ -42,13 +61,33 @@ impl Behavior<ChoreographySettingsViewModel> for LoadChoreographySettingsBehavio
     fn activate(
         &self,
         view_model: &mut ChoreographySettingsViewModel,
-        _disposables: &mut CompositeDisposable,
+        disposables: &mut CompositeDisposable,
     ) {
         BehaviorLog::behavior_activated(
             "LoadChoreographySettingsBehavior",
             "ChoreographySettingsViewModel",
         );
         self.load(view_model);
+        let Some(receiver) = self.receiver.clone() else {
+            return;
+        };
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
+            return;
+        };
+        let behavior = Self {
+            global_state: self.global_state.clone(),
+            receiver: None,
+        };
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            while receiver.try_recv().is_ok() {
+                let mut view_model = view_model_handle.borrow_mut();
+                behavior.load(&mut view_model);
+                view_model.notify_changed();
+            }
+        });
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
 

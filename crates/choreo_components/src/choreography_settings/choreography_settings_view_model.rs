@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::{Rc, Weak};
+
 use choreo_master_mobile_json::Color;
 use crate::date;
 use time::Date;
@@ -47,6 +50,8 @@ pub struct ChoreographySettingsViewModel {
     pub scene_timestamp_seconds_part: i32,
     pub scene_timestamp_millis: i32,
     pub scene_color: Color,
+    on_change: Option<Rc<dyn Fn()>>,
+    self_handle: Option<Weak<RefCell<ChoreographySettingsViewModel>>>,
     is_updating_scene_timestamp: bool,
     disposables: CompositeDisposable,
 }
@@ -99,6 +104,8 @@ impl ChoreographySettingsViewModel {
             scene_timestamp_seconds_part: 0,
             scene_timestamp_millis: 0,
             scene_color: Color::transparent(),
+            on_change: None,
+            self_handle: None,
             is_updating_scene_timestamp: false,
             disposables: CompositeDisposable::new(),
         };
@@ -171,6 +178,23 @@ impl ChoreographySettingsViewModel {
         self.is_updating_scene_timestamp = false;
     }
 
+    pub fn set_on_change(&mut self, handler: Option<Rc<dyn Fn()>>) {
+        self.on_change = handler;
+    }
+
+    pub fn notify_changed(&self) {
+        if let Some(handler) = self.on_change.as_ref() {
+            handler();
+        }
+    }
+
+    pub fn set_self_handle(&mut self, handle: Weak<RefCell<ChoreographySettingsViewModel>>) {
+        self.self_handle = Some(handle);
+    }
+
+    pub fn self_handle(&self) -> Option<Weak<RefCell<ChoreographySettingsViewModel>>> {
+        self.self_handle.clone()
+    }
 }
 
 impl Drop for ChoreographySettingsViewModel {

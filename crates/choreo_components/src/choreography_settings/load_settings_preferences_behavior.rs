@@ -37,5 +37,3 @@ impl<P: Preferences> Behavior<SettingsModel> for LoadSettingsPreferencesBehavior
         self.load(settings);
     }
 }
-
-

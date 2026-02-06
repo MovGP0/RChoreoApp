@@ -29,7 +29,34 @@ mod update_variation_behavior;
 pub use choreography_settings_view_model::{ChoreographySettingsViewModel, GridSizeOption};
 pub use load_choreography_settings_behavior::LoadChoreographySettingsBehavior;
 pub use load_settings_preferences_behavior::LoadSettingsPreferencesBehavior;
-pub use messages::{RedrawFloorCommand, ShowTimestampsChangedEvent};
+pub use messages::{
+    RedrawFloorCommand,
+    ReloadChoreographySettingsCommand,
+    ReloadSettingsPreferencesCommand,
+    ShowTimestampsChangedEvent,
+    UpdateAuthorCommand,
+    UpdateCommentCommand,
+    UpdateDateCommand,
+    UpdateDescriptionCommand,
+    UpdateDrawPathFromCommand,
+    UpdateDrawPathToCommand,
+    UpdateFloorBackCommand,
+    UpdateFloorColorCommand,
+    UpdateFloorFrontCommand,
+    UpdateFloorLeftCommand,
+    UpdateFloorRightCommand,
+    UpdateGridLinesCommand,
+    UpdateGridResolutionCommand,
+    UpdateNameCommand,
+    UpdatePositionsAtSideCommand,
+    UpdateSelectedSceneCommand,
+    UpdateShowLegendCommand,
+    UpdateShowTimestampsCommand,
+    UpdateSnapToGridCommand,
+    UpdateSubtitleCommand,
+    UpdateTransparencyCommand,
+    UpdateVariationCommand,
+};
 pub use update_author_behavior::UpdateAuthorBehavior;
 pub use update_comment_behavior::UpdateCommentBehavior;
 pub use update_date_behavior::UpdateDateBehavior;
