@@ -412,7 +412,7 @@ export component FloorCanvasView inherits Rectangle {
                     if position.has_dancer && position.shortcut != "" : Text {
                         text: position.shortcut;
                         color: position.text_color;
-                        font-size: root.dancer_text_size * content.zoom;
+                        font-size: (parent.width < parent.height ? parent.width : parent.height) * 0.45;
                         horizontal-alignment: center;
                         vertical-alignment: center;
                         width: parent.width;
