@@ -509,7 +509,15 @@ fn build_selection_segments(
         return Vec::new();
     };
 
-    build_dashed_segments_from_points(&points, 6.0, 6.0, color, 2.0, render_transform)
+    let (dash_length, gap_length) = dashed_lengths_in_floor_units(render_transform);
+    build_dashed_segments_from_points(
+        &points,
+        dash_length,
+        gap_length,
+        color,
+        2.0,
+        render_transform,
+    )
 }
 
 fn build_curves_between_scenes(
@@ -652,14 +660,30 @@ fn build_dashed_curve_segments(
     render_transform: &FloorRenderTransform,
 ) -> Vec<LineSegment> {
     let points = build_curve_points(from_position, to_position, 64);
+    let (dash_length, gap_length) = dashed_lengths_in_floor_units(render_transform);
     build_dashed_segments_from_points(
         &points,
-        6.0,
-        6.0,
+        dash_length,
+        gap_length,
         color,
         thickness,
         render_transform,
     )
+}
+
+fn dashed_lengths_in_floor_units(render_transform: &FloorRenderTransform) -> (f64, f64) {
+    const DASH_PX: f64 = 12.0;
+    const GAP_PX: f64 = 8.0;
+    const MIN_FLOOR_UNITS: f64 = 0.05;
+
+    let scale = render_transform.scale as f64;
+    if scale <= f64::EPSILON {
+        return (MIN_FLOOR_UNITS, MIN_FLOOR_UNITS);
+    }
+
+    let dash = (DASH_PX / scale).max(MIN_FLOOR_UNITS);
+    let gap = (GAP_PX / scale).max(MIN_FLOOR_UNITS);
+    (dash, gap)
 }
 
 fn build_curve_points(
