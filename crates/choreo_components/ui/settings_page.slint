@@ -1,4 +1,5 @@
-import { MaterialPalette, MaterialText, MaterialTypography, ScrollView, Switch, TextField, Vertical, Horizontal } from "@material";
+import { MaterialPalette, MaterialText, MaterialTypography, ScrollView, Switch, Vertical, Horizontal } from "@material";
+import { ColorPicker } from "color_picker.slint";
 import { Translations } from "translations.slint";
 
 export component SettingsPage inherits Rectangle {
@@ -8,7 +9,6 @@ export component SettingsPage inherits Rectangle {
     in property <string> primary_color_text: Translations.settings_primary_color_label;
     in property <string> secondary_color_text: Translations.settings_secondary_color_label;
     in property <string> tertiary_color_text: Translations.settings_tertiary_color_label;
-    in property <string> color_hex_label: Translations.settings_color_hex_label;
 
     in property <bool> use_system_theme;
     in property <bool> is_dark_mode;
@@ -20,25 +20,21 @@ export component SettingsPage inherits Rectangle {
     in property <color> secondary_color;
     in property <color> tertiary_color;
 
-    in property <string> primary_color_hex;
-    in property <string> secondary_color_hex;
-    in property <string> tertiary_color_hex;
-
     callback update_use_system_theme(bool);
     callback update_is_dark_mode(bool);
     callback update_use_primary_color(bool);
     callback update_use_secondary_color(bool);
     callback update_use_tertiary_color(bool);
-    callback update_primary_color_hex(string);
-    callback update_secondary_color_hex(string);
-    callback update_tertiary_color_hex(string);
+    callback update_primary_color(color);
+    callback update_secondary_color(color);
+    callback update_tertiary_color(color);
 
     background: MaterialPalette.surface_container_low;
 
     ScrollView {
         Vertical {
             padding: 24px;
-            spacing: 20px;
+            spacing: 12px;
 
             MaterialText {
                 text: title_text;
@@ -46,119 +42,207 @@ export component SettingsPage inherits Rectangle {
                 font-weight: MaterialTypography.headline_small.font_weight;
             }
 
-            Horizontal {
-                spacing: 12px;
-                MaterialText {
-                    text: use_system_theme_text;
-                    font-size: MaterialTypography.body_medium.font_size;
-                    font-weight: MaterialTypography.body_medium.font_weight;
-                }
-                Switch {
-                    checked: use_system_theme;
-                    checked_state_changed(value) => { update_use_system_theme(value); }
+            Rectangle {
+                background: MaterialPalette.surface_container;
+                border-width: 1px;
+                border-color: MaterialPalette.outline_variant;
+                border-radius: 8px;
+
+                Vertical {
+                    padding: 12px;
+                    spacing: 8px;
+
+                    Horizontal {
+                        spacing: 12px;
+
+                        MaterialText {
+                            text: use_system_theme_text;
+                            horizontal-stretch: 1;
+                            font-size: MaterialTypography.body_medium.font_size;
+                            font-weight: MaterialTypography.body_medium.font_weight;
+                        }
+                        Switch {
+                            horizontal-stretch: 0;
+                            width: 108px;
+                            height: 48px;
+                            checked: use_system_theme;
+                            checked_state_changed(value) => { update_use_system_theme(value); }
+                        }
+                    }
+
+                    Horizontal {
+                        spacing: 12px;
+
+                        MaterialText {
+                            text: dark_mode_text;
+                            horizontal-stretch: 1;
+                            font-size: MaterialTypography.body_medium.font_size;
+                            font-weight: MaterialTypography.body_medium.font_weight;
+                        }
+                        Switch {
+                            horizontal-stretch: 0;
+                            width: 108px;
+                            height: 48px;
+                            enabled: !use_system_theme;
+                            checked: is_dark_mode;
+                            checked_state_changed(value) => { update_is_dark_mode(value); }
+                        }
+                    }
                 }
             }
 
-            Horizontal {
-                spacing: 12px;
-                MaterialText {
-                    text: dark_mode_text;
-                    font-size: MaterialTypography.body_medium.font_size;
-                    font-weight: MaterialTypography.body_medium.font_weight;
-                }
-                Switch {
-                    enabled: !use_system_theme;
-                    checked: is_dark_mode;
-                    checked_state_changed(value) => { update_is_dark_mode(value); }
+            Rectangle {
+                background: MaterialPalette.surface_container;
+                border-width: 1px;
+                border-color: MaterialPalette.outline_variant;
+                border-radius: 8px;
+
+                Vertical {
+                    padding: 12px;
+                    spacing: 8px;
+
+                    Horizontal {
+                        spacing: 12px;
+
+                        MaterialText {
+                            text: primary_color_text;
+                            horizontal-stretch: 1;
+                            font-size: MaterialTypography.body_medium.font_size;
+                            font-weight: MaterialTypography.body_medium.font_weight;
+                        }
+                        Switch {
+                            horizontal-stretch: 0;
+                            width: 108px;
+                            height: 48px;
+                            checked: use_primary_color;
+                            checked_state_changed(value) => { update_use_primary_color(value); }
+                        }
+                    }
+
+                    Horizontal {
+                        spacing: 12px;
+
+                        Rectangle {
+                            width: 108px;
+                            height: 36px;
+                            border-radius: 6px;
+                            background: primary_color;
+                        }
+                        ColorPicker {
+                            horizontal-stretch: 1;
+                            opacity: use_primary_color ? 1.0 : 0.45;
+                            selected_color: primary_color;
+                            color_changed(value) => {
+                                if (root.use_primary_color) {
+                                    update_primary_color(value);
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            Horizontal {
-                spacing: 12px;
-                MaterialText {
-                    text: primary_color_text;
-                    font-size: MaterialTypography.body_medium.font_size;
-                    font-weight: MaterialTypography.body_medium.font_weight;
-                }
-                Switch {
-                    checked: use_primary_color;
-                    checked_state_changed(value) => { update_use_primary_color(value); }
+            Rectangle {
+                background: MaterialPalette.surface_container;
+                border-width: 1px;
+                border-color: MaterialPalette.outline_variant;
+                border-radius: 8px;
+
+                Vertical {
+                    padding: 12px;
+                    spacing: 8px;
+
+                    Horizontal {
+                        spacing: 12px;
+
+                        MaterialText {
+                            text: secondary_color_text;
+                            horizontal-stretch: 1;
+                            font-size: MaterialTypography.body_medium.font_size;
+                            font-weight: MaterialTypography.body_medium.font_weight;
+                        }
+                        Switch {
+                            horizontal-stretch: 0;
+                            width: 108px;
+                            height: 48px;
+                            enabled: use_primary_color;
+                            checked: use_secondary_color;
+                            checked_state_changed(value) => { update_use_secondary_color(value); }
+                        }
+                    }
+
+                    Horizontal {
+                        spacing: 12px;
+
+                        Rectangle {
+                            width: 108px;
+                            height: 36px;
+                            border-radius: 6px;
+                            background: secondary_color;
+                        }
+                        ColorPicker {
+                            horizontal-stretch: 1;
+                            opacity: use_secondary_color ? 1.0 : 0.45;
+                            selected_color: secondary_color;
+                            color_changed(value) => {
+                                if (root.use_secondary_color) {
+                                    update_secondary_color(value);
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            Horizontal {
-                spacing: 12px;
-                Rectangle {
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 6px;
-                    background: primary_color;
-                }
-                TextField {
-                    label: color_hex_label;
-                    text: primary_color_hex;
-                    enabled: use_primary_color;
-                    edited(value) => { update_primary_color_hex(value); }
-                }
-            }
+            Rectangle {
+                background: MaterialPalette.surface_container;
+                border-width: 1px;
+                border-color: MaterialPalette.outline_variant;
+                border-radius: 8px;
 
-            Horizontal {
-                spacing: 12px;
-                MaterialText {
-                    text: secondary_color_text;
-                    font-size: MaterialTypography.body_medium.font_size;
-                    font-weight: MaterialTypography.body_medium.font_weight;
-                }
-                Switch {
-                    enabled: use_primary_color;
-                    checked: use_secondary_color;
-                    checked_state_changed(value) => { update_use_secondary_color(value); }
-                }
-            }
+                Vertical {
+                    padding: 12px;
+                    spacing: 8px;
 
-            Horizontal {
-                spacing: 12px;
-                Rectangle {
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 6px;
-                    background: secondary_color;
-                }
-                TextField {
-                    label: color_hex_label;
-                    text: secondary_color_hex;
-                    enabled: use_secondary_color;
-                    edited(value) => { update_secondary_color_hex(value); }
-                }
-            }
+                    Horizontal {
+                        spacing: 12px;
 
-            Horizontal {
-                spacing: 12px;
-                MaterialText {
-                    text: tertiary_color_text;
-                    font-size: MaterialTypography.body_medium.font_size;
-                    font-weight: MaterialTypography.body_medium.font_weight;
-                }
-                Switch {
-                    enabled: use_secondary_color;
-                    checked: use_tertiary_color;
-                    checked_state_changed(value) => { update_use_tertiary_color(value); }
-                }
-            }
+                        MaterialText {
+                            text: tertiary_color_text;
+                            horizontal-stretch: 1;
+                            font-size: MaterialTypography.body_medium.font_size;
+                            font-weight: MaterialTypography.body_medium.font_weight;
+                        }
+                        Switch {
+                            horizontal-stretch: 0;
+                            width: 108px;
+                            height: 48px;
+                            enabled: use_secondary_color;
+                            checked: use_tertiary_color;
+                            checked_state_changed(value) => { update_use_tertiary_color(value); }
+                        }
+                    }
 
-            Horizontal {
-                spacing: 12px;
-                Rectangle {
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 6px;
-                    background: tertiary_color;
-                }
-                TextField {
-                    label: color_hex_label;
-                    text: tertiary_color_hex;
-                    enabled: use_tertiary_color;
-                    edited(value) => { update_tertiary_color_hex(value); }
+                    Horizontal {
+                        spacing: 12px;
+
+                        Rectangle {
+                            width: 108px;
+                            height: 36px;
+                            border-radius: 6px;
+                            background: tertiary_color;
+                        }
+                        ColorPicker {
+                            horizontal-stretch: 1;
+                            opacity: use_tertiary_color ? 1.0 : 0.45;
+                            selected_color: tertiary_color;
+                            color_changed(value) => {
+                                if (root.use_tertiary_color) {
+                                    update_tertiary_color(value);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
