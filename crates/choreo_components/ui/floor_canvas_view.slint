@@ -273,6 +273,7 @@ export component FloorCanvasView inherits Rectangle {
                 y: floor_rect.y;
                 width: floor_rect.width;
                 height: floor_rect.height;
+                z: 1;
                 background: transparent;
 
                 Rectangle {
@@ -301,11 +302,31 @@ export component FloorCanvasView inherits Rectangle {
                 }
             }
 
+            svg_overlay_layer := Rectangle {
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: parent.height;
+                z: 2;
+                background: transparent;
+                visible: root.has_svg_overlay;
+
+                Image {
+                    source: root.svg_overlay;
+                    width: parent.width * content.zoom;
+                    height: parent.height * content.zoom;
+                    x: content.center_x - self.width / 2;
+                    y: content.center_y - self.height / 2;
+                    image-fit: contain;
+                }
+            }
+
             axis_layer := Rectangle {
                 x: 0px;
                 y: 0px;
                 width: parent.width;
                 height: parent.height;
+                z: 6;
                 background: transparent;
                 visible: root.show_axis_labels;
 
@@ -351,6 +372,7 @@ export component FloorCanvasView inherits Rectangle {
                 y: 0px;
                 width: parent.width;
                 height: parent.height;
+                z: 3;
                 background: transparent;
 
                 for curve in root.curves: Path {
@@ -381,7 +403,7 @@ export component FloorCanvasView inherits Rectangle {
                 y: 0px;
                 width: parent.width;
                 height: parent.height;
-                z: 3;
+                z: 4;
                 background: transparent;
 
                 for position in root.positions: Rectangle {
@@ -405,15 +427,28 @@ export component FloorCanvasView inherits Rectangle {
                         y: parent.height / 2 - self.height / 2;
                     }
 
-                    if position.has_dancer && position.shortcut != "" : Text {
-                        text: position.shortcut;
-                        color: position.text_color;
-                        font-size: (parent.width < parent.height ? parent.width : parent.height) * 0.45;
-                        horizontal-alignment: center;
-                        vertical-alignment: center;
-                        width: parent.width;
-                        height: parent.height;
-                    }
+                }
+            }
+
+            position_text_layer := Rectangle {
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: parent.height;
+                z: 5;
+                background: transparent;
+
+                for position in root.positions: Text {
+                    visible: position.has_dancer && position.shortcut != "";
+                    text: position.shortcut;
+                    color: position.text_color;
+                    font-size: root.dancer_size * content.scale * 1px * 0.45;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    width: root.dancer_size * content.scale * 1px;
+                    height: root.dancer_size * content.scale * 1px;
+                    x: content.center_x + position.x * content.scale * 1px - self.width / 2;
+                    y: content.center_y - position.y * content.scale * 1px - self.height / 2;
                 }
             }
 
@@ -422,6 +457,7 @@ export component FloorCanvasView inherits Rectangle {
                 y: 0px;
                 width: parent.width;
                 height: parent.height;
+                z: 7;
                 background: transparent;
 
                 for segment in root.selection_segments: Path {
@@ -565,22 +601,4 @@ export component FloorCanvasView inherits Rectangle {
         }
     }
 
-    svg_overlay_layer := Rectangle {
-        x: 0px;
-        y: 0px;
-        width: root.width;
-        height: root.height;
-        z: 1;
-        background: transparent;
-        visible: root.has_svg_overlay;
-
-        Image {
-            source: root.svg_overlay;
-            width: content.width * content.zoom;
-            height: content.height * content.zoom;
-            x: content.center_x - self.width / 2;
-            y: content.y + content.center_y - self.height / 2;
-            image-fit: contain;
-        }
-    }
 }
