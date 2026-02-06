@@ -9,7 +9,7 @@ export component HamburgerToggleButton inherits Rectangle {
     in property <string> tooltip;
     in property <length> tooltip_offset: root.height / 2 + root.bar_thickness;
     in property <color> bar_color: MaterialPalette.on_surface;
-    in property <color> checked_bar_color: bar_color;
+    in property <color> checked_bar_color: MaterialPalette.primary;
     in property <color> disabled_bar_color: MaterialPalette.on_surface_variant;
     in property <color> background_checked_color: transparent;
     in property <float> pressed_opacity: 0.85;
@@ -80,6 +80,7 @@ export component HamburgerToggleButton inherits Rectangle {
         animate y { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
         animate width { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
         animate transform-rotation { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+        animate background { duration: MaterialAnimations.standard_decelerate_duration; easing: MaterialAnimations.standard_easing; }
     }
 
     bar2 := Rectangle {
@@ -93,6 +94,7 @@ export component HamburgerToggleButton inherits Rectangle {
         animate x { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
         animate y { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
         animate width { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+        animate background { duration: MaterialAnimations.standard_decelerate_duration; easing: MaterialAnimations.standard_easing; }
     }
 
     bar3 := Rectangle {
@@ -109,6 +111,7 @@ export component HamburgerToggleButton inherits Rectangle {
         animate y { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
         animate width { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
         animate transform-rotation { duration: root.animation_duration; easing: MaterialAnimations.standard_easing; }
+        animate background { duration: MaterialAnimations.standard_decelerate_duration; easing: MaterialAnimations.standard_easing; }
     }
 
     states [
