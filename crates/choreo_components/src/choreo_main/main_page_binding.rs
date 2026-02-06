@@ -53,7 +53,11 @@ use crate::scenes::{
     OpenChoreoActions, OpenChoreoRequested, ScenesDependencies, ScenesPaneViewModel, ScenesProvider,
 };
 use crate::settings::{
-    MaterialSchemeHelper, SettingsDependencies, SettingsProvider, SettingsViewModel,
+    MaterialSchemeHelper,
+    SettingsDependencies,
+    SettingsProvider,
+    SettingsViewModel,
+    ThemeMode
 };
 use crate::shell::ShellMaterialSchemeApplier;
 use crate::time::format_seconds;
@@ -107,6 +111,8 @@ pub struct MainPageBinding {
     audio_player: Rc<RefCell<AudioPlayerViewModel>>,
     #[allow(dead_code)]
     nav_bar_timer: slint::Timer,
+    #[allow(dead_code)]
+    settings_timer: slint::Timer,
     #[allow(dead_code)]
     audio_player_timer: slint::Timer,
     #[allow(dead_code)]
@@ -677,12 +683,28 @@ impl MainPageBinding {
                             )
                         })
                     {
-                        audio_player.tick_values =
-                            build_tick_values(audio_player.duration, &scenes);
+                        audio_player.tick_values = build_tick_values(audio_player.duration, &scenes);
                         audio_player.can_link_scene_to_position = selected_scene.is_some();
                     }
                     if let Some(view) = view_weak.upgrade() {
                         apply_audio_player_view_model(&view, &audio_player);
+                    }
+                },
+            );
+            timer
+        };
+
+        let settings_timer = {
+            let settings_view_model = Rc::clone(&settings_view_model);
+            let view_weak = view_weak.clone();
+            let timer = slint::Timer::default();
+            timer.start(
+                slint::TimerMode::Repeated,
+                std::time::Duration::from_millis(16),
+                move || {
+                    if let Some(view) = view_weak.upgrade() {
+                        let settings_view_model = settings_view_model.borrow();
+                        apply_settings_view_model(&view, &settings_view_model);
                     }
                 },
             );
@@ -696,6 +718,7 @@ impl MainPageBinding {
 
         apply_view_model(&view, &view_model.borrow());
         apply_scenes_view_model(&view, &scenes_view_model.borrow());
+        apply_settings_view_model(&view, &settings_view_model.borrow());
         apply_choreography_settings_view_model(&view, &choreography_settings_view_model.borrow());
         apply_audio_player_view_model(&view, &audio_player.borrow());
         floor_provider.borrow().apply_to_view(&view);
@@ -791,6 +814,82 @@ impl MainPageBinding {
                 }
                 let mut view_model = scenes_view_model.borrow_mut();
                 view_model.navigate_to_dancer_settings();
+            });
+        }
+
+        {
+            let settings_view_model = Rc::clone(&settings_view_model);
+            view.on_settings_update_use_system_theme(move |value| {
+                settings_view_model
+                    .borrow_mut()
+                    .update_use_system_theme(value);
+            });
+        }
+
+        {
+            let settings_view_model = Rc::clone(&settings_view_model);
+            view.on_settings_update_is_dark_mode(move |value| {
+                settings_view_model.borrow_mut().update_is_dark_mode(value);
+            });
+        }
+
+        {
+            let settings_view_model = Rc::clone(&settings_view_model);
+            view.on_settings_update_use_primary_color(move |value| {
+                settings_view_model
+                    .borrow_mut()
+                    .update_use_primary_color(value);
+            });
+        }
+
+        {
+            let settings_view_model = Rc::clone(&settings_view_model);
+            view.on_settings_update_use_secondary_color(move |value| {
+                settings_view_model
+                    .borrow_mut()
+                    .update_use_secondary_color(value);
+            });
+        }
+
+        {
+            let settings_view_model = Rc::clone(&settings_view_model);
+            view.on_settings_update_use_tertiary_color(move |value| {
+                settings_view_model
+                    .borrow_mut()
+                    .update_use_tertiary_color(value);
+            });
+        }
+
+        {
+            let settings_view_model = Rc::clone(&settings_view_model);
+            view.on_settings_update_primary_color(move |value| {
+                let color = choreo_color_from_slint(value);
+                let hex = color.to_hex();
+                let mut settings_view_model = settings_view_model.borrow_mut();
+                settings_view_model.primary_color = color;
+                settings_view_model.update_primary_color_hex(hex);
+            });
+        }
+
+        {
+            let settings_view_model = Rc::clone(&settings_view_model);
+            view.on_settings_update_secondary_color(move |value| {
+                let color = choreo_color_from_slint(value);
+                let hex = color.to_hex();
+                let mut settings_view_model = settings_view_model.borrow_mut();
+                settings_view_model.secondary_color = color;
+                settings_view_model.update_secondary_color_hex(hex);
+            });
+        }
+
+        {
+            let settings_view_model = Rc::clone(&settings_view_model);
+            view.on_settings_update_tertiary_color(move |value| {
+                let color = choreo_color_from_slint(value);
+                let hex = color.to_hex();
+                let mut settings_view_model = settings_view_model.borrow_mut();
+                settings_view_model.tertiary_color = color;
+                settings_view_model.update_tertiary_color_hex(hex);
             });
         }
 
@@ -1508,6 +1607,7 @@ impl MainPageBinding {
             floor_provider,
             audio_player,
             nav_bar_timer,
+            settings_timer,
             audio_player_timer,
             choreography_settings_disposables,
             open_choreo_sender,
@@ -1603,6 +1703,17 @@ fn apply_scenes_view_model(view: &ShellHost, view_model: &ScenesPaneViewModel) {
     view.set_scenes_can_delete_scene(view_model.can_delete_scene);
     view.set_scenes_can_navigate_to_settings(view_model.can_navigate_to_settings);
     view.set_scenes_can_navigate_to_dancer_settings(view_model.can_navigate_to_dancer_settings);
+}
+
+fn apply_settings_view_model(view: &ShellHost, view_model: &SettingsViewModel) {
+    view.set_settings_use_system_theme(view_model.use_system_theme);
+    view.set_settings_is_dark_mode(matches!(view_model.theme_mode, ThemeMode::Dark));
+    view.set_settings_use_primary_color(view_model.use_primary_color);
+    view.set_settings_use_secondary_color(view_model.use_secondary_color);
+    view.set_settings_use_tertiary_color(view_model.use_tertiary_color);
+    view.set_settings_primary_color(slint_color_from_choreo(&view_model.primary_color));
+    view.set_settings_secondary_color(slint_color_from_choreo(&view_model.secondary_color));
+    view.set_settings_tertiary_color(slint_color_from_choreo(&view_model.tertiary_color));
 }
 
 fn apply_choreography_settings_view_model(

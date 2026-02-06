@@ -31,6 +31,14 @@ export component ShellHost inherits MaterialWindow {
     in property <bool> scenes_can_delete_scene;
     in property <bool> scenes_can_navigate_to_settings;
     in property <bool> scenes_can_navigate_to_dancer_settings;
+    in property <bool> settings_use_system_theme: true;
+    in property <bool> settings_is_dark_mode: false;
+    in property <bool> settings_use_primary_color: false;
+    in property <bool> settings_use_secondary_color: false;
+    in property <bool> settings_use_tertiary_color: false;
+    in property <color> settings_primary_color: MaterialPalette.primary;
+    in property <color> settings_secondary_color: MaterialPalette.secondary;
+    in property <color> settings_tertiary_color: MaterialPalette.tertiary;
     in property <bool> choreo_has_selected_scene: false;
     in property <string> choreo_scene_name: "";
     in property <string> choreo_scene_text: "";
@@ -126,6 +134,14 @@ export component ShellHost inherits MaterialWindow {
     callback scenes_save_choreo();
     callback scenes_navigate_to_settings();
     callback scenes_navigate_to_dancer_settings();
+    callback settings_update_use_system_theme(bool);
+    callback settings_update_is_dark_mode(bool);
+    callback settings_update_use_primary_color(bool);
+    callback settings_update_use_secondary_color(bool);
+    callback settings_update_use_tertiary_color(bool);
+    callback settings_update_primary_color(color);
+    callback settings_update_secondary_color(color);
+    callback settings_update_tertiary_color(color);
     callback choreo_update_scene_name(string);
     callback choreo_update_scene_text(string);
     callback choreo_update_scene_fixed_positions(bool);
@@ -334,6 +350,23 @@ export component ShellHost inherits MaterialWindow {
         }
         settings_page := SettingsPage {
             visible: root.content_index == 1;
+            use_system_theme: root.settings_use_system_theme;
+            is_dark_mode: root.settings_is_dark_mode;
+            use_primary_color: root.settings_use_primary_color;
+            use_secondary_color: root.settings_use_secondary_color;
+            use_tertiary_color: root.settings_use_tertiary_color;
+            primary_color: root.settings_primary_color;
+            secondary_color: root.settings_secondary_color;
+            tertiary_color: root.settings_tertiary_color;
+
+            update_use_system_theme(value) => { root.settings_update_use_system_theme(value); }
+            update_is_dark_mode(value) => { root.settings_update_is_dark_mode(value); }
+            update_use_primary_color(value) => { root.settings_update_use_primary_color(value); }
+            update_use_secondary_color(value) => { root.settings_update_use_secondary_color(value); }
+            update_use_tertiary_color(value) => { root.settings_update_use_tertiary_color(value); }
+            update_primary_color(value) => { root.settings_update_primary_color(value); }
+            update_secondary_color(value) => { root.settings_update_secondary_color(value); }
+            update_tertiary_color(value) => { root.settings_update_tertiary_color(value); }
         }
         dancer_settings_page := DancerSettingsPage {
             visible: root.content_index == 2;
