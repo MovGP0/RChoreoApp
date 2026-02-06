@@ -217,7 +217,8 @@ pub(crate) fn clamp_scene_timestamp(seconds: f64) -> f64 {
 fn build_grid_size_options() -> Vec<GridSizeOption> {
     (1..=16)
         .map(|denominator| {
-            let centimeters = 100.0 / denominator as f64;
+            let millimeters = 1000.0 / denominator as f64;
+            let centimeters = millimeters / 10.0;
             let centimeters_text = format_decimal(centimeters);
             GridSizeOption {
                 value: denominator,
