@@ -45,8 +45,8 @@ impl FloorAdapter {
     pub fn apply(&mut self, view: &ShellHost, view_model: &mut FloorCanvasViewModel) {
         self.drain_audio_position();
 
-        self.update_bounds(view, view_model);
         self.apply_transform(view, view_model);
+        self.update_bounds(view, view_model);
 
         let state_kind = self.state_machine.borrow().state().kind();
         if !is_floor_render_state(state_kind) {
