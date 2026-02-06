@@ -6,9 +6,22 @@
     <title>ChoreoApp</title>
     <link rel="icon" type="image/svg+xml" href="./app_icon.svg" />
     <style>
+      :root { --app-height: 100dvh; }
       html, body { height: 100%; margin: 0; }
+      @supports (-webkit-touch-callout: none) {
+        html, body { height: -webkit-fill-available; }
+      }
       body { display: flex; align-items: stretch; justify-content: stretch; overflow: hidden; }
-      #canvas { width: 100vw; height: 100vh; display: block; }
+      #canvas {
+        width: 100vw;
+        height: 100vh;
+        height: -webkit-fill-available;
+        height: var(--app-height, 100dvh);
+        display: block;
+      }
+      @supports (height: 100dvh) {
+        #canvas { height: 100dvh; }
+      }
       .wasm-file-picker { display: none !important; }
       #wasm-choreo-picker, #wasm-audio-picker, #wasm-image-picker { display: none !important; }
     </style>
@@ -16,6 +29,15 @@
   <body>
     <canvas id="canvas"></canvas>
     <script type="module">
+      const setAppHeight = () => {
+        const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+        document.documentElement.style.setProperty("--app-height", `${viewportHeight}px`);
+      };
+      setAppHeight();
+      window.addEventListener("resize", setAppHeight);
+      window.visualViewport?.addEventListener("resize", setAppHeight);
+      window.visualViewport?.addEventListener("scroll", setAppHeight);
+
       import init from "./pkg/rchoreo_wasm.js";
       init();
     </script>
