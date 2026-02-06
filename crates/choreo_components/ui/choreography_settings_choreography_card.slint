@@ -1,0 +1,95 @@
+import { MaterialPalette, MaterialText, TextField, Vertical } from "@material";
+import { Date, DatePickerPopup } from "std-widgets.slint";
+import { Translations } from "translations.slint";
+
+export component ChoreographySettingsChoreographyCard inherits Rectangle {
+    property <[int]> today: SlintInternal.date_now();
+
+    in property <string> comment;
+    in property <string> name;
+    in property <string> subtitle;
+    in-out property <Date> date: { day: root.today[0], month: root.today[1], year: root.today[2] };
+    in property <string> date_label: Translations.choreography_date_label;
+    in property <string> date_picker_title: Translations.choreography_date_picker_title;
+    in property <string> variation;
+    in property <string> author;
+    in property <string> description;
+
+    callback update_comment(string);
+    callback update_name(string);
+    callback update_subtitle(string);
+    callback update_date_parts(int, int, int);
+    callback update_variation(string);
+    callback update_author(string);
+    callback update_description(string);
+
+    background: MaterialPalette.surface_container;
+    border-width: 1px;
+    border-color: MaterialPalette.outline_variant;
+    border-radius: 8px;
+
+    Vertical {
+        padding: 12px;
+        spacing: 8px;
+
+        MaterialText {
+            text: Translations.choreography_section_title;
+            font-size: 18px;
+        }
+
+        TextField {
+            label: Translations.choreography_comment_placeholder;
+            text: root.comment;
+            edited(value) => { root.update_comment(value); }
+        }
+
+        TextField {
+            label: Translations.choreography_name_placeholder;
+            text: root.name;
+            edited(value) => { root.update_name(value); }
+        }
+
+        TextField {
+            label: Translations.choreography_subtitle_placeholder;
+            text: root.subtitle;
+            edited(value) => { root.update_subtitle(value); }
+        }
+
+        TextField {
+            label: root.date_label;
+            read_only: true;
+            text: root.date.year + "-" + root.date.month + "-" + root.date.day;
+            trailing_icon: @image-url("icons/CalendarToday.svg");
+            trailing_icon_clicked => { date_picker.show(); }
+        }
+
+        TextField {
+            label: Translations.choreography_variation_placeholder;
+            text: root.variation;
+            edited(value) => { root.update_variation(value); }
+        }
+
+        TextField {
+            label: Translations.choreography_author_placeholder;
+            text: root.author;
+            edited(value) => { root.update_author(value); }
+        }
+
+        TextField {
+            label: Translations.choreography_description_placeholder;
+            text: root.description;
+            edited(value) => { root.update_description(value); }
+        }
+    }
+
+    date_picker := DatePickerPopup {
+        title: root.date_picker_title;
+        date <=> root.date;
+
+        accepted(date) => {
+            root.date = date;
+            root.update_date_parts(date.year, date.month, date.day);
+            date_picker.close();
+        }
+    }
+}

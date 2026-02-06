@@ -1,0 +1,94 @@
+import { IconButton, MaterialPalette, MaterialText } from "@material";
+
+export component NumberPicker inherits Rectangle {
+    in property <string> label;
+    in property <int> value;
+    in property <int> minimum: 0;
+    in property <int> maximum: 100;
+    in property <int> step: 1;
+    in property <bool> enabled: true;
+
+    callback value_changed(int);
+
+    private property <int> normalized_step: root.step < 1 ? 1 : root.step;
+    private property <int> clamped_value: clamp(root.value, root.minimum, root.maximum);
+
+    function increase() {
+        if !root.enabled {
+            return;
+        }
+
+        let next_value = clamp(
+            root.clamped_value + root.normalized_step,
+            root.minimum,
+            root.maximum
+        );
+        if next_value != root.clamped_value {
+            root.value_changed(next_value);
+        }
+    }
+
+    function decrease() {
+        if !root.enabled {
+            return;
+        }
+
+        let next_value = clamp(
+            root.clamped_value - root.normalized_step,
+            root.minimum,
+            root.maximum
+        );
+        if next_value != root.clamped_value {
+            root.value_changed(next_value);
+        }
+    }
+
+    background: transparent;
+
+    HorizontalLayout {
+        spacing: 8px;
+
+        MaterialText {
+            text: root.label;
+            color: MaterialPalette.on_surface_variant;
+            vertical-alignment: center;
+        }
+
+        Rectangle {
+            horizontal-stretch: 1;
+            background: transparent;
+        }
+
+        IconButton {
+            icon: @image-url("icons/Minus.svg");
+            enabled: root.enabled && root.clamped_value > root.minimum;
+            clicked => { root.decrease(); }
+        }
+
+        Rectangle {
+            width: 72px;
+            height: 40px;
+            border-width: 1px;
+            border-color: MaterialPalette.outline_variant;
+            border-radius: 8px;
+            background: MaterialPalette.surface;
+
+            MaterialText {
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: parent.height;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+                text: root.clamped_value;
+                color: MaterialPalette.on_surface;
+            }
+        }
+
+        IconButton {
+            icon: @image-url("icons/Plus.svg");
+            enabled: root.enabled && root.clamped_value < root.maximum;
+            clicked => { root.increase(); }
+        }
+    }
+}

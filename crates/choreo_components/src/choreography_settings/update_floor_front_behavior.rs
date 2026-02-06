@@ -29,7 +29,7 @@ impl UpdateFloorFrontBehavior {
 
     pub fn update_floor_front(&self, value: i32) {
         let updated = self.global_state.try_update(|global_state| {
-            global_state.choreography.floor.size_front = value.clamp(0, 100);
+            global_state.choreography.floor.size_front = value.clamp(1, 100);
         });
         if !updated {
             return;

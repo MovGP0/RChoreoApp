@@ -153,20 +153,38 @@ export component ColorPicker inherits Rectangle {
         Math.round(g * 255),
         Math.round(b * 255)
     );
+    property <length> slider_extent: 64px;
+    property <length> slider_spacing: 8px;
+    property <length> slider_left_inset: 6px;
+    property <length> slider_right_inset: 14px;
 
+    min-width: value_slider_position == ColorPickerDock.left || value_slider_position == ColorPickerDock.right
+        ? wheel_min_width + slider_extent + slider_spacing
+        : wheel_min_width;
+    min-height: value_slider_position == ColorPickerDock.top || value_slider_position == ColorPickerDock.bottom
+        ? wheel_min_height + slider_extent + slider_spacing
+        : wheel_min_height;
     clip: true;
 
     if value_slider_position == ColorPickerDock.top : Vertical {
         spacing: 8px;
 
-        Slider {
-            minimum: 0;
-            maximum: 1;
-            value: root.brightness;
-            value_changed(value) => {
-                root.brightness = value;
-                root.selected_color = root.computed_color;
-                root.color_changed(root.selected_color);
+        Rectangle {
+            width: parent.width;
+            height: root.slider_extent;
+            background: transparent;
+
+            Slider {
+                x: root.slider_left_inset;
+                width: max(0px, parent.width - root.slider_left_inset - root.slider_right_inset);
+                minimum: 0;
+                maximum: 1;
+                value: root.brightness;
+                value_changed(value) => {
+                    root.brightness = value;
+                    root.selected_color = root.computed_color;
+                    root.color_changed(root.selected_color);
+                }
             }
         }
 
@@ -202,14 +220,22 @@ export component ColorPicker inherits Rectangle {
             }
         }
 
-        Slider {
-            minimum: 0;
-            maximum: 1;
-            value: root.brightness;
-            value_changed(value) => {
-                root.brightness = value;
-                root.selected_color = root.computed_color;
-                root.color_changed(root.selected_color);
+        Rectangle {
+            width: parent.width;
+            height: root.slider_extent;
+            background: transparent;
+
+            Slider {
+                x: root.slider_left_inset;
+                width: max(0px, parent.width - root.slider_left_inset - root.slider_right_inset);
+                minimum: 0;
+                maximum: 1;
+                value: root.brightness;
+                value_changed(value) => {
+                    root.brightness = value;
+                    root.selected_color = root.computed_color;
+                    root.color_changed(root.selected_color);
+                }
             }
         }
     }

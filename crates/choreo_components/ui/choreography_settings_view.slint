@@ -1,5 +1,9 @@
-import { CheckBoxTile, CheckState, MaterialPalette, MaterialText, Slider, TextField, Vertical } from "@material";
-import { Date, DatePickerPopup } from "std-widgets.slint";
+import { MaterialPalette, MenuItem, Vertical } from "@material";
+import { Date } from "std-widgets.slint";
+import { ChoreographySettingsChoreographyCard } from "choreography_settings_choreography_card.slint";
+import { ChoreographySettingsDisplayCard } from "choreography_settings_display_card.slint";
+import { ChoreographySettingsFloorCard } from "choreography_settings_floor_card.slint";
+import { ChoreographySettingsSceneCard } from "choreography_settings_scene_card.slint";
 import { Translations } from "translations.slint";
 
 export component ChoreographySettingsView inherits Rectangle {
@@ -12,6 +16,7 @@ export component ChoreographySettingsView inherits Rectangle {
     in property <int> scene_timestamp_minutes;
     in property <int> scene_timestamp_seconds;
     in property <int> scene_timestamp_millis;
+    in-out property <color> scene_color;
 
     in property <string> comment;
     in property <string> name;
@@ -24,11 +29,14 @@ export component ChoreographySettingsView inherits Rectangle {
     in property <string> description;
 
     in property <bool> positions_at_side;
+    in property <bool> draw_path_from;
+    in property <bool> draw_path_to;
     in property <bool> grid_lines;
     in property <bool> snap_to_grid;
     in property <bool> show_timestamps;
     in property <bool> show_legend;
     in property <float> transparency;
+    in-out property <color> floor_color;
 
     in property <[int]> floor_size_options;
     in property <int> floor_front;
@@ -36,7 +44,7 @@ export component ChoreographySettingsView inherits Rectangle {
     in property <int> floor_left;
     in property <int> floor_right;
 
-    in property <[string]> grid_size_options;
+    in property <[MenuItem]> grid_size_options;
     in property <int> grid_resolution_index;
 
     callback update_scene_name(string);
@@ -44,6 +52,7 @@ export component ChoreographySettingsView inherits Rectangle {
     callback update_scene_fixed_positions(bool);
     callback update_scene_has_timestamp(bool);
     callback update_scene_timestamp_parts(int, int, int);
+    callback update_scene_color(color);
 
     callback update_comment(string);
     callback update_name(string);
@@ -54,11 +63,14 @@ export component ChoreographySettingsView inherits Rectangle {
     callback update_description(string);
 
     callback update_positions_at_side(bool);
+    callback update_draw_path_from(bool);
+    callback update_draw_path_to(bool);
     callback update_grid_lines(bool);
     callback update_snap_to_grid(bool);
     callback update_show_timestamps(bool);
     callback update_show_legend(bool);
     callback update_transparency(float);
+    callback update_floor_color(color);
 
     callback update_floor_front(int);
     callback update_floor_back(int);
@@ -67,7 +79,6 @@ export component ChoreographySettingsView inherits Rectangle {
     callback update_grid_resolution(int);
 
     background: MaterialPalette.surface_variant;
-
     preferred-height: content.preferred-height;
     height: self.preferred-height;
 
@@ -77,140 +88,85 @@ export component ChoreographySettingsView inherits Rectangle {
         padding: 8px;
         spacing: 12px;
 
-        Rectangle {
-            background: MaterialPalette.surface_container;
-            border-width: 1px;
-            border-color: MaterialPalette.outline_variant;
-            border-radius: 8px;
+        ChoreographySettingsSceneCard {
+            has_selected_scene: root.has_selected_scene;
+            scene_name: root.scene_name;
+            scene_text: root.scene_text;
+            scene_fixed_positions: root.scene_fixed_positions;
+            scene_has_timestamp: root.scene_has_timestamp;
+            scene_timestamp_minutes: root.scene_timestamp_minutes;
+            scene_timestamp_seconds: root.scene_timestamp_seconds;
+            scene_timestamp_millis: root.scene_timestamp_millis;
+            scene_color <=> root.scene_color;
 
-            Vertical {
-                padding: 12px;
-                spacing: 8px;
-                MaterialText {
-                    text: Translations.scene_section_title;
-                    font-size: 18px;
-                }
-                TextField {
-                    label: Translations.scene_name_label;
-                    text: scene_name;
-                    enabled: has_selected_scene;
-                    edited(new_value) => { update_scene_name(new_value); }
-                }
-                TextField {
-                    label: Translations.scene_text_label;
-                    text: scene_text;
-                    enabled: has_selected_scene;
-                    edited(new_value) => { update_scene_text(new_value); }
-                }
-                CheckBoxTile {
-                    text: Translations.scene_fixed_positions_label;
-                    check_state: scene_fixed_positions ? CheckState.checked : CheckState.unchecked;
-                    enabled: has_selected_scene;
-                    checked_state_changed(state) => {
-                        update_scene_fixed_positions(state == CheckState.checked);
-                    }
-                }
-                CheckBoxTile {
-                    text: Translations.scene_timestamp_label;
-                    check_state: scene_has_timestamp ? CheckState.checked : CheckState.unchecked;
-                    enabled: has_selected_scene;
-                    checked_state_changed(state) => {
-                        update_scene_has_timestamp(state == CheckState.checked);
-                    }
-                }
+            update_scene_name(value) => { root.update_scene_name(value); }
+            update_scene_text(value) => { root.update_scene_text(value); }
+            update_scene_fixed_positions(value) => { root.update_scene_fixed_positions(value); }
+            update_scene_has_timestamp(value) => { root.update_scene_has_timestamp(value); }
+            update_scene_timestamp_parts(minutes, seconds, millis) => {
+                root.update_scene_timestamp_parts(minutes, seconds, millis);
             }
+            update_scene_color(color) => { root.update_scene_color(color); }
         }
 
-        Rectangle {
-            background: MaterialPalette.surface_container;
-            border-width: 1px;
-            border-color: MaterialPalette.outline_variant;
-            border-radius: 8px;
+        ChoreographySettingsDisplayCard {
+            draw_path_from: root.draw_path_from;
+            draw_path_to: root.draw_path_to;
+            show_timestamps: root.show_timestamps;
+            positions_at_side: root.positions_at_side;
+            show_legend: root.show_legend;
 
-            Vertical {
-                padding: 12px;
-                spacing: 8px;
-                MaterialText { text: Translations.choreography_section_title; font-size: 18px; }
-                TextField { label: Translations.choreography_name_placeholder; text: name; edited(v) => { update_name(v); } }
-                TextField { label: Translations.choreography_subtitle_placeholder; text: subtitle; edited(v) => { update_subtitle(v); } }
-                TextField {
-                    label: date_label;
-                    read_only: true;
-                    text: date.year + "-" + date.month + "-" + date.day;
-                    trailing_icon: @image-url("icons/CalendarToday.svg");
-                    trailing_icon_clicked => { date_picker.show(); }
-                }
-                TextField { label: Translations.choreography_variation_placeholder; text: variation; edited(v) => { update_variation(v); } }
-                TextField { label: Translations.choreography_author_placeholder; text: author; edited(v) => { update_author(v); } }
-                TextField { label: Translations.choreography_comment_placeholder; text: comment; edited(v) => { update_comment(v); } }
-                TextField { label: Translations.choreography_description_placeholder; text: description; edited(v) => { update_description(v); } }
-            }
-
-            date_picker := DatePickerPopup {
-                title: date_picker_title;
-                date <=> root.date;
-
-                accepted(date) => {
-                    root.date = date;
-                    root.update_date_parts(date.year, date.month, date.day);
-                    date_picker.close();
-                }
-            }
+            update_draw_path_from(value) => { root.update_draw_path_from(value); }
+            update_draw_path_to(value) => { root.update_draw_path_to(value); }
+            update_show_timestamps(value) => { root.update_show_timestamps(value); }
+            update_positions_at_side(value) => { root.update_positions_at_side(value); }
+            update_show_legend(value) => { root.update_show_legend(value); }
         }
 
-        Rectangle {
-            background: MaterialPalette.surface_container;
-            border-width: 1px;
-            border-color: MaterialPalette.outline_variant;
-            border-radius: 8px;
+        ChoreographySettingsChoreographyCard {
+            comment: root.comment;
+            name: root.name;
+            subtitle: root.subtitle;
+            date <=> root.date;
+            date_label: root.date_label;
+            date_picker_title: root.date_picker_title;
+            variation: root.variation;
+            author: root.author;
+            description: root.description;
 
-            Vertical {
-                padding: 12px;
-                spacing: 8px;
-                MaterialText { text: Translations.choreography_floor_title; font-size: 18px; }
-                CheckBoxTile {
-                    text: Translations.choreography_positions_at_side_label;
-                    check_state: positions_at_side ? CheckState.checked : CheckState.unchecked;
-                    checked_state_changed(state) => {
-                        update_positions_at_side(state == CheckState.checked);
-                    }
-                }
-                CheckBoxTile {
-                    text: Translations.choreography_grid_lines_label;
-                    check_state: grid_lines ? CheckState.checked : CheckState.unchecked;
-                    checked_state_changed(state) => {
-                        update_grid_lines(state == CheckState.checked);
-                    }
-                }
-                CheckBoxTile {
-                    text: Translations.choreography_snap_to_grid_label;
-                    check_state: snap_to_grid ? CheckState.checked : CheckState.unchecked;
-                    checked_state_changed(state) => {
-                        update_snap_to_grid(state == CheckState.checked);
-                    }
-                }
-                CheckBoxTile {
-                    text: Translations.choreography_show_timestamps_label;
-                    check_state: show_timestamps ? CheckState.checked : CheckState.unchecked;
-                    checked_state_changed(state) => {
-                        update_show_timestamps(state == CheckState.checked);
-                    }
-                }
-                CheckBoxTile {
-                    text: Translations.choreography_show_legend_label;
-                    check_state: show_legend ? CheckState.checked : CheckState.unchecked;
-                    checked_state_changed(state) => {
-                        update_show_legend(state == CheckState.checked);
-                    }
-                }
-                MaterialText { text: Translations.choreography_transparency_label; }
-                Slider {
-                    minimum: 0;
-                    maximum: 1;
-                    value: transparency;
-                    value_changed(value) => { update_transparency(value); }
-                }
+            update_comment(value) => { root.update_comment(value); }
+            update_name(value) => { root.update_name(value); }
+            update_subtitle(value) => { root.update_subtitle(value); }
+            update_date_parts(year, month, day) => {
+                root.update_date_parts(year, month, day);
             }
+            update_variation(value) => { root.update_variation(value); }
+            update_author(value) => { root.update_author(value); }
+            update_description(value) => { root.update_description(value); }
+        }
+
+        ChoreographySettingsFloorCard {
+            grid_lines: root.grid_lines;
+            snap_to_grid: root.snap_to_grid;
+            transparency: root.transparency;
+            floor_color <=> root.floor_color;
+            floor_size_options: root.floor_size_options;
+            floor_front: root.floor_front;
+            floor_back: root.floor_back;
+            floor_left: root.floor_left;
+            floor_right: root.floor_right;
+            grid_size_options: root.grid_size_options;
+            grid_resolution_index: root.grid_resolution_index;
+
+            update_grid_lines(value) => { root.update_grid_lines(value); }
+            update_snap_to_grid(value) => { root.update_snap_to_grid(value); }
+            update_transparency(value) => { root.update_transparency(value); }
+            update_floor_color(color) => { root.update_floor_color(color); }
+            update_floor_front(value) => { root.update_floor_front(value); }
+            update_floor_back(value) => { root.update_floor_back(value); }
+            update_floor_left(value) => { root.update_floor_left(value); }
+            update_floor_right(value) => { root.update_floor_right(value); }
+            update_grid_resolution(value) => { root.update_grid_resolution(value); }
         }
     }
 }

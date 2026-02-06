@@ -191,15 +191,13 @@ pub(crate) fn clamp_scene_timestamp(seconds: f64) -> f64 {
 }
 
 fn build_grid_size_options() -> Vec<GridSizeOption> {
-    let options = [100, 50, 25, 20, 10, 5, 2, 1];
-    options
-        .iter()
-        .map(|&centimeters| {
-            let meters = centimeters as f64 / 100.0;
-            let display = format_decimal(meters);
+    (1..=16)
+        .map(|denominator| {
+            let centimeters = 100.0 / denominator as f64;
+            let centimeters_text = format_decimal(centimeters);
             GridSizeOption {
-                value: centimeters,
-                display: format!("{display} m ({centimeters} cm)"),
+                value: denominator,
+                display: format!("1/{denominator} m ({centimeters_text} cm)"),
             }
         })
         .collect()

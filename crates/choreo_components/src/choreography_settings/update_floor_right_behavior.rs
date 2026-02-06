@@ -29,7 +29,7 @@ impl UpdateFloorRightBehavior {
 
     pub fn update_floor_right(&self, value: i32) {
         let updated = self.global_state.try_update(|global_state| {
-            global_state.choreography.floor.size_right = value.clamp(0, 100);
+            global_state.choreography.floor.size_right = value.clamp(1, 100);
         });
         if !updated {
             return;

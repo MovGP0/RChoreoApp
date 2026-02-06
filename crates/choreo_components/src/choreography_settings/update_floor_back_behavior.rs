@@ -29,7 +29,7 @@ impl UpdateFloorBackBehavior {
 
     pub fn update_floor_back(&self, value: i32) {
         let updated = self.global_state.try_update(|global_state| {
-            global_state.choreography.floor.size_back = value.clamp(0, 100);
+            global_state.choreography.floor.size_back = value.clamp(1, 100);
         });
         if !updated {
             return;
