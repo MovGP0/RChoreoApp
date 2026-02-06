@@ -228,6 +228,7 @@ export component MainPage inherits Rectangle {
                     IconButton {
                         icon: @image-url("icons/Svg.svg");
                         tooltip: Translations.main_open_image_tooltip;
+                        checked: root.floor_has_svg_overlay;
                         clicked => { root.open_image(); }
                     }
 

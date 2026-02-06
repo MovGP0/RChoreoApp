@@ -71,11 +71,12 @@ impl DrawFloorBehavior {
 impl Behavior<FloorCanvasViewModel> for DrawFloorBehavior {
     fn activate(
         &self,
-        _view_model: &mut FloorCanvasViewModel,
+        view_model: &mut FloorCanvasViewModel,
         disposables: &mut CompositeDisposable,
     ) {
         BehaviorLog::behavior_activated("DrawFloorBehavior", "FloorCanvasViewModel");
         let behavior = Rc::new(RefCell::new(self.clone()));
+        let view_model_handle = view_model.self_handle().and_then(|handle| handle.upgrade());
         let receiver = self.receiver.clone();
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
@@ -86,6 +87,9 @@ impl Behavior<FloorCanvasViewModel> for DrawFloorBehavior {
 
             if has_message {
                 behavior.borrow_mut().handle_draw_floor();
+                if let Some(view_model_handle) = view_model_handle.as_ref() {
+                    view_model_handle.borrow().request_redraw();
+                }
             }
         });
         disposables.add(Box::new(TimerDisposable::new(timer)));

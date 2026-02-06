@@ -83,6 +83,10 @@ impl FloorCanvasViewModel {
 
     pub fn draw_floor(&mut self) {
         let _ = self.draw_floor_command_sender.send(DrawFloorCommand);
+        self.request_redraw();
+    }
+
+    pub fn request_redraw(&self) {
         if let Some(handler) = self.on_redraw.as_ref() {
             handler();
         }

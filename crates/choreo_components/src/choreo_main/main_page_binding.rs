@@ -606,7 +606,6 @@ impl MainPageBinding {
             let nav_bar = Rc::clone(&nav_bar);
             let actions_for_audio = actions.clone();
             let actions_for_image = actions.clone();
-            let floor_view_model_for_image = Rc::clone(&floor_view_model);
             let global_state_store_for_image = deps.global_state_store.clone();
             let open_audio_request_sender = open_audio_request_sender.clone();
             let open_image_request_sender = open_image_request_sender.clone();
@@ -650,13 +649,11 @@ impl MainPageBinding {
                             let _ = open_image_request_sender.try_send(OpenImageRequested {
                                 file_path: String::new(),
                             });
-                            floor_view_model_for_image.borrow_mut().draw_floor();
                             continue;
                         }
 
                         if let Some(requester) = actions_for_image.request_open_image.as_ref() {
                             requester(open_image_request_sender.clone());
-                            floor_view_model_for_image.borrow_mut().draw_floor();
                             continue;
                         }
 
@@ -666,7 +663,6 @@ impl MainPageBinding {
                             let _ = open_image_request_sender.try_send(OpenImageRequested {
                                 file_path: path,
                             });
-                            floor_view_model_for_image.borrow_mut().draw_floor();
                         }
                     }
 
