@@ -72,7 +72,7 @@ fn android_main(app: slint::android::AndroidApp) {
     )));
     let (scenes_show_dialog_sender, _scenes_show_dialog_receiver) = unbounded();
     let (scenes_close_dialog_sender, _scenes_close_dialog_receiver) = unbounded();
-    let (_redraw_floor_sender, redraw_floor_receiver) = unbounded();
+    let (redraw_floor_sender, redraw_floor_receiver) = unbounded();
 
     let actions = MainPageActionHandlers {
         pick_audio_path: None,
@@ -95,6 +95,7 @@ fn android_main(app: slint::android::AndroidApp) {
             audio_position_receiver,
             scenes_show_dialog_sender,
             scenes_close_dialog_sender,
+            redraw_floor_sender,
             redraw_floor_receiver,
             preferences,
             actions,

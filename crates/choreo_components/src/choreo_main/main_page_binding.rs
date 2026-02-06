@@ -2,8 +2,9 @@ use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
 
+use choreo_master_mobile_json::Color as ChoreoColor;
 use crossbeam_channel::{bounded, Receiver, Sender};
-use slint::{ComponentHandle, ModelRc, VecModel};
+use slint::{Color, ComponentHandle, Image, ModelRc, VecModel};
 
 use choreo_state_machine::ApplicationStateMachine;
 use crate::audio_player::{
@@ -33,6 +34,32 @@ use crate::scenes::{
     ScenesPaneViewModel,
     ScenesProvider,
 };
+use crate::choreography_settings::{
+    ChoreographySettingsViewModel,
+    LoadChoreographySettingsBehavior,
+    UpdateAuthorBehavior,
+    UpdateCommentBehavior,
+    UpdateDateBehavior,
+    UpdateDescriptionBehavior,
+    UpdateDrawPathFromBehavior,
+    UpdateDrawPathToBehavior,
+    UpdateFloorBackBehavior,
+    UpdateFloorColorBehavior,
+    UpdateFloorFrontBehavior,
+    UpdateFloorLeftBehavior,
+    UpdateFloorRightBehavior,
+    UpdateGridLinesBehavior,
+    UpdateGridResolutionBehavior,
+    UpdateNameBehavior,
+    UpdatePositionsAtSideBehavior,
+    UpdateSelectedSceneBehavior,
+    UpdateShowLegendBehavior,
+    UpdateShowTimestampsBehavior,
+    UpdateSnapToGridBehavior,
+    UpdateSubtitleBehavior,
+    UpdateTransparencyBehavior,
+    UpdateVariationBehavior,
+};
 use crate::settings::{
     MaterialSchemeHelper,
     SettingsDependencies,
@@ -41,7 +68,7 @@ use crate::settings::{
 };
 use crate::shell::ShellMaterialSchemeApplier;
 use crate::time::format_seconds;
-use crate::{SceneListItem, ShellHost};
+use crate::{Date, MenuItem, SceneListItem, ShellHost};
 use crate::preferences::SharedPreferences;
 use crate::nav_bar::{
     apply_nav_bar_view_model,
@@ -81,6 +108,7 @@ pub struct MainPageDependencies {
     pub audio_position_receiver: Receiver<AudioPlayerPositionChangedEvent>,
     pub scenes_show_dialog_sender: Sender<crate::scenes::ShowDialogCommand>,
     pub scenes_close_dialog_sender: Sender<crate::scenes::CloseDialogCommand>,
+    pub redraw_floor_sender: Sender<crate::choreography_settings::RedrawFloorCommand>,
     pub redraw_floor_receiver: Receiver<crate::choreography_settings::RedrawFloorCommand>,
     pub preferences: Rc<dyn crate::preferences::Preferences>,
     pub actions: MainPageActionHandlers,
@@ -92,6 +120,8 @@ pub struct MainPageBinding {
     scenes_view_model: Rc<RefCell<ScenesPaneViewModel>>,
     #[allow(dead_code)]
     settings_view_model: Rc<RefCell<SettingsViewModel>>,
+    #[allow(dead_code)]
+    choreography_settings_view_model: Rc<RefCell<ChoreographySettingsViewModel>>,
     #[allow(dead_code)]
     floor_view_model: Rc<RefCell<FloorCanvasViewModel>>,
     #[allow(dead_code)]
@@ -113,6 +143,7 @@ impl MainPageBinding {
         let close_audio_sender = deps.close_audio_sender.clone();
         let scenes_show_dialog_sender = deps.scenes_show_dialog_sender.clone();
         let scenes_close_dialog_sender = deps.scenes_close_dialog_sender.clone();
+        let redraw_floor_sender = deps.redraw_floor_sender.clone();
 
         let actions = deps.actions;
         let view_weak = view.as_weak();
@@ -134,7 +165,7 @@ impl MainPageBinding {
             open_audio_sender,
             close_audio_sender,
             audio_position_receiver: audio_position_receiver_for_scenes,
-            show_timestamps_sender,
+            show_timestamps_sender: show_timestamps_sender.clone(),
             show_timestamps_receiver,
             actions: OpenChoreoActions {
                 request_open_choreo: actions.request_open_choreo.clone(),
@@ -163,6 +194,118 @@ impl MainPageBinding {
             .initialize_view(view_weak.clone());
         let draw_floor_sender = floor_provider.borrow().draw_floor_sender();
         let floor_view_model = floor_provider.borrow().floor_view_model();
+        let shared_preferences = SharedPreferences::new(Rc::clone(&deps.preferences));
+
+        let choreography_settings_view_model =
+            Rc::new(RefCell::new(ChoreographySettingsViewModel::default()));
+        let load_choreography_settings_behavior = Rc::new(
+            LoadChoreographySettingsBehavior::new(Rc::clone(&deps.global_state_store)),
+        );
+        let update_selected_scene_behavior = Rc::new(RefCell::new(
+            UpdateSelectedSceneBehavior::new(Rc::clone(&deps.global_state_store)),
+        ));
+        let update_comment_behavior = Rc::new(UpdateCommentBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_name_behavior = Rc::new(UpdateNameBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_subtitle_behavior = Rc::new(UpdateSubtitleBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_date_behavior = Rc::new(UpdateDateBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_variation_behavior = Rc::new(UpdateVariationBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_author_behavior = Rc::new(UpdateAuthorBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_description_behavior = Rc::new(UpdateDescriptionBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_floor_front_behavior = Rc::new(UpdateFloorFrontBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_floor_back_behavior = Rc::new(UpdateFloorBackBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_floor_left_behavior = Rc::new(UpdateFloorLeftBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_floor_right_behavior = Rc::new(UpdateFloorRightBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_grid_resolution_behavior = Rc::new(UpdateGridResolutionBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_draw_path_from_behavior = Rc::new(UpdateDrawPathFromBehavior::new(
+            shared_preferences.clone(),
+            redraw_floor_sender.clone(),
+        ));
+        let update_draw_path_to_behavior = Rc::new(UpdateDrawPathToBehavior::new(
+            shared_preferences.clone(),
+            redraw_floor_sender.clone(),
+        ));
+        let update_grid_lines_behavior = Rc::new(UpdateGridLinesBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_snap_to_grid_behavior = Rc::new(UpdateSnapToGridBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            shared_preferences.clone(),
+            redraw_floor_sender.clone(),
+        ));
+        let update_floor_color_behavior = Rc::new(UpdateFloorColorBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+        let update_show_timestamps_behavior = Rc::new(UpdateShowTimestampsBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            shared_preferences.clone(),
+            redraw_floor_sender.clone(),
+            show_timestamps_sender.clone(),
+        ));
+        let update_show_legend_behavior = Rc::new(UpdateShowLegendBehavior::new(
+            shared_preferences.clone(),
+            redraw_floor_sender.clone(),
+        ));
+        let update_positions_at_side_behavior = Rc::new(UpdatePositionsAtSideBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            shared_preferences,
+            redraw_floor_sender.clone(),
+        ));
+        let update_transparency_behavior = Rc::new(UpdateTransparencyBehavior::new(
+            Rc::clone(&deps.global_state_store),
+            redraw_floor_sender.clone(),
+        ));
+
+        {
+            let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+            load_choreography_settings_behavior.load(&mut choreography_settings_view_model);
+            update_draw_path_from_behavior.initialize(&mut choreography_settings_view_model);
+            update_draw_path_to_behavior.initialize(&mut choreography_settings_view_model);
+            update_snap_to_grid_behavior.initialize(&mut choreography_settings_view_model);
+            update_show_timestamps_behavior.initialize(&mut choreography_settings_view_model);
+            update_show_legend_behavior.initialize(&mut choreography_settings_view_model);
+            update_positions_at_side_behavior.initialize();
+            update_selected_scene_behavior
+                .borrow_mut()
+                .sync_from_selected(&mut choreography_settings_view_model);
+        }
 
         let mut main_provider = MainViewModelProvider::new(MainViewModelProviderDependencies {
             global_state: global_state.clone(),
@@ -222,10 +365,22 @@ impl MainPageBinding {
         {
             let scenes_view_model_for_change = Rc::clone(&scenes_view_model);
             let floor_provider_for_change = Rc::clone(&floor_provider);
+            let choreography_settings_view_model_for_change =
+                Rc::clone(&choreography_settings_view_model);
+            let load_choreography_settings_behavior_for_change =
+                Rc::clone(&load_choreography_settings_behavior);
+            let update_selected_scene_behavior_for_change =
+                Rc::clone(&update_selected_scene_behavior);
             let view_weak = view_weak.clone();
             let on_change = Rc::new(move || {
                 let scenes_view_model = Rc::clone(&scenes_view_model_for_change);
                 let floor_provider = Rc::clone(&floor_provider_for_change);
+                let choreography_settings_view_model =
+                    Rc::clone(&choreography_settings_view_model_for_change);
+                let load_choreography_settings_behavior =
+                    Rc::clone(&load_choreography_settings_behavior_for_change);
+                let update_selected_scene_behavior =
+                    Rc::clone(&update_selected_scene_behavior_for_change);
                 let view_weak = view_weak.clone();
                 slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
                     if let Some(view) = view_weak.upgrade()
@@ -234,6 +389,17 @@ impl MainPageBinding {
                         apply_scenes_view_model(&view, &scenes_view_model_snapshot);
                         drop(scenes_view_model_snapshot);
                         floor_provider.borrow().apply_to_view(&view);
+                        let mut choreography_settings_view_model =
+                            choreography_settings_view_model.borrow_mut();
+                        load_choreography_settings_behavior
+                            .load(&mut choreography_settings_view_model);
+                        update_selected_scene_behavior
+                            .borrow_mut()
+                            .sync_from_selected(&mut choreography_settings_view_model);
+                        apply_choreography_settings_view_model(
+                            &view,
+                            &choreography_settings_view_model,
+                        );
                     }
                 });
             });
@@ -321,6 +487,7 @@ impl MainPageBinding {
 
         apply_view_model(&view, &view_model.borrow());
         apply_scenes_view_model(&view, &scenes_view_model.borrow());
+        apply_choreography_settings_view_model(&view, &choreography_settings_view_model.borrow());
         floor_provider.borrow().apply_to_view(&view);
 
         bind_nav_bar(&view, Rc::clone(&nav_bar));
@@ -418,6 +585,407 @@ impl MainPageBinding {
         }
 
         {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_selected_scene_behavior = Rc::clone(&update_selected_scene_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_scene_name(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.scene_name = value.to_string();
+                update_selected_scene_behavior
+                    .borrow_mut()
+                    .update_scene_name(&mut choreography_settings_view_model);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_selected_scene_behavior = Rc::clone(&update_selected_scene_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_scene_text(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.scene_text = value.to_string();
+                update_selected_scene_behavior
+                    .borrow_mut()
+                    .update_scene_text(&mut choreography_settings_view_model);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_selected_scene_behavior = Rc::clone(&update_selected_scene_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_scene_fixed_positions(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.scene_fixed_positions = value;
+                update_selected_scene_behavior
+                    .borrow_mut()
+                    .update_scene_fixed_positions(&mut choreography_settings_view_model);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_selected_scene_behavior = Rc::clone(&update_selected_scene_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_scene_has_timestamp(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.scene_has_timestamp = value;
+                update_selected_scene_behavior
+                    .borrow_mut()
+                    .update_scene_timestamp(&mut choreography_settings_view_model);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_selected_scene_behavior = Rc::clone(&update_selected_scene_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_scene_timestamp_parts(move |minutes, seconds, millis| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.set_scene_timestamp_parts(minutes, seconds, millis);
+                update_selected_scene_behavior
+                    .borrow_mut()
+                    .update_scene_timestamp(&mut choreography_settings_view_model);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_selected_scene_behavior = Rc::clone(&update_selected_scene_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_scene_color(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.scene_color = choreo_color_from_slint(value);
+                update_selected_scene_behavior
+                    .borrow_mut()
+                    .update_scene_color(&mut choreography_settings_view_model);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_comment_behavior = Rc::clone(&update_comment_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_comment(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.comment = value.to_string();
+                update_comment_behavior.update_comment(choreography_settings_view_model.comment.as_str());
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_name_behavior = Rc::clone(&update_name_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_name(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.name = value.to_string();
+                update_name_behavior.update_name(choreography_settings_view_model.name.as_str());
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_subtitle_behavior = Rc::clone(&update_subtitle_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_subtitle(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.subtitle = value.to_string();
+                update_subtitle_behavior
+                    .update_subtitle(choreography_settings_view_model.subtitle.as_str());
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_date_behavior = Rc::clone(&update_date_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_date_parts(move |year, month, day| {
+                let Some(new_date) = crate::date::build_date(year, month, day) else {
+                    return;
+                };
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.date = new_date;
+                update_date_behavior.update_date_parts(year, month, day);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_variation_behavior = Rc::clone(&update_variation_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_variation(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.variation = value.to_string();
+                update_variation_behavior
+                    .update_variation(choreography_settings_view_model.variation.as_str());
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_author_behavior = Rc::clone(&update_author_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_author(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.author = value.to_string();
+                update_author_behavior.update_author(choreography_settings_view_model.author.as_str());
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_description_behavior = Rc::clone(&update_description_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_description(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.description = value.to_string();
+                update_description_behavior
+                    .update_description(choreography_settings_view_model.description.as_str());
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_positions_at_side_behavior = Rc::clone(&update_positions_at_side_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_positions_at_side(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.positions_at_side = value;
+                update_positions_at_side_behavior.update_positions_at_side(value);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_draw_path_from_behavior = Rc::clone(&update_draw_path_from_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_draw_path_from(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                update_draw_path_from_behavior
+                    .update_draw_path_from(&mut choreography_settings_view_model, value);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_draw_path_to_behavior = Rc::clone(&update_draw_path_to_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_draw_path_to(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                update_draw_path_to_behavior
+                    .update_draw_path_to(&mut choreography_settings_view_model, value);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_grid_lines_behavior = Rc::clone(&update_grid_lines_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_grid_lines(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.grid_lines = value;
+                update_grid_lines_behavior.update_grid_lines(value);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_snap_to_grid_behavior = Rc::clone(&update_snap_to_grid_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_snap_to_grid(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                update_snap_to_grid_behavior
+                    .update_snap_to_grid(&mut choreography_settings_view_model, value);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_show_timestamps_behavior = Rc::clone(&update_show_timestamps_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_show_timestamps(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                update_show_timestamps_behavior
+                    .update_show_timestamps(&mut choreography_settings_view_model, value);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_show_legend_behavior = Rc::clone(&update_show_legend_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_show_legend(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                update_show_legend_behavior
+                    .update_show_legend(&mut choreography_settings_view_model, value);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_transparency_behavior = Rc::clone(&update_transparency_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_transparency(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.transparency = value as f64;
+                update_transparency_behavior.update_transparency(value as f64);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_floor_color_behavior = Rc::clone(&update_floor_color_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_floor_color(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let floor_color = choreo_color_from_slint(value);
+                choreography_settings_view_model.floor_color = floor_color.clone();
+                update_floor_color_behavior.update_floor_color(floor_color);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_floor_front_behavior = Rc::clone(&update_floor_front_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_floor_front(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let clamped = value.clamp(1, 100);
+                choreography_settings_view_model.floor_front = clamped;
+                update_floor_front_behavior.update_floor_front(clamped);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_floor_back_behavior = Rc::clone(&update_floor_back_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_floor_back(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let clamped = value.clamp(1, 100);
+                choreography_settings_view_model.floor_back = clamped;
+                update_floor_back_behavior.update_floor_back(clamped);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_floor_left_behavior = Rc::clone(&update_floor_left_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_floor_left(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let clamped = value.clamp(1, 100);
+                choreography_settings_view_model.floor_left = clamped;
+                update_floor_left_behavior.update_floor_left(clamped);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_floor_right_behavior = Rc::clone(&update_floor_right_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_floor_right(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let clamped = value.clamp(1, 100);
+                choreography_settings_view_model.floor_right = clamped;
+                update_floor_right_behavior.update_floor_right(clamped);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
+            let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
+            let update_grid_resolution_behavior = Rc::clone(&update_grid_resolution_behavior);
+            let view_weak = view_weak.clone();
+            view.on_choreo_update_grid_resolution(move |value| {
+                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model.set_grid_resolution(value);
+                update_grid_resolution_behavior.update_grid_resolution(value);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                }
+            });
+        }
+
+        {
             let floor_view_model = Rc::clone(&floor_view_model);
             view.on_floor_pointer_pressed(move |x, y, is_primary, is_in_contact| {
                 let view_model = floor_view_model.borrow();
@@ -505,6 +1073,7 @@ impl MainPageBinding {
             view_model,
             scenes_view_model,
             settings_view_model,
+            choreography_settings_view_model,
             floor_view_model,
             floor_provider,
             nav_bar_timer,
@@ -608,6 +1177,53 @@ fn apply_scenes_view_model(view: &ShellHost, view_model: &ScenesPaneViewModel) {
     view.set_scenes_can_navigate_to_dancer_settings(view_model.can_navigate_to_dancer_settings);
 }
 
+fn apply_choreography_settings_view_model(
+    view: &ShellHost,
+    view_model: &ChoreographySettingsViewModel,
+) {
+    view.set_choreo_has_selected_scene(view_model.has_selected_scene);
+    view.set_choreo_scene_name(view_model.scene_name.as_str().into());
+    view.set_choreo_scene_text(view_model.scene_text.as_str().into());
+    view.set_choreo_scene_fixed_positions(view_model.scene_fixed_positions);
+    view.set_choreo_scene_has_timestamp(view_model.scene_has_timestamp);
+    view.set_choreo_scene_timestamp_minutes(view_model.scene_timestamp_minutes);
+    view.set_choreo_scene_timestamp_seconds(view_model.scene_timestamp_seconds_part);
+    view.set_choreo_scene_timestamp_millis(view_model.scene_timestamp_millis);
+    view.set_choreo_scene_color(slint_color_from_choreo(&view_model.scene_color));
+
+    view.set_choreo_comment(view_model.comment.as_str().into());
+    view.set_choreo_name(view_model.name.as_str().into());
+    view.set_choreo_subtitle(view_model.subtitle.as_str().into());
+    view.set_choreo_date(slint_date_from_time(view_model.date));
+    view.set_choreo_variation(view_model.variation.as_str().into());
+    view.set_choreo_author(view_model.author.as_str().into());
+    view.set_choreo_description(view_model.description.as_str().into());
+
+    view.set_choreo_positions_at_side(view_model.positions_at_side);
+    view.set_choreo_draw_path_from(view_model.draw_path_from);
+    view.set_choreo_draw_path_to(view_model.draw_path_to);
+    view.set_choreo_grid_lines(view_model.grid_lines);
+    view.set_choreo_snap_to_grid(view_model.snap_to_grid);
+    view.set_choreo_show_timestamps(view_model.show_timestamps);
+    view.set_choreo_show_legend(view_model.show_legend);
+    view.set_choreo_transparency(view_model.transparency as f32);
+    view.set_choreo_floor_color(slint_color_from_choreo(&view_model.floor_color));
+
+    view.set_choreo_floor_size_options(ModelRc::new(VecModel::from(
+        view_model.floor_size_options.clone(),
+    )));
+    view.set_choreo_floor_front(view_model.floor_front);
+    view.set_choreo_floor_back(view_model.floor_back);
+    view.set_choreo_floor_left(view_model.floor_left);
+    view.set_choreo_floor_right(view_model.floor_right);
+
+    let grid_resolution_index = view_model.grid_resolution().saturating_sub(1);
+    view.set_choreo_grid_resolution_index(grid_resolution_index);
+    view.set_choreo_grid_size_options(ModelRc::new(VecModel::from(
+        build_grid_menu_items(&view_model.grid_size_options),
+    )));
+}
+
 fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneListItem> {
     let items = scenes
         .iter()
@@ -624,5 +1240,38 @@ fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneL
         .collect::<Vec<_>>();
 
     ModelRc::new(VecModel::from(items))
+}
+
+fn build_grid_menu_items(options: &[crate::choreography_settings::GridSizeOption]) -> Vec<MenuItem> {
+    options
+        .iter()
+        .map(|option| MenuItem {
+            icon: Image::default(),
+            text: option.display.as_str().into(),
+            trailing_text: "".into(),
+            enabled: true,
+        })
+        .collect()
+}
+
+fn slint_date_from_time(value: time::Date) -> Date {
+    Date {
+        day: i32::from(value.day()),
+        month: i32::from(value.month() as u8),
+        year: value.year(),
+    }
+}
+
+fn slint_color_from_choreo(color: &ChoreoColor) -> Color {
+    Color::from_argb_u8(color.a, color.r, color.g, color.b)
+}
+
+fn choreo_color_from_slint(color: Color) -> ChoreoColor {
+    ChoreoColor {
+        r: color.red(),
+        g: color.green(),
+        b: color.blue(),
+        a: color.alpha(),
+    }
 }
 

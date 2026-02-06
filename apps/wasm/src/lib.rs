@@ -78,7 +78,7 @@ pub fn main() {
     )));
     let (scenes_show_dialog_sender, _scenes_show_dialog_receiver) = unbounded();
     let (scenes_close_dialog_sender, _scenes_close_dialog_receiver) = unbounded();
-    let (_redraw_floor_sender, redraw_floor_receiver) = unbounded();
+    let (redraw_floor_sender, redraw_floor_receiver) = unbounded();
 
     let file_picker_actor = create_web_file_picker_actor();
     let actions = MainPageActionHandlers {
@@ -123,6 +123,7 @@ pub fn main() {
             audio_position_receiver,
             scenes_show_dialog_sender,
             scenes_close_dialog_sender,
+            redraw_floor_sender,
             redraw_floor_receiver,
             preferences,
             actions,

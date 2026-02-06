@@ -19,6 +19,7 @@ import {
 import { HamburgerToggleButton } from "hamburger_toggle_button.slint";
 import { MainPageDrawerHost } from "main_page_drawer_host.slint";
 import { SceneListItem } from "scenes_pane_view.slint";
+import { Date } from "std-widgets.slint";
 import { Translations } from "translations.slint";
 
 export component MainPage inherits Rectangle {
@@ -45,6 +46,40 @@ export component MainPage inherits Rectangle {
     in property <bool> scenes_can_delete_scene;
     in property <bool> scenes_can_navigate_to_settings;
     in property <bool> scenes_can_navigate_to_dancer_settings;
+    in property <bool> choreo_has_selected_scene: false;
+    in property <string> choreo_scene_name: "";
+    in property <string> choreo_scene_text: "";
+    in property <bool> choreo_scene_fixed_positions: false;
+    in property <bool> choreo_scene_has_timestamp: false;
+    in property <int> choreo_scene_timestamp_minutes: 0;
+    in property <int> choreo_scene_timestamp_seconds: 0;
+    in property <int> choreo_scene_timestamp_millis: 0;
+    in property <color> choreo_scene_color: MaterialPalette.primary;
+    in property <string> choreo_comment: "";
+    in property <string> choreo_name: "";
+    in property <string> choreo_subtitle: "";
+    in property <Date> choreo_date;
+    in property <string> choreo_date_label: Translations.choreography_date_label;
+    in property <string> choreo_date_picker_title: Translations.choreography_date_picker_title;
+    in property <string> choreo_variation: "";
+    in property <string> choreo_author: "";
+    in property <string> choreo_description: "";
+    in property <bool> choreo_positions_at_side: false;
+    in property <bool> choreo_draw_path_from: false;
+    in property <bool> choreo_draw_path_to: false;
+    in property <bool> choreo_grid_lines: false;
+    in property <bool> choreo_snap_to_grid: false;
+    in property <bool> choreo_show_timestamps: false;
+    in property <bool> choreo_show_legend: false;
+    in property <float> choreo_transparency: 0.0;
+    in property <color> choreo_floor_color: MaterialPalette.surface_variant;
+    in property <[int]> choreo_floor_size_options: [];
+    in property <int> choreo_floor_front: 0;
+    in property <int> choreo_floor_back: 0;
+    in property <int> choreo_floor_left: 0;
+    in property <int> choreo_floor_right: 0;
+    in property <[MenuItem]> choreo_grid_size_options: [];
+    in property <int> choreo_grid_resolution_index: 0;
     in property <string> floor_choreography_name: "";
     in property <string> floor_scene_name: "";
     in property <int> floor_front: 6;
@@ -97,6 +132,33 @@ export component MainPage inherits Rectangle {
     callback scenes_save_choreo();
     callback scenes_navigate_to_settings();
     callback scenes_navigate_to_dancer_settings();
+    callback choreo_update_scene_name(string);
+    callback choreo_update_scene_text(string);
+    callback choreo_update_scene_fixed_positions(bool);
+    callback choreo_update_scene_has_timestamp(bool);
+    callback choreo_update_scene_timestamp_parts(int, int, int);
+    callback choreo_update_scene_color(color);
+    callback choreo_update_comment(string);
+    callback choreo_update_name(string);
+    callback choreo_update_subtitle(string);
+    callback choreo_update_date_parts(int, int, int);
+    callback choreo_update_variation(string);
+    callback choreo_update_author(string);
+    callback choreo_update_description(string);
+    callback choreo_update_positions_at_side(bool);
+    callback choreo_update_draw_path_from(bool);
+    callback choreo_update_draw_path_to(bool);
+    callback choreo_update_grid_lines(bool);
+    callback choreo_update_snap_to_grid(bool);
+    callback choreo_update_show_timestamps(bool);
+    callback choreo_update_show_legend(bool);
+    callback choreo_update_transparency(float);
+    callback choreo_update_floor_color(color);
+    callback choreo_update_floor_front(int);
+    callback choreo_update_floor_back(int);
+    callback choreo_update_floor_left(int);
+    callback choreo_update_floor_right(int);
+    callback choreo_update_grid_resolution(int);
     callback floor_pointer_pressed(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback floor_pointer_moved(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback floor_pointer_released(x: float, y: float, is_primary: bool, is_in_contact: bool);
@@ -198,6 +260,40 @@ export component MainPage inherits Rectangle {
                 scenes_can_delete_scene: root.scenes_can_delete_scene;
                 scenes_can_navigate_to_settings: root.scenes_can_navigate_to_settings;
                 scenes_can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
+                has_selected_scene: root.choreo_has_selected_scene;
+                scene_name: root.choreo_scene_name;
+                scene_text: root.choreo_scene_text;
+                scene_fixed_positions: root.choreo_scene_fixed_positions;
+                scene_has_timestamp: root.choreo_scene_has_timestamp;
+                scene_timestamp_minutes: root.choreo_scene_timestamp_minutes;
+                scene_timestamp_seconds: root.choreo_scene_timestamp_seconds;
+                scene_timestamp_millis: root.choreo_scene_timestamp_millis;
+                scene_color: root.choreo_scene_color;
+                comment: root.choreo_comment;
+                name: root.choreo_name;
+                subtitle: root.choreo_subtitle;
+                date: root.choreo_date;
+                date_label: root.choreo_date_label;
+                date_picker_title: root.choreo_date_picker_title;
+                variation: root.choreo_variation;
+                author: root.choreo_author;
+                description: root.choreo_description;
+                positions_at_side: root.choreo_positions_at_side;
+                draw_path_from: root.choreo_draw_path_from;
+                draw_path_to: root.choreo_draw_path_to;
+                grid_lines: root.choreo_grid_lines;
+                snap_to_grid: root.choreo_snap_to_grid;
+                show_timestamps: root.choreo_show_timestamps;
+                show_legend: root.choreo_show_legend;
+                transparency: root.choreo_transparency;
+                floor_color: root.choreo_floor_color;
+                floor_size_options: root.choreo_floor_size_options;
+                floor_front: root.choreo_floor_front;
+                floor_back: root.choreo_floor_back;
+                floor_left: root.choreo_floor_left;
+                floor_right: root.choreo_floor_right;
+                grid_size_options: root.choreo_grid_size_options;
+                grid_resolution_index: root.choreo_grid_resolution_index;
 
                 left_close_requested => { root.close_nav(); }
                 right_close_requested => { root.close_settings(); }
@@ -210,6 +306,37 @@ export component MainPage inherits Rectangle {
                 scenes_save_choreo => { root.scenes_save_choreo(); }
                 scenes_navigate_to_settings => { root.scenes_navigate_to_settings(); }
                 scenes_navigate_to_dancer_settings => { root.scenes_navigate_to_dancer_settings(); }
+                update_scene_name(value) => { root.choreo_update_scene_name(value); }
+                update_scene_text(value) => { root.choreo_update_scene_text(value); }
+                update_scene_fixed_positions(value) => { root.choreo_update_scene_fixed_positions(value); }
+                update_scene_has_timestamp(value) => { root.choreo_update_scene_has_timestamp(value); }
+                update_scene_timestamp_parts(minutes, seconds, millis) => {
+                    root.choreo_update_scene_timestamp_parts(minutes, seconds, millis);
+                }
+                update_scene_color(color) => { root.choreo_update_scene_color(color); }
+                update_comment(value) => { root.choreo_update_comment(value); }
+                update_name(value) => { root.choreo_update_name(value); }
+                update_subtitle(value) => { root.choreo_update_subtitle(value); }
+                update_date_parts(year, month, day) => {
+                    root.choreo_update_date_parts(year, month, day);
+                }
+                update_variation(value) => { root.choreo_update_variation(value); }
+                update_author(value) => { root.choreo_update_author(value); }
+                update_description(value) => { root.choreo_update_description(value); }
+                update_positions_at_side(value) => { root.choreo_update_positions_at_side(value); }
+                update_draw_path_from(value) => { root.choreo_update_draw_path_from(value); }
+                update_draw_path_to(value) => { root.choreo_update_draw_path_to(value); }
+                update_grid_lines(value) => { root.choreo_update_grid_lines(value); }
+                update_snap_to_grid(value) => { root.choreo_update_snap_to_grid(value); }
+                update_show_timestamps(value) => { root.choreo_update_show_timestamps(value); }
+                update_show_legend(value) => { root.choreo_update_show_legend(value); }
+                update_transparency(value) => { root.choreo_update_transparency(value); }
+                update_floor_color(color) => { root.choreo_update_floor_color(color); }
+                update_floor_front(value) => { root.choreo_update_floor_front(value); }
+                update_floor_back(value) => { root.choreo_update_floor_back(value); }
+                update_floor_left(value) => { root.choreo_update_floor_left(value); }
+                update_floor_right(value) => { root.choreo_update_floor_right(value); }
+                update_grid_resolution(value) => { root.choreo_update_grid_resolution(value); }
 
                 floor_canvas := FloorCanvasView {
                     choreography_name: root.floor_choreography_name;

@@ -77,7 +77,7 @@ fn run_ui() -> Result<(), slint::PlatformError> {
     )));
     let (scenes_show_dialog_sender, _scenes_show_dialog_receiver) = unbounded();
     let (scenes_close_dialog_sender, _scenes_close_dialog_receiver) = unbounded();
-    let (_redraw_floor_sender, redraw_floor_receiver) = unbounded();
+    let (redraw_floor_sender, redraw_floor_receiver) = unbounded();
 
     let actions = MainPageActionHandlers {
         pick_audio_path: Some(Rc::new(pick_audio_path)),
@@ -100,6 +100,7 @@ fn run_ui() -> Result<(), slint::PlatformError> {
             audio_position_receiver,
             scenes_show_dialog_sender,
             scenes_close_dialog_sender,
+            redraw_floor_sender,
             redraw_floor_receiver,
             preferences,
             actions,
