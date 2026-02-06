@@ -376,6 +376,11 @@ impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
                     command,
                 );
                 view_model.draw_floor();
+
+                let delayed_view_model = Rc::clone(&view_model_handle);
+                slint::Timer::single_shot(Duration::from_millis(16), move || {
+                    delayed_view_model.borrow_mut().draw_floor();
+                });
             }
 
             while let Ok(command) = touch_receiver.try_recv() {
