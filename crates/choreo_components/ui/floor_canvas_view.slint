@@ -120,8 +120,6 @@ export component FloorCanvasView inherits Rectangle {
     out property <float> canvas_width: root.width / 1px;
     out property <float> canvas_height: root.height / 1px;
 
-    property <int> max_horizontal_meters: floor_left > floor_right ? floor_left : floor_right;
-    property <int> max_vertical_meters: floor_front > floor_back ? floor_front : floor_back;
     property <float> floor_width_meters: (floor_left + floor_right) * 1.0;
     property <float> floor_height_meters: (floor_front + floor_back) * 1.0;
 
@@ -204,6 +202,7 @@ export component FloorCanvasView inherits Rectangle {
                 height: content.floor_height;
                 x: content.floor_x;
                 y: content.floor_y;
+                z: 0;
                 background: root.floor_color;
                 border-width: root.border_thickness;
                 border-color: root.floor_border_color;
@@ -214,46 +213,43 @@ export component FloorCanvasView inherits Rectangle {
                 y: floor_rect.y;
                 width: floor_rect.width;
                 height: floor_rect.height;
+                z: 1;
                 background: transparent;
                 clip: true;
                 visible: root.show_grid_lines;
 
-                for i in root.max_horizontal_meters : Rectangle {
+                for i in root.floor_left : Rectangle {
                     width: root.grid_line_thickness;
                     height: parent.height;
                     background: root.grid_color;
                     opacity: 0.5;
-                    visible: i + 1 <= root.floor_left;
                     x: parent.width / 2 - self.width / 2 - (i + 1) * content.scale * 1px;
                     y: 0px;
                 }
 
-                for i in root.max_horizontal_meters : Rectangle {
+                for i in root.floor_right : Rectangle {
                     width: root.grid_line_thickness;
                     height: parent.height;
                     background: root.grid_color;
                     opacity: 0.5;
-                    visible: i + 1 <= root.floor_right;
                     x: parent.width / 2 - self.width / 2 + (i + 1) * content.scale * 1px;
                     y: 0px;
                 }
 
-                for i in root.max_vertical_meters : Rectangle {
+                for i in root.floor_front : Rectangle {
                     width: parent.width;
                     height: root.grid_line_thickness;
                     background: root.grid_color;
                     opacity: 0.5;
-                    visible: i + 1 <= root.floor_front;
                     x: 0px;
                     y: parent.height / 2 - self.height / 2 - (i + 1) * content.scale * 1px;
                 }
 
-                for i in root.max_vertical_meters : Rectangle {
+                for i in root.floor_back : Rectangle {
                     width: parent.width;
                     height: root.grid_line_thickness;
                     background: root.grid_color;
                     opacity: 0.5;
-                    visible: i + 1 <= root.floor_back;
                     x: 0px;
                     y: parent.height / 2 - self.height / 2 + (i + 1) * content.scale * 1px;
                 }
