@@ -129,6 +129,15 @@ export component FloorCanvasView inherits Rectangle {
     callback pointer_released(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback pointer_wheel_changed(delta: float, x: float, y: float);
 
+    changed floor_bounds_left => { root.redraw(); }
+    changed floor_bounds_top => { root.redraw(); }
+    changed floor_bounds_right => { root.redraw(); }
+    changed floor_bounds_bottom => { root.redraw(); }
+    changed canvas_width => { root.redraw(); }
+    changed canvas_height => { root.redraw(); }
+    changed width => { root.redraw(); }
+    changed height => { root.redraw(); }
+
     background: surface_color;
 
     Vertical {
@@ -159,6 +168,10 @@ export component FloorCanvasView inherits Rectangle {
         content := Rectangle {
             vertical-stretch: 1;
             background: root.surface_color;
+            changed floor_x => { root.redraw(); }
+            changed floor_y => { root.redraw(); }
+            changed floor_width => { root.redraw(); }
+            changed floor_height => { root.redraw(); }
 
             property <float> content_width_px: self.width / 1px;
             property <float> content_height_px: self.height / 1px;
@@ -285,23 +298,6 @@ export component FloorCanvasView inherits Rectangle {
                     background: root.floor_border_color;
                     x: parent.width / 2 - self.width / 2;
                     y: parent.height / 2 - self.height / 2;
-                }
-            }
-
-            svg_overlay_layer := Rectangle {
-                x: floor_rect.x;
-                y: floor_rect.y;
-                width: floor_rect.width;
-                height: floor_rect.height;
-                background: transparent;
-                clip: true;
-                visible: root.has_svg_overlay;
-
-                Image {
-                    source: root.svg_overlay;
-                    width: parent.width;
-                    height: parent.height;
-                    image-fit: contain;
                 }
             }
 
@@ -566,6 +562,25 @@ export component FloorCanvasView inherits Rectangle {
                     return accept;
                 }
             }
+        }
+    }
+
+    svg_overlay_layer := Rectangle {
+        x: 0px;
+        y: 0px;
+        width: root.width;
+        height: root.height;
+        z: 1;
+        background: transparent;
+        visible: root.has_svg_overlay;
+
+        Image {
+            source: root.svg_overlay;
+            width: content.width * content.zoom;
+            height: content.height * content.zoom;
+            x: content.center_x - self.width / 2;
+            y: content.y + content.center_y - self.height / 2;
+            image-fit: contain;
         }
     }
 }

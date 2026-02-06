@@ -493,6 +493,13 @@ impl MainPageBinding {
             });
         }
 
+        {
+            let floor_view_model = Rc::clone(&floor_view_model);
+            view.on_floor_redraw(move || {
+                floor_view_model.borrow_mut().draw_floor();
+            });
+        }
+
         Self {
             view,
             view_model,

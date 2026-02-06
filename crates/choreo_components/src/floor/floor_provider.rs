@@ -232,11 +232,12 @@ impl FloorProvider {
 
         {
             let floor_view_model = Rc::clone(&self.floor_view_model);
+            let floor_adapter = Rc::clone(&self.floor_adapter);
             let view_weak = view_weak.clone();
             let last_snapshot = Rc::new(RefCell::new(None::<FloorLayoutSnapshot>));
             self.floor_layout_timer.start(
                 TimerMode::Repeated,
-                Duration::from_millis(100),
+                Duration::from_millis(16),
                 move || {
                     let Some(view) = view_weak.upgrade() else {
                         return;
@@ -249,7 +250,7 @@ impl FloorProvider {
                     }
 
                     *last = Some(current);
-                    floor_view_model.borrow_mut().draw_floor();
+                    Self::apply_floor_view(&view, &floor_adapter, &floor_view_model);
                 },
             );
         }

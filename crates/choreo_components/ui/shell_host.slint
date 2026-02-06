@@ -84,6 +84,7 @@ export component ShellHost inherits MaterialWindow {
     callback floor_pointer_moved(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback floor_pointer_released(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback floor_pointer_wheel_changed(delta: float, x: float, y: float);
+    callback floor_redraw();
 
     title: root.title_text;
     icon: @image-url("app_icon.svg");
@@ -165,6 +166,9 @@ export component ShellHost inherits MaterialWindow {
             }
             floor_pointer_wheel_changed(delta, x, y) => {
                 root.floor_pointer_wheel_changed(delta, x, y);
+            }
+            floor_redraw => {
+                root.floor_redraw();
             }
         }
         settings_page := SettingsPage {

@@ -117,11 +117,6 @@ impl FloorAdapter {
         view.set_floor_color(floor_color);
         view.set_floor_dancer_size(dancer_size);
 
-        let floor_width_meters = (floor_left + floor_right) as f32;
-        let floor_height_meters = (floor_front + floor_back) as f32;
-        let render_transform =
-            build_floor_render_transform(view_model, floor_width_meters, floor_height_meters);
-
         let current_scene = current_scene.as_ref();
         let scene_positions = current_scene.map(|scene| scene.positions.as_slice());
 
@@ -134,6 +129,30 @@ impl FloorAdapter {
         );
 
         view.set_floor_positions(ModelRc::new(VecModel::from(positions)));
+
+        let (axis_labels_x, axis_labels_y, show_axis_labels) =
+            build_axis_labels(scene_positions, positions_at_side);
+        view.set_floor_axis_labels_x(ModelRc::new(VecModel::from(axis_labels_x)));
+        view.set_floor_axis_labels_y(ModelRc::new(VecModel::from(axis_labels_y)));
+        view.set_floor_show_axis_labels(show_axis_labels);
+
+        let show_legend = self
+            .preferences
+            .get_bool(SettingsPreferenceKeys::SHOW_LEGEND, false)
+            && !legend_entries.is_empty();
+        view.set_floor_legend_entries(ModelRc::new(VecModel::from(legend_entries)));
+        view.set_floor_show_legend(show_legend);
+
+        let (svg_overlay, has_svg_overlay) = load_svg_overlay(&svg_file_path);
+        view.set_floor_svg_overlay(svg_overlay);
+        view.set_floor_has_svg_overlay(has_svg_overlay);
+
+        self.update_bounds(view, view_model);
+
+        let floor_width_meters = (floor_left + floor_right) as f32;
+        let floor_height_meters = (floor_front + floor_back) as f32;
+        let render_transform =
+            build_floor_render_transform(view_model, floor_width_meters, floor_height_meters);
 
         let (curves, dashed_segments) = self.build_curves(
             previous_scene.as_ref(),
@@ -152,23 +171,6 @@ impl FloorAdapter {
             render_transform.as_ref(),
         );
         view.set_floor_selection_segments(ModelRc::new(VecModel::from(selection_segments)));
-
-        let (axis_labels_x, axis_labels_y, show_axis_labels) =
-            build_axis_labels(scene_positions, positions_at_side);
-        view.set_floor_axis_labels_x(ModelRc::new(VecModel::from(axis_labels_x)));
-        view.set_floor_axis_labels_y(ModelRc::new(VecModel::from(axis_labels_y)));
-        view.set_floor_show_axis_labels(show_axis_labels);
-
-        let show_legend = self
-            .preferences
-            .get_bool(SettingsPreferenceKeys::SHOW_LEGEND, false)
-            && !legend_entries.is_empty();
-        view.set_floor_legend_entries(ModelRc::new(VecModel::from(legend_entries)));
-        view.set_floor_show_legend(show_legend);
-
-        let (svg_overlay, has_svg_overlay) = load_svg_overlay(&svg_file_path);
-        view.set_floor_svg_overlay(svg_overlay);
-        view.set_floor_has_svg_overlay(has_svg_overlay);
 
         let remaining_positions = remaining_positions(
             dancer_count,

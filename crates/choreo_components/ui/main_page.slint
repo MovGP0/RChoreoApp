@@ -101,6 +101,7 @@ export component MainPage inherits Rectangle {
     callback floor_pointer_moved(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback floor_pointer_released(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback floor_pointer_wheel_changed(delta: float, x: float, y: float);
+    callback floor_redraw();
 
     background: MaterialPalette.surface_container_low;
 
@@ -249,6 +250,9 @@ export component MainPage inherits Rectangle {
                     }
                     pointer_wheel_changed(delta, x, y) => {
                         root.floor_pointer_wheel_changed(delta, x, y);
+                    }
+                    redraw => {
+                        root.floor_redraw();
                     }
                 }
             }
