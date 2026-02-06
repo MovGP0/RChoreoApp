@@ -6,14 +6,15 @@ export component SceneItemView inherits Rectangle {
     in property <color> scene_color;
     in property <bool> show_timestamps;
     in property <bool> is_selected;
-    in property <color> selected_background: MaterialPalette.primary_container;
-    in property <color> unselected_background: MaterialPalette.surface;
+    in property <color> selected_background: MaterialPalette.secondary_container;
+    in property <color> unselected_background: MaterialPalette.surface_container_low;
     in property <color> selected_stroke: MaterialPalette.primary;
     in property <color> unselected_stroke: MaterialPalette.outline_variant;
-    in property <color> selected_text: MaterialPalette.on_primary_container;
+    in property <color> selected_text: MaterialPalette.on_secondary_container;
     in property <color> unselected_text: MaterialPalette.on_surface;
-    in property <color> selected_timestamp_text: MaterialPalette.on_primary_container;
+    in property <color> selected_timestamp_text: MaterialPalette.on_secondary_container;
     in property <color> unselected_timestamp_text: MaterialPalette.on_surface_variant;
+    in property <color> selected_accent: MaterialPalette.primary;
 
     callback select_scene();
 
@@ -21,6 +22,15 @@ export component SceneItemView inherits Rectangle {
     border-width: is_selected ? 2px : 1px;
     border-color: is_selected ? selected_stroke : unselected_stroke;
     border-radius: 6px;
+
+    if is_selected : Rectangle {
+        x: 0px;
+        y: 0px;
+        width: 4px;
+        height: parent.height;
+        border-radius: 6px;
+        background: selected_accent;
+    }
 
     content := Vertical {
         width: parent.width;
@@ -39,7 +49,9 @@ export component SceneItemView inherits Rectangle {
                 text: scene_name;
                 color: is_selected ? selected_text : unselected_text;
                 font-size: MaterialTypography.body_medium.font_size;
-                font-weight: MaterialTypography.body_medium.font_weight;
+                font-weight: is_selected
+                    ? MaterialTypography.title_medium.font_weight
+                    : MaterialTypography.body_medium.font_weight;
             }
         }
         if show_timestamps : MaterialText {

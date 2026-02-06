@@ -211,8 +211,36 @@ impl ScenesPaneViewModel {
     }
 
     pub fn set_selected_scene(&mut self, scene: Option<SceneViewModel>) {
-        self.global_state.borrow_mut().selected_scene = scene.clone();
-        self.can_delete_scene = scene.is_some();
+        let selected_scene_id = scene.as_ref().map(|selected| selected.scene_id);
+
+        {
+            let mut global_state = self.global_state.borrow_mut();
+
+            for current in &mut global_state.scenes {
+                current.is_selected = selected_scene_id
+                    .as_ref()
+                    .is_some_and(|id| *id == current.scene_id);
+            }
+
+            global_state.selected_scene = selected_scene_id
+                .as_ref()
+                .and_then(|id| {
+                    global_state
+                        .scenes
+                        .iter()
+                        .find(|current| current.scene_id == *id)
+                        .cloned()
+                })
+                .or(scene);
+        }
+
+        for current in &mut self.scenes {
+            current.is_selected = selected_scene_id
+                .as_ref()
+                .is_some_and(|id| *id == current.scene_id);
+        }
+
+        self.can_delete_scene = selected_scene_id.is_some();
         self.notify_changed();
     }
 
@@ -237,20 +265,32 @@ impl ScenesPaneViewModel {
     pub fn refresh_scenes(&mut self) {
         self.scenes.clear();
 
-        let global_state = self.global_state.borrow();
-        if self.search_text.trim().is_empty() {
-            self.scenes.extend(global_state.scenes.iter().cloned());
-            return;
-        }
+        let selected_scene_id = {
+            let global_state = self.global_state.borrow();
+            if self.search_text.trim().is_empty() {
+                self.scenes.extend(global_state.scenes.iter().cloned());
+            } else {
+                let search = self.search_text.to_ascii_lowercase();
+                self.scenes.extend(
+                    global_state
+                        .scenes
+                        .iter()
+                        .filter(|scene| scene.name.to_ascii_lowercase().contains(&search))
+                        .cloned(),
+                );
+            }
 
-        let search = self.search_text.to_ascii_lowercase();
-        self.scenes.extend(
             global_state
-                .scenes
-                .iter()
-                .filter(|scene| scene.name.to_ascii_lowercase().contains(&search))
-                .cloned(),
-        );
+                .selected_scene
+                .as_ref()
+                .map(|selected| selected.scene_id)
+        };
+
+        for current in &mut self.scenes {
+            current.is_selected = selected_scene_id
+                .as_ref()
+                .is_some_and(|id| *id == current.scene_id);
+        }
     }
 
     pub fn update_search_text(&mut self, value: String) {
