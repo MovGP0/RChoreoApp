@@ -37,6 +37,9 @@ use wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
+#[cfg(target_arch = "wasm32")]
+use choreo_components::choreo_main::{OpenAudioRequested, OpenImageRequested};
+
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub fn main() {
     // WASM runs on the browser main thread. There is no per-thread stack size
@@ -77,12 +80,34 @@ pub fn main() {
     let (scenes_close_dialog_sender, _scenes_close_dialog_receiver) = unbounded();
     let (_redraw_floor_sender, redraw_floor_receiver) = unbounded();
 
+    let file_picker_actor = create_web_file_picker_actor();
     let actions = MainPageActionHandlers {
         pick_audio_path: None,
         pick_image_path: None,
-        request_open_choreo: Some(Rc::new(request_open_choreo)),
-        request_open_audio: Some(Rc::new(request_open_audio)),
-        request_open_image: Some(Rc::new(request_open_image)),
+        request_open_choreo: Some(Rc::new({
+            let file_picker_actor = file_picker_actor.clone();
+            move |sender| {
+                if let Some(actor) = file_picker_actor.as_ref() {
+                    actor.request_open_choreo(sender);
+                }
+            }
+        })),
+        request_open_audio: Some(Rc::new({
+            let file_picker_actor = file_picker_actor.clone();
+            move |sender| {
+                if let Some(actor) = file_picker_actor.as_ref() {
+                    actor.request_open_audio(sender);
+                }
+            }
+        })),
+        request_open_image: Some(Rc::new({
+            let file_picker_actor = file_picker_actor.clone();
+            move |sender| {
+                if let Some(actor) = file_picker_actor.as_ref() {
+                    actor.request_open_image(sender);
+                }
+            }
+        })),
     };
 
     let binding = MainPageBinding::new(
@@ -109,156 +134,230 @@ pub fn main() {
 }
 
 #[cfg(target_arch = "wasm32")]
-fn request_open_choreo(sender: Sender<OpenChoreoRequested>) {
-    let Some(window) = web_sys::window() else {
-        return;
-    };
-    let Some(document) = window.document() else {
-        return;
-    };
-    let Ok(element) = document.create_element("input") else {
-        return;
-    };
-    let Ok(input) = element.dyn_into::<web_sys::HtmlInputElement>() else {
-        return;
-    };
-    input.set_type("file");
-    input.set_accept(".choreo,application/json");
+fn create_web_file_picker_actor() -> Option<Rc<WebFilePickerActor>> {
+    WebFilePickerActor::new().map(Rc::new)
+}
 
-    let sender_for_change = sender.clone();
-    let onchange = Closure::wrap(Box::new(move |event: web_sys::Event| {
-        let target = match event.target() {
-            Some(target) => target,
-            None => return,
-        };
-        let Ok(input) = target.dyn_into::<web_sys::HtmlInputElement>() else {
-            return;
-        };
-        let Some(files) = input.files() else {
-            return;
-        };
-        let Some(file) = files.get(0) else {
-            return;
-        };
-        let file_name = file.name();
-        let Ok(reader) = web_sys::FileReader::new() else {
-            return;
-        };
-        let reader_for_load = reader.clone();
-        let sender_for_load = sender_for_change.clone();
-        let onloadend = Closure::wrap(Box::new(move |_event: web_sys::ProgressEvent| {
-            let Ok(result) = reader_for_load.result() else {
-                return;
-            };
-            let Some(contents) = result.as_string() else {
-                return;
-            };
-            let _ = sender_for_load.send(OpenChoreoRequested {
-                file_path: None,
-                file_name: Some(file_name.clone()),
-                contents,
-            });
-        }) as Box<dyn FnMut(_)>);
+#[cfg(not(target_arch = "wasm32"))]
+fn create_web_file_picker_actor() -> Option<Rc<WebFilePickerActor>> {
+    None
+}
 
-        reader.set_onloadend(Some(onloadend.as_ref().unchecked_ref()));
-        let _ = reader.read_as_text(&file);
-        onloadend.forget();
-    }) as Box<dyn FnMut(_)>);
+#[cfg(target_arch = "wasm32")]
+struct WebFilePickerActor {
+    choreo_input: web_sys::HtmlInputElement,
+    audio_input: web_sys::HtmlInputElement,
+    image_input: web_sys::HtmlInputElement,
+    choreo_sender: Rc<RefCell<Option<Sender<OpenChoreoRequested>>>>,
+    audio_sender: Rc<RefCell<Option<Sender<OpenAudioRequested>>>>,
+    image_sender: Rc<RefCell<Option<Sender<OpenImageRequested>>>>,
+    _choreo_onchange: Closure<dyn FnMut(web_sys::Event)>,
+    _audio_onchange: Closure<dyn FnMut(web_sys::Event)>,
+    _image_onchange: Closure<dyn FnMut(web_sys::Event)>,
+}
 
-    input.set_onchange(Some(onchange.as_ref().unchecked_ref()));
-    if let Some(body) = document.body() {
-        let _ = body.append_child(&input);
+#[cfg(not(target_arch = "wasm32"))]
+struct WebFilePickerActor;
+
+#[cfg(not(target_arch = "wasm32"))]
+impl WebFilePickerActor {
+    fn request_open_choreo(&self, _sender: Sender<OpenChoreoRequested>) {}
+
+    fn request_open_audio(
+        &self,
+        _sender: Sender<choreo_components::choreo_main::OpenAudioRequested>,
+    ) {
     }
-    input.click();
-    onchange.forget();
-}
 
-#[cfg(not(target_arch = "wasm32"))]
-fn request_open_choreo(_: Sender<OpenChoreoRequested>) {}
-
-#[cfg(target_arch = "wasm32")]
-fn request_open_audio(sender: Sender<choreo_components::choreo_main::OpenAudioRequested>) {
-    request_open_file(
-        "audio/*",
-        move |file, object_url| {
-            let _ = sender.send(choreo_components::choreo_main::OpenAudioRequested {
-                file_path: object_url,
-            });
-            drop(file);
-        },
-    );
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn request_open_audio(_: Sender<choreo_components::choreo_main::OpenAudioRequested>) {}
-
-#[cfg(target_arch = "wasm32")]
-fn request_open_image(sender: Sender<choreo_components::choreo_main::OpenImageRequested>) {
-    request_open_file(
-        ".svg,image/svg+xml",
-        move |file, object_url| {
-            let _ = sender.send(choreo_components::choreo_main::OpenImageRequested {
-                file_path: object_url,
-            });
-            drop(file);
-        },
-    );
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn request_open_image(_: Sender<choreo_components::choreo_main::OpenImageRequested>) {}
-
-#[cfg(target_arch = "wasm32")]
-fn request_open_file(
-    accept: &str,
-    on_selected: impl FnOnce(web_sys::File, String) + 'static,
-) {
-    let Some(window) = web_sys::window() else {
-        return;
-    };
-    let Some(document) = window.document() else {
-        return;
-    };
-    let Ok(element) = document.create_element("input") else {
-        return;
-    };
-    let Ok(input) = element.dyn_into::<web_sys::HtmlInputElement>() else {
-        return;
-    };
-    input.set_type("file");
-    input.set_accept(accept);
-
-    let mut on_selected = Some(on_selected);
-    let onchange = Closure::wrap(Box::new(move |event: web_sys::Event| {
-        let Some(on_selected) = on_selected.take() else {
-            return;
-        };
-        let target = match event.target() {
-            Some(target) => target,
-            None => return,
-        };
-        let Ok(input) = target.dyn_into::<web_sys::HtmlInputElement>() else {
-            return;
-        };
-        let Some(files) = input.files() else {
-            return;
-        };
-        let Some(file) = files.get(0) else {
-            return;
-        };
-
-        let object_url = match web_sys::Url::create_object_url_with_blob(&file) {
-            Ok(url) => url,
-            Err(_) => return,
-        };
-
-        on_selected(file, object_url);
-    }) as Box<dyn FnMut(_)>);
-
-    input.set_onchange(Some(onchange.as_ref().unchecked_ref()));
-    if let Some(body) = document.body() {
-        let _ = body.append_child(&input);
+    fn request_open_image(
+        &self,
+        _sender: Sender<choreo_components::choreo_main::OpenImageRequested>,
+    ) {
     }
-    input.click();
-    onchange.forget();
+}
+
+#[cfg(target_arch = "wasm32")]
+impl WebFilePickerActor {
+    fn new() -> Option<Self> {
+        let Some(window) = web_sys::window() else {
+            return None;
+        };
+        let Some(document) = window.document() else {
+            return None;
+        };
+
+        let choreo_input = Self::create_hidden_file_input(
+            &document,
+            "wasm-choreo-picker",
+            ".choreo,application/json",
+        )?;
+        let audio_input =
+            Self::create_hidden_file_input(&document, "wasm-audio-picker", "audio/*")?;
+        let image_input = Self::create_hidden_file_input(
+            &document,
+            "wasm-image-picker",
+            ".svg,image/svg+xml",
+        )?;
+
+        let choreo_sender = Rc::new(RefCell::new(None));
+        let audio_sender = Rc::new(RefCell::new(None));
+        let image_sender = Rc::new(RefCell::new(None));
+
+        let choreo_onchange = {
+            let choreo_sender = Rc::clone(&choreo_sender);
+            Closure::wrap(Box::new(move |event: web_sys::Event| {
+                let target = match event.target() {
+                    Some(target) => target,
+                    None => return,
+                };
+                let Ok(input) = target.dyn_into::<web_sys::HtmlInputElement>() else {
+                    return;
+                };
+                let Some(files) = input.files() else {
+                    return;
+                };
+                let Some(file) = files.get(0) else {
+                    return;
+                };
+                let Some(sender) = choreo_sender.borrow().as_ref().cloned() else {
+                    return;
+                };
+                let file_name = file.name();
+                let Ok(reader) = web_sys::FileReader::new() else {
+                    return;
+                };
+                let onloadend = Closure::wrap(Box::new(move |_event: web_sys::ProgressEvent| {
+                    let Ok(result) = reader.result() else {
+                        return;
+                    };
+                    let Some(contents) = result.as_string() else {
+                        return;
+                    };
+                    let _ = sender.send(OpenChoreoRequested {
+                        file_path: None,
+                        file_name: Some(file_name.clone()),
+                        contents,
+                    });
+                }) as Box<dyn FnMut(_)>);
+                reader.set_onloadend(Some(onloadend.as_ref().unchecked_ref()));
+                let _ = reader.read_as_text(&file);
+                onloadend.forget();
+            }) as Box<dyn FnMut(_)>)
+        };
+        choreo_input.set_onchange(Some(choreo_onchange.as_ref().unchecked_ref()));
+
+        let audio_onchange = {
+            let audio_sender = Rc::clone(&audio_sender);
+            Closure::wrap(Box::new(move |event: web_sys::Event| {
+                let target = match event.target() {
+                    Some(target) => target,
+                    None => return,
+                };
+                let Ok(input) = target.dyn_into::<web_sys::HtmlInputElement>() else {
+                    return;
+                };
+                let Some(files) = input.files() else {
+                    return;
+                };
+                let Some(file) = files.get(0) else {
+                    return;
+                };
+                let Some(sender) = audio_sender.borrow().as_ref().cloned() else {
+                    return;
+                };
+                let object_url = match web_sys::Url::create_object_url_with_blob(&file) {
+                    Ok(url) => url,
+                    Err(_) => return,
+                };
+                let _ = sender.send(OpenAudioRequested {
+                    file_path: object_url,
+                });
+            }) as Box<dyn FnMut(_)>)
+        };
+        audio_input.set_onchange(Some(audio_onchange.as_ref().unchecked_ref()));
+
+        let image_onchange = {
+            let image_sender = Rc::clone(&image_sender);
+            Closure::wrap(Box::new(move |event: web_sys::Event| {
+                let target = match event.target() {
+                    Some(target) => target,
+                    None => return,
+                };
+                let Ok(input) = target.dyn_into::<web_sys::HtmlInputElement>() else {
+                    return;
+                };
+                let Some(files) = input.files() else {
+                    return;
+                };
+                let Some(file) = files.get(0) else {
+                    return;
+                };
+                let Some(sender) = image_sender.borrow().as_ref().cloned() else {
+                    return;
+                };
+                let object_url = match web_sys::Url::create_object_url_with_blob(&file) {
+                    Ok(url) => url,
+                    Err(_) => return,
+                };
+                let _ = sender.send(OpenImageRequested {
+                    file_path: object_url,
+                });
+            }) as Box<dyn FnMut(_)>)
+        };
+        image_input.set_onchange(Some(image_onchange.as_ref().unchecked_ref()));
+
+        Some(Self {
+            choreo_input,
+            audio_input,
+            image_input,
+            choreo_sender,
+            audio_sender,
+            image_sender,
+            _choreo_onchange: choreo_onchange,
+            _audio_onchange: audio_onchange,
+            _image_onchange: image_onchange,
+        })
+    }
+
+    fn create_hidden_file_input(
+        document: &web_sys::Document,
+        id: &str,
+        accept: &str,
+    ) -> Option<web_sys::HtmlInputElement> {
+        let Ok(element) = document.create_element("input") else {
+            return None;
+        };
+        let Ok(input) = element.dyn_into::<web_sys::HtmlInputElement>() else {
+            return None;
+        };
+        input.set_type("file");
+        input.set_id(id);
+        input.set_accept(accept);
+        let _ = input.set_attribute("class", "wasm-file-picker");
+        let _ = input.set_attribute("style", "display:none");
+        let _ = input.set_attribute("aria-hidden", "true");
+        if let Some(body) = document.body() {
+            let _ = body.append_child(&input);
+            return Some(input);
+        }
+        None
+    }
+
+    fn request_open_choreo(&self, sender: Sender<OpenChoreoRequested>) {
+        self.choreo_sender.replace(Some(sender));
+        self.choreo_input.set_value("");
+        self.choreo_input.click();
+    }
+
+    fn request_open_audio(&self, sender: Sender<OpenAudioRequested>) {
+        self.audio_sender.replace(Some(sender));
+        self.audio_input.set_value("");
+        self.audio_input.click();
+    }
+
+    fn request_open_image(&self, sender: Sender<OpenImageRequested>) {
+        self.image_sender.replace(Some(sender));
+        self.image_input.set_value("");
+        self.image_input.click();
+    }
 }
