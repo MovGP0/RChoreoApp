@@ -39,6 +39,7 @@ pub struct FloorProvider {
     floor_adapter: Rc<RefCell<FloorAdapter>>,
     draw_floor_sender: Sender<DrawFloorCommand>,
     floor_audio_timer: Timer,
+    floor_layout_timer: Timer,
 }
 
 impl FloorProvider {
@@ -175,6 +176,7 @@ impl FloorProvider {
             floor_adapter,
             draw_floor_sender,
             floor_audio_timer: Timer::default(),
+            floor_layout_timer: Timer::default(),
         }
     }
 
@@ -227,6 +229,30 @@ impl FloorProvider {
                 }
             });
         }
+
+        {
+            let floor_view_model = Rc::clone(&self.floor_view_model);
+            let view_weak = view_weak.clone();
+            let last_snapshot = Rc::new(RefCell::new(None::<FloorLayoutSnapshot>));
+            self.floor_layout_timer.start(
+                TimerMode::Repeated,
+                Duration::from_millis(100),
+                move || {
+                    let Some(view) = view_weak.upgrade() else {
+                        return;
+                    };
+
+                    let current = FloorLayoutSnapshot::from_view(&view);
+                    let mut last = last_snapshot.borrow_mut();
+                    if last.is_some_and(|previous| previous == current) {
+                        return;
+                    }
+
+                    *last = Some(current);
+                    floor_view_model.borrow_mut().draw_floor();
+                },
+            );
+        }
     }
 
     pub fn apply_to_view(&self, view: &ShellHost) {
@@ -252,5 +278,28 @@ impl FloorProvider {
     ) {
         let mut floor_view_model = floor_view_model.borrow_mut();
         floor_adapter.borrow_mut().apply(view, &mut floor_view_model);
+    }
+}
+
+#[derive(Clone, Copy, PartialEq)]
+struct FloorLayoutSnapshot {
+    floor_bounds_left: f32,
+    floor_bounds_top: f32,
+    floor_bounds_right: f32,
+    floor_bounds_bottom: f32,
+    floor_canvas_width: f32,
+    floor_canvas_height: f32,
+}
+
+impl FloorLayoutSnapshot {
+    fn from_view(view: &ShellHost) -> Self {
+        Self {
+            floor_bounds_left: view.get_floor_bounds_left(),
+            floor_bounds_top: view.get_floor_bounds_top(),
+            floor_bounds_right: view.get_floor_bounds_right(),
+            floor_bounds_bottom: view.get_floor_bounds_bottom(),
+            floor_canvas_width: view.get_floor_canvas_width(),
+            floor_canvas_height: view.get_floor_canvas_height(),
+        }
     }
 }
