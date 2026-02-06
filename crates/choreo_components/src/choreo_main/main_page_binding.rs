@@ -607,6 +607,7 @@ impl MainPageBinding {
             let actions_for_audio = actions.clone();
             let actions_for_image = actions.clone();
             let floor_view_model_for_image = Rc::clone(&floor_view_model);
+            let global_state_store_for_image = deps.global_state_store.clone();
             let open_audio_request_sender = open_audio_request_sender.clone();
             let open_image_request_sender = open_image_request_sender.clone();
             let interaction_mode_sender = interaction_mode_sender.clone();
@@ -636,6 +637,23 @@ impl MainPageBinding {
                     }
 
                     while nav_bar_open_image_receiver.try_recv().is_ok() {
+                        let svg_loaded = global_state_store_for_image
+                            .try_with_state(|global_state| {
+                                global_state
+                                    .svg_file_path
+                                    .as_ref()
+                                    .is_some_and(|path| !path.trim().is_empty())
+                            })
+                            .unwrap_or(false);
+
+                        if svg_loaded {
+                            let _ = open_image_request_sender.try_send(OpenImageRequested {
+                                file_path: String::new(),
+                            });
+                            floor_view_model_for_image.borrow_mut().draw_floor();
+                            continue;
+                        }
+
                         if let Some(requester) = actions_for_image.request_open_image.as_ref() {
                             requester(open_image_request_sender.clone());
                             floor_view_model_for_image.borrow_mut().draw_floor();

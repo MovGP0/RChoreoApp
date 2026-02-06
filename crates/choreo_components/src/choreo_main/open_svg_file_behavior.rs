@@ -58,15 +58,31 @@ impl Behavior<MainViewModel> for OpenSvgFileBehavior {
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
             while let Ok(command) = receiver.try_recv() {
+                let path = command.file_path.trim().to_string();
+
+                if path.is_empty() {
+                    let updated = global_state.try_update(|global_state| {
+                        global_state.svg_file_path = None;
+                    });
+                    if !updated {
+                        return;
+                    }
+
+                    preferences.remove(choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE);
+                    let _ = draw_floor_sender.send(DrawFloorCommand);
+                    continue;
+                }
+
                 let updated = global_state.try_update(|global_state| {
-                    global_state.svg_file_path = Some(command.file_path.clone());
+                    global_state.svg_file_path = Some(path.clone());
                 });
                 if !updated {
                     return;
                 }
+
                 preferences.set_string(
                     choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE,
-                    command.file_path,
+                    path,
                 );
                 let _ = draw_floor_sender.send(DrawFloorCommand);
             }
