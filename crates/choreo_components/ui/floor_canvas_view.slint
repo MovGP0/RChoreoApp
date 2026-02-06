@@ -67,6 +67,7 @@ export component FloorCanvasView inherits Rectangle {
     in property <color> empty_position_border_color: MaterialPalette.outline_variant;
     in property <length> header_padding: 16px;
     in property <length> header_spacing: 4px;
+    in property <length> header_floor_spacing: 20px;
     in property <length> grid_padding: 46px;
     in property <length> grid_line_thickness: 1px;
     in property <length> border_thickness: 2px;
@@ -89,6 +90,7 @@ export component FloorCanvasView inherits Rectangle {
     in property <[AxisLabel]> axis_labels_x: [];
     in property <[AxisLabel]> axis_labels_y: [];
     in property <length> axis_label_offset: 12px;
+    in property <length> axis_label_floor_padding: 6px;
     in property <length> axis_label_size: MaterialTypography.label_large.font_size;
     in property <int> axis_label_weight: MaterialTypography.label_large.font_weight;
     in property <bool> show_axis_labels: false;
@@ -169,6 +171,7 @@ export component FloorCanvasView inherits Rectangle {
                 + root.header_spacing
                 + root.header_subtitle_size
             ) / 1px * zoom;
+            property <float> header_floor_spacing_px: root.header_floor_spacing / 1px * zoom;
             property <length> legend_reserved_width: root.show_legend && root.legend_entries.length > 0
                 ? root.legend_panel_width + root.legend_margin
                 : 0px;
@@ -178,8 +181,8 @@ export component FloorCanvasView inherits Rectangle {
             property <float> available_width_px: layout_width_px > 2.0 * padding_px
                 ? layout_width_px - 2.0 * padding_px
                 : 0.0;
-            property <float> available_height_px: content_height_px > header_height_px + 2.0 * padding_px
-                ? content_height_px - header_height_px - 2.0 * padding_px
+            property <float> available_height_px: content_height_px > header_height_px + header_floor_spacing_px + 2.0 * padding_px
+                ? content_height_px - header_height_px - header_floor_spacing_px - 2.0 * padding_px
                 : 0.0;
             property <float> scale_x: root.floor_width_meters > 0.0
                 ? available_width_px / root.floor_width_meters
@@ -197,8 +200,8 @@ export component FloorCanvasView inherits Rectangle {
                 ? root.floor_height_meters * scale * 1px
                 : 0px;
             property <length> floor_x: (layout_width_px * 1px - floor_width) / 2 + root.pan_x * 1px;
-            property <length> floor_y: header_height_px * 1px
-                + (parent.height - header_height_px * 1px - floor_height) / 2
+            property <length> floor_y: (header_height_px + header_floor_spacing_px) * 1px
+                + (parent.height - (header_height_px + header_floor_spacing_px) * 1px - floor_height) / 2
                 + root.pan_y * 1px;
             property <length> center_x: floor_x + floor_width / 2;
             property <length> center_y: floor_y + floor_height / 2;
@@ -332,7 +335,7 @@ export component FloorCanvasView inherits Rectangle {
                     font-weight: root.axis_label_weight;
                     horizontal-alignment: center;
                     x: content.center_x + label.value * content.scale * 1px - self.width / 2;
-                    y: floor_rect.y - root.axis_label_offset;
+                    y: floor_rect.y - root.axis_label_offset - root.axis_label_floor_padding - self.height;
                 }
 
                 for label in root.axis_labels_x: Text {
@@ -342,7 +345,7 @@ export component FloorCanvasView inherits Rectangle {
                     font-weight: root.axis_label_weight;
                     horizontal-alignment: center;
                     x: content.center_x + label.value * content.scale * 1px - self.width / 2;
-                    y: floor_rect.y + floor_rect.height + root.axis_label_offset - self.height;
+                    y: floor_rect.y + floor_rect.height + root.axis_label_offset + root.axis_label_floor_padding;
                 }
 
                 for label in root.axis_labels_y: Text {
@@ -477,54 +480,48 @@ export component FloorCanvasView inherits Rectangle {
 
             legend_panel := Rectangle {
                 visible: root.show_legend && root.legend_entries.length > 0;
-                x: parent.width > root.legend_panel_width + root.grid_padding
-                    ? parent.width - root.legend_panel_width - root.grid_padding
-                    : 0px;
-                y: root.grid_padding;
+                x: floor_rect.x + floor_rect.width + root.legend_margin * content.zoom;
+                y: floor_rect.y;
                 z: 5;
-                width: root.legend_panel_width;
-                height: root.legend_entries.length > 0
-                    ? root.legend_padding * 2
-                        + (root.legend_entries.length * (root.legend_square_size > root.legend_text_size
-                            ? root.legend_square_size
-                            : root.legend_text_size))
-                        + ((root.legend_entries.length - 1) * root.legend_row_spacing)
-                    : 0px;
+                width: root.legend_panel_width * content.zoom;
+                height: legend_content.preferred-height + root.legend_padding * 2 * content.zoom;
                 background: transparent;
                 border-width: 1px;
                 border-color: root.legend_border_color;
 
-                Vertical {
-                    padding: root.legend_padding;
-                    spacing: root.legend_row_spacing;
+                legend_content := Vertical {
+                    spacing: root.legend_row_spacing * content.zoom;
+                    x: root.legend_padding * content.zoom;
+                    y: root.legend_padding * content.zoom;
+                    width: parent.width - root.legend_padding * 2 * content.zoom;
 
                     for entry in root.legend_entries: Horizontal {
-                        spacing: root.legend_column_spacing;
+                        spacing: root.legend_column_spacing * content.zoom;
 
                         Rectangle {
-                            width: root.legend_square_size;
-                            height: root.legend_square_size;
+                            width: root.legend_square_size * content.zoom;
+                            height: root.legend_square_size * content.zoom;
                             background: entry.color;
                         }
 
                         Text {
                             text: entry.shortcut;
                             color: root.legend_text_color;
-                            font-size: root.legend_text_size;
+                            font-size: root.legend_text_size * content.zoom;
                             font-weight: root.legend_text_weight;
                         }
 
                         Text {
                             text: entry.name;
                             color: root.legend_text_color;
-                            font-size: root.legend_text_size;
+                            font-size: root.legend_text_size * content.zoom;
                             font-weight: root.legend_text_weight;
                         }
 
                         Text {
                             text: entry.position_text;
                             color: root.legend_text_color;
-                            font-size: root.legend_text_size;
+                            font-size: root.legend_text_size * content.zoom;
                             font-weight: root.legend_text_weight;
                         }
                     }
@@ -620,7 +617,7 @@ export component FloorCanvasView inherits Rectangle {
 
         header_box := Rectangle {
             x: content.floor_x;
-            y: content.floor_y - content.header_height_px * 1px;
+            y: content.floor_y - (content.header_height_px + content.header_floor_spacing_px) * 1px;
             width: content.floor_width;
             height: content.header_height_px * 1px;
             background: transparent;
