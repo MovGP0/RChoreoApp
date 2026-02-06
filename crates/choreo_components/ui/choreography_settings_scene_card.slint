@@ -1,4 +1,4 @@
-import { CheckBoxTile, CheckState, MaterialPalette, MaterialText, TextField, Vertical } from "@material";
+import { CheckBoxTile, CheckState, MaterialPalette, MaterialText, MaterialTypography, TextField, Vertical } from "@material";
 import { ColorPicker } from "color_picker.slint";
 import { NumberPicker } from "number_picker.slint";
 import { Translations } from "translations.slint";
@@ -32,7 +32,8 @@ export component ChoreographySettingsSceneCard inherits Rectangle {
 
         MaterialText {
             text: Translations.scene_section_title;
-            font-size: 18px;
+            font-size: MaterialTypography.title_large.font_size;
+            font-weight: MaterialTypography.title_large.font_weight;
         }
 
         TextField {
@@ -106,6 +107,8 @@ export component ChoreographySettingsSceneCard inherits Rectangle {
         MaterialText {
             text: Translations.scene_color_label;
             color: MaterialPalette.on_surface_variant;
+            font-size: MaterialTypography.body_medium.font_size;
+            font-weight: MaterialTypography.body_medium.font_weight;
         }
         ColorPicker {
             selected_color: root.scene_color;

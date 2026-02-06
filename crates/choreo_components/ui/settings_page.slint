@@ -1,4 +1,4 @@
-import { MaterialPalette, MaterialText, ScrollView, Switch, TextField, Vertical, Horizontal } from "@material";
+import { MaterialPalette, MaterialText, MaterialTypography, ScrollView, Switch, TextField, Vertical, Horizontal } from "@material";
 import { Translations } from "translations.slint";
 
 export component SettingsPage inherits Rectangle {
@@ -42,13 +42,17 @@ export component SettingsPage inherits Rectangle {
 
             MaterialText {
                 text: title_text;
-                font-size: 26px;
-                font-weight: 700;
+                font-size: MaterialTypography.headline_small.font_size;
+                font-weight: MaterialTypography.headline_small.font_weight;
             }
 
             Horizontal {
                 spacing: 12px;
-                MaterialText { text: use_system_theme_text; }
+                MaterialText {
+                    text: use_system_theme_text;
+                    font-size: MaterialTypography.body_medium.font_size;
+                    font-weight: MaterialTypography.body_medium.font_weight;
+                }
                 Switch {
                     checked: use_system_theme;
                     checked_state_changed(value) => { update_use_system_theme(value); }
@@ -57,7 +61,11 @@ export component SettingsPage inherits Rectangle {
 
             Horizontal {
                 spacing: 12px;
-                MaterialText { text: dark_mode_text; }
+                MaterialText {
+                    text: dark_mode_text;
+                    font-size: MaterialTypography.body_medium.font_size;
+                    font-weight: MaterialTypography.body_medium.font_weight;
+                }
                 Switch {
                     enabled: !use_system_theme;
                     checked: is_dark_mode;
@@ -67,7 +75,11 @@ export component SettingsPage inherits Rectangle {
 
             Horizontal {
                 spacing: 12px;
-                MaterialText { text: primary_color_text; }
+                MaterialText {
+                    text: primary_color_text;
+                    font-size: MaterialTypography.body_medium.font_size;
+                    font-weight: MaterialTypography.body_medium.font_weight;
+                }
                 Switch {
                     checked: use_primary_color;
                     checked_state_changed(value) => { update_use_primary_color(value); }
@@ -92,7 +104,11 @@ export component SettingsPage inherits Rectangle {
 
             Horizontal {
                 spacing: 12px;
-                MaterialText { text: secondary_color_text; }
+                MaterialText {
+                    text: secondary_color_text;
+                    font-size: MaterialTypography.body_medium.font_size;
+                    font-weight: MaterialTypography.body_medium.font_weight;
+                }
                 Switch {
                     enabled: use_primary_color;
                     checked: use_secondary_color;
@@ -118,7 +134,11 @@ export component SettingsPage inherits Rectangle {
 
             Horizontal {
                 spacing: 12px;
-                MaterialText { text: tertiary_color_text; }
+                MaterialText {
+                    text: tertiary_color_text;
+                    font-size: MaterialTypography.body_medium.font_size;
+                    font-weight: MaterialTypography.body_medium.font_weight;
+                }
                 Switch {
                     enabled: use_secondary_color;
                     checked: use_tertiary_color;

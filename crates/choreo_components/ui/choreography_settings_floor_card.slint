@@ -4,6 +4,7 @@ import {
     DropDownMenu,
     MaterialPalette,
     MaterialText,
+    MaterialTypography,
     MenuItem,
     Slider,
     Vertical
@@ -48,7 +49,8 @@ export component ChoreographySettingsFloorCard inherits Rectangle {
 
         MaterialText {
             text: Translations.choreography_floor_title;
-            font-size: 18px;
+            font-size: MaterialTypography.title_large.font_size;
+            font-weight: MaterialTypography.title_large.font_weight;
         }
 
         NumberPicker {
@@ -124,6 +126,8 @@ export component ChoreographySettingsFloorCard inherits Rectangle {
         MaterialText {
             text: Translations.choreography_transparency_label + ": " + Math.round(root.transparency * 100.0) + "%";
             color: MaterialPalette.on_surface_variant;
+            font-size: MaterialTypography.body_medium.font_size;
+            font-weight: MaterialTypography.body_medium.font_weight;
         }
         Slider {
             minimum: 0;
@@ -135,6 +139,8 @@ export component ChoreographySettingsFloorCard inherits Rectangle {
         MaterialText {
             text: Translations.choreography_floor_color_label;
             color: MaterialPalette.on_surface_variant;
+            font-size: MaterialTypography.body_medium.font_size;
+            font-weight: MaterialTypography.body_medium.font_weight;
         }
         ColorPicker {
             selected_color: root.floor_color;

@@ -1,4 +1,4 @@
-import { Horizontal, IconButton, MaterialPalette, MaterialText, Slider } from "@material";
+import { Horizontal, IconButton, MaterialPalette, MaterialText, MaterialTypography, Slider } from "@material";
 import { SliderWithTicks } from "slider_with_ticks.slint";
 
 export component AudioPlayerView inherits Rectangle {
@@ -43,6 +43,8 @@ export component AudioPlayerView inherits Rectangle {
         MaterialText {
             text: speed_label;
             color: MaterialPalette.on_surface_variant;
+            font-size: MaterialTypography.label_large.font_size;
+            font-weight: MaterialTypography.label_large.font_weight;
             horizontal-alignment: right;
             vertical-alignment: center;
         }
@@ -61,6 +63,8 @@ export component AudioPlayerView inherits Rectangle {
         MaterialText {
             text: duration_label;
             color: MaterialPalette.on_surface_variant;
+            font-size: MaterialTypography.label_large.font_size;
+            font-weight: MaterialTypography.label_large.font_weight;
             width: 64px;
             vertical-alignment: center;
         }

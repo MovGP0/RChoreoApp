@@ -1,4 +1,4 @@
-import { MaterialPalette, MaterialText, Vertical, Horizontal } from "@material";
+import { MaterialPalette, MaterialText, MaterialTypography, Vertical, Horizontal } from "@material";
 
 export component SceneItemView inherits Rectangle {
     in property <string> scene_name;
@@ -38,11 +38,15 @@ export component SceneItemView inherits Rectangle {
             MaterialText {
                 text: scene_name;
                 color: is_selected ? selected_text : unselected_text;
+                font-size: MaterialTypography.body_medium.font_size;
+                font-weight: MaterialTypography.body_medium.font_weight;
             }
         }
         if show_timestamps : MaterialText {
             text: timestamp_text;
             color: is_selected ? selected_timestamp_text : unselected_timestamp_text;
+            font-size: MaterialTypography.label_medium.font_size;
+            font-weight: MaterialTypography.label_medium.font_weight;
         }
     }
 

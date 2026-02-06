@@ -1,4 +1,4 @@
-import { MaterialPalette, MaterialText, TextButton, Vertical } from "@material";
+import { MaterialPalette, MaterialText, MaterialTypography, TextButton, Vertical } from "@material";
 import { Translations } from "translations.slint";
 
 export component SwapDancersDialogView inherits Rectangle {
@@ -22,10 +22,26 @@ export component SwapDancersDialogView inherits Rectangle {
 
     Vertical {
         spacing: 8px;
-        MaterialText { text: title_text; font-size: 18px; }
-        MaterialText { text: first_name; }
-        MaterialText { text: second_name; }
-        MaterialText { text: message_text; }
+        MaterialText {
+            text: title_text;
+            font-size: MaterialTypography.title_large.font_size;
+            font-weight: MaterialTypography.title_large.font_weight;
+        }
+        MaterialText {
+            text: first_name;
+            font-size: MaterialTypography.body_medium.font_size;
+            font-weight: MaterialTypography.body_medium.font_weight;
+        }
+        MaterialText {
+            text: second_name;
+            font-size: MaterialTypography.body_medium.font_size;
+            font-weight: MaterialTypography.body_medium.font_weight;
+        }
+        MaterialText {
+            text: message_text;
+            font-size: MaterialTypography.body_medium.font_size;
+            font-weight: MaterialTypography.body_medium.font_weight;
+        }
         TextButton { text: cancel_text; clicked => { cancel(); } }
         TextButton { text: confirm_text; clicked => { confirm(); } }
     }

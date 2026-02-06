@@ -1,4 +1,4 @@
-import { ListView, MaterialPalette, MaterialText, TextButton, TextField, Vertical } from "@material";
+import { ListView, MaterialPalette, MaterialText, MaterialTypography, TextButton, TextField, Vertical } from "@material";
 import { Translations } from "translations.slint";
 
 export component DancerSettingsPage inherits Rectangle {
@@ -45,9 +45,17 @@ export component DancerSettingsPage inherits Rectangle {
                 padding: 12px;
                 horizontal-stretch: 1;
                 vertical-stretch: 1;
-                MaterialText { text: title_text; font-size: 18px; }
+                MaterialText {
+                    text: title_text;
+                    font-size: MaterialTypography.title_large.font_size;
+                    font-weight: MaterialTypography.title_large.font_weight;
+                }
                 ListView {
-                    for name in dancer_names: MaterialText { text: name; }
+                    for name in dancer_names: MaterialText {
+                        text: name;
+                        font-size: MaterialTypography.body_medium.font_size;
+                        font-weight: MaterialTypography.body_medium.font_weight;
+                    }
                 }
                 TextButton { text: "+"; clicked => { add_dancer(); } }
                 TextButton { text: "-"; enabled: can_delete_dancer; clicked => { delete_dancer(); } }
@@ -80,7 +88,11 @@ export component DancerSettingsPage inherits Rectangle {
                 padding: 12px;
                 horizontal-stretch: 1;
                 vertical-stretch: 1;
-                MaterialText { text: swap_title_text; }
+                MaterialText {
+                    text: swap_title_text;
+                    font-size: MaterialTypography.title_medium.font_size;
+                    font-weight: MaterialTypography.title_medium.font_weight;
+                }
                 TextButton { text: Translations.dancer_swap_button; enabled: can_swap_dancers; clicked => { swap_dancers(); } }
             }
         }

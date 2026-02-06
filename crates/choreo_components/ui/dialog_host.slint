@@ -1,4 +1,4 @@
-import { MaterialPalette, MaterialText } from "@material";
+import { MaterialPalette, MaterialText, MaterialTypography } from "@material";
 
 export component DialogHost inherits Rectangle {
     in-out property <bool> is_open: false;
@@ -64,6 +64,8 @@ export component DialogHost inherits Rectangle {
                 MaterialText {
                     text: root.dialog_content;
                     color: MaterialPalette.on_surface;
+                    font-size: MaterialTypography.body_medium.font_size;
+                    font-weight: MaterialTypography.body_medium.font_weight;
                     width: parent.width;
                     wrap: word-wrap;
                 }

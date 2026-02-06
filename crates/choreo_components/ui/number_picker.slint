@@ -1,4 +1,4 @@
-import { IconButton, MaterialPalette, MaterialText } from "@material";
+import { IconButton, MaterialPalette, MaterialText, MaterialTypography } from "@material";
 
 export component NumberPicker inherits Rectangle {
     in property <string> label;
@@ -51,6 +51,8 @@ export component NumberPicker inherits Rectangle {
         MaterialText {
             text: root.label;
             color: MaterialPalette.on_surface_variant;
+            font-size: MaterialTypography.body_medium.font_size;
+            font-weight: MaterialTypography.body_medium.font_weight;
             vertical-alignment: center;
         }
 
@@ -82,6 +84,8 @@ export component NumberPicker inherits Rectangle {
                 vertical-alignment: center;
                 text: root.clamped_value;
                 color: MaterialPalette.on_surface;
+                font-size: MaterialTypography.title_medium.font_size;
+                font-weight: MaterialTypography.title_medium.font_weight;
             }
         }
 

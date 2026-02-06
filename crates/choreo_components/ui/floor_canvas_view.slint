@@ -1,4 +1,4 @@
-import { MaterialPalette, Vertical, Horizontal } from "@material";
+import { MaterialPalette, MaterialTypography, Vertical, Horizontal } from "@material";
 import { Translations } from "translations.slint";
 
 export struct FloorPosition {
@@ -76,7 +76,8 @@ export component FloorCanvasView inherits Rectangle {
     in property <float> pan_y: 0.0;
     in property <float> zoom_factor: 1.0;
     in property <float> dancer_size: 1.0;
-    in property <length> dancer_text_size: 24px;
+    in property <length> dancer_text_size: MaterialTypography.title_large.font_size;
+    in property <int> dancer_text_weight: MaterialTypography.title_medium.font_weight;
     in property <length> dancer_border_thickness: 2px;
     in property <length> dancer_selection_thickness: 3px;
     in property <length> dancer_selection_padding: 4px;
@@ -88,7 +89,8 @@ export component FloorCanvasView inherits Rectangle {
     in property <[AxisLabel]> axis_labels_x: [];
     in property <[AxisLabel]> axis_labels_y: [];
     in property <length> axis_label_offset: 12px;
-    in property <length> axis_label_size: 16px;
+    in property <length> axis_label_size: MaterialTypography.label_large.font_size;
+    in property <int> axis_label_weight: MaterialTypography.label_large.font_weight;
     in property <bool> show_axis_labels: false;
     in property <[LegendEntry]> legend_entries: [];
     in property <bool> show_legend: false;
@@ -98,7 +100,8 @@ export component FloorCanvasView inherits Rectangle {
     in property <length> legend_square_size: 10px;
     in property <length> legend_margin: 48px;
     in property <length> legend_panel_width: 240px;
-    in property <length> legend_text_size: 14px;
+    in property <length> legend_text_size: MaterialTypography.body_medium.font_size;
+    in property <int> legend_text_weight: MaterialTypography.body_medium.font_weight;
     in property <color> legend_text_color: MaterialPalette.on_surface;
     in property <color> legend_border_color: MaterialPalette.outline_variant;
     in property <image> svg_overlay;
@@ -108,8 +111,14 @@ export component FloorCanvasView inherits Rectangle {
     in property <length> placement_padding: 12px;
     in property <length> placement_spacing: 4px;
     in property <length> placement_corner_radius: 8px;
-    in property <length> placement_title_size: 16px;
-    in property <length> placement_body_size: 14px;
+    in property <length> placement_title_size: MaterialTypography.title_medium.font_size;
+    in property <int> placement_title_weight: MaterialTypography.title_medium.font_weight;
+    in property <length> placement_body_size: MaterialTypography.body_medium.font_size;
+    in property <int> placement_body_weight: MaterialTypography.body_medium.font_weight;
+    in property <length> header_title_size: MaterialTypography.title_large.font_size;
+    in property <int> header_title_weight: MaterialTypography.title_large.font_weight;
+    in property <length> header_subtitle_size: MaterialTypography.body_medium.font_size;
+    in property <int> header_subtitle_weight: MaterialTypography.body_medium.font_weight;
     in property <color> placement_title_color: MaterialPalette.on_surface;
     in property <color> placement_body_color: MaterialPalette.on_surface_variant;
     in property <color> placement_background_color: MaterialPalette.surface_variant;
@@ -156,9 +165,9 @@ export component FloorCanvasView inherits Rectangle {
             property <float> padding_px: root.grid_padding / 1px;
             property <float> header_height_px: (
                 root.header_padding * 2
-                + 20px
+                + root.header_title_size
                 + root.header_spacing
-                + 14px
+                + root.header_subtitle_size
             ) / 1px * zoom;
             property <length> legend_reserved_width: root.show_legend && root.legend_entries.length > 0
                 ? root.legend_panel_width + root.legend_margin
@@ -320,6 +329,7 @@ export component FloorCanvasView inherits Rectangle {
                     text: label.text;
                     color: root.subtitle_color;
                     font-size: root.axis_label_size;
+                    font-weight: root.axis_label_weight;
                     horizontal-alignment: center;
                     x: content.center_x + label.value * content.scale * 1px - self.width / 2;
                     y: floor_rect.y - root.axis_label_offset;
@@ -329,6 +339,7 @@ export component FloorCanvasView inherits Rectangle {
                     text: label.text;
                     color: root.subtitle_color;
                     font-size: root.axis_label_size;
+                    font-weight: root.axis_label_weight;
                     horizontal-alignment: center;
                     x: content.center_x + label.value * content.scale * 1px - self.width / 2;
                     y: floor_rect.y + floor_rect.height + root.axis_label_offset - self.height;
@@ -338,6 +349,7 @@ export component FloorCanvasView inherits Rectangle {
                     text: label.text;
                     color: root.subtitle_color;
                     font-size: root.axis_label_size;
+                    font-weight: root.axis_label_weight;
                     horizontal-alignment: right;
                     x: floor_rect.x - root.axis_label_offset - self.width;
                     y: content.center_y - label.value * content.scale * 1px - self.height / 2;
@@ -347,6 +359,7 @@ export component FloorCanvasView inherits Rectangle {
                     text: label.text;
                     color: root.subtitle_color;
                     font-size: root.axis_label_size;
+                    font-weight: root.axis_label_weight;
                     horizontal-alignment: left;
                     x: floor_rect.x + floor_rect.width + root.axis_label_offset;
                     y: content.center_y - label.value * content.scale * 1px - self.height / 2;
@@ -428,7 +441,11 @@ export component FloorCanvasView inherits Rectangle {
                     visible: position.has_dancer && position.shortcut != "";
                     text: position.shortcut;
                     color: position.text_color;
-                    font-size: root.dancer_size * content.scale * 1px * 0.45;
+                    font-size: root.dancer_size
+                        * content.scale
+                        * 1px
+                        * (MaterialTypography.body_medium.font_size / MaterialTypography.title_large.font_size);
+                    font-weight: root.dancer_text_weight;
                     horizontal-alignment: center;
                     vertical-alignment: center;
                     width: root.dancer_size * content.scale * 1px;
@@ -494,18 +511,21 @@ export component FloorCanvasView inherits Rectangle {
                             text: entry.shortcut;
                             color: root.legend_text_color;
                             font-size: root.legend_text_size;
+                            font-weight: root.legend_text_weight;
                         }
 
                         Text {
                             text: entry.name;
                             color: root.legend_text_color;
                             font-size: root.legend_text_size;
+                            font-weight: root.legend_text_weight;
                         }
 
                         Text {
                             text: entry.position_text;
                             color: root.legend_text_color;
                             font-size: root.legend_text_size;
+                            font-weight: root.legend_text_weight;
                         }
                     }
                 }
@@ -526,18 +546,21 @@ export component FloorCanvasView inherits Rectangle {
                         text: Translations.floor_placement_title;
                         color: root.placement_title_color;
                         font-size: root.placement_title_size;
+                        font-weight: root.placement_title_weight;
                     }
 
                     Text {
                         text: Translations.floor_placement_hint;
                         color: root.placement_body_color;
                         font-size: root.placement_body_size;
+                        font-weight: root.placement_body_weight;
                     }
 
                     Text {
                         text: Translations.floor_placement_remaining_prefix + root.remaining_positions;
                         color: root.placement_body_color;
                         font-size: root.placement_body_size;
+                        font-weight: root.placement_body_weight;
                     }
                 }
             }
@@ -605,24 +628,26 @@ export component FloorCanvasView inherits Rectangle {
             Text {
                 text: root.choreography_name;
                 color: root.title_color;
-                font-size: 20px * content.zoom;
+                font-size: root.header_title_size * content.zoom;
+                font-weight: root.header_title_weight;
                 horizontal-alignment: center;
                 vertical-alignment: center;
                 width: parent.width;
-                height: 20px * content.zoom;
+                height: root.header_title_size * content.zoom;
                 y: root.header_padding * content.zoom;
             }
 
             Text {
                 text: root.scene_name;
                 color: root.subtitle_color;
-                font-size: 14px * content.zoom;
+                font-size: root.header_subtitle_size * content.zoom;
+                font-weight: root.header_subtitle_weight;
                 horizontal-alignment: center;
                 vertical-alignment: center;
                 width: parent.width;
-                height: 14px * content.zoom;
+                height: root.header_subtitle_size * content.zoom;
                 y: root.header_padding * content.zoom
-                    + 20px * content.zoom
+                    + root.header_title_size * content.zoom
                     + root.header_spacing * content.zoom;
             }
         }

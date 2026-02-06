@@ -1,4 +1,4 @@
-import { ElevatedCard, MaterialText, TextButton, Vertical, Horizontal } from "@material";
+import { ElevatedCard, MaterialText, MaterialTypography, TextButton, Vertical, Horizontal } from "@material";
 import { Translations } from "translations.slint";
 
 export component DeleteSceneDialogView inherits Rectangle {
@@ -16,13 +16,25 @@ export component DeleteSceneDialogView inherits Rectangle {
         padding: 16px;
         Vertical {
             spacing: 12px;
-            MaterialText { text: title_text; font-size: 18px; }
+            MaterialText {
+                text: title_text;
+                font-size: MaterialTypography.title_large.font_size;
+                font-weight: MaterialTypography.title_large.font_weight;
+            }
             Horizontal {
                 spacing: 8px;
                 Rectangle { width: 12px; height: 12px; border-radius: 6px; background: scene_color; }
-                MaterialText { text: scene_name; }
+                MaterialText {
+                    text: scene_name;
+                    font-size: MaterialTypography.body_medium.font_size;
+                    font-weight: MaterialTypography.body_medium.font_weight;
+                }
             }
-            MaterialText { text: message_text; }
+            MaterialText {
+                text: message_text;
+                font-size: MaterialTypography.body_medium.font_size;
+                font-weight: MaterialTypography.body_medium.font_weight;
+            }
             Horizontal {
                 spacing: 8px;
                 TextButton { text: cancel_text; clicked => { cancel(); } }
