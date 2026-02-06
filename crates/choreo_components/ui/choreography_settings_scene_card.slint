@@ -49,39 +49,21 @@ export component ChoreographySettingsSceneCard inherits Rectangle {
             edited(new_value) => { root.update_scene_text(new_value); }
         }
 
-        HorizontalLayout {
-            spacing: 8px;
-            MaterialText {
-                text: Translations.scene_fixed_positions_label;
-                vertical-alignment: center;
-                color: MaterialPalette.on_surface_variant;
-            }
-            Rectangle { horizontal-stretch: 1; background: transparent; }
-            CheckBoxTile {
-                text: "";
-                check_state: root.scene_fixed_positions ? CheckState.checked : CheckState.unchecked;
-                enabled: root.has_selected_scene;
-                checked_state_changed(state) => {
-                    root.update_scene_fixed_positions(state == CheckState.checked);
-                }
+        CheckBoxTile {
+            text: Translations.scene_fixed_positions_label;
+            check_state: root.scene_fixed_positions ? CheckState.checked : CheckState.unchecked;
+            enabled: root.has_selected_scene;
+            checked_state_changed(state) => {
+                root.update_scene_fixed_positions(state == CheckState.checked);
             }
         }
 
-        HorizontalLayout {
-            spacing: 8px;
-            MaterialText {
-                text: Translations.scene_timestamp_label;
-                vertical-alignment: center;
-                color: MaterialPalette.on_surface_variant;
-            }
-            Rectangle { horizontal-stretch: 1; background: transparent; }
-            CheckBoxTile {
-                text: "";
-                check_state: root.scene_has_timestamp ? CheckState.checked : CheckState.unchecked;
-                enabled: root.has_selected_scene;
-                checked_state_changed(state) => {
-                    root.update_scene_has_timestamp(state == CheckState.checked);
-                }
+        CheckBoxTile {
+            text: Translations.scene_timestamp_label;
+            check_state: root.scene_has_timestamp ? CheckState.checked : CheckState.unchecked;
+            enabled: root.has_selected_scene;
+            checked_state_changed(state) => {
+                root.update_scene_has_timestamp(state == CheckState.checked);
             }
         }
 

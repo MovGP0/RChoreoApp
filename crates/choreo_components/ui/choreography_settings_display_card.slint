@@ -28,88 +28,43 @@ export component ChoreographySettingsDisplayCard inherits Rectangle {
             font-size: 18px;
         }
 
-        HorizontalLayout {
-            spacing: 8px;
-            MaterialText {
-                text: Translations.choreography_draw_path_from_label;
-                vertical-alignment: center;
-                color: MaterialPalette.on_surface_variant;
-            }
-            Rectangle { horizontal-stretch: 1; background: transparent; }
-            CheckBoxTile {
-                text: "";
-                check_state: root.draw_path_from ? CheckState.checked : CheckState.unchecked;
-                checked_state_changed(state) => {
-                    root.update_draw_path_from(state == CheckState.checked);
-                }
+        CheckBoxTile {
+            text: Translations.choreography_draw_path_from_label;
+            check_state: root.draw_path_from ? CheckState.checked : CheckState.unchecked;
+            checked_state_changed(state) => {
+                root.update_draw_path_from(state == CheckState.checked);
             }
         }
 
-        HorizontalLayout {
-            spacing: 8px;
-            MaterialText {
-                text: Translations.choreography_draw_path_to_label;
-                vertical-alignment: center;
-                color: MaterialPalette.on_surface_variant;
-            }
-            Rectangle { horizontal-stretch: 1; background: transparent; }
-            CheckBoxTile {
-                text: "";
-                check_state: root.draw_path_to ? CheckState.checked : CheckState.unchecked;
-                checked_state_changed(state) => {
-                    root.update_draw_path_to(state == CheckState.checked);
-                }
+        CheckBoxTile {
+            text: Translations.choreography_draw_path_to_label;
+            check_state: root.draw_path_to ? CheckState.checked : CheckState.unchecked;
+            checked_state_changed(state) => {
+                root.update_draw_path_to(state == CheckState.checked);
             }
         }
 
-        HorizontalLayout {
-            spacing: 8px;
-            MaterialText {
-                text: Translations.choreography_show_timestamps_label;
-                vertical-alignment: center;
-                color: MaterialPalette.on_surface_variant;
-            }
-            Rectangle { horizontal-stretch: 1; background: transparent; }
-            CheckBoxTile {
-                text: "";
-                check_state: root.show_timestamps ? CheckState.checked : CheckState.unchecked;
-                checked_state_changed(state) => {
-                    root.update_show_timestamps(state == CheckState.checked);
-                }
+        CheckBoxTile {
+            text: Translations.choreography_show_timestamps_label;
+            check_state: root.show_timestamps ? CheckState.checked : CheckState.unchecked;
+            checked_state_changed(state) => {
+                root.update_show_timestamps(state == CheckState.checked);
             }
         }
 
-        HorizontalLayout {
-            spacing: 8px;
-            MaterialText {
-                text: Translations.choreography_positions_at_side_label;
-                vertical-alignment: center;
-                color: MaterialPalette.on_surface_variant;
-            }
-            Rectangle { horizontal-stretch: 1; background: transparent; }
-            CheckBoxTile {
-                text: "";
-                check_state: root.positions_at_side ? CheckState.checked : CheckState.unchecked;
-                checked_state_changed(state) => {
-                    root.update_positions_at_side(state == CheckState.checked);
-                }
+        CheckBoxTile {
+            text: Translations.choreography_positions_at_side_label;
+            check_state: root.positions_at_side ? CheckState.checked : CheckState.unchecked;
+            checked_state_changed(state) => {
+                root.update_positions_at_side(state == CheckState.checked);
             }
         }
 
-        HorizontalLayout {
-            spacing: 8px;
-            MaterialText {
-                text: Translations.choreography_show_legend_label;
-                vertical-alignment: center;
-                color: MaterialPalette.on_surface_variant;
-            }
-            Rectangle { horizontal-stretch: 1; background: transparent; }
-            CheckBoxTile {
-                text: "";
-                check_state: root.show_legend ? CheckState.checked : CheckState.unchecked;
-                checked_state_changed(state) => {
-                    root.update_show_legend(state == CheckState.checked);
-                }
+        CheckBoxTile {
+            text: Translations.choreography_show_legend_label;
+            check_state: root.show_legend ? CheckState.checked : CheckState.unchecked;
+            checked_state_changed(state) => {
+                root.update_show_legend(state == CheckState.checked);
             }
         }
     }

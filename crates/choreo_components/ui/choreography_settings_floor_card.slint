@@ -105,37 +105,19 @@ export component ChoreographySettingsFloorCard inherits Rectangle {
             }
         }
 
-        HorizontalLayout {
-            spacing: 8px;
-            MaterialText {
-                text: Translations.choreography_grid_lines_label;
-                vertical-alignment: center;
-                color: MaterialPalette.on_surface_variant;
-            }
-            Rectangle { horizontal-stretch: 1; background: transparent; }
-            CheckBoxTile {
-                text: "";
-                check_state: root.grid_lines ? CheckState.checked : CheckState.unchecked;
-                checked_state_changed(state) => {
-                    root.update_grid_lines(state == CheckState.checked);
-                }
+        CheckBoxTile {
+            text: Translations.choreography_grid_lines_label;
+            check_state: root.grid_lines ? CheckState.checked : CheckState.unchecked;
+            checked_state_changed(state) => {
+                root.update_grid_lines(state == CheckState.checked);
             }
         }
 
-        HorizontalLayout {
-            spacing: 8px;
-            MaterialText {
-                text: Translations.choreography_snap_to_grid_label;
-                vertical-alignment: center;
-                color: MaterialPalette.on_surface_variant;
-            }
-            Rectangle { horizontal-stretch: 1; background: transparent; }
-            CheckBoxTile {
-                text: "";
-                check_state: root.snap_to_grid ? CheckState.checked : CheckState.unchecked;
-                checked_state_changed(state) => {
-                    root.update_snap_to_grid(state == CheckState.checked);
-                }
+        CheckBoxTile {
+            text: Translations.choreography_snap_to_grid_label;
+            check_state: root.snap_to_grid ? CheckState.checked : CheckState.unchecked;
+            checked_state_changed(state) => {
+                root.update_snap_to_grid(state == CheckState.checked);
             }
         }
 
