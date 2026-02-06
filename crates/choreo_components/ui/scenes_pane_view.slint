@@ -1,5 +1,6 @@
-import { IconButton, ListView, MaterialPalette, MaterialText, SearchBar, Vertical, Horizontal } from "@material";
+import { IconButton, ListView, MaterialPalette, MaterialText, Vertical, Horizontal } from "@material";
 import { SceneItemView } from "scene_item_view.slint";
+import { SceneSearchBar } from "scene_search_bar.slint";
 import { Translations } from "translations.slint";
 
 export struct SceneListItem {
@@ -48,19 +49,27 @@ export component ScenesPaneView inherits Rectangle {
 
                 ListView {
                     vertical-stretch: 1;
-                    for scene[index] in scenes: SceneItemView {
-                        scene_name: scene.name;
-                        timestamp_text: scene.timestamp_text;
-                        scene_color: scene.color;
-                        show_timestamps: root.show_timestamps;
-                        is_selected: scene.is_selected;
-                        select_scene => { root.select_scene(index); }
+                    for scene[index] in scenes: Rectangle {
+                        background: transparent;
+                        height: root.show_timestamps ? 62px : 50px;
+
+                        scene_content := SceneItemView {
+                            width: parent.width;
+                            height: parent.height - 8px;
+                            y: 4px;
+                            scene_name: scene.name;
+                            timestamp_text: scene.timestamp_text;
+                            scene_color: scene.color;
+                            show_timestamps: root.show_timestamps;
+                            is_selected: scene.is_selected;
+                            select_scene => { root.select_scene(index); }
+                        }
                     }
                 }
             }
         }
 
-        SearchBar {
+        SceneSearchBar {
             placeholder_text: Translations.search_placeholder;
             text <=> search_text;
             edited(value) => { update_search_text(value); }
