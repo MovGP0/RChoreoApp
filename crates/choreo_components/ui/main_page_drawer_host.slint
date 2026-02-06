@@ -105,9 +105,9 @@ export component MainPageDrawerHost inherits Rectangle {
 
     content := Rectangle {
         x: root.inline_left_width;
-        y: 0px;
+        y: root.top_inset;
         width: parent.width - root.inline_left_width;
-        height: parent.height;
+        height: parent.height - root.top_inset;
         background: transparent;
         z: 0;
 

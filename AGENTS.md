@@ -141,6 +141,24 @@ Only when the changes are verified, you can close the bd ticket.
 - place message (Event, Command, Query, Response) types into `messages.rs`
 - place the slint views into the shared `ui` folder
 
+### Floor Component
+
+- `FloorCanvasView` uses `content.floor_x`, `content.floor_y`, `content.floor_width`, and `content.floor_height` as the single source of truth for transformed floor placement.
+- In Y direction, header space is reserved first (`header_height_px`), then floor Y is computed from the remaining height.
+- Header overlay is rendered above all floor layers (`z` high), but its position/size are still bound to transformed floor coordinates:
+  - `x = content.floor_x`
+  - `y = content.floor_y - content.header_height_px`
+  - `width = content.floor_width`
+- SVG overlay must scale from the same layout basis as the floor (`content.layout_width_px`, `content.content_height_px`, and `content.zoom`) and remain centered at `content.center_x/content.center_y`.
+- Layering order inside floor rendering:
+  1. floor background
+  2. grid lines
+  3. floor SVG
+  4. from/to paths
+  5. position circles
+  6. position numbers
+- Curves and dashed path segments are command-based geometry generated in `floor_adapter.rs`; when layout/bounds change, redraw/apply must run so path commands are regenerated with current transform.
+
 # Issue Tracking
 
 This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.

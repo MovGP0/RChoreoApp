@@ -50,8 +50,8 @@ export struct LegendEntry {
 }
 
 export component FloorCanvasView inherits Rectangle {
-    in property <string> choreography_name: "";
-    in property <string> scene_name: "";
+    in property <string> choreography_name: "Lorem ipsum dolor sit amet";
+    in property <string> scene_name: "Lorem ipsum";
     in property <int> floor_front: 6;
     in property <int> floor_back: 6;
     in property <int> floor_left: 6;
@@ -143,28 +143,6 @@ export component FloorCanvasView inherits Rectangle {
     Vertical {
         spacing: 0px;
 
-        Rectangle {
-            width: parent.width;
-            height: root.header_padding * 2 + 20px + 14px + root.header_spacing;
-            background: root.surface_color;
-            Vertical {
-                padding: root.header_padding;
-                spacing: root.header_spacing;
-                Text {
-                    text: root.choreography_name;
-                    color: root.title_color;
-                    font-size: 20px;
-                    horizontal-alignment: center;
-                }
-                Text {
-                    text: root.scene_name;
-                    color: root.subtitle_color;
-                    font-size: 14px;
-                    horizontal-alignment: center;
-                }
-            }
-        }
-
         content := Rectangle {
             vertical-stretch: 1;
             background: root.surface_color;
@@ -176,6 +154,12 @@ export component FloorCanvasView inherits Rectangle {
             property <float> content_width_px: self.width / 1px;
             property <float> content_height_px: self.height / 1px;
             property <float> padding_px: root.grid_padding / 1px;
+            property <float> header_height_px: (
+                root.header_padding * 2
+                + 20px
+                + root.header_spacing
+                + 14px
+            ) / 1px * zoom;
             property <length> legend_reserved_width: root.show_legend && root.legend_entries.length > 0
                 ? root.legend_panel_width + root.legend_margin
                 : 0px;
@@ -185,8 +169,8 @@ export component FloorCanvasView inherits Rectangle {
             property <float> available_width_px: layout_width_px > 2.0 * padding_px
                 ? layout_width_px - 2.0 * padding_px
                 : 0.0;
-            property <float> available_height_px: content_height_px > 2.0 * padding_px
-                ? content_height_px - 2.0 * padding_px
+            property <float> available_height_px: content_height_px > header_height_px + 2.0 * padding_px
+                ? content_height_px - header_height_px - 2.0 * padding_px
                 : 0.0;
             property <float> scale_x: root.floor_width_meters > 0.0
                 ? available_width_px / root.floor_width_meters
@@ -204,7 +188,9 @@ export component FloorCanvasView inherits Rectangle {
                 ? root.floor_height_meters * scale * 1px
                 : 0px;
             property <length> floor_x: (layout_width_px * 1px - floor_width) / 2 + root.pan_x * 1px;
-            property <length> floor_y: (parent.height - floor_height) / 2 + root.pan_y * 1px;
+            property <length> floor_y: header_height_px * 1px
+                + (parent.height - header_height_px * 1px - floor_height) / 2
+                + root.pan_y * 1px;
             property <length> center_x: floor_x + floor_width / 2;
             property <length> center_y: floor_y + floor_height / 2;
             property <float> floor_width_px: floor_width / 1px;
@@ -313,8 +299,8 @@ export component FloorCanvasView inherits Rectangle {
 
                 Image {
                     source: root.svg_overlay;
-                    width: parent.width * content.zoom;
-                    height: parent.height * content.zoom;
+                    width: content.layout_width_px * 1px * content.zoom;
+                    height: content.content_height_px * 1px * content.zoom;
                     x: content.center_x - self.width / 2;
                     y: content.center_y - self.height / 2;
                     image-fit: contain;
@@ -597,6 +583,47 @@ export component FloorCanvasView inherits Rectangle {
                     );
                     return accept;
                 }
+            }
+        }
+    }
+
+    header_overlay := Rectangle {
+        x: 0px;
+        y: 0px;
+        width: root.width;
+        height: root.height;
+        z: 100;
+        background: transparent;
+
+        header_box := Rectangle {
+            x: content.floor_x;
+            y: content.floor_y - content.header_height_px * 1px;
+            width: content.floor_width;
+            height: content.header_height_px * 1px;
+            background: transparent;
+
+            Text {
+                text: root.choreography_name;
+                color: root.title_color;
+                font-size: 20px * content.zoom;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+                width: parent.width;
+                height: 20px * content.zoom;
+                y: root.header_padding * content.zoom;
+            }
+
+            Text {
+                text: root.scene_name;
+                color: root.subtitle_color;
+                font-size: 14px * content.zoom;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+                width: parent.width;
+                height: 14px * content.zoom;
+                y: root.header_padding * content.zoom
+                    + 20px * content.zoom
+                    + root.header_spacing * content.zoom;
             }
         }
     }
