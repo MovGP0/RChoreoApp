@@ -1,4 +1,4 @@
-import { MaterialPalette, MaterialText, MaterialTypography, Vertical, Horizontal } from "@material";
+import { MaterialAnimations, MaterialPalette, MaterialText, MaterialTypography, Vertical, Horizontal } from "@material";
 
 export component SceneItemView inherits Rectangle {
     in property <string> scene_name;
@@ -15,6 +15,7 @@ export component SceneItemView inherits Rectangle {
     in property <color> selected_timestamp_text: MaterialPalette.on_secondary_container;
     in property <color> unselected_timestamp_text: MaterialPalette.on_surface_variant;
     in property <color> selected_accent: MaterialPalette.primary;
+    in property <duration> selection_animation_duration: MaterialAnimations.emphasized_duration;
 
     callback select_scene();
 
@@ -22,14 +23,18 @@ export component SceneItemView inherits Rectangle {
     border-width: is_selected ? 2px : 1px;
     border-color: is_selected ? selected_stroke : unselected_stroke;
     border-radius: 6px;
+    animate background { duration: root.selection_animation_duration; easing: MaterialAnimations.standard_easing; }
+    animate border-color { duration: root.selection_animation_duration; easing: MaterialAnimations.standard_easing; }
 
-    if is_selected : Rectangle {
+    Rectangle {
         x: 0px;
         y: 0px;
         width: 4px;
         height: parent.height;
         border-radius: 6px;
         background: selected_accent;
+        opacity: is_selected ? 1 : 0;
+        animate opacity { duration: root.selection_animation_duration; easing: MaterialAnimations.standard_easing; }
     }
 
     content := Vertical {
@@ -52,6 +57,7 @@ export component SceneItemView inherits Rectangle {
                 font-weight: is_selected
                     ? MaterialTypography.title_medium.font_weight
                     : MaterialTypography.body_medium.font_weight;
+                animate color { duration: root.selection_animation_duration; easing: MaterialAnimations.standard_easing; }
             }
         }
         if show_timestamps : MaterialText {
@@ -59,6 +65,7 @@ export component SceneItemView inherits Rectangle {
             color: is_selected ? selected_timestamp_text : unselected_timestamp_text;
             font-size: MaterialTypography.label_medium.font_size;
             font-weight: MaterialTypography.label_medium.font_weight;
+            animate color { duration: root.selection_animation_duration; easing: MaterialAnimations.standard_easing; }
         }
     }
 
