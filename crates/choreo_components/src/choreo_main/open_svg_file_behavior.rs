@@ -1,5 +1,7 @@
 use std::rc::Rc;
 use std::time::Duration;
+#[cfg(not(target_arch = "wasm32"))]
+use std::path::Path;
 
 use crossbeam_channel::{Receiver, Sender};
 use nject::injectable;
@@ -46,11 +48,46 @@ impl OpenSvgFileBehavior {
         }
     }
 
+    fn restore_last_opened_svg(&self) {
+        let path = self
+            .preferences
+            .get_string(choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE, "");
+
+        if path.trim().is_empty() {
+            return;
+        }
+
+        if !Self::path_exists(path.as_str()) {
+            self.preferences
+                .remove(choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE);
+            return;
+        }
+
+        let updated = self.global_state.try_update(|global_state| {
+            global_state.svg_file_path = Some(path.clone());
+        });
+        if !updated {
+            return;
+        }
+
+        let _ = self.draw_floor_sender.send(DrawFloorCommand);
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn path_exists(path: &str) -> bool {
+        Path::new(path).exists()
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn path_exists(_path: &str) -> bool {
+        false
+    }
 }
 
 impl Behavior<MainViewModel> for OpenSvgFileBehavior {
     fn activate(&self, _view_model: &mut MainViewModel, disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("OpenSvgFileBehavior", "MainViewModel");
+        self.restore_last_opened_svg();
         let receiver = self.receiver.clone();
         let global_state = Rc::clone(&self.global_state);
         let preferences = Rc::clone(&self.preferences);
