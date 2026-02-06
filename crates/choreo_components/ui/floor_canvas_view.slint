@@ -441,8 +441,11 @@ export component FloorCanvasView inherits Rectangle {
 
             legend_panel := Rectangle {
                 visible: root.show_legend && root.legend_entries.length > 0;
-                x: floor_rect.x + floor_rect.width + root.legend_margin;
-                y: floor_rect.y;
+                x: parent.width > root.legend_panel_width + root.grid_padding
+                    ? parent.width - root.legend_panel_width - root.grid_padding
+                    : 0px;
+                y: root.grid_padding;
+                z: 5;
                 width: root.legend_panel_width;
                 height: root.legend_entries.length > 0
                     ? root.legend_padding * 2
