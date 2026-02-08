@@ -84,6 +84,13 @@ fn handle_link_scene_to_position(
     };
 
     selected_scene.timestamp = Some(rounded_timestamp);
+    if let Some(scene) = global_state
+        .scenes
+        .iter_mut()
+        .find(|scene| scene.scene_id == selected_scene.scene_id)
+    {
+        scene.timestamp = Some(rounded_timestamp);
+    }
 
     if let Some(model_scene) = global_state
         .choreography

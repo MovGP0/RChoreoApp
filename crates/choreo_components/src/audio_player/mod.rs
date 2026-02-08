@@ -14,6 +14,9 @@ pub use crate::haptics::{HapticFeedback, NoopHapticFeedback, PlatformHapticFeedb
 pub use audio_player_actor::create_platform_audio_player;
 pub use audio_player_behavior::AudioPlayerBehavior;
 pub use audio_player_link_scene_behavior::AudioPlayerLinkSceneBehavior;
+pub(crate) use audio_player_linking::{
+    build_tick_values, can_link_scene, try_get_linked_timestamp,
+};
 pub use audio_player_position_changed_behavior::AudioPlayerPositionChangedBehavior;
 pub use audio_player_ticks_behavior::AudioPlayerTicksBehavior;
 pub use audio_player_view_model::{

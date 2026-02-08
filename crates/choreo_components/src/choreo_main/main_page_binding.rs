@@ -8,7 +8,7 @@ use slint::{Color, ComponentHandle, Image, ModelRc, VecModel};
 
 use crate::audio_player::{
     AudioPlayerPositionChangedEvent, AudioPlayerViewModel, AudioPlayerViewState,
-    OpenAudioFileCommand,
+    OpenAudioFileCommand, build_tick_values, can_link_scene, try_get_linked_timestamp,
 };
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::choreography_settings::{
@@ -641,6 +641,7 @@ impl MainPageBinding {
 
         let audio_player_timer = {
             let audio_player = Rc::clone(&audio_player);
+            let global_state_store = Rc::clone(&deps.global_state_store);
             let view_weak = view_weak.clone();
             let timer = slint::Timer::default();
             timer.start(
@@ -649,6 +650,19 @@ impl MainPageBinding {
                 move || {
                     let mut audio_player = audio_player.borrow_mut();
                     audio_player.sync_from_player();
+                    if let Some((scenes, selected_scene)) =
+                        global_state_store.try_with_state(|global_state| {
+                            (
+                                global_state.scenes.clone(),
+                                global_state.selected_scene.clone(),
+                            )
+                        })
+                    {
+                        audio_player.tick_values =
+                            build_tick_values(audio_player.duration, &scenes);
+                        audio_player.can_link_scene_to_position =
+                            can_link_scene(audio_player.position, selected_scene.as_ref(), &scenes);
+                    }
                     if let Some(view) = view_weak.upgrade() {
                         apply_audio_player_view_model(&view, &audio_player);
                     }
@@ -1427,10 +1441,20 @@ impl MainPageBinding {
 
         {
             let audio_player = Rc::clone(&audio_player);
+            let global_state_store = Rc::clone(&deps.global_state_store);
             let view_weak = view_weak.clone();
             view.on_audio_link_scene_to_position(move || {
                 let mut audio_player = audio_player.borrow_mut();
-                audio_player.link_scene_to_position();
+                if let Some(haptic) = &audio_player.haptic_feedback
+                    && haptic.is_supported()
+                {
+                    haptic.perform_click();
+                }
+                link_selected_scene_to_audio_position(
+                    &global_state_store,
+                    audio_player.position,
+                    &mut audio_player,
+                );
                 if let Some(view) = view_weak.upgrade() {
                     apply_audio_player_view_model(&view, &audio_player);
                 }
@@ -1604,11 +1628,16 @@ fn apply_choreography_settings_view_model(
 }
 
 fn apply_audio_player_view_model(view: &ShellHost, view_model: &AudioPlayerViewModel) {
-    let slider_duration = if view_model.duration > 0.0 {
-        view_model.duration
-    } else {
-        view_model.position.max(1.0)
-    };
+    let max_tick = view_model
+        .tick_values
+        .iter()
+        .copied()
+        .fold(0.0_f64, f64::max);
+    let slider_duration = view_model
+        .duration
+        .max(max_tick)
+        .max(view_model.position)
+        .max(1.0);
 
     view.set_audio_speed(view_model.speed as f32);
     view.set_audio_minimum_speed(view_model.minimum_speed as f32);
@@ -1627,6 +1656,56 @@ fn apply_audio_player_view_model(view: &ShellHost, view_model: &AudioPlayerViewM
     view.set_audio_is_playing(view_model.is_playing);
     view.set_audio_speed_label(view_model.speed_label.as_str().into());
     view.set_audio_duration_label(view_model.duration_label.as_str().into());
+}
+
+fn link_selected_scene_to_audio_position(
+    global_state_store: &GlobalStateActor,
+    audio_position: f64,
+    audio_player: &mut AudioPlayerViewModel,
+) {
+    let updated = global_state_store.try_update(|global_state| {
+        let Some((selected_scene_id, rounded_timestamp)) = global_state
+            .selected_scene
+            .as_mut()
+            .and_then(|selected_scene| {
+                let rounded_timestamp =
+                    try_get_linked_timestamp(audio_position, selected_scene, &global_state.scenes)?;
+                selected_scene.timestamp = Some(rounded_timestamp);
+                Some((selected_scene.scene_id, rounded_timestamp))
+            })
+        else {
+            return;
+        };
+        if let Some(scene) = global_state
+            .scenes
+            .iter_mut()
+            .find(|scene| scene.scene_id == selected_scene_id)
+        {
+            scene.timestamp = Some(rounded_timestamp);
+        }
+        if let Some(model_scene) = global_state
+            .choreography
+            .scenes
+            .iter_mut()
+            .find(|scene| scene.scene_id == selected_scene_id)
+        {
+            model_scene.timestamp = Some(format_seconds(rounded_timestamp));
+        }
+    });
+    if !updated {
+        return;
+    }
+
+    if let Some((scenes, selected_scene)) = global_state_store.try_with_state(|global_state| {
+        (
+            global_state.scenes.clone(),
+            global_state.selected_scene.clone(),
+        )
+    }) {
+        audio_player.tick_values = build_tick_values(audio_player.duration, &scenes);
+        audio_player.can_link_scene_to_position =
+            can_link_scene(audio_position, selected_scene.as_ref(), &scenes);
+    }
 }
 
 fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneListItem> {
