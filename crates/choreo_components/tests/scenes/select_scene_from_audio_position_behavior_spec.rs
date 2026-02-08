@@ -12,7 +12,9 @@ use scenes::Report;
 #[serial_test::serial]
 fn select_scene_from_audio_position_behavior_spec() {
     let suite = rspec::describe("select scene from audio position behavior", (), |spec| {
-        spec.it("selects scene whose timestamp range contains current position", |_| {
+        spec.it(
+            "selects scene whose timestamp range contains current position",
+            |_| {
                 let context = scenes::ScenesTestContext::new();
 
                 let first = scenes::build_scene_model(1, "First", Some("00:05"), vec![]);
@@ -63,7 +65,9 @@ fn select_scene_from_audio_position_behavior_spec() {
             },
         );
 
-        spec.it("does not emit event when computed scene does not change", |_| {
+        spec.it(
+            "does not emit event when computed scene does not change",
+            |_| {
                 let context = scenes::ScenesTestContext::new();
 
                 let first = scenes::build_scene_model(1, "First", Some("00:05"), vec![]);

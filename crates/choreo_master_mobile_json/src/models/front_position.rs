@@ -57,8 +57,8 @@ impl<'de> Deserialize<'de> for FrontPosition {
             where
                 E: serde::de::Error,
             {
-                let value = i32::try_from(value)
-                    .map_err(|_| E::custom("front position out of range"))?;
+                let value =
+                    i32::try_from(value).map_err(|_| E::custom("front position out of range"))?;
                 FrontPosition::from_i32(value)
                     .ok_or_else(|| E::custom("front position out of range"))
             }
@@ -67,8 +67,8 @@ impl<'de> Deserialize<'de> for FrontPosition {
             where
                 E: serde::de::Error,
             {
-                let value = i32::try_from(value)
-                    .map_err(|_| E::custom("front position out of range"))?;
+                let value =
+                    i32::try_from(value).map_err(|_| E::custom("front position out of range"))?;
                 FrontPosition::from_i32(value)
                     .ok_or_else(|| E::custom("front position out of range"))
             }

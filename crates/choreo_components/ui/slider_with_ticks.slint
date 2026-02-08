@@ -2,7 +2,7 @@ import { MaterialPalette, MaterialStyleMetrics, StateLayer } from "@material";
 
 export component SliderWithTicks inherits Rectangle {
     in property <bool> enabled: true;
-    in_out property <float> value;
+    in-out property <float> value;
     in property <float> minimum;
     in property <int> stop_count: 0;
     in property <float> maximum: 100;
@@ -27,21 +27,17 @@ export component SliderWithTicks inherits Rectangle {
     forward-focus: focus_scope;
 
     function begin_drag() {
-        if !root.enabled || root.is_dragging {
-            return;
+        if (root.enabled && !root.is_dragging) {
+            root.is_dragging = true;
+            root.drag_started();
         }
-
-        root.is_dragging = true;
-        root.drag_started();
     }
 
     function end_drag() {
-        if !root.is_dragging {
-            return;
+        if (root.is_dragging) {
+            root.is_dragging = false;
+            root.drag_completed();
         }
-
-        root.is_dragging = false;
-        root.drag_completed();
     }
 
     VerticalLayout {
@@ -68,7 +64,7 @@ export component SliderWithTicks inherits Rectangle {
                         background: thumb.background;
                     }
 
-                    if root.stop_count > 1: Rectangle {
+                    if (root.stop_count > 1): Rectangle {
                         width: 100%;
                         height: 100%;
 
@@ -78,6 +74,26 @@ export component SliderWithTicks inherits Rectangle {
                             width: self.height;
                             border_radius: self.height / 2;
                             background: MaterialPalette.outline;
+                        }
+                    }
+
+                    Rectangle {
+                        width: 100%;
+                        height: 100%;
+
+                        // Render scene ticks from the exact timestamp model value.
+                        // Using the model entry by index avoids ambiguity with repeater
+                        // loop bindings and keeps tick placement aligned to the slider.
+                        for tick[index] in root.tick_values: Rectangle {
+                            width: MaterialStyleMetrics.size_1;
+                            height: MaterialStyleMetrics.size_24;
+                            x: root.value_to_length(track.width, root.tick_values[index])
+                                - (self.width / 2);
+                            y: (track.height - self.height) / 2;
+                            background: root.tick_color;
+                            visible: root.maximum > root.minimum
+                                && root.tick_values[index] >= root.minimum
+                                && root.tick_values[index] <= root.maximum;
                         }
                     }
                 }
@@ -112,10 +128,10 @@ export component SliderWithTicks inherits Rectangle {
                             }
 
                             pointer_event(event) => {
-                                if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                                if (event.kind == PointerEventKind.down && event.button == PointerEventButton.left) {
                                     root.begin_drag();
                                 }
-                                if event.kind == PointerEventKind.up {
+                                if (event.kind == PointerEventKind.up) {
                                     root.end_drag();
                                 }
                             }
@@ -124,22 +140,22 @@ export component SliderWithTicks inherits Rectangle {
                 }
 
                 pointer_event(event) => {
-                    if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                    if (event.kind == PointerEventKind.down && event.button == PointerEventButton.left) {
                         root.begin_drag();
                         root.set_value(root.length_to_value(self.mouse_x, track.width));
                     }
-                    if event.kind == PointerEventKind.up {
+                    if (event.kind == PointerEventKind.up) {
                         root.end_drag();
                     }
                 }
             }
 
             key_pressed(event) => {
-                if event.text == Key.LeftArrow {
+                if (event.text == Key.LeftArrow) {
                     root.set_value(root.value - root.steps);
                     return accept;
                 }
-                if event.text == Key.RightArrow {
+                if (event.text == Key.RightArrow) {
                     root.set_value(root.value + root.steps);
                     return accept;
                 }
@@ -147,30 +163,11 @@ export component SliderWithTicks inherits Rectangle {
             }
         }
 
-        Rectangle {
-            horizontal-stretch: 1;
-            height: MaterialStyleMetrics.size_6;
-            background: transparent;
-
-            for tick[index] in root.tick_values: Rectangle {
-                width: MaterialStyleMetrics.size_1;
-                height: min(MaterialStyleMetrics.size_4, parent.height);
-                x: root.value_to_length(parent.width, tick) - (self.width / 2);
-                y: parent.height - self.height;
-                background: root.tick_color;
-                visible: root.maximum > root.minimum
-                    && tick >= root.minimum
-                    && tick <= root.maximum;
-            }
-        }
-    }
-
-    changed value => {
-        root.value_changed(root.value);
+        Rectangle { horizontal-stretch: 1; height: MaterialStyleMetrics.size_8; background: transparent; }
     }
 
     pure function value_to_length(width: length, value: float) -> length {
-        if root.maximum <= root.minimum {
+        if (root.maximum <= root.minimum) {
             return 0px;
         }
 
@@ -182,18 +179,26 @@ export component SliderWithTicks inherits Rectangle {
     }
 
     pure function length_to_value(x: length, width: length) -> float {
-        if width <= 0px {
+        if (width <= 0px) {
             return root.minimum;
         }
 
-        return x * (root.maximum - root.minimum) / width;
+        return root.minimum + (x * (root.maximum - root.minimum) / width);
     }
 
     function set_value(value: float) {
-        if root.steps > 1 {
-            root.value = clamp(round(value / root.steps) * root.steps, root.minimum, root.maximum)
+        if (root.steps > 1) {
+            let snapped = clamp(round(value / root.steps) * root.steps, root.minimum, root.maximum);
+            if (snapped != root.value) {
+                root.value = snapped;
+                root.value_changed(root.value);
+            }
         } else {
-            root.value = clamp(value, root.minimum, root.maximum)
+            let clamped = clamp(value, root.minimum, root.maximum);
+            if (clamped != root.value) {
+                root.value = clamped;
+                root.value_changed(root.value);
+            }
         }
     }
 }

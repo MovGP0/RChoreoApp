@@ -44,7 +44,8 @@ fn load_settings_preferences_behavior_spec() {
             assert!(context.updater.call_count() >= 1);
         });
 
-        spec.it("reloads from updated preferences when reload is invoked",
+        spec.it(
+            "reloads from updated preferences when reload is invoked",
             |_| {
                 let context = settings::SettingsTestContext::new();
                 context

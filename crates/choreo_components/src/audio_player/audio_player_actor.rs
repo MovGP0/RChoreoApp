@@ -5,7 +5,7 @@ use crossbeam_channel::{Receiver, Sender, TrySendError, bounded};
 
 use super::types::AudioPlayer;
 
-const AUDIO_COMMAND_BUFFER: usize = 1;
+const AUDIO_COMMAND_BUFFER: usize = 64;
 
 pub fn create_platform_audio_player(file_path: String) -> Box<dyn AudioPlayer> {
     #[cfg(target_arch = "wasm32")]
@@ -44,6 +44,7 @@ enum AudioCommand {
     Pause,
     Stop,
     Seek(f64),
+    SeekAndPlay(f64),
     SetSpeed(f64),
     SetVolume(f64),
     SetBalance(f64),
@@ -87,8 +88,26 @@ mod native {
                     runtime.publish(&shared_for_thread);
                     loop {
                         match receiver.recv_timeout(Duration::from_millis(16)) {
-                            Ok(AudioCommand::Shutdown) => break,
-                            Ok(command) => runtime.handle(command),
+                            Ok(command) => {
+                                let mut pending_commands = PendingAudioCommands::default();
+                                let mut seq: usize = 0;
+
+                                pending_commands.merge(seq, command);
+                                seq += 1;
+
+                                while let Ok(queued) = receiver.try_recv() {
+                                    pending_commands.merge(seq, queued);
+                                    seq += 1;
+                                }
+
+                                if pending_commands.has_shutdown() {
+                                    break;
+                                }
+
+                                for pending_command in pending_commands.into_ordered_commands() {
+                                    runtime.handle(pending_command);
+                                }
+                            }
                             Err(crossbeam_channel::RecvTimeoutError::Timeout) => {}
                             Err(crossbeam_channel::RecvTimeoutError::Disconnected) => break,
                         }
@@ -157,6 +176,10 @@ mod native {
 
         fn seek(&mut self, position: f64) {
             self.send_latest(AudioCommand::Seek(position));
+        }
+
+        fn seek_and_play(&mut self, position: f64) {
+            self.send_latest(AudioCommand::SeekAndPlay(position));
         }
 
         fn set_speed(&mut self, speed: f64) {
@@ -283,6 +306,13 @@ mod native {
                     } else {
                         None
                     };
+                }
+                AudioCommand::SeekAndPlay(position) => {
+                    self.sync_position();
+                    self.position = clamp_position(position, self.duration);
+                    self.is_playing = true;
+                    self.rebuild_sink(self.position, true);
+                    self.last_started_at = Some(Instant::now());
                 }
                 AudioCommand::SetSpeed(speed) => {
                     self.sync_position();
@@ -464,6 +494,79 @@ mod native {
         }
         position.clamp(0.0, duration)
     }
+
+    #[derive(Default)]
+    struct PendingAudioCommands {
+        latest_control: Option<(usize, AudioCommand)>,
+        latest_seek: Option<(usize, f64)>,
+        latest_seek_and_play: Option<(usize, f64)>,
+        latest_speed: Option<(usize, f64)>,
+        latest_volume: Option<(usize, f64)>,
+        latest_balance: Option<(usize, f64)>,
+        latest_loop: Option<(usize, bool)>,
+    }
+
+    impl PendingAudioCommands {
+        fn merge(&mut self, sequence: usize, command: AudioCommand) {
+            match command {
+                AudioCommand::Play
+                | AudioCommand::Pause
+                | AudioCommand::Stop
+                | AudioCommand::Shutdown => {
+                    self.latest_control = Some((sequence, command));
+                }
+                AudioCommand::Seek(position) => {
+                    self.latest_seek = Some((sequence, position));
+                }
+                AudioCommand::SeekAndPlay(position) => {
+                    self.latest_seek_and_play = Some((sequence, position));
+                }
+                AudioCommand::SetSpeed(speed) => {
+                    self.latest_speed = Some((sequence, speed));
+                }
+                AudioCommand::SetVolume(volume) => {
+                    self.latest_volume = Some((sequence, volume));
+                }
+                AudioCommand::SetBalance(balance) => {
+                    self.latest_balance = Some((sequence, balance));
+                }
+                AudioCommand::SetLoop(loop_enabled) => {
+                    self.latest_loop = Some((sequence, loop_enabled));
+                }
+            }
+        }
+
+        fn has_shutdown(&self) -> bool {
+            matches!(self.latest_control, Some((_, AudioCommand::Shutdown)))
+        }
+
+        fn into_ordered_commands(self) -> Vec<AudioCommand> {
+            let mut pending: Vec<(usize, AudioCommand)> = Vec::new();
+            if let Some((order, control)) = self.latest_control {
+                pending.push((order, control));
+            }
+            if let Some((order, position)) = self.latest_seek {
+                pending.push((order, AudioCommand::Seek(position)));
+            }
+            if let Some((order, position)) = self.latest_seek_and_play {
+                pending.push((order, AudioCommand::SeekAndPlay(position)));
+            }
+            if let Some((order, speed)) = self.latest_speed {
+                pending.push((order, AudioCommand::SetSpeed(speed)));
+            }
+            if let Some((order, volume)) = self.latest_volume {
+                pending.push((order, AudioCommand::SetVolume(volume)));
+            }
+            if let Some((order, balance)) = self.latest_balance {
+                pending.push((order, AudioCommand::SetBalance(balance)));
+            }
+            if let Some((order, loop_enabled)) = self.latest_loop {
+                pending.push((order, AudioCommand::SetLoop(loop_enabled)));
+            }
+            pending.sort_by_key(|(order, _)| *order);
+            pending.into_iter().map(|(_, command)| command).collect()
+        }
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -551,6 +654,13 @@ mod wasm {
             if self.state.is_playing {
                 self.last_started_at = Some(Instant::now());
             }
+        }
+
+        fn seek_and_play(&mut self, position: f64) {
+            self.sync_position();
+            self.state.current_position = position.max(0.0);
+            self.state.is_playing = true;
+            self.last_started_at = Some(Instant::now());
         }
 
         fn set_speed(&mut self, speed: f64) {

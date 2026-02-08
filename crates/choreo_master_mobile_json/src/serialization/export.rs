@@ -5,14 +5,7 @@ use std::path::Path;
 
 use crate::clock::SystemClock;
 use crate::errors::ChoreoJsonError;
-use crate::models::{
-    Choreography,
-    Dancer,
-    DancerId,
-    Position,
-    Role,
-    Scene
-};
+use crate::models::{Choreography, Dancer, DancerId, Position, Role, Scene};
 use crate::serialization::helpers::ref_map;
 
 pub fn export(choreography: &Choreography) -> Result<String, ChoreoJsonError> {

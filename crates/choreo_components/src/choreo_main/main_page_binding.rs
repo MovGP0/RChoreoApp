@@ -4,11 +4,17 @@ use std::rc::Rc;
 
 use choreo_master_mobile_json::Color as ChoreoColor;
 use crossbeam_channel::{Receiver, Sender, bounded};
-use slint::{Color, ComponentHandle, Image, ModelRc, VecModel};
+use slint::{
+    Color,
+    ComponentHandle,
+    Image,
+    ModelRc,
+    VecModel,
+};
 
 use crate::audio_player::{
     AudioPlayerPositionChangedEvent, AudioPlayerViewModel, AudioPlayerViewState,
-    OpenAudioFileCommand, build_tick_values, can_link_scene, try_get_linked_timestamp,
+    OpenAudioFileCommand, build_tick_values,
 };
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::choreography_settings::{
@@ -639,8 +645,11 @@ impl MainPageBinding {
             timer
         };
 
+        let audio_player_view_state = Rc::new(RefCell::new(AudioPlayerViewState::new()));
+
         let audio_player_timer = {
             let audio_player = Rc::clone(&audio_player);
+            let audio_player_view_state = Rc::clone(&audio_player_view_state);
             let global_state_store = Rc::clone(&deps.global_state_store);
             let view_weak = view_weak.clone();
             let timer = slint::Timer::default();
@@ -649,7 +658,9 @@ impl MainPageBinding {
                 std::time::Duration::from_millis(16),
                 move || {
                     let mut audio_player = audio_player.borrow_mut();
-                    audio_player.sync_from_player();
+                    if !audio_player_view_state.borrow().is_user_dragging() {
+                        audio_player.sync_from_player();
+                    }
                     if let Some((scenes, selected_scene)) =
                         global_state_store.try_with_state(|global_state| {
                             (
@@ -660,8 +671,7 @@ impl MainPageBinding {
                     {
                         audio_player.tick_values =
                             build_tick_values(audio_player.duration, &scenes);
-                        audio_player.can_link_scene_to_position =
-                            can_link_scene(audio_player.position, selected_scene.as_ref(), &scenes);
+                        audio_player.can_link_scene_to_position = selected_scene.is_some();
                     }
                     if let Some(view) = view_weak.upgrade() {
                         apply_audio_player_view_model(&view, &audio_player);
@@ -1377,8 +1387,6 @@ impl MainPageBinding {
             });
         }
 
-        let audio_player_view_state = Rc::new(RefCell::new(AudioPlayerViewState::new()));
-
         {
             let audio_player = Rc::clone(&audio_player);
             let view_weak = view_weak.clone();
@@ -1398,10 +1406,17 @@ impl MainPageBinding {
 
         {
             let audio_player = Rc::clone(&audio_player);
+            let audio_player_view_state = Rc::clone(&audio_player_view_state);
             let view_weak = view_weak.clone();
             view.on_audio_position_changed(move |value| {
                 let mut audio_player = audio_player.borrow_mut();
                 audio_player.position = value as f64;
+                audio_player.update_duration_label();
+                if !audio_player_view_state.borrow().is_user_dragging() {
+                    let position = audio_player.position;
+                    audio_player.seek(position);
+                    audio_player.update_duration_label();
+                }
                 if let Some(view) = view_weak.upgrade() {
                     apply_audio_player_view_model(&view, &audio_player);
                 }
@@ -1664,18 +1679,12 @@ fn link_selected_scene_to_audio_position(
     audio_player: &mut AudioPlayerViewModel,
 ) {
     let updated = global_state_store.try_update(|global_state| {
-        let Some((selected_scene_id, rounded_timestamp)) = global_state
-            .selected_scene
-            .as_mut()
-            .and_then(|selected_scene| {
-                let rounded_timestamp =
-                    try_get_linked_timestamp(audio_position, selected_scene, &global_state.scenes)?;
-                selected_scene.timestamp = Some(rounded_timestamp);
-                Some((selected_scene.scene_id, rounded_timestamp))
-            })
-        else {
+        let Some(selected_scene) = global_state.selected_scene.as_mut() else {
             return;
         };
+        let selected_scene_id = selected_scene.scene_id;
+        let rounded_timestamp = round_to_100_millis(audio_position);
+        selected_scene.timestamp = Some(rounded_timestamp);
         if let Some(scene) = global_state
             .scenes
             .iter_mut()
@@ -1703,9 +1712,14 @@ fn link_selected_scene_to_audio_position(
         )
     }) {
         audio_player.tick_values = build_tick_values(audio_player.duration, &scenes);
-        audio_player.can_link_scene_to_position =
-            can_link_scene(audio_position, selected_scene.as_ref(), &scenes);
+        audio_player.can_link_scene_to_position = selected_scene.is_some();
     }
+}
+
+fn round_to_100_millis(seconds: f64) -> f64 {
+    let milliseconds = seconds * 1000.0;
+    let rounded = (milliseconds / 100.0).round() * 100.0;
+    rounded / 1000.0
 }
 
 fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneListItem> {

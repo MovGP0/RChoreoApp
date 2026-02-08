@@ -162,6 +162,20 @@ impl AudioPlayerViewModel {
         self.position = player.current_position();
     }
 
+    pub fn seek_and_play(&mut self, position: f64) {
+        let Some(player) = self.player.as_mut() else {
+            return;
+        };
+
+        if !player.can_seek() {
+            return;
+        }
+
+        player.seek_and_play(position);
+        self.position = player.current_position();
+        self.is_playing = true;
+    }
+
     pub fn reload(&mut self) {
         // handled by the stream factory integration
     }
@@ -253,18 +267,11 @@ impl AudioPlayerViewState {
             return;
         }
 
-        view_model.seek(position);
-
-        if !self.was_playing {
-            return;
+        if self.was_playing {
+            view_model.seek_and_play(position);
+        } else {
+            view_model.seek(position);
         }
-
-        let Some(player) = view_model.player.as_mut() else {
-            return;
-        };
-
-        player.play();
-        view_model.is_playing = true;
     }
 
     pub fn on_speed_changed(&mut self, view_model: &mut AudioPlayerViewModel, new_value: f64) {

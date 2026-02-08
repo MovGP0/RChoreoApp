@@ -12,7 +12,9 @@ use scenes::Report;
 #[serial_test::serial]
 fn show_scene_timestamps_behavior_spec() {
     let suite = rspec::describe("show scene timestamps behavior", (), |spec| {
-        spec.it("initializes from choreography settings on activation", |_| {
+        spec.it(
+            "initializes from choreography settings on activation",
+            |_| {
                 let context = scenes::ScenesTestContext::new();
                 context.update_global_state(|state| {
                     state.choreography.settings.show_timestamps = true;

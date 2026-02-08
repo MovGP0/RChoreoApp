@@ -10,7 +10,9 @@ use settings::Report;
 #[serial_test::serial]
 fn color_preferences_behavior_spec() {
     let suite = rspec::describe("color preferences behavior", (), |spec| {
-        spec.it("enforces primary-secondary-tertiary enablement hierarchy", |_| {
+        spec.it(
+            "enforces primary-secondary-tertiary enablement hierarchy",
+            |_| {
                 let context = settings::SettingsTestContext::new();
 
                 context

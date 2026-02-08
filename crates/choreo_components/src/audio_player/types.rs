@@ -10,6 +10,10 @@ pub trait AudioPlayer {
     fn pause(&mut self);
     fn stop(&mut self);
     fn seek(&mut self, position: f64);
+    fn seek_and_play(&mut self, position: f64) {
+        self.seek(position);
+        self.play();
+    }
     fn set_speed(&mut self, speed: f64);
     fn set_volume(&mut self, volume: f64);
     fn set_balance(&mut self, balance: f64);

@@ -11,7 +11,8 @@ fn slider_with_ticks_behavior_spec() {
     let suite = rspec::describe("slider with ticks behavior", (), |spec| {
         spec.it("activates without mutating default slider state", |_| {
             let behavior = SliderWithTicksBehavior;
-            let view_model = SliderWithTicksViewModel::new(vec![Box::new(behavior) as Box<dyn Behavior<_>>]);
+            let view_model =
+                SliderWithTicksViewModel::new(vec![Box::new(behavior) as Box<dyn Behavior<_>>]);
 
             assert_eq!(view_model.minimum, 0.0);
             assert_eq!(view_model.maximum, 1.0);
