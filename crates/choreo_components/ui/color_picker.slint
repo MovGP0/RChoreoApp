@@ -116,12 +116,7 @@ export component ColorPicker inherits Rectangle {
 
     callback color_changed(color);
 
-    property <float> hue_normalized: {
-        if (hue < 0) {
-            return Math.mod(hue, 360) + 360;
-        }
-        Math.mod(hue, 360)
-    }
+    property <float> hue_normalized: hue < 0 ? Math.mod(hue, 360) + 360 :Math.mod(hue, 360);
     property <float> hue_section: hue_normalized / 60.0;
     property <float> section_index: Math.floor(hue_section);
     property <float> section_fraction: hue_section - section_index;
