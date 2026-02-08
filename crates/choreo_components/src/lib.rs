@@ -6,26 +6,26 @@
 #![deny(elided_lifetimes_in_paths)]
 #![deny(clippy::all)]
 
-pub mod global;
-pub mod scenes;
-pub mod preferences;
-pub mod settings;
-pub mod behavior;
-pub mod logging;
 pub mod audio_player;
-pub mod haptics;
-pub mod dancers;
-pub mod choreography_settings;
-pub mod floor;
-pub mod i18n;
+pub mod behavior;
 pub mod choreo_main;
-pub mod time;
+pub mod choreography_settings;
 pub mod color_picker;
-pub mod shell;
+pub mod dancers;
 pub mod date;
-pub mod splash_screen;
-pub mod slider_with_ticks;
+pub mod floor;
+pub mod global;
+pub mod haptics;
+pub mod i18n;
+pub mod logging;
 pub mod nav_bar;
+pub mod preferences;
+pub mod scenes;
+pub mod settings;
+pub mod shell;
+pub mod slider_with_ticks;
+pub mod splash_screen;
+pub mod time;
 
 mod ui {
     #![allow(unreachable_pub)]

@@ -26,51 +26,50 @@ fn unique_temp_file(name: &str) -> std::path::PathBuf {
 #[serial_test::serial]
 fn open_audio_file_behavior_spec() {
     let suite = rspec::describe("open audio file behavior", (), |spec| {
-        spec.it("stores stream factory and persists last opened audio path", |_| {
-            let preferences = Rc::new(choreo_components::preferences::InMemoryPreferences::new());
-            let (sender, receiver) = unbounded::<OpenAudioFileCommand>();
-            let behavior = OpenAudioFileBehavior::new(
-                receiver,
-                preferences.clone() as Rc<dyn Preferences>,
-            );
-            let context = audio_player::AudioPlayerTestContext::with_dependencies(
-                vec![
-                Box::new(behavior) as Box<dyn Behavior<_>>,
-                ],
-                choreo_components::global::GlobalStateActor::new(),
-                preferences.clone(),
-            );
+        spec.it(
+            "stores stream factory and persists last opened audio path",
+            |_| {
+                let preferences =
+                    Rc::new(choreo_components::preferences::InMemoryPreferences::new());
+                let (sender, receiver) = unbounded::<OpenAudioFileCommand>();
+                let behavior = OpenAudioFileBehavior::new(
+                    receiver,
+                    preferences.clone() as Rc<dyn Preferences>,
+                );
+                let context = audio_player::AudioPlayerTestContext::with_dependencies(
+                    vec![Box::new(behavior) as Box<dyn Behavior<_>>],
+                    choreo_components::global::GlobalStateActor::new(),
+                    preferences.clone(),
+                );
 
-            let file_path = unique_temp_file("open-audio");
-            fs::write(&file_path, b"audio").expect("audio temp file should be written");
-            sender
-                .send(OpenAudioFileCommand {
-                    file_path: file_path.to_string_lossy().into_owned(),
-                })
-                .expect("send should succeed");
+                let file_path = unique_temp_file("open-audio");
+                fs::write(&file_path, b"audio").expect("audio temp file should be written");
+                sender
+                    .send(OpenAudioFileCommand {
+                        file_path: file_path.to_string_lossy().into_owned(),
+                    })
+                    .expect("send should succeed");
 
-            let updated = context.wait_until(Duration::from_secs(1), || {
-                context.view_model.borrow().stream_factory.is_some()
-            });
-            assert!(updated);
+                let updated = context.wait_until(Duration::from_secs(1), || {
+                    context.view_model.borrow().stream_factory.is_some()
+                });
+                assert!(updated);
 
-            let stored = preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_AUDIO_FILE, "");
-            assert_eq!(stored, file_path.to_string_lossy());
+                let stored =
+                    preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_AUDIO_FILE, "");
+                assert_eq!(stored, file_path.to_string_lossy());
 
-            fs::remove_file(file_path).expect("audio temp file should be removed");
-        });
+                fs::remove_file(file_path).expect("audio temp file should be removed");
+            },
+        );
 
         spec.it("ignores empty file paths", |_| {
             let preferences = Rc::new(choreo_components::preferences::InMemoryPreferences::new());
             let (sender, receiver) = unbounded::<OpenAudioFileCommand>();
-            let behavior = OpenAudioFileBehavior::new(
-                receiver,
-                preferences.clone() as Rc<dyn Preferences>,
-            );
+            let behavior =
+                OpenAudioFileBehavior::new(receiver, preferences.clone() as Rc<dyn Preferences>);
             let context = audio_player::AudioPlayerTestContext::with_dependencies(
-                vec![
-                Box::new(behavior) as Box<dyn Behavior<_>>,
-                ],
+                vec![Box::new(behavior) as Box<dyn Behavior<_>>],
                 choreo_components::global::GlobalStateActor::new(),
                 preferences,
             );

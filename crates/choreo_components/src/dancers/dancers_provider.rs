@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crossbeam_channel::{unbounded, Sender};
+use crossbeam_channel::{Sender, unbounded};
 
 use crate::global::GlobalStateActor;
 use crate::haptics::HapticFeedback;
@@ -13,16 +13,9 @@ use super::delete_dancer_behavior::DeleteDancerBehavior;
 use super::hide_dancer_dialog_behavior::HideDancerDialogBehavior;
 use super::load_dancer_settings_behavior::LoadDancerSettingsBehavior;
 use super::messages::{
-    AddDancerCommand,
-    CancelDancerSettingsCommand,
-    CloseDancerDialogCommand,
-    DancerSelectionCommand,
-    DeleteDancerCommand,
-    SaveDancerSettingsCommand,
-    SelectRoleCommand,
-    ShowDancerDialogCommand,
-    SwapDancersCommand,
-    UpdateDancerIconCommand,
+    AddDancerCommand, CancelDancerSettingsCommand, CloseDancerDialogCommand,
+    DancerSelectionCommand, DeleteDancerCommand, SaveDancerSettingsCommand, SelectRoleCommand,
+    ShowDancerDialogCommand, SwapDancersCommand, UpdateDancerIconCommand,
     UpdateSwapSelectionCommand,
 };
 use super::save_dancer_settings_behavior::SaveDancerSettingsBehavior;
@@ -45,8 +38,7 @@ pub struct DancersProvider {
 }
 
 impl DancersProvider {
-    pub fn new(deps: DancersProviderDependencies) -> Self
-    {
+    pub fn new(deps: DancersProviderDependencies) -> Self {
         let (show_dialog_sender, show_dialog_receiver) = unbounded();
         let (close_dialog_sender, close_dialog_receiver) = unbounded();
         let (add_dancer_sender, add_dancer_receiver) = unbounded();
@@ -79,7 +71,10 @@ impl DancersProvider {
             Box::new(SelectedIconBehavior::new(update_icon_receiver)),
             Box::new(SelectedRoleBehavior::new(select_role_receiver)),
             Box::new(SwapDancerSelectionBehavior::new(swap_selection_receiver)),
-            Box::new(SwapDancersBehavior::new(show_dialog_sender.clone(), swap_receiver)),
+            Box::new(SwapDancersBehavior::new(
+                show_dialog_sender.clone(),
+                swap_receiver,
+            )),
             Box::new(HideDancerDialogBehavior::new(close_dialog_receiver)),
             Box::new(ShowDancerDialogBehavior::new(show_dialog_receiver)),
             Box::new(CancelDancerSettingsBehavior::new(cancel_receiver)),

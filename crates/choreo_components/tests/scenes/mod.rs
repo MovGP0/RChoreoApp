@@ -8,13 +8,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 
-use choreo_master_mobile_json::SceneId;
-use choreo_models::ChoreographyModel;
-use choreo_models::Colors;
-use choreo_models::DancerModel;
-use choreo_models::PositionModel;
-use choreo_models::RoleModel;
-use choreo_models::SceneModel;
 use choreo_components::behavior::Behavior;
 use choreo_components::global::GlobalStateActor;
 use choreo_components::preferences::InMemoryPreferences;
@@ -22,6 +15,13 @@ use choreo_components::preferences::Preferences;
 use choreo_components::scenes::SceneMapper;
 use choreo_components::scenes::SceneViewModel;
 use choreo_components::scenes::ScenesPaneViewModel;
+use choreo_master_mobile_json::SceneId;
+use choreo_models::ChoreographyModel;
+use choreo_models::Colors;
+use choreo_models::DancerModel;
+use choreo_models::PositionModel;
+use choreo_models::RoleModel;
+use choreo_models::SceneModel;
 use crossbeam_channel::unbounded;
 use rspec::ConfigurationBuilder;
 use rspec::Logger;
@@ -100,12 +100,18 @@ impl ScenesTestContext {
         self.pump_events();
     }
 
-    pub fn update_global_state(&self, update: impl FnOnce(&mut choreo_components::global::GlobalStateModel)) {
+    pub fn update_global_state(
+        &self,
+        update: impl FnOnce(&mut choreo_components::global::GlobalStateModel),
+    ) {
         let updated = self.global_state_store.try_update(update);
         assert!(updated, "failed to update global state in test context");
     }
 
-    pub fn read_global_state<T>(&self, read: impl FnOnce(&choreo_components::global::GlobalStateModel) -> T) -> T {
+    pub fn read_global_state<T>(
+        &self,
+        read: impl FnOnce(&choreo_components::global::GlobalStateModel) -> T,
+    ) -> T {
         self.global_state_store
             .try_with_state(read)
             .expect("failed to read global state in test context")
@@ -187,7 +193,8 @@ pub fn build_dancer(dancer_id: i32, name: &str) -> Rc<DancerModel> {
 
 pub fn map_scene_view_model(scene: &SceneModel) -> SceneViewModel {
     let mapper = SceneMapper;
-    let mut view_model = SceneViewModel::new(scene.scene_id, scene.name.clone(), scene.color.clone());
+    let mut view_model =
+        SceneViewModel::new(scene.scene_id, scene.name.clone(), scene.color.clone());
     mapper.map_model_to_view_model(scene, &mut view_model);
     view_model
 }
@@ -215,7 +222,8 @@ pub fn set_choreography(
     });
 
     context.view_model.borrow_mut().refresh_scenes();
-    context.view_model
+    context
+        .view_model
         .borrow_mut()
         .set_selected_scene(context.read_global_state(|state| state.selected_scene.clone()));
 }

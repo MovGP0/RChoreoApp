@@ -33,7 +33,10 @@ fn selected_role_behavior_spec() {
             let view_model = context.view_model.borrow();
             assert_eq!(view_model.dancers[0].role.name, "Follow");
             assert_eq!(
-                view_model.selected_role.as_ref().map(|role| role.name.as_str()),
+                view_model
+                    .selected_role
+                    .as_ref()
+                    .map(|role| role.name.as_str()),
                 Some("Follow")
             );
         });

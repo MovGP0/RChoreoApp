@@ -50,14 +50,16 @@ impl<P: Preferences + Clone> UpdatePositionsAtSideBehavior<P> {
     }
 
     fn initialize(&self, view_model: &mut ChoreographySettingsViewModel) {
-        let value = self
-            .preferences
-            .get_bool(choreo_models::SettingsPreferenceKeys::POSITIONS_AT_SIDE, true);
+        let value = self.preferences.get_bool(
+            choreo_models::SettingsPreferenceKeys::POSITIONS_AT_SIDE,
+            true,
+        );
         view_model.positions_at_side = value;
         self.global_state.try_update(|global_state| {
-            global_state.choreography.settings.positions_at_side = self
-                .preferences
-                .get_bool(choreo_models::SettingsPreferenceKeys::POSITIONS_AT_SIDE, true);
+            global_state.choreography.settings.positions_at_side = self.preferences.get_bool(
+                choreo_models::SettingsPreferenceKeys::POSITIONS_AT_SIDE,
+                true,
+            );
         });
     }
 
@@ -72,7 +74,9 @@ impl<P: Preferences + Clone> UpdatePositionsAtSideBehavior<P> {
     }
 }
 
-impl<P: Preferences + Clone + 'static> Behavior<ChoreographySettingsViewModel> for UpdatePositionsAtSideBehavior<P> {
+impl<P: Preferences + Clone + 'static> Behavior<ChoreographySettingsViewModel>
+    for UpdatePositionsAtSideBehavior<P>
+{
     fn activate(
         &self,
         view_model: &mut ChoreographySettingsViewModel,
@@ -108,5 +112,3 @@ impl<P: Preferences + Clone + 'static> Behavior<ChoreographySettingsViewModel> f
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
-

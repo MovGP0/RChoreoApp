@@ -194,17 +194,15 @@ impl Drop for DancerSettingsViewModel {
     }
 }
 
-
 pub struct IconNameToImageSourceConverter;
 
 impl IconNameToImageSourceConverter {
     pub fn convert(icon_name: &str) -> Option<&'static [u8]> {
         let normalized = normalize_icon_name_for_resource(icon_name);
-        icon_bytes(&normalized)
-            .or_else(|| {
-                let fallback = format!("Icon{}", to_pascal_case(&normalized));
-                icon_bytes(&fallback)
-            })
+        icon_bytes(&normalized).or_else(|| {
+            let fallback = format!("Icon{}", to_pascal_case(&normalized));
+            icon_bytes(&fallback)
+        })
     }
 }
 
@@ -323,11 +321,7 @@ fn normalize_icon_name_for_resource(icon_name: &str) -> String {
         trimmed = &trimmed[4..];
     }
 
-    let name = trimmed
-        .split('/')
-        .next_back()
-        .unwrap_or(trimmed)
-        .trim();
+    let name = trimmed.split('/').next_back().unwrap_or(trimmed).trim();
     let name = name.strip_suffix(".png").unwrap_or(name);
     if name.to_ascii_lowercase().starts_with("icon") {
         name.to_string()
@@ -393,11 +387,7 @@ fn display_name(dancer: &DancerModel) -> String {
 }
 
 fn format_swap_message(locale: &str, first: &str, second: &str) -> String {
-    let template = translation_with_fallback(locale, "DancerSwapDialogMessage")
-        .unwrap_or("{0} ↔ {1}");
-    template
-        .replace("{0}", first)
-        .replace("{1}", second)
+    let template =
+        translation_with_fallback(locale, "DancerSwapDialogMessage").unwrap_or("{0} ↔ {1}");
+    template.replace("{0}", first).replace("{1}", second)
 }
-
-

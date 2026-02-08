@@ -14,9 +14,6 @@ impl Behavior<SliderWithTicksViewModel> for SliderWithTicksBehavior {
         _view_model: &mut SliderWithTicksViewModel,
         _disposables: &mut CompositeDisposable,
     ) {
-        BehaviorLog::behavior_activated(
-            "SliderWithTicksBehavior",
-            "SliderWithTicksViewModel",
-        );
+        BehaviorLog::behavior_activated("SliderWithTicksBehavior", "SliderWithTicksViewModel");
     }
 }

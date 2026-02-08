@@ -30,8 +30,7 @@ impl FloorAdapter {
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
         preferences: Rc<dyn Preferences>,
         audio_position_receiver: Receiver<AudioPlayerPositionChangedEvent>,
-    ) -> Self
-    {
+    ) -> Self {
         Self {
             global_state,
             state_machine,
@@ -179,7 +178,9 @@ impl FloorAdapter {
 
         let remaining_positions = remaining_positions(
             dancer_count,
-            current_scene.map(|scene| scene.positions.len()).unwrap_or(0),
+            current_scene
+                .map(|scene| scene.positions.len())
+                .unwrap_or(0),
             state_kind,
             is_place_mode,
         );
@@ -223,7 +224,9 @@ impl FloorAdapter {
     fn clear_floor(&self, view: &ShellHost) {
         view.set_floor_positions(ModelRc::new(VecModel::from(Vec::<FloorPosition>::new())));
         view.set_floor_curves(ModelRc::new(VecModel::from(Vec::<FloorCurve>::new())));
-        view.set_floor_dashed_curve_segments(ModelRc::new(VecModel::from(Vec::<LineSegment>::new())));
+        view.set_floor_dashed_curve_segments(ModelRc::new(VecModel::from(
+            Vec::<LineSegment>::new(),
+        )));
         view.set_floor_selection_segments(ModelRc::new(VecModel::from(Vec::<LineSegment>::new())));
         view.set_floor_axis_labels_x(ModelRc::new(VecModel::from(Vec::<AxisLabel>::new())));
         view.set_floor_axis_labels_y(ModelRc::new(VecModel::from(Vec::<AxisLabel>::new())));
@@ -242,13 +245,13 @@ impl FloorAdapter {
         next_scene: Option<&crate::scenes::SceneViewModel>,
         selected_positions: &[PositionModel],
         transparency: f64,
-    ) -> (Vec<FloorPosition>, Vec<LegendEntry>)
-    {
+    ) -> (Vec<FloorPosition>, Vec<LegendEntry>) {
         let Some(positions) = positions else {
             return (Vec::new(), Vec::new());
         };
 
-        let interpolation = build_interpolation(current_scene, next_scene, self.current_audio_seconds);
+        let interpolation =
+            build_interpolation(current_scene, next_scene, self.current_audio_seconds);
         let mut floor_positions = Vec::with_capacity(positions.len());
         let mut legend_entries = Vec::new();
 
@@ -271,7 +274,8 @@ impl FloorAdapter {
                 }
 
                 fill_color = apply_transparency(color_from_choreo(&dancer.color), transparency);
-                border_color = apply_transparency(self.role_border_color(&dancer.role), transparency);
+                border_color =
+                    apply_transparency(self.role_border_color(&dancer.role), transparency);
                 text_color = pick_black_or_white(fill_color);
                 shortcut = dancer.shortcut.clone();
 
@@ -283,7 +287,9 @@ impl FloorAdapter {
                 });
             }
 
-            let is_selected = selected_positions.iter().any(|selected| selected == position);
+            let is_selected = selected_positions
+                .iter()
+                .any(|selected| selected == position);
 
             floor_positions.push(FloorPosition {
                 x: draw_x as f32,
@@ -322,8 +328,7 @@ impl FloorAdapter {
         next_scene: Option<&crate::scenes::SceneViewModel>,
         transparency: f64,
         render_transform: Option<&FloorRenderTransform>,
-    ) -> (Vec<FloorCurve>, Vec<LineSegment>)
-    {
+    ) -> (Vec<FloorCurve>, Vec<LineSegment>) {
         let Some(render_transform) = render_transform else {
             return (Vec::new(), Vec::new());
         };
@@ -558,13 +563,8 @@ fn build_curves_between_scenes(
         }
         color = apply_transparency(color, transparency);
 
-        let curve_segments = build_dashed_curve_segments(
-            from_position,
-            to_position,
-            color,
-            2.0,
-            render_transform,
-        );
+        let curve_segments =
+            build_dashed_curve_segments(from_position, to_position, color, 2.0, render_transform);
         segments.extend(curve_segments);
     }
 
@@ -748,14 +748,8 @@ fn sample_cubic_curve(
         let uuu = uu * u;
         let ttt = tt * t;
 
-        let x = uuu * start.x
-            + 3.0 * uu * t * control1.x
-            + 3.0 * u * tt * control2.x
-            + ttt * end.x;
-        let y = uuu * start.y
-            + 3.0 * uu * t * control1.y
-            + 3.0 * u * tt * control2.y
-            + ttt * end.y;
+        let x = uuu * start.x + 3.0 * uu * t * control1.x + 3.0 * u * tt * control2.x + ttt * end.x;
+        let y = uuu * start.y + 3.0 * uu * t * control1.y + 3.0 * u * tt * control2.y + ttt * end.y;
         points.push(Point::new(x, y));
     }
     points
@@ -791,10 +785,7 @@ fn build_dashed_segments_from_points(
         while segment_length > f64::EPSILON {
             let step = remaining.min(segment_length);
             let t = step / segment_length;
-            let end_point = Point::new(
-                segment_start.x + dx * t,
-                segment_start.y + dy * t,
-            );
+            let end_point = Point::new(segment_start.x + dx * t, segment_start.y + dy * t);
 
             if draw {
                 let commands =
@@ -1034,13 +1025,21 @@ fn get_adjacent_scenes(
     let index = scenes
         .iter()
         .position(|scene| scene.scene_id == selected_scene.scene_id)
-        .or_else(|| scenes.iter().position(|scene| scene.name == selected_scene.name));
+        .or_else(|| {
+            scenes
+                .iter()
+                .position(|scene| scene.name == selected_scene.name)
+        });
 
     let Some(index) = index else {
         return (None, None, None);
     };
 
-    let previous = if index > 0 { scenes.get(index - 1).cloned() } else { None };
+    let previous = if index > 0 {
+        scenes.get(index - 1).cloned()
+    } else {
+        None
+    };
     let current = scenes.get(index).cloned();
     let next = scenes.get(index + 1).cloned();
 
@@ -1085,7 +1084,11 @@ fn rgb_to_hsl(r: f32, g: f32, b: f32) -> (f32, f32, f32) {
         return (0.0, 0.0, l * 100.0);
     }
 
-    let s = if l < 0.5 { delta / (max + min) } else { delta / (2.0 - max - min) };
+    let s = if l < 0.5 {
+        delta / (max + min)
+    } else {
+        delta / (2.0 - max - min)
+    };
 
     let mut h = if max == r {
         (g - b) / delta + if g < b { 6.0 } else { 0.0 }
@@ -1108,7 +1111,11 @@ fn hsl_to_rgb(h: f32, s: f32, l: f32) -> (f32, f32, f32) {
         return (val, val, val);
     }
 
-    let q = if l < 0.5 { l * (1.0 + s) } else { l + s - l * s };
+    let q = if l < 0.5 {
+        l * (1.0 + s)
+    } else {
+        l + s - l * s
+    };
     let p = 2.0 * l - q;
 
     let hk = h / 360.0;
@@ -1120,7 +1127,11 @@ fn hsl_to_rgb(h: f32, s: f32, l: f32) -> (f32, f32, f32) {
     let g = hue_to_rgb(p, q, t_g);
     let b = hue_to_rgb(p, q, t_b);
 
-    ((r * 255.0).round(), (g * 255.0).round(), (b * 255.0).round())
+    (
+        (r * 255.0).round(),
+        (g * 255.0).round(),
+        (b * 255.0).round(),
+    )
 }
 
 fn hue_to_rgb(p: f32, q: f32, mut t: f32) -> f32 {
@@ -1185,7 +1196,11 @@ fn format_position_value(value: f64) -> String {
 }
 
 fn format_position_text(x: f64, y: f64) -> String {
-    format!("({}, {})", format_position_value(x), format_position_value(y))
+    format!(
+        "({}, {})",
+        format_position_value(x),
+        format_position_value(y)
+    )
 }
 
 fn load_svg_overlay(path: &Option<String>) -> (Image, bool) {

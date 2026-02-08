@@ -4,8 +4,7 @@ use slint::SharedString;
 
 use crate::{ShellHost, Translations};
 
-pub fn apply_translations(view: &ShellHost, locale: &str)
-{
+pub fn apply_translations(view: &ShellHost, locale: &str) {
     let translations = view.global::<Translations<'_>>();
 
     translations.set_settings_title(t(locale, "SettingsTitle"));
@@ -18,7 +17,8 @@ pub fn apply_translations(view: &ShellHost, locale: &str)
     translations.set_app_title(t(locale, "AppTitle"));
     translations.set_choreography_author_placeholder(t(locale, "ChoreographyAuthorPlaceholder"));
     translations.set_choreography_comment_placeholder(t(locale, "ChoreographyCommentPlaceholder"));
-    translations.set_choreography_description_placeholder(t(locale, "ChoreographyDescriptionPlaceholder"));
+    translations
+        .set_choreography_description_placeholder(t(locale, "ChoreographyDescriptionPlaceholder"));
     translations.set_choreography_display_title(t(locale, "ChoreographyDisplayTitle"));
     translations.set_choreography_draw_path_from_label(t(locale, "ChoreographyDrawPathFromLabel"));
     translations.set_choreography_draw_path_to_label(t(locale, "ChoreographyDrawPathToLabel"));
@@ -35,11 +35,14 @@ pub fn apply_translations(view: &ShellHost, locale: &str)
     translations.set_choreography_snap_to_grid_label(t(locale, "ChoreographySnapToGridLabel"));
     translations.set_choreography_grid_size_label(t(locale, "ChoreographyGridSizeLabel"));
     translations.set_choreography_name_placeholder(t(locale, "ChoreographyNamePlaceholder"));
-    translations.set_choreography_positions_at_side_label(t(locale, "ChoreographyPositionsAtSideLabel"));
+    translations
+        .set_choreography_positions_at_side_label(t(locale, "ChoreographyPositionsAtSideLabel"));
     translations.set_choreography_section_title(t(locale, "ChoreographySectionTitle"));
-    translations.set_choreography_show_timestamps_label(t(locale, "ChoreographyShowTimestampsLabel"));
+    translations
+        .set_choreography_show_timestamps_label(t(locale, "ChoreographyShowTimestampsLabel"));
     translations.set_choreography_show_legend_label(t(locale, "ChoreographyShowLegendLabel"));
-    translations.set_choreography_subtitle_placeholder(t(locale, "ChoreographySubtitlePlaceholder"));
+    translations
+        .set_choreography_subtitle_placeholder(t(locale, "ChoreographySubtitlePlaceholder"));
     translations.set_choreography_date_label(t(locale, "ChoreographyDateLabel"));
     translations.set_choreography_date_picker_title(t(locale, "ChoreographyDatePickerTitle"));
     translations.set_choreography_transparency_label(t(locale, "ChoreographyTransparencyLabel"));
@@ -49,10 +52,14 @@ pub fn apply_translations(view: &ShellHost, locale: &str)
     translations.set_delete_scene_dialog_yes(t(locale, "DeleteSceneDialogYes"));
     translations.set_delete_scene_dialog_no(t(locale, "DeleteSceneDialogNo"));
     translations.set_copy_scene_positions_dialog_title(t(locale, "CopyScenePositionsDialogTitle"));
-    translations.set_copy_scene_positions_dialog_message(t(locale, "CopyScenePositionsDialogMessage"));
-    translations.set_copy_scene_positions_dialog_confirm(t(locale, "CopyScenePositionsDialogConfirm"));
-    translations.set_copy_scene_positions_dialog_cancel(t(locale, "CopyScenePositionsDialogCancel"));
-    translations.set_choreography_variation_placeholder(t(locale, "ChoreographyVariationPlaceholder"));
+    translations
+        .set_copy_scene_positions_dialog_message(t(locale, "CopyScenePositionsDialogMessage"));
+    translations
+        .set_copy_scene_positions_dialog_confirm(t(locale, "CopyScenePositionsDialogConfirm"));
+    translations
+        .set_copy_scene_positions_dialog_cancel(t(locale, "CopyScenePositionsDialogCancel"));
+    translations
+        .set_choreography_variation_placeholder(t(locale, "ChoreographyVariationPlaceholder"));
     translations.set_scene_section_title(t(locale, "SceneSectionTitle"));
     translations.set_scene_name_label(t(locale, "SceneNameLabel"));
     translations.set_scene_text_label(t(locale, "SceneTextLabel"));
@@ -77,7 +84,8 @@ pub fn apply_translations(view: &ShellHost, locale: &str)
     translations.set_scenes_save(t(locale, "ScenesSave"));
     translations.set_scene_timestamp_minutes_label(t(locale, "SceneTimestampMinutesLabel"));
     translations.set_scene_timestamp_seconds_label(t(locale, "SceneTimestampSecondsLabel"));
-    translations.set_scene_timestamp_milliseconds_label(t(locale, "SceneTimestampMillisecondsLabel"));
+    translations
+        .set_scene_timestamp_milliseconds_label(t(locale, "SceneTimestampMillisecondsLabel"));
     translations.set_common_cancel(t(locale, "CommonCancel"));
     translations.set_common_ok(t(locale, "CommonOk"));
     translations.set_dancer_color_label(t(locale, "DancerColorLabel"));
@@ -118,9 +126,6 @@ pub fn apply_translations(view: &ShellHost, locale: &str)
     translations.set_color_yellow(t(locale, "ColorYellow"));
 }
 
-fn t(locale: &str, key: &str) -> SharedString
-{
-    translation_with_fallback(locale, key)
-        .unwrap_or(key)
-        .into()
+fn t(locale: &str, key: &str) -> SharedString {
+    translation_with_fallback(locale, key).unwrap_or(key).into()
 }

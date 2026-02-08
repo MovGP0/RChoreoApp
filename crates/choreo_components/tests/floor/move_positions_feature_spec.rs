@@ -1,9 +1,9 @@
 use crate::floor;
 
-use floor::Report;
 use choreo_components::floor::{Matrix, Point};
 use choreo_components::global::InteractionMode;
 use choreo_state_machine::{MovePositionsStartedTrigger, StateKind};
+use floor::Report;
 use std::time::Duration;
 
 fn setup_context() -> floor::FloorTestContext {
@@ -61,7 +61,8 @@ fn move_positions_feature_spec() {
             );
 
             let moved = context.wait_until(Duration::from_secs(1), || {
-                let scene = context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
+                let scene =
+                    context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
                 let first = &scene.positions[0];
                 let second = &scene.positions[1];
                 let third = &scene.positions[2];
@@ -82,8 +83,10 @@ fn move_positions_feature_spec() {
             drag_from_to(&context, Point::new(4.0, 4.0), Point::new(4.0, 4.0));
 
             let cleared = context.wait_until(Duration::from_secs(1), || {
-                let selected_count = context.read_global_state(|state| state.selected_positions.len());
-                let has_rectangle = context.read_global_state(|state| state.selection_rectangle.is_some());
+                let selected_count =
+                    context.read_global_state(|state| state.selected_positions.len());
+                let has_rectangle =
+                    context.read_global_state(|state| state.selection_rectangle.is_some());
                 selected_count == 0 && !has_rectangle
             });
             assert!(cleared);
@@ -102,8 +105,10 @@ fn move_positions_feature_spec() {
             );
 
             let moved = context.wait_until(Duration::from_secs(1), || {
-                let scene = context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
-                let selected_count = context.read_global_state(|state| state.selected_positions.len());
+                let scene =
+                    context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
+                let selected_count =
+                    context.read_global_state(|state| state.selected_positions.len());
                 let first = &scene.positions[0];
                 let second = &scene.positions[1];
                 let third = &scene.positions[2];
@@ -126,29 +131,45 @@ fn move_positions_feature_spec() {
             let selected_ok = context.wait_until(Duration::from_secs(1), || {
                 let selected = context.read_global_state(|state| state.selected_positions.clone());
                 selected.len() == 2
-                    && selected.iter().any(|position| (position.x + 1.0).abs() < 0.0001 && (position.y - 1.0).abs() < 0.0001)
-                    && selected.iter().any(|position| (position.x - 1.0).abs() < 0.0001 && (position.y - 1.0).abs() < 0.0001)
-                    && !selected.iter().any(|position| (position.x - 3.0).abs() < 0.0001 && (position.y + 2.0).abs() < 0.0001)
+                    && selected.iter().any(|position| {
+                        (position.x + 1.0).abs() < 0.0001 && (position.y - 1.0).abs() < 0.0001
+                    })
+                    && selected.iter().any(|position| {
+                        (position.x - 1.0).abs() < 0.0001 && (position.y - 1.0).abs() < 0.0001
+                    })
+                    && !selected.iter().any(|position| {
+                        (position.x - 3.0).abs() < 0.0001 && (position.y + 2.0).abs() < 0.0001
+                    })
             });
             assert!(selected_ok);
         });
 
-        spec.it("selects positions with mouse drag rectangle after translation", |_| {
-            let context = setup_context();
-            assert_eq!(context.state_kind(), StateKind::MovePositionsState);
-            context.set_transformation_matrix(Matrix::translation(10.0, -12.0));
+        spec.it(
+            "selects positions with mouse drag rectangle after translation",
+            |_| {
+                let context = setup_context();
+                assert_eq!(context.state_kind(), StateKind::MovePositionsState);
+                context.set_transformation_matrix(Matrix::translation(10.0, -12.0));
 
-            select_rectangle(&context, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
+                select_rectangle(&context, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
 
-            let selected_ok = context.wait_until(Duration::from_secs(1), || {
-                let selected = context.read_global_state(|state| state.selected_positions.clone());
-                selected.len() == 2
-                    && selected.iter().any(|position| (position.x + 1.0).abs() < 0.0001 && (position.y - 1.0).abs() < 0.0001)
-                    && selected.iter().any(|position| (position.x - 1.0).abs() < 0.0001 && (position.y - 1.0).abs() < 0.0001)
-                    && !selected.iter().any(|position| (position.x - 3.0).abs() < 0.0001 && (position.y + 2.0).abs() < 0.0001)
-            });
-            assert!(selected_ok);
-        });
+                let selected_ok = context.wait_until(Duration::from_secs(1), || {
+                    let selected =
+                        context.read_global_state(|state| state.selected_positions.clone());
+                    selected.len() == 2
+                        && selected.iter().any(|position| {
+                            (position.x + 1.0).abs() < 0.0001 && (position.y - 1.0).abs() < 0.0001
+                        })
+                        && selected.iter().any(|position| {
+                            (position.x - 1.0).abs() < 0.0001 && (position.y - 1.0).abs() < 0.0001
+                        })
+                        && !selected.iter().any(|position| {
+                            (position.x - 3.0).abs() < 0.0001 && (position.y + 2.0).abs() < 0.0001
+                        })
+                });
+                assert!(selected_ok);
+            },
+        );
     });
 
     let report = floor::run_suite(&suite);

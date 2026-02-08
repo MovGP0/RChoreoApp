@@ -12,8 +12,8 @@ use nject::injectable;
 
 use super::messages::ReloadSettingsCommand;
 use super::settings_view_model::{
-    default_primary_color, default_secondary_color, default_tertiary_color, SettingsViewModel,
-    ThemeMode,
+    SettingsViewModel, ThemeMode, default_primary_color, default_secondary_color,
+    default_tertiary_color,
 };
 use super::types::MaterialSchemeUpdater;
 
@@ -23,13 +23,18 @@ use super::types::MaterialSchemeUpdater;
         Self::new(preferences, updater, reload_receiver)
     }
 )]
-pub struct LoadSettingsPreferencesBehavior<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static> {
+pub struct LoadSettingsPreferencesBehavior<
+    P: Preferences + Clone + 'static,
+    U: MaterialSchemeUpdater + Clone + 'static,
+> {
     preferences: P,
     updater: U,
     reload_receiver: Receiver<ReloadSettingsCommand>,
 }
 
-impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static> LoadSettingsPreferencesBehavior<P, U> {
+impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static>
+    LoadSettingsPreferencesBehavior<P, U>
+{
     pub fn new(
         preferences: P,
         updater: U,
@@ -47,24 +52,30 @@ impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'stati
     }
 
     fn load_from(view_model: &mut SettingsViewModel, preferences: &P, updater: &U) {
-        let stored_theme = preferences
-            .get_string(choreo_models::SettingsPreferenceKeys::THEME, "Light");
+        let stored_theme =
+            preferences.get_string(choreo_models::SettingsPreferenceKeys::THEME, "Light");
         view_model.theme_mode = if stored_theme == "Dark" {
             ThemeMode::Dark
         } else {
             ThemeMode::Light
         };
 
-        view_model.use_system_theme = preferences
-            .get_bool(choreo_models::SettingsPreferenceKeys::USE_SYSTEM_THEME, true);
-        view_model.use_primary_color = preferences
-            .get_bool(choreo_models::SettingsPreferenceKeys::USE_PRIMARY_COLOR, false);
-        view_model.use_secondary_color = preferences
-            .get_bool(choreo_models::SettingsPreferenceKeys::USE_SECONDARY_COLOR, false)
-            && view_model.use_primary_color;
-        view_model.use_tertiary_color = preferences
-            .get_bool(choreo_models::SettingsPreferenceKeys::USE_TERTIARY_COLOR, false)
-            && view_model.use_secondary_color;
+        view_model.use_system_theme = preferences.get_bool(
+            choreo_models::SettingsPreferenceKeys::USE_SYSTEM_THEME,
+            true,
+        );
+        view_model.use_primary_color = preferences.get_bool(
+            choreo_models::SettingsPreferenceKeys::USE_PRIMARY_COLOR,
+            false,
+        );
+        view_model.use_secondary_color = preferences.get_bool(
+            choreo_models::SettingsPreferenceKeys::USE_SECONDARY_COLOR,
+            false,
+        ) && view_model.use_primary_color;
+        view_model.use_tertiary_color = preferences.get_bool(
+            choreo_models::SettingsPreferenceKeys::USE_TERTIARY_COLOR,
+            false,
+        ) && view_model.use_secondary_color;
 
         view_model.primary_color = Self::get_color_from_preferences(
             preferences,
@@ -97,14 +108,11 @@ impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'stati
     }
 }
 
-impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static> Behavior<SettingsViewModel>
-    for LoadSettingsPreferencesBehavior<P, U>
+impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static>
+    Behavior<SettingsViewModel> for LoadSettingsPreferencesBehavior<P, U>
 {
     fn activate(&self, view_model: &mut SettingsViewModel, disposables: &mut CompositeDisposable) {
-        BehaviorLog::behavior_activated(
-            "LoadSettingsPreferencesBehavior",
-            "SettingsViewModel",
-        );
+        BehaviorLog::behavior_activated("LoadSettingsPreferencesBehavior", "SettingsViewModel");
         self.load(view_model);
 
         let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())

@@ -3,49 +3,24 @@
 use choreo_components::behavior::Behavior;
 use choreo_components::choreography_settings::RedrawFloorCommand;
 use choreo_components::floor::{
-    CanvasViewHandle,
-    DrawFloorCommand,
-    FloorCanvasViewModel,
-    FloorPointerEventSenders,
-    GestureHandlingBehavior,
-    Matrix,
-    MovePositionsBehavior,
-    PlacePositionBehavior,
-    Point,
-    PointerButton,
-    PointerEventArgs,
-    PointerMovedCommand,
-    PointerPressedCommand,
-    PointerReleasedCommand,
-    PointerWheelChangedCommand,
-    Rect,
-    RedrawFloorBehavior,
-    RotateAroundCenterBehavior,
-    ScaleAroundDancerBehavior,
-    ScalePositionsBehavior,
-    Size,
-    TouchAction,
-    TouchCommand,
-    TouchDeviceType,
-    TouchEventArgs,
+    CanvasViewHandle, DrawFloorCommand, FloorCanvasViewModel, FloorPointerEventSenders,
+    GestureHandlingBehavior, Matrix, MovePositionsBehavior, PlacePositionBehavior, Point,
+    PointerButton, PointerEventArgs, PointerMovedCommand, PointerPressedCommand,
+    PointerReleasedCommand, PointerWheelChangedCommand, Rect, RedrawFloorBehavior,
+    RotateAroundCenterBehavior, ScaleAroundDancerBehavior, ScalePositionsBehavior, Size,
+    TouchAction, TouchCommand, TouchDeviceType, TouchEventArgs,
 };
 use choreo_components::global::{GlobalStateActor, GlobalStateModel};
 use choreo_components::scenes::SceneViewModel;
 use choreo_models::{
-    ChoreographyModel,
-    DancerModel,
-    FloorModel,
-    PositionModel,
-    RoleModel,
-    SceneModel,
-    SettingsModel,
+    ChoreographyModel, DancerModel, FloorModel, PositionModel, RoleModel, SceneModel, SettingsModel,
 };
 use choreo_state_machine::ApplicationStateMachine;
-use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
+use crossbeam_channel::{Receiver, Sender, bounded, unbounded};
 pub use rspec::report::Report;
 use rspec::{ConfigurationBuilder, Logger, Runner};
-use std::cell::RefCell;
 use std::cell::Cell;
+use std::cell::RefCell;
 use std::io;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -103,7 +78,9 @@ impl FloorTestContext {
 
         let global_state_store = GlobalStateActor::new();
         let state_machine = Rc::new(RefCell::new(
-            ApplicationStateMachine::with_default_transitions(Box::new(GlobalStateModel::default())),
+            ApplicationStateMachine::with_default_transitions(
+                Box::new(GlobalStateModel::default()),
+            ),
         ));
 
         let (draw_floor_sender, draw_floor_receiver) = unbounded();
@@ -258,7 +235,9 @@ impl FloorTestContext {
     }
 
     pub fn set_transformation_matrix(&self, matrix: Matrix) {
-        self.view_model.borrow_mut().set_transformation_matrix(matrix);
+        self.view_model
+            .borrow_mut()
+            .set_transformation_matrix(matrix);
     }
 
     pub fn update_global_state(&self, update: impl FnOnce(&mut GlobalStateModel)) {
@@ -277,7 +256,9 @@ impl FloorTestContext {
     }
 
     pub fn send_pointer_pressed(&self, point: Point) {
-        self.view_model.borrow().pointer_pressed(pointer_pressed(point));
+        self.view_model
+            .borrow()
+            .pointer_pressed(pointer_pressed(point));
         self.pump_events();
     }
 
@@ -287,7 +268,9 @@ impl FloorTestContext {
     }
 
     pub fn send_pointer_released(&self, point: Point) {
-        self.view_model.borrow().pointer_released(pointer_released(point));
+        self.view_model
+            .borrow()
+            .pointer_released(pointer_released(point));
         self.pump_events();
     }
 

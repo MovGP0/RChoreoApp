@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crossbeam_channel::{unbounded, Sender};
+use crossbeam_channel::{Sender, unbounded};
 
 use crate::behavior::Behavior;
 use crate::preferences::Preferences;
@@ -9,15 +9,9 @@ use crate::preferences::Preferences;
 use super::color_preferences_behavior::{ColorPreferencesBehavior, ColorPreferencesReceivers};
 use super::load_settings_preferences_behavior::LoadSettingsPreferencesBehavior;
 use super::messages::{
-    ReloadSettingsCommand,
-    SwitchThemeModeCommand,
-    UpdatePrimaryColorHexCommand,
-    UpdateSecondaryColorHexCommand,
-    UpdateTertiaryColorHexCommand,
-    UpdateUsePrimaryColorCommand,
-    UpdateUseSecondaryColorCommand,
-    UpdateUseSystemThemeCommand,
-    UpdateUseTertiaryColorCommand,
+    ReloadSettingsCommand, SwitchThemeModeCommand, UpdatePrimaryColorHexCommand,
+    UpdateSecondaryColorHexCommand, UpdateTertiaryColorHexCommand, UpdateUsePrimaryColorCommand,
+    UpdateUseSecondaryColorCommand, UpdateUseSystemThemeCommand, UpdateUseTertiaryColorCommand,
 };
 use super::settings_view_model::{SettingsViewModel, SettingsViewModelActions};
 use super::switch_dark_light_mode_behavior::SwitchDarkLightModeBehavior;
@@ -83,7 +77,8 @@ impl SettingsProvider {
         let update_use_system_theme_sender_for_action = update_use_system_theme_sender.clone();
         let switch_theme_mode_sender_for_action = switch_theme_mode_sender.clone();
         let update_use_primary_color_sender_for_action = update_use_primary_color_sender.clone();
-        let update_use_secondary_color_sender_for_action = update_use_secondary_color_sender.clone();
+        let update_use_secondary_color_sender_for_action =
+            update_use_secondary_color_sender.clone();
         let update_use_tertiary_color_sender_for_action = update_use_tertiary_color_sender.clone();
         let update_primary_color_hex_sender_for_action = update_primary_color_hex_sender.clone();
         let update_secondary_color_hex_sender_for_action =
@@ -94,44 +89,36 @@ impl SettingsProvider {
                 let _ = reload_sender_for_action.send(ReloadSettingsCommand);
             })),
             update_use_system_theme: Some(Rc::new(move |_view_model, enabled| {
-                let _ = update_use_system_theme_sender_for_action.send(
-                    UpdateUseSystemThemeCommand { enabled },
-                );
+                let _ = update_use_system_theme_sender_for_action
+                    .send(UpdateUseSystemThemeCommand { enabled });
             })),
             update_is_dark_mode: Some(Rc::new(move |_view_model, enabled| {
-                let _ = switch_theme_mode_sender_for_action.send(
-                    SwitchThemeModeCommand { is_dark: enabled },
-                );
+                let _ = switch_theme_mode_sender_for_action
+                    .send(SwitchThemeModeCommand { is_dark: enabled });
             })),
             update_use_primary_color: Some(Rc::new(move |_view_model, enabled| {
-                let _ = update_use_primary_color_sender_for_action.send(
-                    UpdateUsePrimaryColorCommand { enabled },
-                );
+                let _ = update_use_primary_color_sender_for_action
+                    .send(UpdateUsePrimaryColorCommand { enabled });
             })),
             update_use_secondary_color: Some(Rc::new(move |_view_model, enabled| {
-                let _ = update_use_secondary_color_sender_for_action.send(
-                    UpdateUseSecondaryColorCommand { enabled },
-                );
+                let _ = update_use_secondary_color_sender_for_action
+                    .send(UpdateUseSecondaryColorCommand { enabled });
             })),
             update_use_tertiary_color: Some(Rc::new(move |_view_model, enabled| {
-                let _ = update_use_tertiary_color_sender_for_action.send(
-                    UpdateUseTertiaryColorCommand { enabled },
-                );
+                let _ = update_use_tertiary_color_sender_for_action
+                    .send(UpdateUseTertiaryColorCommand { enabled });
             })),
             update_primary_color_hex: Some(Rc::new(move |_view_model, value| {
-                let _ = update_primary_color_hex_sender_for_action.send(
-                    UpdatePrimaryColorHexCommand { value },
-                );
+                let _ = update_primary_color_hex_sender_for_action
+                    .send(UpdatePrimaryColorHexCommand { value });
             })),
             update_secondary_color_hex: Some(Rc::new(move |_view_model, value| {
-                let _ = update_secondary_color_hex_sender_for_action.send(
-                    UpdateSecondaryColorHexCommand { value },
-                );
+                let _ = update_secondary_color_hex_sender_for_action
+                    .send(UpdateSecondaryColorHexCommand { value });
             })),
             update_tertiary_color_hex: Some(Rc::new(move |_view_model, value| {
-                let _ = update_tertiary_color_hex_sender_for_action.send(
-                    UpdateTertiaryColorHexCommand { value },
-                );
+                let _ = update_tertiary_color_hex_sender_for_action
+                    .send(UpdateTertiaryColorHexCommand { value });
             })),
         };
 

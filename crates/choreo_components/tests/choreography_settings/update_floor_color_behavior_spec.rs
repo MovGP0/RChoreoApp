@@ -5,8 +5,8 @@ use crate::choreography_settings;
 use choreo_components::behavior::Behavior;
 use choreo_components::choreography_settings::UpdateFloorColorBehavior;
 use choreo_components::choreography_settings::UpdateFloorColorCommand;
-use crossbeam_channel::unbounded;
 use choreography_settings::Report;
+use crossbeam_channel::unbounded;
 
 #[test]
 #[serial_test::serial]
@@ -14,7 +14,10 @@ fn update_floor_color_behavior_spec() {
     let suite = rspec::describe("update floor color behavior", (), |spec| {
         spec.it("updates floor color and sends redraw", |_| {
             let (redraw_sender, redraw_receiver) = unbounded();
-            let context = choreography_settings::ChoreographySettingsTestContext::with_redraw_receiver(redraw_receiver);
+            let context =
+                choreography_settings::ChoreographySettingsTestContext::with_redraw_receiver(
+                    redraw_receiver,
+                );
             let (sender, receiver) = unbounded::<UpdateFloorColorCommand>();
             let behavior = UpdateFloorColorBehavior::new_with_receiver(
                 context.global_state_store.clone(),

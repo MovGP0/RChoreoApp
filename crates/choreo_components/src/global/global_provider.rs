@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use choreo_state_machine::ApplicationStateMachine;
 
-use super::{GlobalStateModel, GlobalStateActor};
+use super::{GlobalStateActor, GlobalStateModel};
 
 pub struct GlobalProvider {
     global_state_store: Rc<GlobalStateActor>,
@@ -12,14 +12,13 @@ pub struct GlobalProvider {
 }
 
 impl GlobalProvider {
-    pub fn new() -> Self
-    {
+    pub fn new() -> Self {
         let global_state_store = GlobalStateActor::new();
         let global_state = global_state_store.state_handle();
         let state_machine = Rc::new(RefCell::new(
-            ApplicationStateMachine::with_default_transitions(Box::new(
-                GlobalStateModel::default(),
-            )),
+            ApplicationStateMachine::with_default_transitions(
+                Box::new(GlobalStateModel::default()),
+            ),
         ));
 
         Self {
@@ -29,8 +28,7 @@ impl GlobalProvider {
         }
     }
 
-    pub fn global_state_store(&self) -> Rc<GlobalStateActor>
-    {
+    pub fn global_state_store(&self) -> Rc<GlobalStateActor> {
         Rc::clone(&self.global_state_store)
     }
 
@@ -44,8 +42,7 @@ impl GlobalProvider {
 }
 
 impl Default for GlobalProvider {
-    fn default() -> Self
-    {
+    fn default() -> Self {
         Self::new()
     }
 }

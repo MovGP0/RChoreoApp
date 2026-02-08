@@ -81,5 +81,3 @@ impl Behavior<ChoreographySettingsViewModel> for UpdateFloorFrontBehavior {
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
-

@@ -1,27 +1,25 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crossbeam_channel::Sender;
 use choreo_state_machine::ApplicationStateMachine;
+use crossbeam_channel::Sender;
 
 use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::audio_player::{CloseAudioFileCommand, OpenAudioFileCommand};
 use crate::behavior::Behavior;
 use crate::choreography_settings::RedrawFloorCommand;
 use crate::choreography_settings::ShowTimestampsChangedEvent;
-use crate::global::{GlobalStateModel, GlobalStateActor};
+use crate::global::{GlobalStateActor, GlobalStateModel};
 
+use super::OpenChoreoRequested;
 use super::apply_placement_mode_behavior::ApplyPlacementModeBehavior;
 use super::filter_scenes_behavior::FilterScenesBehavior;
 use super::insert_scene_behavior::InsertSceneBehavior;
 use super::load_scenes_behavior::LoadScenesBehavior;
 use super::messages::{CloseDialogCommand, ShowDialogCommand};
 use super::open_choreo_behavior::{
-    OpenChoreoActions,
-    OpenChoreoBehavior,
-    OpenChoreoBehaviorDependencies,
+    OpenChoreoActions, OpenChoreoBehavior, OpenChoreoBehaviorDependencies,
 };
-use super::OpenChoreoRequested;
 use super::save_choreo_behavior::SaveChoreoBehavior;
 use super::scenes_view_model::ScenesPaneViewModel;
 use super::select_scene_behavior::SelectSceneBehavior;
@@ -51,8 +49,7 @@ pub struct ScenesProvider {
 }
 
 impl ScenesProvider {
-    pub fn new(deps: ScenesDependencies) -> Self
-    {
+    pub fn new(deps: ScenesDependencies) -> Self {
         let (select_scene_sender, select_scene_receiver) = crossbeam_channel::unbounded();
         let (selected_scene_changed_sender, selected_scene_changed_receiver) =
             crossbeam_channel::unbounded();

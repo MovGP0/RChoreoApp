@@ -1,14 +1,14 @@
 use std::rc::Rc;
 use std::time::Duration;
 
-use crossbeam_channel::Receiver;
 use crate::global::GlobalStateActor;
+use crossbeam_channel::Receiver;
 use nject::injectable;
 use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
-use crate::logging::BehaviorLog;
 use crate::choreography_settings::ShowTimestampsChangedEvent;
+use crate::logging::BehaviorLog;
 
 use super::scenes_view_model::ScenesPaneViewModel;
 
@@ -29,13 +29,17 @@ impl ShowSceneTimestampsBehavior {
         global_state: Rc<GlobalStateActor>,
         receiver: Receiver<ShowTimestampsChangedEvent>,
     ) -> Self {
-        Self { global_state, receiver }
+        Self {
+            global_state,
+            receiver,
+        }
     }
 
     fn update_from_choreography(&self, view_model: &mut ScenesPaneViewModel) {
-        let Some(value) = self.global_state.try_with_state(|global_state| {
-            global_state.choreography.settings.show_timestamps
-        }) else {
+        let Some(value) = self
+            .global_state
+            .try_with_state(|global_state| global_state.choreography.settings.show_timestamps)
+        else {
             return;
         };
         view_model.show_timestamps = value;
@@ -43,7 +47,11 @@ impl ShowSceneTimestampsBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for ShowSceneTimestampsBehavior {
-    fn activate(&self, view_model: &mut ScenesPaneViewModel, disposables: &mut CompositeDisposable) {
+    fn activate(
+        &self,
+        view_model: &mut ScenesPaneViewModel,
+        disposables: &mut CompositeDisposable,
+    ) {
         BehaviorLog::behavior_activated("ShowSceneTimestampsBehavior", "ScenesPaneViewModel");
         self.update_from_choreography(view_model);
         let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())

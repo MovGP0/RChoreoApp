@@ -1,6 +1,7 @@
 mod add_dancer_behavior;
 mod cancel_dancer_settings_behavior;
 mod dancer_settings_view_model;
+mod dancers_provider;
 mod delete_dancer_behavior;
 mod hide_dancer_dialog_behavior;
 mod load_dancer_settings_behavior;
@@ -13,14 +14,13 @@ mod selected_role_behavior;
 mod show_dancer_dialog_behavior;
 mod swap_dancer_selection_behavior;
 mod swap_dancers_behavior;
-mod dancers_provider;
 
 pub use add_dancer_behavior::AddDancerBehavior;
 pub use cancel_dancer_settings_behavior::CancelDancerSettingsBehavior;
 pub use dancer_settings_view_model::{
-    DancerSettingsViewModel, IconNameToImageSourceConverter, IconOption,
-    SwapDancersDialogViewModel,
+    DancerSettingsViewModel, IconNameToImageSourceConverter, IconOption, SwapDancersDialogViewModel,
 };
+pub use dancers_provider::{DancersProvider, DancersProviderDependencies};
 pub use delete_dancer_behavior::DeleteDancerBehavior;
 pub use hide_dancer_dialog_behavior::HideDancerDialogBehavior;
 pub use load_dancer_settings_behavior::LoadDancerSettingsBehavior;
@@ -32,4 +32,3 @@ pub use selected_role_behavior::SelectedRoleBehavior;
 pub use show_dancer_dialog_behavior::ShowDancerDialogBehavior;
 pub use swap_dancer_selection_behavior::SwapDancerSelectionBehavior;
 pub use swap_dancers_behavior::SwapDancersBehavior;
-pub use dancers_provider::{DancersProvider, DancersProviderDependencies};

@@ -18,7 +18,7 @@ fn close_audio_file_behavior_spec() {
             let (sender, receiver) = unbounded::<CloseAudioFileCommand>();
             let behavior = CloseAudioFileBehavior::new(receiver);
             let context = audio_player::AudioPlayerTestContext::new(vec![
-                Box::new(behavior) as Box<dyn Behavior<_>>,
+                Box::new(behavior) as Box<dyn Behavior<_>>
             ]);
 
             let player_state = Rc::new(RefCell::new(audio_player::TestAudioPlayerState {
@@ -37,10 +37,14 @@ fn close_audio_file_behavior_spec() {
                 vm.is_playing = true;
                 vm.can_seek = true;
                 vm.can_set_speed = true;
-                vm.stream_factory = Some(Box::new(|| Ok(Box::new(std::io::Cursor::new(vec![1, 2, 3])))));
+                vm.stream_factory = Some(Box::new(|| {
+                    Ok(Box::new(std::io::Cursor::new(vec![1, 2, 3])))
+                }));
             }
 
-            sender.send(CloseAudioFileCommand).expect("send should succeed");
+            sender
+                .send(CloseAudioFileCommand)
+                .expect("send should succeed");
 
             let reset = context.wait_until(Duration::from_secs(1), || {
                 let vm = context.view_model.borrow();

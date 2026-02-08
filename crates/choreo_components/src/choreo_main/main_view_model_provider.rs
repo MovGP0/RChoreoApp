@@ -1,24 +1,19 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crossbeam_channel::{bounded, unbounded, Sender};
+use crossbeam_channel::{Sender, bounded, unbounded};
 
 use choreo_state_machine::ApplicationStateMachine;
 
 use crate::audio_player::OpenAudioFileCommand;
 use crate::behavior::Behavior;
-use crate::global::{GlobalStateModel, GlobalStateActor, InteractionMode};
+use crate::global::{GlobalStateActor, GlobalStateModel, InteractionMode};
 use crate::preferences::Preferences;
 
 use super::messages::{OpenAudioRequested, OpenImageRequested};
 use super::{
-    ApplyInteractionModeBehavior,
-    HideDialogBehavior,
-    MainViewModel,
-    OpenAudioBehavior,
-    OpenImageBehavior,
-    OpenSvgFileBehavior,
-    ShowDialogBehavior,
+    ApplyInteractionModeBehavior, HideDialogBehavior, MainViewModel, OpenAudioBehavior,
+    OpenImageBehavior, OpenSvgFileBehavior, ShowDialogBehavior,
 };
 
 pub struct MainViewModelProviderDependencies {
@@ -40,8 +35,7 @@ pub struct MainViewModelProvider {
 }
 
 impl MainViewModelProvider {
-    pub fn new(deps: MainViewModelProviderDependencies) -> Self
-    {
+    pub fn new(deps: MainViewModelProviderDependencies) -> Self {
         const MAIN_EVENT_BUFFER: usize = 64;
         let (interaction_mode_sender, interaction_mode_receiver) = bounded(MAIN_EVENT_BUFFER);
         let (open_audio_request_sender, open_audio_request_receiver) = bounded(MAIN_EVENT_BUFFER);

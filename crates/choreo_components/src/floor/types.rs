@@ -172,7 +172,6 @@ impl Default for Matrix {
     }
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CanvasViewHandle;
 
@@ -243,4 +242,3 @@ impl FloorRenderGate for FloorRenderGateImpl {
         }
     }
 }
-

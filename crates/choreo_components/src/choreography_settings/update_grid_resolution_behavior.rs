@@ -81,5 +81,3 @@ impl Behavior<ChoreographySettingsViewModel> for UpdateGridResolutionBehavior {
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
-

@@ -16,5 +16,4 @@ pub trait AudioPlayer {
     fn set_loop(&mut self, loop_enabled: bool);
 }
 
-pub type StreamFactory =
-    Box<dyn Fn() -> io::Result<Box<dyn io::Read + Send>> + Send + Sync>;
+pub type StreamFactory = Box<dyn Fn() -> io::Result<Box<dyn io::Read + Send>> + Send + Sync>;

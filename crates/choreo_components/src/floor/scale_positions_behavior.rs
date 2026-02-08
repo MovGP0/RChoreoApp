@@ -2,25 +2,23 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crossbeam_channel::Receiver;
-use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
-use crate::global::{GlobalStateModel, GlobalStateActor, InteractionMode, SelectionRectangle};
+use crate::behavior::{Behavior, CompositeDisposable};
+use crate::global::{GlobalStateActor, GlobalStateModel, InteractionMode, SelectionRectangle};
 use crate::logging::BehaviorLog;
 use choreo_models::PositionModel;
 use choreo_state_machine::{
-    ApplicationStateMachine,
-    ScalePositionsDragCompletedTrigger,
-    ScalePositionsDragStartedTrigger,
-    ScalePositionsSelectionCompletedTrigger,
-    ScalePositionsSelectionStartedTrigger,
-    StateKind,
+    ApplicationStateMachine, ScalePositionsDragCompletedTrigger, ScalePositionsDragStartedTrigger,
+    ScalePositionsSelectionCompletedTrigger, ScalePositionsSelectionStartedTrigger, StateKind,
 };
+use crossbeam_channel::Receiver;
 use nject::injectable;
 use slint::TimerMode;
 
 use super::floor_view_model::FloorCanvasViewModel;
-use super::messages::{PointerButton, PointerMovedCommand, PointerPressedCommand, PointerReleasedCommand};
+use super::messages::{
+    PointerButton, PointerMovedCommand, PointerPressedCommand, PointerReleasedCommand,
+};
 use super::types::Point;
 
 #[derive(Default, Clone)]
@@ -64,8 +62,7 @@ impl ScalePositionsBehavior {
         pointer_pressed_receiver: Receiver<PointerPressedCommand>,
         pointer_moved_receiver: Receiver<PointerMovedCommand>,
         pointer_released_receiver: Receiver<PointerReleasedCommand>,
-    ) -> Self
-    {
+    ) -> Self {
         Self {
             global_state: Some(global_state),
             state_machine: Some(state_machine),
@@ -288,10 +285,12 @@ impl ScalePositionsBehavior {
     }
 
     fn update_selection(&mut self, global_state: &mut GlobalStateModel, floor_point: Point) {
-        let rectangle = global_state.selection_rectangle.unwrap_or(SelectionRectangle {
-            start: floor_point,
-            end: floor_point,
-        });
+        let rectangle = global_state
+            .selection_rectangle
+            .unwrap_or(SelectionRectangle {
+                start: floor_point,
+                end: floor_point,
+            });
         let updated = SelectionRectangle {
             start: rectangle.start,
             end: floor_point,
@@ -412,7 +411,10 @@ impl ScalePositionsBehavior {
     ) -> Vec<usize> {
         let mut indices = Vec::new();
         for (index, position) in scene.positions.iter().enumerate() {
-            if selected_positions.iter().any(|selected| selected == position) {
+            if selected_positions
+                .iter()
+                .any(|selected| selected == position)
+            {
                 indices.push(index);
             }
         }

@@ -5,8 +5,8 @@ use crate::choreography_settings;
 use choreo_components::behavior::Behavior;
 use choreo_components::choreography_settings::UpdateGridLinesBehavior;
 use choreo_components::choreography_settings::UpdateGridLinesCommand;
-use crossbeam_channel::unbounded;
 use choreography_settings::Report;
+use crossbeam_channel::unbounded;
 
 #[test]
 #[serial_test::serial]
@@ -14,7 +14,10 @@ fn update_grid_lines_behavior_spec() {
     let suite = rspec::describe("update grid lines behavior", (), |spec| {
         spec.it("updates grid lines and sends redraw", |_| {
             let (redraw_sender, redraw_receiver) = unbounded();
-            let context = choreography_settings::ChoreographySettingsTestContext::with_redraw_receiver(redraw_receiver);
+            let context =
+                choreography_settings::ChoreographySettingsTestContext::with_redraw_receiver(
+                    redraw_receiver,
+                );
             let (sender, receiver) = unbounded::<UpdateGridLinesCommand>();
             let behavior = UpdateGridLinesBehavior::new_with_receiver(
                 context.global_state_store.clone(),

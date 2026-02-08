@@ -10,12 +10,8 @@ use crate::preferences::Preferences;
 use nject::injectable;
 
 use super::messages::{
-    UpdatePrimaryColorHexCommand,
-    UpdateSecondaryColorHexCommand,
-    UpdateTertiaryColorHexCommand,
-    UpdateUsePrimaryColorCommand,
-    UpdateUseSecondaryColorCommand,
-    UpdateUseTertiaryColorCommand,
+    UpdatePrimaryColorHexCommand, UpdateSecondaryColorHexCommand, UpdateTertiaryColorHexCommand,
+    UpdateUsePrimaryColorCommand, UpdateUseSecondaryColorCommand, UpdateUseTertiaryColorCommand,
 };
 use super::settings_view_model::SettingsViewModel;
 use super::types::MaterialSchemeUpdater;
@@ -57,7 +53,10 @@ impl ColorPreferencesReceivers {
         Self::new(preferences, updater, receivers)
     }
 )]
-pub struct ColorPreferencesBehavior<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static> {
+pub struct ColorPreferencesBehavior<
+    P: Preferences + Clone + 'static,
+    U: MaterialSchemeUpdater + Clone + 'static,
+> {
     preferences: P,
     updater: U,
     update_use_primary_color_receiver: Receiver<UpdateUsePrimaryColorCommand>,
@@ -68,12 +67,10 @@ pub struct ColorPreferencesBehavior<P: Preferences + Clone + 'static, U: Materia
     update_tertiary_color_hex_receiver: Receiver<UpdateTertiaryColorHexCommand>,
 }
 
-impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static> ColorPreferencesBehavior<P, U> {
-    pub(super) fn new(
-        preferences: P,
-        updater: U,
-        receivers: ColorPreferencesReceivers,
-    ) -> Self {
+impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static>
+    ColorPreferencesBehavior<P, U>
+{
+    pub(super) fn new(preferences: P, updater: U, receivers: ColorPreferencesReceivers) -> Self {
         Self {
             preferences,
             updater,
@@ -99,8 +96,7 @@ impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'stati
         );
 
         if !enabled {
-            preferences
-                .remove(choreo_models::SettingsPreferenceKeys::PRIMARY_COLOR);
+            preferences.remove(choreo_models::SettingsPreferenceKeys::PRIMARY_COLOR);
             view_model.use_secondary_color = false;
             view_model.use_tertiary_color = false;
         }
@@ -126,8 +122,7 @@ impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'stati
         );
 
         if !enabled {
-            preferences
-                .remove(choreo_models::SettingsPreferenceKeys::SECONDARY_COLOR);
+            preferences.remove(choreo_models::SettingsPreferenceKeys::SECONDARY_COLOR);
             view_model.use_tertiary_color = false;
         }
 
@@ -152,8 +147,7 @@ impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'stati
         );
 
         if !enabled {
-            preferences
-                .remove(choreo_models::SettingsPreferenceKeys::TERTIARY_COLOR);
+            preferences.remove(choreo_models::SettingsPreferenceKeys::TERTIARY_COLOR);
         }
 
         updater.update(view_model, preferences);
@@ -171,10 +165,7 @@ impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'stati
         let hex = color.to_hex();
         view_model.primary_color = color;
         if view_model.use_primary_color {
-            preferences.set_string(
-                choreo_models::SettingsPreferenceKeys::PRIMARY_COLOR,
-                hex,
-            );
+            preferences.set_string(choreo_models::SettingsPreferenceKeys::PRIMARY_COLOR, hex);
             updater.update(view_model, preferences);
         }
     }
@@ -191,10 +182,7 @@ impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'stati
         let hex = color.to_hex();
         view_model.secondary_color = color;
         if view_model.use_secondary_color {
-            preferences.set_string(
-                choreo_models::SettingsPreferenceKeys::SECONDARY_COLOR,
-                hex,
-            );
+            preferences.set_string(choreo_models::SettingsPreferenceKeys::SECONDARY_COLOR, hex);
             updater.update(view_model, preferences);
         }
     }
@@ -211,17 +199,14 @@ impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'stati
         let hex = color.to_hex();
         view_model.tertiary_color = color;
         if view_model.use_tertiary_color {
-            preferences.set_string(
-                choreo_models::SettingsPreferenceKeys::TERTIARY_COLOR,
-                hex,
-            );
+            preferences.set_string(choreo_models::SettingsPreferenceKeys::TERTIARY_COLOR, hex);
             updater.update(view_model, preferences);
         }
     }
 }
 
-impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static> Behavior<SettingsViewModel>
-    for ColorPreferencesBehavior<P, U>
+impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static>
+    Behavior<SettingsViewModel> for ColorPreferencesBehavior<P, U>
 {
     fn activate(&self, view_model: &mut SettingsViewModel, disposables: &mut CompositeDisposable) {
         BehaviorLog::behavior_activated("ColorPreferencesBehavior", "SettingsViewModel");

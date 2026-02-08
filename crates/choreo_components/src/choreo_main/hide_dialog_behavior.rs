@@ -4,12 +4,12 @@ use crossbeam_channel::Receiver;
 use nject::injectable;
 use slint::TimerMode;
 
-use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
 
-use super::messages::CloseDialogCommand;
 use super::main_view_model::MainViewModel;
+use super::messages::CloseDialogCommand;
 
 #[injectable]
 #[inject(|receiver: Receiver<CloseDialogCommand>| Self { receiver })]

@@ -6,8 +6,8 @@ use crossbeam_channel::Receiver;
 use nject::injectable;
 use slint::TimerMode;
 
-use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
 
 use super::floor_view_model::FloorCanvasViewModel;
@@ -32,8 +32,7 @@ impl DrawFloorBehavior {
     pub fn new(
         receiver: Receiver<DrawFloorCommand>,
         render_gate: Option<Rc<dyn FloorRenderGate>>,
-    ) -> Self
-    {
+    ) -> Self {
         Self {
             receiver,
             render_gate,

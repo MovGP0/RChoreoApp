@@ -53,7 +53,9 @@ impl<P: Preferences + Clone> UpdateDrawPathToBehavior<P> {
     }
 }
 
-impl<P: Preferences + Clone + 'static> Behavior<ChoreographySettingsViewModel> for UpdateDrawPathToBehavior<P> {
+impl<P: Preferences + Clone + 'static> Behavior<ChoreographySettingsViewModel>
+    for UpdateDrawPathToBehavior<P>
+{
     fn activate(
         &self,
         view_model: &mut ChoreographySettingsViewModel,
@@ -87,5 +89,3 @@ impl<P: Preferences + Clone + 'static> Behavior<ChoreographySettingsViewModel> f
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
-

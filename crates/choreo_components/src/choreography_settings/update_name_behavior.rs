@@ -78,5 +78,3 @@ impl Behavior<ChoreographySettingsViewModel> for UpdateNameBehavior {
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
-

@@ -1,8 +1,8 @@
 use crate::floor;
 
-use floor::Report;
 use choreo_components::floor::Point;
 use choreo_state_machine::PlacePositionsStartedTrigger;
+use floor::Report;
 use std::time::Duration;
 
 #[test]
@@ -32,14 +32,21 @@ fn place_position_behavior_spec() {
             context.send_pointer_released(view_point);
 
             let added = context.wait_until(Duration::from_secs(1), || {
-                let scene_count = context
-                    .read_global_state(|state| state.selected_scene.as_ref().map(|scene| scene.positions.len()).unwrap_or(0));
-                let choreography_count = context.read_global_state(|state| state.choreography.scenes[0].positions.len());
+                let scene_count = context.read_global_state(|state| {
+                    state
+                        .selected_scene
+                        .as_ref()
+                        .map(|scene| scene.positions.len())
+                        .unwrap_or(0)
+                });
+                let choreography_count =
+                    context.read_global_state(|state| state.choreography.scenes[0].positions.len());
                 scene_count == 1 && choreography_count == 1
             });
             assert!(added);
 
-            let scene = context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
+            let scene =
+                context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
             let position = &scene.positions[0];
             floor::assert_close(position.x, 1.0, 0.0001);
             floor::assert_close(position.y, 1.0, 0.0001);
@@ -89,14 +96,21 @@ fn place_position_behavior_spec() {
             context.send_pointer_released(view_point);
 
             let added = context.wait_until(Duration::from_secs(1), || {
-                let scene_count = context
-                    .read_global_state(|state| state.selected_scene.as_ref().map(|scene| scene.positions.len()).unwrap_or(0));
-                let choreography_count = context.read_global_state(|state| state.choreography.scenes[0].positions.len());
+                let scene_count = context.read_global_state(|state| {
+                    state
+                        .selected_scene
+                        .as_ref()
+                        .map(|scene| scene.positions.len())
+                        .unwrap_or(0)
+                });
+                let choreography_count =
+                    context.read_global_state(|state| state.choreography.scenes[0].positions.len());
                 scene_count == 1 && choreography_count == 1
             });
             assert!(added);
 
-            let scene = context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
+            let scene =
+                context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
             let position = &scene.positions[0];
             floor::assert_close(position.x, 0.0, 0.0001);
             floor::assert_close(position.y, 0.0, 0.0001);

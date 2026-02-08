@@ -6,7 +6,12 @@ use std::path::Path;
 use crate::clock::SystemClock;
 use crate::errors::ChoreoJsonError;
 use crate::models::{
-    Choreography, Dancer, DancerId, Position, Role, Scene,
+    Choreography,
+    Dancer,
+    DancerId,
+    Position,
+    Role,
+    Scene
 };
 use crate::serialization::helpers::ref_map;
 
@@ -39,7 +44,10 @@ fn to_value(choreography: &Choreography) -> Result<Value, ChoreoJsonError> {
     }
 
     root.insert("Settings".to_string(), settings);
-    root.insert("Floor".to_string(), serde_json::to_value(&choreography.floor)?);
+    root.insert(
+        "Floor".to_string(),
+        serde_json::to_value(&choreography.floor)?,
+    );
 
     let roles_value = export_roles(&choreography.roles)?;
     let (dancers_value, dancer_ids) = export_dancers(&choreography.dancers, &choreography.roles)?;
@@ -63,7 +71,10 @@ fn to_value(choreography: &Choreography) -> Result<Value, ChoreoJsonError> {
         root.insert("Author".to_string(), Value::String(author.clone()));
     }
     if let Some(description) = &choreography.description {
-        root.insert("Description".to_string(), Value::String(description.clone()));
+        root.insert(
+            "Description".to_string(),
+            Value::String(description.clone()),
+        );
     }
 
     let timestamp = choreography
@@ -113,12 +124,12 @@ fn export_dancers(
 
         let mut map = Map::new();
         map.insert("$id".to_string(), Value::String(id.to_string()));
-        map.insert(
-            "Role".to_string(),
-            Value::Object(ref_map("$ref", &role_id)),
-        );
+        map.insert("Role".to_string(), Value::Object(ref_map("$ref", &role_id)));
         map.insert("Name".to_string(), Value::String(dancer.name.clone()));
-        map.insert("Shortcut".to_string(), Value::String(dancer.shortcut.clone()));
+        map.insert(
+            "Shortcut".to_string(),
+            Value::String(dancer.shortcut.clone()),
+        );
         map.insert("Color".to_string(), Value::String(dancer.color.to_hex()));
         if let Some(icon) = &dancer.icon {
             map.insert("Icon".to_string(), Value::String(icon.clone()));
@@ -161,22 +172,37 @@ fn export_scene(
     let mut map = Map::new();
     map.insert("$id".to_string(), Value::String(id.to_string()));
     if let Some(positions) = &scene.positions {
-        map.insert("Positions".to_string(), export_positions(positions, dancer_ids)?);
+        map.insert(
+            "Positions".to_string(),
+            export_positions(positions, dancer_ids)?,
+        );
     }
     map.insert("Name".to_string(), Value::String(scene.name.clone()));
     if let Some(text) = &scene.text {
         map.insert("Text".to_string(), Value::String(text.clone()));
     }
-    map.insert("FixedPositions".to_string(), Value::Bool(scene.fixed_positions));
+    map.insert(
+        "FixedPositions".to_string(),
+        Value::Bool(scene.fixed_positions),
+    );
     if let Some(timestamp) = &scene.timestamp {
         map.insert("Timestamp".to_string(), Value::String(timestamp.clone()));
     }
-    map.insert("VariationDepth".to_string(), Value::Number(scene.variation_depth.into()));
+    map.insert(
+        "VariationDepth".to_string(),
+        Value::Number(scene.variation_depth.into()),
+    );
     if let Some(variations) = &scene.variations {
-        map.insert("Variations".to_string(), export_scene_variations(variations, dancer_ids)?);
+        map.insert(
+            "Variations".to_string(),
+            export_scene_variations(variations, dancer_ids)?,
+        );
     }
     if let Some(current) = &scene.current_variation {
-        map.insert("CurrentVariation".to_string(), export_scene_list(current, dancer_ids)?);
+        map.insert(
+            "CurrentVariation".to_string(),
+            export_scene_list(current, dancer_ids)?,
+        );
     }
     map.insert("Color".to_string(), Value::String(scene.color.to_hex()));
 

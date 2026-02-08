@@ -1,6 +1,6 @@
 use crate::floor;
-use floor::Report;
 use choreo_components::floor::Point;
+use floor::Report;
 use std::time::Duration;
 
 #[test]
@@ -49,12 +49,42 @@ fn gesture_handling_behavior_spec() {
             let context = floor::FloorTestContext::new();
             context.configure_canvas();
 
-            context.send_touch(1, choreo_components::floor::TouchAction::Pressed, Point::new(40.0, 50.0), true);
-            context.send_touch(2, choreo_components::floor::TouchAction::Pressed, Point::new(60.0, 50.0), true);
-            context.send_touch(1, choreo_components::floor::TouchAction::Moved, Point::new(30.0, 50.0), true);
-            context.send_touch(2, choreo_components::floor::TouchAction::Moved, Point::new(70.0, 50.0), true);
-            context.send_touch(1, choreo_components::floor::TouchAction::Released, Point::new(30.0, 50.0), false);
-            context.send_touch(2, choreo_components::floor::TouchAction::Released, Point::new(70.0, 50.0), false);
+            context.send_touch(
+                1,
+                choreo_components::floor::TouchAction::Pressed,
+                Point::new(40.0, 50.0),
+                true,
+            );
+            context.send_touch(
+                2,
+                choreo_components::floor::TouchAction::Pressed,
+                Point::new(60.0, 50.0),
+                true,
+            );
+            context.send_touch(
+                1,
+                choreo_components::floor::TouchAction::Moved,
+                Point::new(30.0, 50.0),
+                true,
+            );
+            context.send_touch(
+                2,
+                choreo_components::floor::TouchAction::Moved,
+                Point::new(70.0, 50.0),
+                true,
+            );
+            context.send_touch(
+                1,
+                choreo_components::floor::TouchAction::Released,
+                Point::new(30.0, 50.0),
+                false,
+            );
+            context.send_touch(
+                2,
+                choreo_components::floor::TouchAction::Released,
+                Point::new(70.0, 50.0),
+                false,
+            );
 
             let zoomed = context.wait_until(Duration::from_secs(1), || {
                 context.view_model.borrow().transformation_matrix.scale_x() > 1.0

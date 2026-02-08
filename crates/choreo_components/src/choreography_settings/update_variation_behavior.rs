@@ -8,8 +8,8 @@ use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
-use super::mapper::normalize_text;
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
+use super::mapper::normalize_text;
 use super::messages::{RedrawFloorCommand, UpdateVariationCommand};
 use nject::injectable;
 
@@ -61,10 +61,7 @@ impl Behavior<ChoreographySettingsViewModel> for UpdateVariationBehavior {
         _view_model: &mut ChoreographySettingsViewModel,
         disposables: &mut CompositeDisposable,
     ) {
-        BehaviorLog::behavior_activated(
-            "UpdateVariationBehavior",
-            "ChoreographySettingsViewModel",
-        );
+        BehaviorLog::behavior_activated("UpdateVariationBehavior", "ChoreographySettingsViewModel");
         let Some(receiver) = self.receiver.clone() else {
             return;
         };

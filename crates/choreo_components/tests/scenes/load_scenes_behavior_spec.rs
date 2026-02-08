@@ -15,8 +15,14 @@ fn load_scenes_behavior_spec() {
         spec.it("loads scenes on activation and selects first scene", |_| {
             let context = scenes::ScenesTestContext::new();
 
-            let first_model = scenes::build_scene_model(1, "Intro", Some("00:05"), vec![scenes::build_position(0.0, 0.0)]);
-            let second_model = scenes::build_scene_model(2, "Verse", None, vec![scenes::build_position(1.0, 1.0)]);
+            let first_model = scenes::build_scene_model(
+                1,
+                "Intro",
+                Some("00:05"),
+                vec![scenes::build_position(0.0, 0.0)],
+            );
+            let second_model =
+                scenes::build_scene_model(2, "Verse", None, vec![scenes::build_position(1.0, 1.0)]);
             context.update_global_state(|state| {
                 state.choreography.scenes = vec![first_model.clone(), second_model];
             });
@@ -31,14 +37,30 @@ fn load_scenes_behavior_spec() {
             context.activate_behaviors(vec![Box::new(behavior) as Box<dyn Behavior<_>>]);
 
             let loaded = context.wait_until(Duration::from_secs(1), || {
-                context.read_global_state(|state| state.scenes.len() == 2 && state.selected_scene.as_ref().map(|scene| scene.scene_id) == Some(first_model.scene_id))
+                context.read_global_state(|state| {
+                    state.scenes.len() == 2
+                        && state.selected_scene.as_ref().map(|scene| scene.scene_id)
+                            == Some(first_model.scene_id)
+                })
             });
             assert!(loaded);
 
-            let selected_event = selected_scene_changed_receiver.try_recv().expect("selected scene changed event should be emitted");
-            assert_eq!(selected_event.selected_scene.as_ref().map(|scene| scene.scene_id), Some(first_model.scene_id));
+            let selected_event = selected_scene_changed_receiver
+                .try_recv()
+                .expect("selected scene changed event should be emitted");
+            assert_eq!(
+                selected_event
+                    .selected_scene
+                    .as_ref()
+                    .map(|scene| scene.scene_id),
+                Some(first_model.scene_id)
+            );
 
-            let selected_vm = context.view_model.borrow().selected_scene().expect("view model selected scene should be set");
+            let selected_vm = context
+                .view_model
+                .borrow()
+                .selected_scene()
+                .expect("view model selected scene should be set");
             assert_eq!(selected_vm.scene_id, first_model.scene_id);
             assert_eq!(selected_vm.name, "Intro");
             assert_eq!(selected_vm.timestamp, Some(5.0));

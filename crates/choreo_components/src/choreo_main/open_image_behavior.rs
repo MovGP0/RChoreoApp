@@ -4,8 +4,8 @@ use crossbeam_channel::{Receiver, Sender};
 use nject::injectable;
 use slint::TimerMode;
 
-use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
 
 use super::main_view_model::MainViewModel;
@@ -24,11 +24,7 @@ pub struct OpenImageBehavior {
 }
 
 impl OpenImageBehavior {
-    pub fn new(
-        sender: Sender<OpenSvgFileCommand>,
-        receiver: Receiver<OpenImageRequested>,
-    ) -> Self
-    {
+    pub fn new(sender: Sender<OpenSvgFileCommand>, receiver: Receiver<OpenImageRequested>) -> Self {
         Self { sender, receiver }
     }
 

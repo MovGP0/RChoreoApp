@@ -9,8 +9,8 @@ use slint::TimerMode;
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::logging::BehaviorLog;
 
-use super::mapper::{default_role, ensure_default_roles, next_dancer_id};
 use super::dancer_settings_view_model::DancerSettingsViewModel;
+use super::mapper::{default_role, ensure_default_roles, next_dancer_id};
 use super::messages::{AddDancerCommand, DancerSelectionCommand, UpdateSwapSelectionCommand};
 
 #[injectable]

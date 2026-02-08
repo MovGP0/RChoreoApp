@@ -73,7 +73,9 @@ impl<P: Preferences + Clone> UpdateSnapToGridBehavior<P> {
     }
 }
 
-impl<P: Preferences + Clone + 'static> Behavior<ChoreographySettingsViewModel> for UpdateSnapToGridBehavior<P> {
+impl<P: Preferences + Clone + 'static> Behavior<ChoreographySettingsViewModel>
+    for UpdateSnapToGridBehavior<P>
+{
     fn activate(
         &self,
         view_model: &mut ChoreographySettingsViewModel,
@@ -108,5 +110,3 @@ impl<P: Preferences + Clone + 'static> Behavior<ChoreographySettingsViewModel> f
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
-

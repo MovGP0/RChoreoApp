@@ -8,6 +8,9 @@ pub struct ColorChangedEvent {
 
 impl ColorChangedEvent {
     pub fn new(old_color: Color, new_color: Color) -> Self {
-        Self { old_color, new_color }
+        Self {
+            old_color,
+            new_color,
+        }
     }
 }

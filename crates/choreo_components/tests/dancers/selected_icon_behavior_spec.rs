@@ -22,7 +22,10 @@ fn selected_icon_behavior_spec() {
                 .first()
                 .map(|option| option.key.clone())
                 .expect("icon options should not be empty");
-            context.view_model.borrow_mut().update_dancer_icon(key.clone());
+            context
+                .view_model
+                .borrow_mut()
+                .update_dancer_icon(key.clone());
 
             let updated = context.wait_until(Duration::from_secs(1), || {
                 context

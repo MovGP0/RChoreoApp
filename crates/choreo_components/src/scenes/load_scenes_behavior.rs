@@ -51,8 +51,11 @@ impl LoadScenesBehavior {
                 .scenes
                 .iter()
                 .map(|scene| {
-                    let mut view_model =
-                        SceneViewModel::new(scene.scene_id, scene.name.clone(), scene.color.clone());
+                    let mut view_model = SceneViewModel::new(
+                        scene.scene_id,
+                        scene.name.clone(),
+                        scene.color.clone(),
+                    );
                     mapper.map_model_to_view_model(scene, &mut view_model);
                     view_model
                 })
@@ -75,13 +78,19 @@ impl LoadScenesBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for LoadScenesBehavior {
-    fn activate(&self, view_model: &mut ScenesPaneViewModel, disposables: &mut CompositeDisposable) {
+    fn activate(
+        &self,
+        view_model: &mut ScenesPaneViewModel,
+        disposables: &mut CompositeDisposable,
+    ) {
         BehaviorLog::behavior_activated("LoadScenesBehavior", "ScenesPaneViewModel");
         let selected_scene = Self::load(&self.global_state, view_model);
         if let Some(selected_scene) = selected_scene {
-            let _ = self.selected_scene_changed_sender.send(SelectedSceneChangedEvent {
-                selected_scene: Some(selected_scene),
-            });
+            let _ = self
+                .selected_scene_changed_sender
+                .send(SelectedSceneChangedEvent {
+                    selected_scene: Some(selected_scene),
+                });
         }
 
         let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())

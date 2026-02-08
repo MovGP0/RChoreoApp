@@ -181,7 +181,8 @@ impl Colors {
     }
 
     pub fn antiquewhite() -> Color {
-        Self::named_web_color("antiquewhite").expect("antiquewhite must be present in named web colors")
+        Self::named_web_color("antiquewhite")
+            .expect("antiquewhite must be present in named web colors")
     }
 
     pub fn aqua() -> Color {
@@ -209,7 +210,8 @@ impl Colors {
     }
 
     pub fn blanchedalmond() -> Color {
-        Self::named_web_color("blanchedalmond").expect("blanchedalmond must be present in named web colors")
+        Self::named_web_color("blanchedalmond")
+            .expect("blanchedalmond must be present in named web colors")
     }
 
     pub fn blue() -> Color {
@@ -245,7 +247,8 @@ impl Colors {
     }
 
     pub fn cornflowerblue() -> Color {
-        Self::named_web_color("cornflowerblue").expect("cornflowerblue must be present in named web colors")
+        Self::named_web_color("cornflowerblue")
+            .expect("cornflowerblue must be present in named web colors")
     }
 
     pub fn cornsilk() -> Color {
@@ -269,7 +272,8 @@ impl Colors {
     }
 
     pub fn darkgoldenrod() -> Color {
-        Self::named_web_color("darkgoldenrod").expect("darkgoldenrod must be present in named web colors")
+        Self::named_web_color("darkgoldenrod")
+            .expect("darkgoldenrod must be present in named web colors")
     }
 
     pub fn darkgray() -> Color {
@@ -289,11 +293,13 @@ impl Colors {
     }
 
     pub fn darkmagenta() -> Color {
-        Self::named_web_color("darkmagenta").expect("darkmagenta must be present in named web colors")
+        Self::named_web_color("darkmagenta")
+            .expect("darkmagenta must be present in named web colors")
     }
 
     pub fn darkolivegreen() -> Color {
-        Self::named_web_color("darkolivegreen").expect("darkolivegreen must be present in named web colors")
+        Self::named_web_color("darkolivegreen")
+            .expect("darkolivegreen must be present in named web colors")
     }
 
     pub fn darkorange() -> Color {
@@ -313,23 +319,28 @@ impl Colors {
     }
 
     pub fn darkseagreen() -> Color {
-        Self::named_web_color("darkseagreen").expect("darkseagreen must be present in named web colors")
+        Self::named_web_color("darkseagreen")
+            .expect("darkseagreen must be present in named web colors")
     }
 
     pub fn darkslateblue() -> Color {
-        Self::named_web_color("darkslateblue").expect("darkslateblue must be present in named web colors")
+        Self::named_web_color("darkslateblue")
+            .expect("darkslateblue must be present in named web colors")
     }
 
     pub fn darkslategray() -> Color {
-        Self::named_web_color("darkslategray").expect("darkslategray must be present in named web colors")
+        Self::named_web_color("darkslategray")
+            .expect("darkslategray must be present in named web colors")
     }
 
     pub fn darkslategrey() -> Color {
-        Self::named_web_color("darkslategrey").expect("darkslategrey must be present in named web colors")
+        Self::named_web_color("darkslategrey")
+            .expect("darkslategrey must be present in named web colors")
     }
 
     pub fn darkturquoise() -> Color {
-        Self::named_web_color("darkturquoise").expect("darkturquoise must be present in named web colors")
+        Self::named_web_color("darkturquoise")
+            .expect("darkturquoise must be present in named web colors")
     }
 
     pub fn darkviolet() -> Color {
@@ -341,7 +352,8 @@ impl Colors {
     }
 
     pub fn deepskyblue() -> Color {
-        Self::named_web_color("deepskyblue").expect("deepskyblue must be present in named web colors")
+        Self::named_web_color("deepskyblue")
+            .expect("deepskyblue must be present in named web colors")
     }
 
     pub fn dimgray() -> Color {
@@ -361,11 +373,13 @@ impl Colors {
     }
 
     pub fn floralwhite() -> Color {
-        Self::named_web_color("floralwhite").expect("floralwhite must be present in named web colors")
+        Self::named_web_color("floralwhite")
+            .expect("floralwhite must be present in named web colors")
     }
 
     pub fn forestgreen() -> Color {
-        Self::named_web_color("forestgreen").expect("forestgreen must be present in named web colors")
+        Self::named_web_color("forestgreen")
+            .expect("forestgreen must be present in named web colors")
     }
 
     pub fn fuchsia() -> Color {
@@ -397,7 +411,8 @@ impl Colors {
     }
 
     pub fn greenyellow() -> Color {
-        Self::named_web_color("greenyellow").expect("greenyellow must be present in named web colors")
+        Self::named_web_color("greenyellow")
+            .expect("greenyellow must be present in named web colors")
     }
 
     pub fn grey() -> Color {
@@ -433,7 +448,8 @@ impl Colors {
     }
 
     pub fn lavenderblush() -> Color {
-        Self::named_web_color("lavenderblush").expect("lavenderblush must be present in named web colors")
+        Self::named_web_color("lavenderblush")
+            .expect("lavenderblush must be present in named web colors")
     }
 
     pub fn lawngreen() -> Color {
@@ -441,7 +457,8 @@ impl Colors {
     }
 
     pub fn lemonchiffon() -> Color {
-        Self::named_web_color("lemonchiffon").expect("lemonchiffon must be present in named web colors")
+        Self::named_web_color("lemonchiffon")
+            .expect("lemonchiffon must be present in named web colors")
     }
 
     pub fn lightblue() -> Color {
@@ -457,7 +474,8 @@ impl Colors {
     }
 
     pub fn lightgoldenrodyellow() -> Color {
-        Self::named_web_color("lightgoldenrodyellow").expect("lightgoldenrodyellow must be present in named web colors")
+        Self::named_web_color("lightgoldenrodyellow")
+            .expect("lightgoldenrodyellow must be present in named web colors")
     }
 
     pub fn lightgray() -> Color {
@@ -477,31 +495,38 @@ impl Colors {
     }
 
     pub fn lightsalmon() -> Color {
-        Self::named_web_color("lightsalmon").expect("lightsalmon must be present in named web colors")
+        Self::named_web_color("lightsalmon")
+            .expect("lightsalmon must be present in named web colors")
     }
 
     pub fn lightseagreen() -> Color {
-        Self::named_web_color("lightseagreen").expect("lightseagreen must be present in named web colors")
+        Self::named_web_color("lightseagreen")
+            .expect("lightseagreen must be present in named web colors")
     }
 
     pub fn lightskyblue() -> Color {
-        Self::named_web_color("lightskyblue").expect("lightskyblue must be present in named web colors")
+        Self::named_web_color("lightskyblue")
+            .expect("lightskyblue must be present in named web colors")
     }
 
     pub fn lightslategray() -> Color {
-        Self::named_web_color("lightslategray").expect("lightslategray must be present in named web colors")
+        Self::named_web_color("lightslategray")
+            .expect("lightslategray must be present in named web colors")
     }
 
     pub fn lightslategrey() -> Color {
-        Self::named_web_color("lightslategrey").expect("lightslategrey must be present in named web colors")
+        Self::named_web_color("lightslategrey")
+            .expect("lightslategrey must be present in named web colors")
     }
 
     pub fn lightsteelblue() -> Color {
-        Self::named_web_color("lightsteelblue").expect("lightsteelblue must be present in named web colors")
+        Self::named_web_color("lightsteelblue")
+            .expect("lightsteelblue must be present in named web colors")
     }
 
     pub fn lightyellow() -> Color {
-        Self::named_web_color("lightyellow").expect("lightyellow must be present in named web colors")
+        Self::named_web_color("lightyellow")
+            .expect("lightyellow must be present in named web colors")
     }
 
     pub fn lime() -> Color {
@@ -525,7 +550,8 @@ impl Colors {
     }
 
     pub fn mediumaquamarine() -> Color {
-        Self::named_web_color("mediumaquamarine").expect("mediumaquamarine must be present in named web colors")
+        Self::named_web_color("mediumaquamarine")
+            .expect("mediumaquamarine must be present in named web colors")
     }
 
     pub fn mediumblue() -> Color {
@@ -533,35 +559,43 @@ impl Colors {
     }
 
     pub fn mediumorchid() -> Color {
-        Self::named_web_color("mediumorchid").expect("mediumorchid must be present in named web colors")
+        Self::named_web_color("mediumorchid")
+            .expect("mediumorchid must be present in named web colors")
     }
 
     pub fn mediumpurple() -> Color {
-        Self::named_web_color("mediumpurple").expect("mediumpurple must be present in named web colors")
+        Self::named_web_color("mediumpurple")
+            .expect("mediumpurple must be present in named web colors")
     }
 
     pub fn mediumseagreen() -> Color {
-        Self::named_web_color("mediumseagreen").expect("mediumseagreen must be present in named web colors")
+        Self::named_web_color("mediumseagreen")
+            .expect("mediumseagreen must be present in named web colors")
     }
 
     pub fn mediumslateblue() -> Color {
-        Self::named_web_color("mediumslateblue").expect("mediumslateblue must be present in named web colors")
+        Self::named_web_color("mediumslateblue")
+            .expect("mediumslateblue must be present in named web colors")
     }
 
     pub fn mediumspringgreen() -> Color {
-        Self::named_web_color("mediumspringgreen").expect("mediumspringgreen must be present in named web colors")
+        Self::named_web_color("mediumspringgreen")
+            .expect("mediumspringgreen must be present in named web colors")
     }
 
     pub fn mediumturquoise() -> Color {
-        Self::named_web_color("mediumturquoise").expect("mediumturquoise must be present in named web colors")
+        Self::named_web_color("mediumturquoise")
+            .expect("mediumturquoise must be present in named web colors")
     }
 
     pub fn mediumvioletred() -> Color {
-        Self::named_web_color("mediumvioletred").expect("mediumvioletred must be present in named web colors")
+        Self::named_web_color("mediumvioletred")
+            .expect("mediumvioletred must be present in named web colors")
     }
 
     pub fn midnightblue() -> Color {
-        Self::named_web_color("midnightblue").expect("midnightblue must be present in named web colors")
+        Self::named_web_color("midnightblue")
+            .expect("midnightblue must be present in named web colors")
     }
 
     pub fn mintcream() -> Color {
@@ -577,7 +611,8 @@ impl Colors {
     }
 
     pub fn navajowhite() -> Color {
-        Self::named_web_color("navajowhite").expect("navajowhite must be present in named web colors")
+        Self::named_web_color("navajowhite")
+            .expect("navajowhite must be present in named web colors")
     }
 
     pub fn navy() -> Color {
@@ -609,7 +644,8 @@ impl Colors {
     }
 
     pub fn palegoldenrod() -> Color {
-        Self::named_web_color("palegoldenrod").expect("palegoldenrod must be present in named web colors")
+        Self::named_web_color("palegoldenrod")
+            .expect("palegoldenrod must be present in named web colors")
     }
 
     pub fn palegreen() -> Color {
@@ -617,11 +653,13 @@ impl Colors {
     }
 
     pub fn paleturquoise() -> Color {
-        Self::named_web_color("paleturquoise").expect("paleturquoise must be present in named web colors")
+        Self::named_web_color("paleturquoise")
+            .expect("paleturquoise must be present in named web colors")
     }
 
     pub fn palevioletred() -> Color {
-        Self::named_web_color("palevioletred").expect("palevioletred must be present in named web colors")
+        Self::named_web_color("palevioletred")
+            .expect("palevioletred must be present in named web colors")
     }
 
     pub fn papayawhip() -> Color {
@@ -653,7 +691,8 @@ impl Colors {
     }
 
     pub fn rebeccapurple() -> Color {
-        Self::named_web_color("rebeccapurple").expect("rebeccapurple must be present in named web colors")
+        Self::named_web_color("rebeccapurple")
+            .expect("rebeccapurple must be present in named web colors")
     }
 
     pub fn red() -> Color {
@@ -669,7 +708,8 @@ impl Colors {
     }
 
     pub fn saddlebrown() -> Color {
-        Self::named_web_color("saddlebrown").expect("saddlebrown must be present in named web colors")
+        Self::named_web_color("saddlebrown")
+            .expect("saddlebrown must be present in named web colors")
     }
 
     pub fn salmon() -> Color {
@@ -717,7 +757,8 @@ impl Colors {
     }
 
     pub fn springgreen() -> Color {
-        Self::named_web_color("springgreen").expect("springgreen must be present in named web colors")
+        Self::named_web_color("springgreen")
+            .expect("springgreen must be present in named web colors")
     }
 
     pub fn steelblue() -> Color {
@@ -765,10 +806,12 @@ impl Colors {
     }
 
     pub fn yellowgreen() -> Color {
-        Self::named_web_color("yellowgreen").expect("yellowgreen must be present in named web colors")
+        Self::named_web_color("yellowgreen")
+            .expect("yellowgreen must be present in named web colors")
     }
 
     pub fn transparent() -> Color {
-        Self::named_web_color("transparent").expect("transparent must be present in named web colors")
+        Self::named_web_color("transparent")
+            .expect("transparent must be present in named web colors")
     }
 }

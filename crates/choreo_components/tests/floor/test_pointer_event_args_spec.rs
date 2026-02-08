@@ -1,7 +1,7 @@
 use crate::floor;
 
-use floor::Report;
 use choreo_components::floor::{Point, PointerButton, PointerEventArgs};
+use floor::Report;
 
 #[test]
 #[serial_test::serial]

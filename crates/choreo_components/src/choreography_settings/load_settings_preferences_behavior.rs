@@ -19,9 +19,10 @@ impl<P: Preferences> LoadSettingsPreferencesBehavior<P> {
         settings.show_timestamps = self
             .preferences
             .get_bool(choreo_models::SettingsPreferenceKeys::SHOW_TIMESTAMPS, true);
-        settings.positions_at_side = self
-            .preferences
-            .get_bool(choreo_models::SettingsPreferenceKeys::POSITIONS_AT_SIDE, true);
+        settings.positions_at_side = self.preferences.get_bool(
+            choreo_models::SettingsPreferenceKeys::POSITIONS_AT_SIDE,
+            true,
+        );
         settings.snap_to_grid = self
             .preferences
             .get_bool(choreo_models::SettingsPreferenceKeys::SNAP_TO_GRID, true);
@@ -30,10 +31,7 @@ impl<P: Preferences> LoadSettingsPreferencesBehavior<P> {
 
 impl<P: Preferences> Behavior<SettingsModel> for LoadSettingsPreferencesBehavior<P> {
     fn activate(&self, settings: &mut SettingsModel, _disposables: &mut CompositeDisposable) {
-        BehaviorLog::behavior_activated(
-            "LoadSettingsPreferencesBehavior",
-            "SettingsModel",
-        );
+        BehaviorLog::behavior_activated("LoadSettingsPreferencesBehavior", "SettingsModel");
         self.load(settings);
     }
 }

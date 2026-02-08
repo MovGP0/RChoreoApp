@@ -2,13 +2,11 @@ use time::{Date, Month};
 
 use crate::time::SystemClock;
 
-pub(crate) fn today_date() -> Date
-{
+pub(crate) fn today_date() -> Date {
     SystemClock::now_utc().date()
 }
 
-pub(crate) fn build_date(year: i32, month: i32, day: i32) -> Option<Date>
-{
+pub(crate) fn build_date(year: i32, month: i32, day: i32) -> Option<Date> {
     if !is_valid_date(year, month, day) {
         return None;
     }
@@ -16,15 +14,12 @@ pub(crate) fn build_date(year: i32, month: i32, day: i32) -> Option<Date>
     date_from_parts(year, month, day)
 }
 
-
-fn date_from_parts(year: i32, month: i32, day: i32) -> Option<Date>
-{
+fn date_from_parts(year: i32, month: i32, day: i32) -> Option<Date> {
     let month = month_from_i32(month)?;
     Date::from_calendar_date(year, month, day as u8).ok()
 }
 
-fn month_from_i32(month: i32) -> Option<Month>
-{
+fn month_from_i32(month: i32) -> Option<Month> {
     match month {
         1 => Some(Month::January),
         2 => Some(Month::February),
@@ -42,9 +37,7 @@ fn month_from_i32(month: i32) -> Option<Month>
     }
 }
 
-
-fn is_valid_date(year: i32, month: i32, day: i32) -> bool
-{
+fn is_valid_date(year: i32, month: i32, day: i32) -> bool {
     if year <= 0 {
         return false;
     }
@@ -60,8 +53,7 @@ fn is_valid_date(year: i32, month: i32, day: i32) -> bool
     day <= days_in_month(year, month)
 }
 
-fn days_in_month(year: i32, month: i32) -> i32
-{
+fn days_in_month(year: i32, month: i32) -> i32 {
     match month {
         1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
         4 | 6 | 9 | 11 => 30,
@@ -76,7 +68,6 @@ fn days_in_month(year: i32, month: i32) -> i32
     }
 }
 
-fn is_leap_year(year: i32) -> bool
-{
+fn is_leap_year(year: i32) -> bool {
     (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
 }

@@ -32,7 +32,12 @@ impl SwapDancerSelectionBehavior {
         if view_model
             .swap_from_dancer
             .as_ref()
-            .map(|dancer| !view_model.dancers.iter().any(|item| item.dancer_id == dancer.dancer_id))
+            .map(|dancer| {
+                !view_model
+                    .dancers
+                    .iter()
+                    .any(|item| item.dancer_id == dancer.dancer_id)
+            })
             .unwrap_or(true)
         {
             view_model.swap_from_dancer = view_model.dancers.first().cloned();
@@ -47,23 +52,36 @@ impl SwapDancerSelectionBehavior {
         if view_model
             .swap_to_dancer
             .as_ref()
-            .map(|dancer| !view_model.dancers.iter().any(|item| item.dancer_id == dancer.dancer_id))
+            .map(|dancer| {
+                !view_model
+                    .dancers
+                    .iter()
+                    .any(|item| item.dancer_id == dancer.dancer_id)
+            })
             .unwrap_or(true)
-            || view_model.swap_to_dancer.as_ref().map(|dancer| {
-                view_model
-                    .swap_from_dancer
-                    .as_ref()
-                    .map(|from| from.dancer_id == dancer.dancer_id)
-                    .unwrap_or(false)
-            }).unwrap_or(false)
+            || view_model
+                .swap_to_dancer
+                .as_ref()
+                .map(|dancer| {
+                    view_model
+                        .swap_from_dancer
+                        .as_ref()
+                        .map(|from| from.dancer_id == dancer.dancer_id)
+                        .unwrap_or(false)
+                })
+                .unwrap_or(false)
         {
-            view_model.swap_to_dancer = view_model.dancers.iter().find(|dancer| {
-                view_model
-                    .swap_from_dancer
-                    .as_ref()
-                    .map(|from| from.dancer_id != dancer.dancer_id)
-                    .unwrap_or(true)
-            }).cloned();
+            view_model.swap_to_dancer = view_model
+                .dancers
+                .iter()
+                .find(|dancer| {
+                    view_model
+                        .swap_from_dancer
+                        .as_ref()
+                        .map(|from| from.dancer_id != dancer.dancer_id)
+                        .unwrap_or(true)
+                })
+                .cloned();
         }
 
         Self::update_can_swap(view_model);
@@ -87,10 +105,7 @@ impl Behavior<DancerSettingsViewModel> for SwapDancerSelectionBehavior {
         view_model: &mut DancerSettingsViewModel,
         disposables: &mut CompositeDisposable,
     ) {
-        BehaviorLog::behavior_activated(
-            "SwapDancerSelectionBehavior",
-            "DancerSettingsViewModel",
-        );
+        BehaviorLog::behavior_activated("SwapDancerSelectionBehavior", "DancerSettingsViewModel");
         let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
         else {
             return;

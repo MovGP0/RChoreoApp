@@ -10,7 +10,9 @@ use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
-use super::messages::{RedrawFloorCommand, ShowTimestampsChangedEvent, UpdateShowTimestampsCommand};
+use super::messages::{
+    RedrawFloorCommand, ShowTimestampsChangedEvent, UpdateShowTimestampsCommand,
+};
 use nject::injectable;
 
 #[injectable]
@@ -79,7 +81,9 @@ impl<P: Preferences + Clone> UpdateShowTimestampsBehavior<P> {
     }
 }
 
-impl<P: Preferences + Clone + 'static> Behavior<ChoreographySettingsViewModel> for UpdateShowTimestampsBehavior<P> {
+impl<P: Preferences + Clone + 'static> Behavior<ChoreographySettingsViewModel>
+    for UpdateShowTimestampsBehavior<P>
+{
     fn activate(
         &self,
         view_model: &mut ChoreographySettingsViewModel,
@@ -115,6 +119,3 @@ impl<P: Preferences + Clone + 'static> Behavior<ChoreographySettingsViewModel> f
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
-
-

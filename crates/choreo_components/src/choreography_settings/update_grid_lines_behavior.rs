@@ -60,10 +60,7 @@ impl Behavior<ChoreographySettingsViewModel> for UpdateGridLinesBehavior {
         _view_model: &mut ChoreographySettingsViewModel,
         disposables: &mut CompositeDisposable,
     ) {
-        BehaviorLog::behavior_activated(
-            "UpdateGridLinesBehavior",
-            "ChoreographySettingsViewModel",
-        );
+        BehaviorLog::behavior_activated("UpdateGridLinesBehavior", "ChoreographySettingsViewModel");
         let Some(receiver) = self.receiver.clone() else {
             return;
         };
@@ -81,5 +78,3 @@ impl Behavior<ChoreographySettingsViewModel> for UpdateGridLinesBehavior {
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
-

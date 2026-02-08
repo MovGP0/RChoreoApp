@@ -8,8 +8,8 @@ use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
-use super::mapper::{map_from_choreography, reset_view_model, update_selected_scene};
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
+use super::mapper::{map_from_choreography, reset_view_model, update_selected_scene};
 use super::messages::ReloadChoreographySettingsCommand;
 use nject::injectable;
 
@@ -39,7 +39,10 @@ impl LoadChoreographySettingsBehavior {
 
     fn load(&self, view_model: &mut ChoreographySettingsViewModel) {
         let Some(snapshot) = self.global_state.try_with_state(|global_state| {
-            (global_state.choreography.clone(), global_state.selected_scene.clone())
+            (
+                global_state.choreography.clone(),
+                global_state.selected_scene.clone(),
+            )
         }) else {
             return;
         };
@@ -90,5 +93,3 @@ impl Behavior<ChoreographySettingsViewModel> for LoadChoreographySettingsBehavio
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
-

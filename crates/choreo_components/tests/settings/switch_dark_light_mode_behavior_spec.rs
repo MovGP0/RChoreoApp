@@ -14,16 +14,20 @@ fn switch_dark_light_mode_behavior_spec() {
         spec.it("updates use-system-theme flag and persists it", |_| {
             let context = settings::SettingsTestContext::new();
 
-            context.view_model.borrow_mut().update_use_system_theme(false);
+            context
+                .view_model
+                .borrow_mut()
+                .update_use_system_theme(false);
 
             let updated = context.wait_until(Duration::from_secs(1), || {
                 !context.view_model.borrow().use_system_theme
             });
             assert!(updated);
-            assert!(!context.preferences.get_bool(
-                SettingsPreferenceKeys::USE_SYSTEM_THEME,
-                true
-            ));
+            assert!(
+                !context
+                    .preferences
+                    .get_bool(SettingsPreferenceKeys::USE_SYSTEM_THEME, true)
+            );
         });
 
         spec.it("switches theme mode and stores theme preference", |_| {

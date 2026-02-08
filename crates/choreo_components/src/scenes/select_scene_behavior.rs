@@ -5,12 +5,12 @@ use crossbeam_channel::{Receiver, Sender};
 use nject::injectable;
 use slint::TimerMode;
 
+use super::messages::{SelectSceneCommand, SelectedSceneChangedEvent};
+use super::scenes_view_model::ScenesPaneViewModel;
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::choreography_settings::RedrawFloorCommand;
 use crate::logging::BehaviorLog;
 use crate::scenes::SceneViewModel;
-use super::messages::{SelectSceneCommand, SelectedSceneChangedEvent};
-use super::scenes_view_model::ScenesPaneViewModel;
 
 #[injectable]
 #[inject(
@@ -48,7 +48,10 @@ impl SelectSceneBehavior {
         }
     }
 
-    fn handle_selection(view_model: &mut ScenesPaneViewModel, index: usize) -> Option<SceneViewModel> {
+    fn handle_selection(
+        view_model: &mut ScenesPaneViewModel,
+        index: usize,
+    ) -> Option<SceneViewModel> {
         let scene = view_model.scenes.get(index).cloned()?;
         view_model.set_selected_scene(Some(scene));
         view_model.selected_scene()
@@ -80,7 +83,8 @@ impl Behavior<ScenesPaneViewModel> for SelectSceneBehavior {
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
             while let Ok(command) = receiver.try_recv() {
                 let mut view_model = view_model_handle.borrow_mut();
-                if let Some(selected_scene) = Self::handle_selection(&mut view_model, command.index) {
+                if let Some(selected_scene) = Self::handle_selection(&mut view_model, command.index)
+                {
                     let _ = selected_scene_changed_sender.send(SelectedSceneChangedEvent {
                         selected_scene: Some(selected_scene),
                     });

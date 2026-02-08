@@ -60,7 +60,10 @@ impl UpdateSelectedSceneBehavior {
             return;
         }
         let _ = self.global_state.try_update(|global_state| {
-            let scene_id = global_state.selected_scene.as_ref().map(|scene| scene.scene_id);
+            let scene_id = global_state
+                .selected_scene
+                .as_ref()
+                .map(|scene| scene.scene_id);
             if let Some(scene) = global_state.selected_scene.as_mut() {
                 scene.name = value.to_string();
             }
@@ -75,7 +78,10 @@ impl UpdateSelectedSceneBehavior {
             return;
         }
         let _ = self.global_state.try_update(|global_state| {
-            let scene_id = global_state.selected_scene.as_ref().map(|scene| scene.scene_id);
+            let scene_id = global_state
+                .selected_scene
+                .as_ref()
+                .map(|scene| scene.scene_id);
             if let Some(scene) = global_state.selected_scene.as_mut() {
                 scene.text = value.to_string();
             }
@@ -90,7 +96,10 @@ impl UpdateSelectedSceneBehavior {
             return;
         }
         let _ = self.global_state.try_update(|global_state| {
-            let scene_id = global_state.selected_scene.as_ref().map(|scene| scene.scene_id);
+            let scene_id = global_state
+                .selected_scene
+                .as_ref()
+                .map(|scene| scene.scene_id);
             if let Some(scene) = global_state.selected_scene.as_mut() {
                 scene.fixed_positions = value;
             }
@@ -105,7 +114,10 @@ impl UpdateSelectedSceneBehavior {
             return;
         }
         let _ = self.global_state.try_update(|global_state| {
-            let scene_id = global_state.selected_scene.as_ref().map(|scene| scene.scene_id);
+            let scene_id = global_state
+                .selected_scene
+                .as_ref()
+                .map(|scene| scene.scene_id);
             if let Some(scene) = global_state.selected_scene.as_mut() {
                 scene.color = value.clone();
             }
@@ -120,18 +132,17 @@ impl UpdateSelectedSceneBehavior {
             return;
         }
         let _ = self.global_state.try_update(|global_state| {
-            let scene_id = global_state.selected_scene.as_ref().map(|scene| scene.scene_id);
+            let scene_id = global_state
+                .selected_scene
+                .as_ref()
+                .map(|scene| scene.scene_id);
             let timestamp = if has_timestamp {
                 Some(format_seconds(seconds))
             } else {
                 None
             };
             if let Some(scene) = global_state.selected_scene.as_mut() {
-                scene.timestamp = if has_timestamp {
-                    Some(seconds)
-                } else {
-                    None
-                };
+                scene.timestamp = if has_timestamp { Some(seconds) } else { None };
             }
             if let Some(model_scene) = find_scene_mut(&mut global_state.choreography, scene_id) {
                 model_scene.timestamp = timestamp;

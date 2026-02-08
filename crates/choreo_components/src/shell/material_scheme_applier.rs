@@ -1,34 +1,28 @@
 use slint::{Color as SlintColor, ComponentHandle, Weak};
 
-use crate::settings::MaterialSchemeApplier;
-use crate::settings::MaterialScheme as SettingsMaterialScheme;
-use crate::settings::MaterialSchemes as SettingsMaterialSchemes;
 use crate::MaterialPalette;
 use crate::ShellHost;
+use crate::settings::MaterialScheme as SettingsMaterialScheme;
+use crate::settings::MaterialSchemeApplier;
+use crate::settings::MaterialSchemes as SettingsMaterialSchemes;
 use crate::{MaterialScheme as SlintMaterialScheme, MaterialSchemes as SlintMaterialSchemes};
 
 #[derive(Clone)]
-pub struct ShellMaterialSchemeApplier
-{
+pub struct ShellMaterialSchemeApplier {
     view: Weak<ShellHost>,
 }
 
-impl ShellMaterialSchemeApplier
-{
-    pub fn new(view: &ShellHost) -> Self
-    {
+impl ShellMaterialSchemeApplier {
+    pub fn new(view: &ShellHost) -> Self {
         Self {
             view: view.as_weak(),
         }
     }
 }
 
-impl MaterialSchemeApplier for ShellMaterialSchemeApplier
-{
-    fn apply(&self, schemes: SettingsMaterialSchemes)
-    {
-        let Some(view) = self.view.upgrade() else
-        {
+impl MaterialSchemeApplier for ShellMaterialSchemeApplier {
+    fn apply(&self, schemes: SettingsMaterialSchemes) {
+        let Some(view) = self.view.upgrade() else {
             return;
         };
 
@@ -37,16 +31,14 @@ impl MaterialSchemeApplier for ShellMaterialSchemeApplier
     }
 }
 
-fn map_schemes(schemes: &SettingsMaterialSchemes) -> SlintMaterialSchemes
-{
+fn map_schemes(schemes: &SettingsMaterialSchemes) -> SlintMaterialSchemes {
     SlintMaterialSchemes {
         light: map_scheme(&schemes.light),
         dark: map_scheme(&schemes.dark),
     }
 }
 
-fn map_scheme(scheme: &SettingsMaterialScheme) -> SlintMaterialScheme
-{
+fn map_scheme(scheme: &SettingsMaterialScheme) -> SlintMaterialScheme {
     SlintMaterialScheme {
         primary: map_color(&scheme.primary),
         surfaceTint: map_color(&scheme.surface_tint),
@@ -100,7 +92,6 @@ fn map_scheme(scheme: &SettingsMaterialScheme) -> SlintMaterialScheme
     }
 }
 
-fn map_color(color: &choreo_master_mobile_json::Color) -> SlintColor
-{
+fn map_color(color: &choreo_master_mobile_json::Color) -> SlintColor {
     SlintColor::from_argb_u8(color.a, color.r, color.g, color.b)
 }

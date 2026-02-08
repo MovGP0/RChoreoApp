@@ -3,31 +3,21 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crossbeam_channel::Receiver;
-use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
 use choreo_state_machine::{
-    ApplicationStateMachine,
-    PanCompletedTrigger,
-    PanStartedTrigger,
-    StateKind,
-    ZoomCompletedTrigger,
-    ZoomStartedTrigger,
+    ApplicationStateMachine, PanCompletedTrigger, PanStartedTrigger, StateKind,
+    ZoomCompletedTrigger, ZoomStartedTrigger,
 };
+use crossbeam_channel::Receiver;
 use nject::injectable;
 use slint::TimerMode;
 
 use super::floor_view_model::FloorCanvasViewModel;
 use super::messages::{
-    PointerButton,
-    PointerMovedCommand,
-    PointerPressedCommand,
-    PointerReleasedCommand,
-    PointerWheelChangedCommand,
-    TouchAction,
-    TouchCommand,
-    TouchDeviceType,
+    PointerButton, PointerMovedCommand, PointerPressedCommand, PointerReleasedCommand,
+    PointerWheelChangedCommand, TouchAction, TouchCommand, TouchDeviceType,
 };
 use super::types::{Matrix, Point};
 
@@ -77,8 +67,7 @@ impl GestureHandlingBehavior {
         pointer_released_receiver: Receiver<PointerReleasedCommand>,
         pointer_wheel_changed_receiver: Receiver<PointerWheelChangedCommand>,
         touch_receiver: Receiver<TouchCommand>,
-    ) -> Self
-    {
+    ) -> Self {
         Self {
             state_machine: Some(state_machine),
             pointer_pressed_receiver: Some(pointer_pressed_receiver),
@@ -217,7 +206,12 @@ impl GestureHandlingBehavior {
         }
 
         self.last_single_touch_position = None;
-        let points = self.active_touches.values().take(2).copied().collect::<Vec<_>>();
+        let points = self
+            .active_touches
+            .values()
+            .take(2)
+            .copied()
+            .collect::<Vec<_>>();
         let first = points[0];
         let second = points[1];
         let center = Point::new((first.x + second.x) / 2.0, (first.y + second.y) / 2.0);
@@ -230,7 +224,9 @@ impl GestureHandlingBehavior {
             let _ = state_machine.try_apply(&ZoomStartedTrigger);
         }
 
-        if let (Some(last_center), Some(last_distance)) = (self.last_touch_center, self.last_touch_distance) {
+        if let (Some(last_center), Some(last_distance)) =
+            (self.last_touch_center, self.last_touch_distance)
+        {
             let delta_x = ((center.x - last_center.x) as f32) * Self::TOUCH_PAN_FACTOR;
             let delta_y = ((center.y - last_center.y) as f32) * Self::TOUCH_PAN_FACTOR;
             Self::apply_translation(view_model, delta_x, delta_y);
@@ -238,12 +234,8 @@ impl GestureHandlingBehavior {
             if last_distance > 0.0 {
                 let scale = distance / last_distance;
                 if scale.is_finite() && scale > 0.0 {
-                    let scale_matrix = Matrix::scale(
-                        scale as f32,
-                        scale as f32,
-                        center.x as f32,
-                        center.y as f32,
-                    );
+                    let scale_matrix =
+                        Matrix::scale(scale as f32, scale as f32, center.x as f32, center.y as f32);
                     Self::apply_transformation(view_model, scale_matrix);
                 }
             }
@@ -258,7 +250,11 @@ impl GestureHandlingBehavior {
         view_model: &mut FloorCanvasViewModel,
         state_machine: &mut ApplicationStateMachine,
     ) {
-        let touch_point = *self.active_touches.values().next().unwrap_or(&Point::new(0.0, 0.0));
+        let touch_point = *self
+            .active_touches
+            .values()
+            .next()
+            .unwrap_or(&Point::new(0.0, 0.0));
         let current = touch_point;
 
         let Some(last) = self.last_single_touch_position else {
@@ -337,7 +333,8 @@ impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
         let Some(pointer_released_receiver) = self.pointer_released_receiver.clone() else {
             return;
         };
-        let Some(pointer_wheel_changed_receiver) = self.pointer_wheel_changed_receiver.clone() else {
+        let Some(pointer_wheel_changed_receiver) = self.pointer_wheel_changed_receiver.clone()
+        else {
             return;
         };
         let Some(touch_receiver) = self.touch_receiver.clone() else {
@@ -370,11 +367,7 @@ impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
                 let mut behavior = behavior.borrow_mut();
                 let mut view_model = view_model_handle.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
-                behavior.handle_pointer_wheel_changed(
-                    &mut view_model,
-                    &mut state_machine,
-                    command,
-                );
+                behavior.handle_pointer_wheel_changed(&mut view_model, &mut state_machine, command);
                 view_model.draw_floor();
 
                 let delayed_view_model = Rc::clone(&view_model_handle);

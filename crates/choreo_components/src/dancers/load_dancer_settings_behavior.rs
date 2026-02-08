@@ -9,8 +9,8 @@ use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
-use super::mapper::{default_role, ensure_default_roles};
 use super::dancer_settings_view_model::DancerSettingsViewModel;
+use super::mapper::{default_role, ensure_default_roles};
 use super::messages::{DancerSelectionCommand, UpdateSwapSelectionCommand};
 
 #[injectable]
@@ -71,9 +71,11 @@ impl LoadDancerSettingsBehavior {
                 .get(&(Rc::as_ptr(&dancer.role) as usize))
                 .cloned()
                 .or_else(|| {
-                    view_model.roles.iter().find(|candidate| {
-                        candidate.name.eq_ignore_ascii_case(&dancer.role.name)
-                    }).cloned()
+                    view_model
+                        .roles
+                        .iter()
+                        .find(|candidate| candidate.name.eq_ignore_ascii_case(&dancer.role.name))
+                        .cloned()
                 })
                 .or_else(|| view_model.roles.first().cloned())
                 .unwrap_or_else(|| Rc::new(default_role("Dame")));
@@ -99,10 +101,7 @@ impl Behavior<DancerSettingsViewModel> for LoadDancerSettingsBehavior {
         view_model: &mut DancerSettingsViewModel,
         _disposables: &mut CompositeDisposable,
     ) {
-        BehaviorLog::behavior_activated(
-            "LoadDancerSettingsBehavior",
-            "DancerSettingsViewModel",
-        );
+        BehaviorLog::behavior_activated("LoadDancerSettingsBehavior", "DancerSettingsViewModel");
         self.load(view_model);
         let _ = self.selection_sender.send(DancerSelectionCommand::Refresh);
         let _ = self.swap_selection_sender.send(UpdateSwapSelectionCommand);

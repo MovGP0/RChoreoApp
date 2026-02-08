@@ -12,8 +12,8 @@ use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
-use super::mapper::update_scene_dancers;
 use super::dancer_settings_view_model::DancerSettingsViewModel;
+use super::mapper::update_scene_dancers;
 use super::messages::SaveDancerSettingsCommand;
 
 #[injectable]
@@ -33,16 +33,20 @@ impl SaveDancerSettingsBehavior {
         global_state: Rc<GlobalStateActor>,
         receiver: Receiver<SaveDancerSettingsCommand>,
     ) -> Self {
-        Self { global_state, receiver }
+        Self {
+            global_state,
+            receiver,
+        }
     }
 
-    fn apply_changes(global_state: &GlobalStateActor, view_model: &DancerSettingsViewModel) -> bool {
+    fn apply_changes(
+        global_state: &GlobalStateActor,
+        view_model: &DancerSettingsViewModel,
+    ) -> bool {
         global_state.try_update(|global_state| {
             let choreography = &mut global_state.choreography;
             choreography.roles.clear();
-            choreography
-                .roles
-                .extend(view_model.roles.iter().cloned());
+            choreography.roles.extend(view_model.roles.iter().cloned());
 
             choreography.dancers.clear();
             choreography
@@ -68,10 +72,7 @@ impl Behavior<DancerSettingsViewModel> for SaveDancerSettingsBehavior {
         view_model: &mut DancerSettingsViewModel,
         disposables: &mut CompositeDisposable,
     ) {
-        BehaviorLog::behavior_activated(
-            "SaveDancerSettingsBehavior",
-            "DancerSettingsViewModel",
-        );
+        BehaviorLog::behavior_activated("SaveDancerSettingsBehavior", "DancerSettingsViewModel");
         let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
         else {
             return;

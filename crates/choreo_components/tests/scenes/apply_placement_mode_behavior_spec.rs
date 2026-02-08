@@ -16,36 +16,50 @@ use scenes::Report;
 #[serial_test::serial]
 fn apply_placement_mode_behavior_spec() {
     let suite = rspec::describe("apply placement mode behavior", (), |spec| {
-        spec.it("enables place mode when selected scene has fewer positions than dancers", |_| {
-            let context = scenes::ScenesTestContext::new();
+        spec.it(
+            "enables place mode when selected scene has fewer positions than dancers",
+            |_| {
+                let context = scenes::ScenesTestContext::new();
 
-            let first = scenes::build_scene_model(1, "First", None, vec![scenes::build_position(0.0, 0.0)]);
-            let first_vm = scenes::map_scene_view_model(&first);
-            let dancer_one = scenes::build_dancer(1, "A");
-            let dancer_two = scenes::build_dancer(2, "B");
-            context.update_global_state(|state| {
-                state.choreography.scenes = vec![first.clone()];
-                state.choreography.dancers = vec![dancer_one, dancer_two];
-                state.selected_scene = Some(first_vm.clone());
-            });
+                let first = scenes::build_scene_model(
+                    1,
+                    "First",
+                    None,
+                    vec![scenes::build_position(0.0, 0.0)],
+                );
+                let first_vm = scenes::map_scene_view_model(&first);
+                let dancer_one = scenes::build_dancer(1, "A");
+                let dancer_two = scenes::build_dancer(2, "B");
+                context.update_global_state(|state| {
+                    state.choreography.scenes = vec![first.clone()];
+                    state.choreography.dancers = vec![dancer_one, dancer_two];
+                    state.selected_scene = Some(first_vm.clone());
+                });
 
-            let state_machine = Rc::new(RefCell::new(ApplicationStateMachine::with_default_transitions(Box::new(
-                choreo_components::global::GlobalStateModel::default(),
-            ))));
-            let (_selected_scene_changed_sender, selected_scene_changed_receiver) = unbounded::<SelectedSceneChangedEvent>();
-            let behavior = ApplyPlacementModeBehavior::new(
-                context.global_state_store.clone(),
-                Some(state_machine.clone()),
-                selected_scene_changed_receiver,
-            );
-            context.activate_behaviors(vec![Box::new(behavior) as Box<dyn Behavior<_>>]);
+                let state_machine = Rc::new(RefCell::new(
+                    ApplicationStateMachine::with_default_transitions(Box::new(
+                        choreo_components::global::GlobalStateModel::default(),
+                    )),
+                ));
+                let (_selected_scene_changed_sender, selected_scene_changed_receiver) =
+                    unbounded::<SelectedSceneChangedEvent>();
+                let behavior = ApplyPlacementModeBehavior::new(
+                    context.global_state_store.clone(),
+                    Some(state_machine.clone()),
+                    selected_scene_changed_receiver,
+                );
+                context.activate_behaviors(vec![Box::new(behavior) as Box<dyn Behavior<_>>]);
 
-            let applied = context.wait_until(Duration::from_secs(1), || {
-                context.read_global_state(|state| state.is_place_mode)
-            });
-            assert!(applied);
-            assert_eq!(state_machine.borrow().state().kind(), StateKind::PlacePositionsState);
-        });
+                let applied = context.wait_until(Duration::from_secs(1), || {
+                    context.read_global_state(|state| state.is_place_mode)
+                });
+                assert!(applied);
+                assert_eq!(
+                    state_machine.borrow().state().kind(),
+                    StateKind::PlacePositionsState
+                );
+            },
+        );
 
         spec.it("disables place mode when selection is cleared", |_| {
             let context = scenes::ScenesTestContext::new();
@@ -58,10 +72,13 @@ fn apply_placement_mode_behavior_spec() {
                 state.is_place_mode = true;
             });
 
-            let state_machine = Rc::new(RefCell::new(ApplicationStateMachine::with_default_transitions(Box::new(
-                choreo_components::global::GlobalStateModel::default(),
-            ))));
-            let (selected_scene_changed_sender, selected_scene_changed_receiver) = unbounded::<SelectedSceneChangedEvent>();
+            let state_machine = Rc::new(RefCell::new(
+                ApplicationStateMachine::with_default_transitions(Box::new(
+                    choreo_components::global::GlobalStateModel::default(),
+                )),
+            ));
+            let (selected_scene_changed_sender, selected_scene_changed_receiver) =
+                unbounded::<SelectedSceneChangedEvent>();
             let behavior = ApplyPlacementModeBehavior::new(
                 context.global_state_store.clone(),
                 Some(state_machine.clone()),
@@ -70,14 +87,19 @@ fn apply_placement_mode_behavior_spec() {
             context.activate_behaviors(vec![Box::new(behavior) as Box<dyn Behavior<_>>]);
 
             selected_scene_changed_sender
-                .send(SelectedSceneChangedEvent { selected_scene: None })
+                .send(SelectedSceneChangedEvent {
+                    selected_scene: None,
+                })
                 .expect("send should succeed");
 
             let cleared = context.wait_until(Duration::from_secs(1), || {
                 !context.read_global_state(|state| state.is_place_mode)
             });
             assert!(cleared);
-            assert_eq!(state_machine.borrow().state().kind(), StateKind::ViewSceneState);
+            assert_eq!(
+                state_machine.borrow().state().kind(),
+                StateKind::ViewSceneState
+            );
         });
     });
 

@@ -2,7 +2,6 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crossbeam_channel::Receiver;
 use choreo_state_machine::{
     ApplicationStateMachine, MovePositionsCompletedTrigger, MovePositionsStartedTrigger,
     RotateAroundCenterCompletedTrigger, RotateAroundCenterSelectionCompletedTrigger,
@@ -11,11 +10,12 @@ use choreo_state_machine::{
     ScalePositionsCompletedTrigger, ScalePositionsSelectionCompletedTrigger,
     ScalePositionsStartedTrigger,
 };
+use crossbeam_channel::Receiver;
 use nject::injectable;
 use slint::TimerMode;
 
-use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::{GlobalStateActor, InteractionMode};
 use crate::logging::BehaviorLog;
 
@@ -50,9 +50,10 @@ impl ApplyInteractionModeBehavior {
     }
 
     fn apply_mode(&self, mode: InteractionMode) {
-        let Some(selected_positions) = self.global_state.try_with_state(|global_state| {
-            global_state.selected_positions.len()
-        }) else {
+        let Some(selected_positions) = self
+            .global_state
+            .try_with_state(|global_state| global_state.selected_positions.len())
+        else {
             return;
         };
         let mut state_machine = self.state_machine.borrow_mut();

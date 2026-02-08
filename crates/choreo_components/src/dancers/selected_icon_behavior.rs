@@ -9,8 +9,8 @@ use slint::TimerMode;
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::logging::BehaviorLog;
 
-use super::mapper::normalize_icon_name;
 use super::dancer_settings_view_model::DancerSettingsViewModel;
+use super::mapper::normalize_icon_name;
 use super::messages::UpdateDancerIconCommand;
 
 #[injectable]

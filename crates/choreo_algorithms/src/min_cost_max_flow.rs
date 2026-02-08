@@ -17,7 +17,9 @@ pub struct MinCostMaxFlowSolver {
 impl MinCostMaxFlowSolver {
     pub fn new(node_count: usize) -> Result<Self, AlgorithmError> {
         if node_count == 0 {
-            return Err(AlgorithmError::InvalidParameter("node_count must be positive."));
+            return Err(AlgorithmError::InvalidParameter(
+                "node_count must be positive.",
+            ));
         }
 
         Ok(Self {
@@ -48,9 +50,7 @@ impl MinCostMaxFlowSolver {
             ));
         }
         if !cost.is_finite() {
-            return Err(AlgorithmError::InvalidParameter(
-                "cost must be finite.",
-            ));
+            return Err(AlgorithmError::InvalidParameter("cost must be finite."));
         }
 
         let from_index = self.adjacency[from_node].len();
@@ -203,9 +203,7 @@ impl MinCostMaxFlowSolver {
         Ok((total_sent_flow, total_cost))
     }
 
-    pub fn enumerate_forward_edges(
-        &self,
-    ) -> Vec<(usize, usize, i32, f32, i32)> {
+    pub fn enumerate_forward_edges(&self) -> Vec<(usize, usize, i32, f32, i32)> {
         let mut edges = Vec::new();
 
         for (from_node, adjacency) in self.adjacency.iter().enumerate() {
@@ -233,7 +231,12 @@ pub fn solve_assignment(
     initial_points: &[Vector2],
     target_points: &[Vector2],
 ) -> Result<Vec<usize>, AlgorithmError> {
-    solve_assignment_with(initial_points, target_points, |distance| distance * distance, |_, _| true)
+    solve_assignment_with(
+        initial_points,
+        target_points,
+        |distance| distance * distance,
+        |_, _| true,
+    )
 }
 
 pub fn solve_assignment_with<F, G>(
@@ -247,7 +250,9 @@ where
     G: Fn(usize, usize) -> bool,
 {
     if initial_points.len() != target_points.len() {
-        return Err(AlgorithmError::SizeMismatch("Point sets must have equal size."));
+        return Err(AlgorithmError::SizeMismatch(
+            "Point sets must have equal size.",
+        ));
     }
 
     let point_count = initial_points.len();
@@ -289,7 +294,8 @@ where
         solver.add_edge(target_node, sink_node, 1, 0.0f32)?;
     }
 
-    let (sent_flow, _) = solver.compute_min_cost_flow(source_node, sink_node, point_count as i32)?;
+    let (sent_flow, _) =
+        solver.compute_min_cost_flow(source_node, sink_node, point_count as i32)?;
     if sent_flow != point_count as i32 {
         return Err(AlgorithmError::NoPerfectAssignment(
             "No perfect assignment exists under the given constraints.",
@@ -301,8 +307,10 @@ where
     for (from_node, to_node, _residual_capacity, _cost, reverse_residual_capacity) in
         solver.enumerate_forward_edges()
     {
-        let from_is_initial = from_node >= first_initial_node && from_node < first_initial_node + point_count;
-        let to_is_target = to_node >= first_target_node && to_node < first_target_node + point_count;
+        let from_is_initial =
+            from_node >= first_initial_node && from_node < first_initial_node + point_count;
+        let to_is_target =
+            to_node >= first_target_node && to_node < first_target_node + point_count;
         if !from_is_initial || !to_is_target {
             continue;
         }

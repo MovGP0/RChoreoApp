@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crate::ShellHost;
 
-use super::{mode_index, mode_option_from_index, NavBarViewModel};
+use super::{NavBarViewModel, mode_index, mode_option_from_index};
 
 pub fn apply_nav_bar_view_model(view: &ShellHost, view_model: &NavBarViewModel) {
     view.set_selected_mode_index(mode_index(view_model.selected_mode));

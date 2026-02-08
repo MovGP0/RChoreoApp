@@ -26,7 +26,10 @@ fn from_value(value: &Value) -> Result<Choreography, ChoreoJsonError> {
         .as_object()
         .ok_or(ChoreoJsonError::ExpectedObject("Choreography"))?;
 
-    let comment = root.get("_Comment").and_then(|v| v.as_str()).map(String::from);
+    let comment = root
+        .get("_Comment")
+        .and_then(|v| v.as_str())
+        .map(String::from);
     let name = get_string(root, "Name")?.unwrap_or_default();
     let subtitle = get_string(root, "Subtitle")?;
     let date = get_string(root, "Date")?;
@@ -73,7 +76,9 @@ fn from_value(value: &Value) -> Result<Choreography, ChoreoJsonError> {
     })
 }
 
-fn parse_roles(value: Option<&Value>) -> Result<(Vec<Role>, HashMap<String, Role>), ChoreoJsonError> {
+fn parse_roles(
+    value: Option<&Value>,
+) -> Result<(Vec<Role>, HashMap<String, Role>), ChoreoJsonError> {
     let list = value
         .and_then(Value::as_array)
         .ok_or(ChoreoJsonError::ExpectedArray("Roles"))?;
@@ -170,7 +175,10 @@ fn parse_scenes(
     Ok(scenes)
 }
 
-fn parse_scene(value: &Value, dancers_by_id: &HashMap<String, Dancer>) -> Result<Scene, ChoreoJsonError> {
+fn parse_scene(
+    value: &Value,
+    dancers_by_id: &HashMap<String, Dancer>,
+) -> Result<Scene, ChoreoJsonError> {
     let obj = value
         .as_object()
         .ok_or(ChoreoJsonError::ExpectedObject("Scene"))?;
@@ -223,7 +231,9 @@ fn parse_dancer_ref(
     value: Option<&Value>,
     dancers_by_id: &HashMap<String, Dancer>,
 ) -> Result<Option<Dancer>, ChoreoJsonError> {
-    let Some(value) = value else { return Ok(None); };
+    let Some(value) = value else {
+        return Ok(None);
+    };
     let obj = value
         .as_object()
         .ok_or(ChoreoJsonError::ExpectedObject("Dancer"))?;

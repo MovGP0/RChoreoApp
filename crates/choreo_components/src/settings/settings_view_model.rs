@@ -148,7 +148,6 @@ impl SettingsViewModel {
             handler(self, value);
         }
     }
-
 }
 
 impl Drop for SettingsViewModel {

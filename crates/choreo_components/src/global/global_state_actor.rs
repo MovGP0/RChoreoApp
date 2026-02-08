@@ -17,8 +17,7 @@ pub struct GlobalStateActor {
 }
 
 impl GlobalStateActor {
-    pub fn new() -> Rc<Self>
-    {
+    pub fn new() -> Rc<Self> {
         let store = Rc::new(Self {
             state: Rc::new(RefCell::new(GlobalStateModel::default())),
             queue: RefCell::new(VecDeque::new()),
@@ -27,30 +26,26 @@ impl GlobalStateActor {
         });
 
         let store_weak = Rc::downgrade(&store);
-        store._timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
-            if let Some(store) = store_weak.upgrade() {
-                store.drain();
-            }
-        });
+        store
+            ._timer
+            .start(TimerMode::Repeated, Duration::from_millis(16), move || {
+                if let Some(store) = store_weak.upgrade() {
+                    store.drain();
+                }
+            });
 
         store
     }
 
-    pub fn state_handle(&self) -> Rc<RefCell<GlobalStateModel>>
-    {
+    pub fn state_handle(&self) -> Rc<RefCell<GlobalStateModel>> {
         Rc::clone(&self.state)
     }
 
-    pub fn try_with_state<T>(&self, handler: impl FnOnce(&GlobalStateModel) -> T) -> Option<T>
-    {
-        self.state
-            .try_borrow()
-            .ok()
-            .map(|state| handler(&state))
+    pub fn try_with_state<T>(&self, handler: impl FnOnce(&GlobalStateModel) -> T) -> Option<T> {
+        self.state.try_borrow().ok().map(|state| handler(&state))
     }
 
-    pub fn try_update(&self, handler: impl FnOnce(&mut GlobalStateModel)) -> bool
-    {
+    pub fn try_update(&self, handler: impl FnOnce(&mut GlobalStateModel)) -> bool {
         let Ok(mut state) = self.state.try_borrow_mut() else {
             return false;
         };
@@ -65,13 +60,11 @@ impl GlobalStateActor {
         self.queue.borrow_mut().push_back(Box::new(command));
     }
 
-    pub fn subscribe(&self, handler: Rc<dyn Fn()>)
-    {
+    pub fn subscribe(&self, handler: Rc<dyn Fn()>) {
         self.subscribers.borrow_mut().push(Rc::downgrade(&handler));
     }
 
-    fn drain(&self)
-    {
+    fn drain(&self) {
         let mut queue = self.queue.borrow_mut();
         if queue.is_empty() {
             return;

@@ -60,10 +60,7 @@ impl Behavior<ChoreographySettingsViewModel> for UpdateFloorLeftBehavior {
         _view_model: &mut ChoreographySettingsViewModel,
         disposables: &mut CompositeDisposable,
     ) {
-        BehaviorLog::behavior_activated(
-            "UpdateFloorLeftBehavior",
-            "ChoreographySettingsViewModel",
-        );
+        BehaviorLog::behavior_activated("UpdateFloorLeftBehavior", "ChoreographySettingsViewModel");
         let Some(receiver) = self.receiver.clone() else {
             return;
         };
@@ -81,5 +78,3 @@ impl Behavior<ChoreographySettingsViewModel> for UpdateFloorLeftBehavior {
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
-

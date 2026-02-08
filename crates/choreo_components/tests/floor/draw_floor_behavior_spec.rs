@@ -32,24 +32,27 @@ impl FloorRenderGate for TestRenderGate {
 #[serial_test::serial]
 fn draw_floor_behavior_spec() {
     let suite = rspec::describe("draw floor behavior", (), |spec| {
-        spec.it("marks render gate once when draw command is handled", |_| {
-            let (sender, receiver) = unbounded::<DrawFloorCommand>();
-            let gate = Rc::new(TestRenderGate::default());
-            let mut behavior = DrawFloorBehavior::new(receiver, Some(gate.clone()));
+        spec.it(
+            "marks render gate once when draw command is handled",
+            |_| {
+                let (sender, receiver) = unbounded::<DrawFloorCommand>();
+                let gate = Rc::new(TestRenderGate::default());
+                let mut behavior = DrawFloorBehavior::new(receiver, Some(gate.clone()));
 
-            sender
-                .send(DrawFloorCommand)
-                .expect("draw command send should succeed");
-            assert!(behavior.try_handle());
-            assert!(gate.is_rendered());
-            assert_eq!(*gate.marks.lock().expect("lock should succeed"), 1);
+                sender
+                    .send(DrawFloorCommand)
+                    .expect("draw command send should succeed");
+                assert!(behavior.try_handle());
+                assert!(gate.is_rendered());
+                assert_eq!(*gate.marks.lock().expect("lock should succeed"), 1);
 
-            sender
-                .send(DrawFloorCommand)
-                .expect("draw command send should succeed");
-            assert!(behavior.try_handle());
-            assert_eq!(*gate.marks.lock().expect("lock should succeed"), 1);
-        });
+                sender
+                    .send(DrawFloorCommand)
+                    .expect("draw command send should succeed");
+                assert!(behavior.try_handle());
+                assert_eq!(*gate.marks.lock().expect("lock should succeed"), 1);
+            },
+        );
 
         spec.it("returns false when no draw command is pending", |_| {
             let (_sender, receiver) = unbounded::<DrawFloorCommand>();

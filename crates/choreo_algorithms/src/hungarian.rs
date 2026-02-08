@@ -7,7 +7,9 @@ pub fn fill_squared_distances(
     target: &[Vector2],
 ) -> Result<Vec<Vec<f32>>, AlgorithmError> {
     if initial.len() != target.len() {
-        return Err(AlgorithmError::SizeMismatch("Point sets must have equal size."));
+        return Err(AlgorithmError::SizeMismatch(
+            "Point sets must have equal size.",
+        ));
     }
 
     let n = initial.len();
@@ -119,7 +121,9 @@ where
     F: Fn(f32) -> f32,
 {
     if initial.len() != target.len() {
-        return Err(AlgorithmError::SizeMismatch("Point sets must have equal size."));
+        return Err(AlgorithmError::SizeMismatch(
+            "Point sets must have equal size.",
+        ));
     }
 
     let n = initial.len();
@@ -266,7 +270,13 @@ fn try_find_perfect_matching(distances: &[Vec<f32>], threshold: f32) -> bool {
 
     for left_node in 0..n {
         let mut visited = vec![false; n];
-        if !augment(left_node, distances, threshold, &mut match_to_left, &mut visited) {
+        if !augment(
+            left_node,
+            distances,
+            threshold,
+            &mut match_to_left,
+            &mut visited,
+        ) {
             return false;
         }
     }

@@ -44,37 +44,39 @@ fn load_settings_preferences_behavior_spec() {
             assert!(context.updater.call_count() >= 1);
         });
 
-        spec.it("reloads from updated preferences when reload is invoked", |_| {
-            let context = settings::SettingsTestContext::new();
-            context
-                .preferences
-                .set_string(SettingsPreferenceKeys::THEME, "Dark".to_string());
-            context
-                .preferences
-                .set_bool(SettingsPreferenceKeys::USE_PRIMARY_COLOR, false);
-            context
-                .preferences
-                .set_bool(SettingsPreferenceKeys::USE_SECONDARY_COLOR, true);
-            context
-                .preferences
-                .set_string(SettingsPreferenceKeys::PRIMARY_COLOR, "invalid".to_string());
+        spec.it("reloads from updated preferences when reload is invoked",
+            |_| {
+                let context = settings::SettingsTestContext::new();
+                context
+                    .preferences
+                    .set_string(SettingsPreferenceKeys::THEME, "Dark".to_string());
+                context
+                    .preferences
+                    .set_bool(SettingsPreferenceKeys::USE_PRIMARY_COLOR, false);
+                context
+                    .preferences
+                    .set_bool(SettingsPreferenceKeys::USE_SECONDARY_COLOR, true);
+                context
+                    .preferences
+                    .set_string(SettingsPreferenceKeys::PRIMARY_COLOR, "invalid".to_string());
 
-            context.view_model.borrow_mut().reload();
+                context.view_model.borrow_mut().reload();
 
-            let reloaded = context.wait_until(Duration::from_secs(1), || {
+                let reloaded = context.wait_until(Duration::from_secs(1), || {
+                    let view_model = context.view_model.borrow();
+                    view_model.theme_mode == ThemeMode::Dark
+                });
+                assert!(reloaded);
+
                 let view_model = context.view_model.borrow();
-                view_model.theme_mode == ThemeMode::Dark
-            });
-            assert!(reloaded);
-
-            let view_model = context.view_model.borrow();
-            assert!(!view_model.use_primary_color);
-            assert!(!view_model.use_secondary_color);
-            assert_eq!(
-                view_model.primary_color.to_hex(),
-                choreo_components::settings::default_primary_color().to_hex()
-            );
-        });
+                assert!(!view_model.use_primary_color);
+                assert!(!view_model.use_secondary_color);
+                assert_eq!(
+                    view_model.primary_color.to_hex(),
+                    choreo_components::settings::default_primary_color().to_hex()
+                );
+            },
+        );
     });
 
     let report = settings::run_suite(&suite);

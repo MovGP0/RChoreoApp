@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use choreo_models::{ChoreographyModel, PositionModel, SceneModel};
 
-use crate::scenes::SceneViewModel;
 use crate::floor::Point;
+use crate::scenes::SceneViewModel;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SelectionRectangle {

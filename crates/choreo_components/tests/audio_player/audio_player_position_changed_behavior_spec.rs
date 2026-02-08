@@ -15,15 +15,17 @@ fn audio_player_position_changed_behavior_spec() {
             let (sender, receiver) = bounded(16);
             let behavior = AudioPlayerPositionChangedBehavior::new(sender);
             let context = audio_player::AudioPlayerTestContext::new(vec![
-                Box::new(behavior) as Box<dyn Behavior<_>>,
+                Box::new(behavior) as Box<dyn Behavior<_>>
             ]);
 
             context.view_model.borrow_mut().position = 1.0;
-            let published = context.wait_until(Duration::from_secs(1), || receiver.try_recv().is_ok());
+            let published =
+                context.wait_until(Duration::from_secs(1), || receiver.try_recv().is_ok());
             assert!(published);
 
             context.view_model.borrow_mut().position = 2.0;
-            let published_again = context.wait_until(Duration::from_secs(1), || receiver.try_recv().is_ok());
+            let published_again =
+                context.wait_until(Duration::from_secs(1), || receiver.try_recv().is_ok());
             assert!(published_again);
         });
     });

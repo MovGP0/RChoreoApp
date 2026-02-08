@@ -2,9 +2,9 @@ use std::rc::Rc;
 
 use nject::injectable;
 
+use super::scenes_view_model::ScenesPaneViewModel;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
-use super::scenes_view_model::ScenesPaneViewModel;
 
 #[injectable]
 #[inject(|| Self)]
@@ -17,7 +17,11 @@ impl FilterScenesBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for FilterScenesBehavior {
-    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(
+        &self,
+        view_model: &mut ScenesPaneViewModel,
+        _disposables: &mut CompositeDisposable,
+    ) {
         BehaviorLog::behavior_activated("FilterScenesBehavior", "ScenesPaneViewModel");
         view_model.set_update_search_text_handler(Some(Rc::new(|view_model| {
             FilterScenesBehavior::apply(view_model);

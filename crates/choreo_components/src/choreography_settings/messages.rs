@@ -127,8 +127,5 @@ pub enum UpdateSelectedSceneCommand {
     SceneText(String),
     SceneFixedPositions(bool),
     SceneColor(Color),
-    SceneTimestamp {
-        has_timestamp: bool,
-        seconds: f64,
-    },
+    SceneTimestamp { has_timestamp: bool, seconds: f64 },
 }

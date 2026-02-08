@@ -1,9 +1,9 @@
 use crate::floor;
 
-use floor::Report;
 use choreo_components::floor::Point;
 use choreo_components::global::InteractionMode;
 use choreo_state_machine::MovePositionsStartedTrigger;
+use floor::Report;
 use std::time::Duration;
 
 fn setup_context() -> floor::FloorTestContext {
@@ -60,7 +60,8 @@ fn move_positions_behavior_spec() {
             );
 
             let moved = context.wait_until(Duration::from_secs(1), || {
-                let scene = context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
+                let scene =
+                    context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
                 let first = &scene.positions[0];
                 let second = &scene.positions[1];
                 (first.x - (start_first.x + 1.5)).abs() < 0.0001
@@ -84,7 +85,8 @@ fn move_positions_behavior_spec() {
             );
 
             let moved = context.wait_until(Duration::from_secs(1), || {
-                let scene = context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
+                let scene =
+                    context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
                 let first = &scene.positions[0];
                 let second = &scene.positions[1];
                 (first.x - (start_first.x + 1.5)).abs() < 0.0001
@@ -102,8 +104,10 @@ fn move_positions_behavior_spec() {
             drag_from_to(&context, Point::new(4.0, 4.0), Point::new(4.0, 4.0));
 
             let cleared = context.wait_until(Duration::from_secs(1), || {
-                let selected_count = context.read_global_state(|state| state.selected_positions.len());
-                let has_rectangle = context.read_global_state(|state| state.selection_rectangle.is_some());
+                let selected_count =
+                    context.read_global_state(|state| state.selected_positions.len());
+                let has_rectangle =
+                    context.read_global_state(|state| state.selection_rectangle.is_some());
                 selected_count == 0 && !has_rectangle
             });
             assert!(cleared);

@@ -3,11 +3,11 @@ use std::rc::Rc;
 use choreo_models::{Colors, SceneModel};
 use nject::injectable;
 
+use super::mapper::{build_scene_name, next_scene_id};
+use super::scenes_view_model::{SceneViewModel, ScenesPaneViewModel};
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
-use super::mapper::{build_scene_name, next_scene_id};
-use super::scenes_view_model::{SceneViewModel, ScenesPaneViewModel};
 
 #[injectable]
 #[inject(|global_state: Rc<GlobalStateActor>| Self::new(global_state))]
@@ -63,7 +63,10 @@ impl InsertSceneBehavior {
                 color: Colors::transparent(),
             };
             let model_insert = insert_index.min(global_state.choreography.scenes.len());
-            global_state.choreography.scenes.insert(model_insert, model_scene);
+            global_state
+                .choreography
+                .scenes
+                .insert(model_insert, model_scene);
 
             selected_scene = global_state.selected_scene.clone();
         });
@@ -77,7 +80,11 @@ impl InsertSceneBehavior {
 }
 
 impl Behavior<ScenesPaneViewModel> for InsertSceneBehavior {
-    fn activate(&self, view_model: &mut ScenesPaneViewModel, _disposables: &mut CompositeDisposable) {
+    fn activate(
+        &self,
+        view_model: &mut ScenesPaneViewModel,
+        _disposables: &mut CompositeDisposable,
+    ) {
         BehaviorLog::behavior_activated("InsertSceneBehavior", "ScenesPaneViewModel");
         let before_behavior = self.global_state.clone();
         view_model.set_add_scene_before_handler(Some(Rc::new(move |view_model| {

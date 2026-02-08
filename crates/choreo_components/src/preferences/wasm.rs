@@ -11,8 +11,7 @@ pub struct WasmPreferences {
 }
 
 impl WasmPreferences {
-    pub fn new(app_name: &str) -> Self
-    {
+    pub fn new(app_name: &str) -> Self {
         let storage = web_sys::window()
             .and_then(|window| window.local_storage().ok())
             .flatten();
@@ -24,15 +23,13 @@ impl WasmPreferences {
         }
     }
 
-    fn key_for(&self, key: &str) -> String
-    {
+    fn key_for(&self, key: &str) -> String {
         format!("{}.{}", self.app_name, key)
     }
 }
 
 impl Preferences for WasmPreferences {
-    fn get_string(&self, key: &str, default_value: &str) -> String
-    {
+    fn get_string(&self, key: &str, default_value: &str) -> String {
         let Some(storage) = self.storage.as_ref() else {
             return self.fallback.get_string(key, default_value);
         };
@@ -48,8 +45,7 @@ impl Preferences for WasmPreferences {
         }
     }
 
-    fn set_string(&self, key: &str, value: String)
-    {
+    fn set_string(&self, key: &str, value: String) {
         let Some(storage) = self.storage.as_ref() else {
             self.fallback.set_string(key, value);
             return;
@@ -61,8 +57,7 @@ impl Preferences for WasmPreferences {
         }
     }
 
-    fn remove(&self, key: &str)
-    {
+    fn remove(&self, key: &str) {
         if let Some(storage) = self.storage.as_ref() {
             let full_key = self.key_for(key);
             if let Err(err) = storage.remove_item(&full_key) {
@@ -73,15 +68,13 @@ impl Preferences for WasmPreferences {
         self.fallback.remove(key);
     }
 
-    fn get_bool(&self, key: &str, default_value: bool) -> bool
-    {
+    fn get_bool(&self, key: &str, default_value: bool) -> bool {
         let text_default = if default_value { "true" } else { "false" };
         let value = self.get_string(key, text_default);
         value.eq_ignore_ascii_case("true")
     }
 
-    fn set_bool(&self, key: &str, value: bool)
-    {
+    fn set_bool(&self, key: &str, value: bool) {
         self.set_string(key, value.to_string());
     }
 }

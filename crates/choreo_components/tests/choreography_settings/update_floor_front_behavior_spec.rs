@@ -5,8 +5,8 @@ use crate::choreography_settings;
 use choreo_components::behavior::Behavior;
 use choreo_components::choreography_settings::UpdateFloorFrontBehavior;
 use choreo_components::choreography_settings::UpdateFloorFrontCommand;
-use crossbeam_channel::unbounded;
 use choreography_settings::Report;
+use crossbeam_channel::unbounded;
 
 #[test]
 #[serial_test::serial]
@@ -14,7 +14,10 @@ fn update_floor_front_behavior_spec() {
     let suite = rspec::describe("update floor front behavior", (), |spec| {
         spec.it("clamps floor front range and sends redraw", |_| {
             let (redraw_sender, redraw_receiver) = unbounded();
-            let context = choreography_settings::ChoreographySettingsTestContext::with_redraw_receiver(redraw_receiver);
+            let context =
+                choreography_settings::ChoreographySettingsTestContext::with_redraw_receiver(
+                    redraw_receiver,
+                );
             let (sender, receiver) = unbounded::<UpdateFloorFrontCommand>();
             let behavior = UpdateFloorFrontBehavior::new_with_receiver(
                 context.global_state_store.clone(),

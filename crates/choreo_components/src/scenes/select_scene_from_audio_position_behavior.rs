@@ -94,7 +94,10 @@ impl Behavior<ScenesPaneViewModel> for SelectSceneFromAudioPositionBehavior {
         view_model: &mut ScenesPaneViewModel,
         disposables: &mut CompositeDisposable,
     ) {
-        BehaviorLog::behavior_activated("SelectSceneFromAudioPositionBehavior", "ScenesPaneViewModel");
+        BehaviorLog::behavior_activated(
+            "SelectSceneFromAudioPositionBehavior",
+            "ScenesPaneViewModel",
+        );
         let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
         else {
             return;

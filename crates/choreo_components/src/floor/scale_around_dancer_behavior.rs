@@ -3,25 +3,24 @@ use std::rc::Rc;
 use std::time::Duration;
 use web_time::Instant;
 
-use crossbeam_channel::Receiver;
-use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
-use crate::global::{GlobalStateModel, GlobalStateActor, InteractionMode, SelectionRectangle};
+use crate::behavior::{Behavior, CompositeDisposable};
+use crate::global::{GlobalStateActor, GlobalStateModel, InteractionMode, SelectionRectangle};
 use crate::logging::BehaviorLog;
 use choreo_models::PositionModel;
 use choreo_state_machine::{
-    ApplicationStateMachine,
-    ScaleAroundDancerDragCompletedTrigger,
-    ScaleAroundDancerDragStartedTrigger,
-    ScaleAroundDancerSelectionCompletedTrigger,
-    ScaleAroundDancerSelectionStartedTrigger,
-    StateKind,
+    ApplicationStateMachine, ScaleAroundDancerDragCompletedTrigger,
+    ScaleAroundDancerDragStartedTrigger, ScaleAroundDancerSelectionCompletedTrigger,
+    ScaleAroundDancerSelectionStartedTrigger, StateKind,
 };
+use crossbeam_channel::Receiver;
 use nject::injectable;
 use slint::TimerMode;
 
 use super::floor_view_model::FloorCanvasViewModel;
-use super::messages::{PointerButton, PointerMovedCommand, PointerPressedCommand, PointerReleasedCommand};
+use super::messages::{
+    PointerButton, PointerMovedCommand, PointerPressedCommand, PointerReleasedCommand,
+};
 use super::types::Point;
 
 pub trait TimeProvider: Send + Sync {
@@ -125,8 +124,7 @@ impl ScaleAroundDancerBehavior {
         pointer_pressed_receiver: Receiver<PointerPressedCommand>,
         pointer_moved_receiver: Receiver<PointerMovedCommand>,
         pointer_released_receiver: Receiver<PointerReleasedCommand>,
-    ) -> Self
-    {
+    ) -> Self {
         Self {
             global_state: Some(global_state),
             state_machine: Some(state_machine),
@@ -304,8 +302,8 @@ impl ScaleAroundDancerBehavior {
             .rotation_anchor_index
             .and_then(|index| scene.positions.get(index))
             .map(|position| Point::new(position.x, position.y));
-        let rotation_center =
-            anchor_point.unwrap_or_else(|| Self::calculate_center(&global_state.selected_positions));
+        let rotation_center = anchor_point
+            .unwrap_or_else(|| Self::calculate_center(&global_state.selected_positions));
 
         let start_angle = Self::calculate_angle(rotation_center, floor_point);
 
@@ -379,10 +377,12 @@ impl ScaleAroundDancerBehavior {
     }
 
     fn update_selection(&mut self, global_state: &mut GlobalStateModel, floor_point: Point) {
-        let rectangle = global_state.selection_rectangle.unwrap_or(SelectionRectangle {
-            start: floor_point,
-            end: floor_point,
-        });
+        let rectangle = global_state
+            .selection_rectangle
+            .unwrap_or(SelectionRectangle {
+                start: floor_point,
+                end: floor_point,
+            });
         let updated = SelectionRectangle {
             start: rectangle.start,
             end: floor_point,
@@ -488,14 +488,19 @@ impl ScaleAroundDancerBehavior {
         floor_point: Point,
         global_state: &mut GlobalStateModel,
     ) -> (bool, bool) {
-        let Some((hit_index, _)) = Self::try_get_position_at_point(global_state, floor_point) else {
+        let Some((hit_index, _)) = Self::try_get_position_at_point(global_state, floor_point)
+        else {
             self.reset_tap_state();
             return (false, false);
         };
 
         let now = self.time_provider.now();
-        let is_double_tap = self.last_tap_time.is_some_and(|last| now - last <= Duration::from_millis(400))
-            && self.last_tap_view_point.is_some_and(|last| Self::distance(last, view_point) <= 12.0)
+        let is_double_tap = self
+            .last_tap_time
+            .is_some_and(|last| now - last <= Duration::from_millis(400))
+            && self
+                .last_tap_view_point
+                .is_some_and(|last| Self::distance(last, view_point) <= 12.0)
             && self.last_tap_index == Some(hit_index);
 
         self.last_tap_time = Some(now);
@@ -550,7 +555,10 @@ impl ScaleAroundDancerBehavior {
         let dy = point.y - anchor.y;
         let cos = angle.cos();
         let sin = angle.sin();
-        Point::new(anchor.x + dx * cos - dy * sin, anchor.y + dx * sin + dy * cos)
+        Point::new(
+            anchor.x + dx * cos - dy * sin,
+            anchor.y + dx * sin + dy * cos,
+        )
     }
 
     fn distance(left: Point, right: Point) -> f64 {
@@ -611,7 +619,10 @@ impl ScaleAroundDancerBehavior {
     ) -> Vec<usize> {
         let mut indices = Vec::new();
         for (index, position) in scene.positions.iter().enumerate() {
-            if selected_positions.iter().any(|selected| selected == position) {
+            if selected_positions
+                .iter()
+                .any(|selected| selected == position)
+            {
                 indices.push(index);
             }
         }
@@ -676,8 +687,7 @@ impl Behavior<FloorCanvasViewModel> for ScaleAroundDancerBehavior {
         &self,
         view_model: &mut FloorCanvasViewModel,
         disposables: &mut CompositeDisposable,
-    )
-    {
+    ) {
         BehaviorLog::behavior_activated("ScaleAroundDancerBehavior", "FloorCanvasViewModel");
 
         let Some(global_state) = self.global_state.clone() else {

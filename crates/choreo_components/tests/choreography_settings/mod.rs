@@ -52,7 +52,8 @@ pub struct ChoreographySettingsTestContext {
     pub global_state_store: Rc<GlobalStateActor>,
     pub view_model: Rc<RefCell<ChoreographySettingsViewModel>>,
     pub preferences: InMemoryPreferences,
-    pub redraw_receiver: crossbeam_channel::Receiver<choreo_components::choreography_settings::RedrawFloorCommand>,
+    pub redraw_receiver:
+        crossbeam_channel::Receiver<choreo_components::choreography_settings::RedrawFloorCommand>,
     disposables: RefCell<CompositeDisposable>,
 }
 
@@ -81,7 +82,9 @@ impl ChoreographySettingsTestContext {
     }
 
     pub fn with_redraw_receiver(
-        redraw_receiver: crossbeam_channel::Receiver<choreo_components::choreography_settings::RedrawFloorCommand>,
+        redraw_receiver: crossbeam_channel::Receiver<
+            choreo_components::choreography_settings::RedrawFloorCommand,
+        >,
     ) -> Self {
         ensure_slint_test_backend();
 
@@ -102,7 +105,10 @@ impl ChoreographySettingsTestContext {
         context
     }
 
-    pub fn activate_behaviors(&self, behaviors: Vec<Box<dyn Behavior<ChoreographySettingsViewModel>>>) {
+    pub fn activate_behaviors(
+        &self,
+        behaviors: Vec<Box<dyn Behavior<ChoreographySettingsViewModel>>>,
+    ) {
         for behavior in behaviors {
             behavior.activate(
                 &mut self.view_model.borrow_mut(),
@@ -112,12 +118,18 @@ impl ChoreographySettingsTestContext {
         self.pump_events();
     }
 
-    pub fn update_global_state(&self, update: impl FnOnce(&mut choreo_components::global::GlobalStateModel)) {
+    pub fn update_global_state(
+        &self,
+        update: impl FnOnce(&mut choreo_components::global::GlobalStateModel),
+    ) {
         let updated = self.global_state_store.try_update(update);
         assert!(updated, "failed to update global state in test context");
     }
 
-    pub fn read_global_state<T>(&self, read: impl FnOnce(&choreo_components::global::GlobalStateModel) -> T) -> T {
+    pub fn read_global_state<T>(
+        &self,
+        read: impl FnOnce(&choreo_components::global::GlobalStateModel) -> T,
+    ) -> T {
         self.global_state_store
             .try_with_state(read)
             .expect("failed to read global state in test context")

@@ -26,14 +26,19 @@ use super::types::MaterialSchemeUpdater;
         )
     }
 )]
-pub struct SwitchDarkLightModeBehavior<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static> {
+pub struct SwitchDarkLightModeBehavior<
+    P: Preferences + Clone + 'static,
+    U: MaterialSchemeUpdater + Clone + 'static,
+> {
     preferences: P,
     updater: U,
     update_use_system_theme_receiver: Receiver<UpdateUseSystemThemeCommand>,
     switch_theme_mode_receiver: Receiver<SwitchThemeModeCommand>,
 }
 
-impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static> SwitchDarkLightModeBehavior<P, U> {
+impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static>
+    SwitchDarkLightModeBehavior<P, U>
+{
     pub fn new(
         preferences: P,
         updater: U,
@@ -75,20 +80,19 @@ impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'stati
         };
 
         let theme = if is_dark { "Dark" } else { "Light" };
-        preferences
-            .set_string(choreo_models::SettingsPreferenceKeys::THEME, theme.to_string());
+        preferences.set_string(
+            choreo_models::SettingsPreferenceKeys::THEME,
+            theme.to_string(),
+        );
         updater.update(view_model, preferences);
     }
 }
 
-impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static> Behavior<SettingsViewModel>
-    for SwitchDarkLightModeBehavior<P, U>
+impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'static>
+    Behavior<SettingsViewModel> for SwitchDarkLightModeBehavior<P, U>
 {
     fn activate(&self, view_model: &mut SettingsViewModel, disposables: &mut CompositeDisposable) {
-        BehaviorLog::behavior_activated(
-            "SwitchDarkLightModeBehavior",
-            "SettingsViewModel",
-        );
+        BehaviorLog::behavior_activated("SwitchDarkLightModeBehavior", "SettingsViewModel");
         let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
         else {
             return;
@@ -113,12 +117,7 @@ impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'stati
 
             while let Ok(command) = switch_theme_mode_receiver.try_recv() {
                 let mut view_model = view_model_handle.borrow_mut();
-                Self::apply_theme_mode(
-                    &mut view_model,
-                    &preferences,
-                    &updater,
-                    command.is_dark,
-                );
+                Self::apply_theme_mode(&mut view_model, &preferences, &updater, command.is_dark);
             }
         });
         disposables.add(Box::new(TimerDisposable::new(timer)));

@@ -1,8 +1,8 @@
 use choreo_algorithms::hungarian::compute_mid_scene_assignment;
 use choreo_algorithms::min_cost_max_flow::solve_three_scene_assignment;
 use choreo_algorithms::{AlgorithmError, Vector2};
-use rspec::{ConfigurationBuilder, Logger, Runner};
 use rspec::report::Report;
+use rspec::{ConfigurationBuilder, Logger, Runner};
 use serde_json::Value;
 use std::io;
 use std::sync::Arc;
@@ -23,19 +23,22 @@ where
 #[test]
 fn three_scene_assignment_spec() {
     let suite = rspec::describe("three scene assignment", (), |spec| {
-        spec.it("chooses non-crossing mapping when midpoints are swapped", |_| {
-            let scene_a = vec![Vector2::new(0.0, 0.0), Vector2::new(2.0, 0.0)];
-            let scene_b = vec![Vector2::new(2.0, 1.0), Vector2::new(0.0, 1.0)];
-            let scene_c = vec![Vector2::new(0.0, 2.0), Vector2::new(2.0, 2.0)];
+        spec.it(
+            "chooses non-crossing mapping when midpoints are swapped",
+            |_| {
+                let scene_a = vec![Vector2::new(0.0, 0.0), Vector2::new(2.0, 0.0)];
+                let scene_b = vec![Vector2::new(2.0, 1.0), Vector2::new(0.0, 1.0)];
+                let scene_c = vec![Vector2::new(0.0, 2.0), Vector2::new(2.0, 2.0)];
 
-            let hungarian =
-                compute_mid_scene_assignment(&scene_a, &scene_b, &scene_c).expect("hungarian");
-            let min_cost =
-                solve_three_scene_assignment(&scene_a, &scene_b, &scene_c).expect("min cost");
+                let hungarian =
+                    compute_mid_scene_assignment(&scene_a, &scene_b, &scene_c).expect("hungarian");
+                let min_cost =
+                    solve_three_scene_assignment(&scene_a, &scene_b, &scene_c).expect("min cost");
 
-            assert_eq!(hungarian, vec![1, 0]);
-            assert_eq!(min_cost, vec![1, 0]);
-        });
+                assert_eq!(hungarian, vec![1, 0]);
+                assert_eq!(min_cost, vec![1, 0]);
+            },
+        );
 
         spec.it("fails when scenes differ in size", |_| {
             let scene_a = vec![Vector2::new(0.0, 0.0)];
@@ -51,17 +54,20 @@ fn three_scene_assignment_spec() {
             assert!(matches!(min_cost, AlgorithmError::SizeMismatch(_)));
         });
 
-        spec.it("returns valid assignments on real choreography sample", |_| {
-            let (scene_a, scene_b, scene_c) = load_first_three_scenes();
+        spec.it(
+            "returns valid assignments on real choreography sample",
+            |_| {
+                let (scene_a, scene_b, scene_c) = load_first_three_scenes();
 
-            let hungarian =
-                compute_mid_scene_assignment(&scene_a, &scene_b, &scene_c).expect("hungarian");
-            let min_cost =
-                solve_three_scene_assignment(&scene_a, &scene_b, &scene_c).expect("min cost");
+                let hungarian =
+                    compute_mid_scene_assignment(&scene_a, &scene_b, &scene_c).expect("hungarian");
+                let min_cost =
+                    solve_three_scene_assignment(&scene_a, &scene_b, &scene_c).expect("min cost");
 
-            assert_is_permutation(&hungarian, scene_a.len());
-            assert_is_permutation(&min_cost, scene_a.len());
-        });
+                assert_is_permutation(&hungarian, scene_a.len());
+                assert_is_permutation(&min_cost, scene_a.len());
+            },
+        );
     });
 
     let report = run_suite(&suite);
@@ -99,14 +105,8 @@ fn load_first_three_scenes() -> (Vec<Vector2>, Vec<Vector2>, Vec<Vector2>) {
                 .expect("dancer ref")
                 .parse::<i32>()
                 .expect("dancer id");
-            let x = position
-                .get("X")
-                .and_then(Value::as_f64)
-                .expect("X") as f32;
-            let y = position
-                .get("Y")
-                .and_then(Value::as_f64)
-                .expect("Y") as f32;
+            let x = position.get("X").and_then(Value::as_f64).expect("X") as f32;
+            let y = position.get("Y").and_then(Value::as_f64).expect("Y") as f32;
             collected[scene_index].push((dancer_id, Vector2::new(x, y)));
         }
     }

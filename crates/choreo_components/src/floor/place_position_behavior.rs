@@ -2,18 +2,20 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crossbeam_channel::Receiver;
-use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
-use crate::global::{GlobalStateModel, GlobalStateActor};
+use crate::behavior::{Behavior, CompositeDisposable};
+use crate::global::{GlobalStateActor, GlobalStateModel};
 use crate::logging::BehaviorLog;
 use choreo_models::PositionModel;
 use choreo_state_machine::{ApplicationStateMachine, StateKind};
+use crossbeam_channel::Receiver;
 use nject::injectable;
 use slint::TimerMode;
 
 use super::floor_view_model::FloorCanvasViewModel;
-use super::messages::{PointerButton, PointerMovedCommand, PointerPressedCommand, PointerReleasedCommand};
+use super::messages::{
+    PointerButton, PointerMovedCommand, PointerPressedCommand, PointerReleasedCommand,
+};
 use super::types::Point;
 
 #[derive(Default, Clone)]
@@ -50,8 +52,7 @@ impl PlacePositionBehavior {
         pointer_pressed_receiver: Receiver<PointerPressedCommand>,
         pointer_moved_receiver: Receiver<PointerMovedCommand>,
         pointer_released_receiver: Receiver<PointerReleasedCommand>,
-    ) -> Self
-    {
+    ) -> Self {
         Self {
             global_state: Some(global_state),
             state_machine: Some(state_machine),
@@ -102,7 +103,12 @@ impl PlacePositionBehavior {
         self.pointer_moved = false;
 
         if should_place {
-            self.try_place_position(view_model, global_state, state_machine, command.event_args.position);
+            self.try_place_position(
+                view_model,
+                global_state,
+                state_machine,
+                command.event_args.position,
+            );
         }
     }
 
@@ -121,7 +127,8 @@ impl PlacePositionBehavior {
             return;
         }
 
-        let Some(floor_point) = Self::try_get_floor_point(view_model, global_state, view_point) else {
+        let Some(floor_point) = Self::try_get_floor_point(view_model, global_state, view_point)
+        else {
             return;
         };
 
@@ -162,7 +169,11 @@ impl PlacePositionBehavior {
         }
     }
 
-    fn snap_to_grid(choreography: &choreo_models::ChoreographyModel, position_x: &mut f64, position_y: &mut f64) {
+    fn snap_to_grid(
+        choreography: &choreo_models::ChoreographyModel,
+        position_x: &mut f64,
+        position_y: &mut f64,
+    ) {
         if !choreography.settings.snap_to_grid {
             return;
         }

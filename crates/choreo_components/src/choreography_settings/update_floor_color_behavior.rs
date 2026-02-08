@@ -82,5 +82,3 @@ impl Behavior<ChoreographySettingsViewModel> for UpdateFloorColorBehavior {
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
-

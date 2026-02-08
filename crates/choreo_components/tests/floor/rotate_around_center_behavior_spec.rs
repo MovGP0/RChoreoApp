@@ -1,9 +1,9 @@
 use crate::floor;
 
-use floor::Report;
 use choreo_components::floor::Point;
 use choreo_components::global::InteractionMode;
 use choreo_state_machine::RotateAroundCenterStartedTrigger;
+use floor::Report;
 use std::time::Duration;
 
 fn setup_context() -> floor::FloorTestContext {
@@ -53,7 +53,8 @@ fn rotate_around_center_behavior_spec() {
             drag_from_to(&context, Point::new(0.0, 2.0), Point::new(1.0, 1.0));
 
             let rotated = context.wait_until(Duration::from_secs(1), || {
-                let scene = context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
+                let scene =
+                    context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
                 let first = &scene.positions[0];
                 let second = &scene.positions[1];
                 let third = &scene.positions[2];

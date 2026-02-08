@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
 use crossbeam_channel::Receiver;
 use nject::injectable;
@@ -22,8 +22,7 @@ pub struct RedrawFloorBehavior {
 }
 
 impl RedrawFloorBehavior {
-    pub fn new(receiver: Receiver<RedrawFloorCommand>) -> Self
-    {
+    pub fn new(receiver: Receiver<RedrawFloorCommand>) -> Self {
         Self {
             receiver: Some(receiver),
         }

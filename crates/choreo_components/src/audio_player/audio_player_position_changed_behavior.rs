@@ -19,15 +19,17 @@ pub struct AudioPlayerPositionChangedBehavior {
 }
 
 impl AudioPlayerPositionChangedBehavior {
-    pub fn new(publisher: Sender<AudioPlayerPositionChangedEvent>) -> Self
-    {
+    pub fn new(publisher: Sender<AudioPlayerPositionChangedEvent>) -> Self {
         Self { publisher }
     }
 }
 
 impl Behavior<AudioPlayerViewModel> for AudioPlayerPositionChangedBehavior {
-    fn activate(&self, view_model: &mut AudioPlayerViewModel, disposables: &mut CompositeDisposable)
-    {
+    fn activate(
+        &self,
+        view_model: &mut AudioPlayerViewModel,
+        disposables: &mut CompositeDisposable,
+    ) {
         BehaviorLog::behavior_activated(
             "AudioPlayerPositionChangedBehavior",
             "AudioPlayerViewModel",

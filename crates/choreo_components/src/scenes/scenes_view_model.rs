@@ -1,14 +1,14 @@
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
-use crossbeam_channel::Sender;
 use choreo_master_mobile_json::{Color, SceneId};
 use choreo_models::{PositionModel, SceneModel, SettingsPreferenceKeys};
+use crossbeam_channel::Sender;
 use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
-use crate::haptics::HapticFeedback;
 use crate::global::GlobalStateModel;
+use crate::haptics::HapticFeedback;
 use crate::preferences::Preferences;
 
 use super::messages::{CloseDialogCommand, DialogRequest, ShowDialogCommand};
@@ -43,7 +43,6 @@ pub struct ScenesPaneViewModelActions {
     pub navigate_to_dancer_settings: Option<SceneActionHandler>,
     pub select_scene: Option<SceneSelectHandler>,
 }
-
 
 #[injectable]
 #[inject(
@@ -143,66 +142,39 @@ impl ScenesPaneViewModel {
         self.actions = actions;
     }
 
-    pub fn set_add_scene_before_handler(
-        &mut self,
-        handler: Option<SceneActionHandler>,
-    ) {
+    pub fn set_add_scene_before_handler(&mut self, handler: Option<SceneActionHandler>) {
         self.actions.add_scene_before = handler;
     }
 
-    pub fn set_add_scene_after_handler(
-        &mut self,
-        handler: Option<SceneActionHandler>,
-    ) {
+    pub fn set_add_scene_after_handler(&mut self, handler: Option<SceneActionHandler>) {
         self.actions.add_scene_after = handler;
     }
 
-    pub fn set_update_search_text_handler(
-        &mut self,
-        handler: Option<SceneActionHandler>,
-    ) {
+    pub fn set_update_search_text_handler(&mut self, handler: Option<SceneActionHandler>) {
         self.actions.update_search_text = handler;
     }
 
-    pub fn set_delete_scene_handler(
-        &mut self,
-        handler: Option<SceneActionHandler>,
-    ) {
+    pub fn set_delete_scene_handler(&mut self, handler: Option<SceneActionHandler>) {
         self.actions.delete_scene = handler;
     }
 
-    pub fn set_open_choreo_handler(
-        &mut self,
-        handler: Option<SceneActionHandler>,
-    ) {
+    pub fn set_open_choreo_handler(&mut self, handler: Option<SceneActionHandler>) {
         self.actions.open_choreo = handler;
     }
 
-    pub fn set_save_choreo_handler(
-        &mut self,
-        handler: Option<SceneActionHandler>,
-    ) {
+    pub fn set_save_choreo_handler(&mut self, handler: Option<SceneActionHandler>) {
         self.actions.save_choreo = handler;
     }
 
-    pub fn set_navigate_to_settings_handler(
-        &mut self,
-        handler: Option<SceneActionHandler>,
-    ) {
+    pub fn set_navigate_to_settings_handler(&mut self, handler: Option<SceneActionHandler>) {
         self.actions.navigate_to_settings = handler;
     }
 
-    pub fn set_navigate_to_dancer_settings_handler(
-        &mut self,
-        handler: Option<SceneActionHandler>,
-    ) {
+    pub fn set_navigate_to_dancer_settings_handler(&mut self, handler: Option<SceneActionHandler>) {
         self.actions.navigate_to_dancer_settings = handler;
     }
 
-    pub fn set_select_scene_handler(
-        &mut self,
-        handler: Option<SceneSelectHandler>,
-    ) {
+    pub fn set_select_scene_handler(&mut self, handler: Option<SceneSelectHandler>) {
         self.actions.select_scene = handler;
     }
 
@@ -401,7 +373,6 @@ impl ScenesPaneViewModel {
             haptic.perform_click();
         }
     }
-
 }
 
 impl Drop for ScenesPaneViewModel {

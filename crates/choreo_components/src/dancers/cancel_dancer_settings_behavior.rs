@@ -32,10 +32,7 @@ impl Behavior<DancerSettingsViewModel> for CancelDancerSettingsBehavior {
         view_model: &mut DancerSettingsViewModel,
         disposables: &mut CompositeDisposable,
     ) {
-        BehaviorLog::behavior_activated(
-            "CancelDancerSettingsBehavior",
-            "DancerSettingsViewModel",
-        );
+        BehaviorLog::behavior_activated("CancelDancerSettingsBehavior", "DancerSettingsViewModel");
         let Some(_view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
         else {
             return;

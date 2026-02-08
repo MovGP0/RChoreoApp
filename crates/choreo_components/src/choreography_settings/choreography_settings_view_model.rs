@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
-use choreo_master_mobile_json::Color;
 use crate::date;
+use choreo_master_mobile_json::Color;
 use time::Date;
 
 use crate::behavior::{Behavior, CompositeDisposable};
@@ -62,13 +62,14 @@ impl ChoreographySettingsViewModel {
     pub fn new(behaviors: Vec<Box<dyn Behavior<ChoreographySettingsViewModel>>>) -> Self {
         let floor_size_options = (0..=100).collect::<Vec<_>>();
         let grid_size_options = build_grid_size_options();
-        let selected_grid_size_option = grid_size_options
-            .first()
-            .cloned()
-            .unwrap_or(GridSizeOption {
-                value: 1,
-                display: "1/1 m (100 cm)".to_string(),
-            });
+        let selected_grid_size_option =
+            grid_size_options
+                .first()
+                .cloned()
+                .unwrap_or(GridSizeOption {
+                    value: 1,
+                    display: "1/1 m (100 cm)".to_string(),
+                });
 
         let mut view_model = Self {
             floor_size_options,
@@ -119,9 +120,12 @@ impl ChoreographySettingsViewModel {
     }
 
     pub fn grid_resolution(&self) -> i32 {
-        self.selected_grid_size_option
-            .value
-            .max(self.grid_size_options.first().map(|opt| opt.value).unwrap_or(1))
+        self.selected_grid_size_option.value.max(
+            self.grid_size_options
+                .first()
+                .map(|opt| opt.value)
+                .unwrap_or(1),
+        )
     }
 
     pub fn set_grid_resolution(&mut self, value: i32) {
@@ -161,9 +165,7 @@ impl ChoreographySettingsViewModel {
         let seconds = seconds.clamp(0, 59);
         let millis = millis.clamp(0, 999);
         let millis = (millis / 10) * 10;
-        let total = (minutes as f64 * 60.0)
-            + (seconds as f64)
-            + (millis as f64 / 1000.0);
+        let total = (minutes as f64 * 60.0) + (seconds as f64) + (millis as f64 / 1000.0);
         let clamped = clamp_scene_timestamp(total);
         let total_millis = (clamped * 1000.0).round() as i64;
         let minutes = (total_millis / 60000) as i32;
@@ -209,9 +211,11 @@ impl Default for ChoreographySettingsViewModel {
     }
 }
 
-
 pub(crate) fn clamp_scene_timestamp(seconds: f64) -> f64 {
-    seconds.clamp(0.0, ChoreographySettingsViewModel::MAX_SCENE_TIMESTAMP_SECONDS)
+    seconds.clamp(
+        0.0,
+        ChoreographySettingsViewModel::MAX_SCENE_TIMESTAMP_SECONDS,
+    )
 }
 
 fn build_grid_size_options() -> Vec<GridSizeOption> {
@@ -248,4 +252,3 @@ fn format_decimal(value: f64) -> String {
 fn round_to_two_decimals(value: f64) -> f64 {
     (value * 100.0).round() / 100.0
 }
-

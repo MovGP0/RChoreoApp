@@ -1,15 +1,15 @@
-use std::time::Duration;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Duration;
 
 use crate::choreo_main;
 
 use choreo_components::behavior::Behavior;
 use choreo_components::choreo_main::ApplyInteractionModeBehavior;
 use choreo_components::global::InteractionMode;
+use choreo_main::Report;
 use choreo_state_machine::StateKind;
 use crossbeam_channel::unbounded;
-use choreo_main::Report;
 
 #[test]
 #[serial_test::serial]
@@ -19,9 +19,9 @@ fn apply_interaction_mode_behavior_spec() {
             let (sender, receiver) = unbounded::<InteractionMode>();
             let global_state_store = choreo_components::global::GlobalStateActor::new();
             let state_machine = Rc::new(RefCell::new(
-                choreo_state_machine::ApplicationStateMachine::with_default_transitions(
-                    Box::new(choreo_components::global::GlobalStateModel::default()),
-                ),
+                choreo_state_machine::ApplicationStateMachine::with_default_transitions(Box::new(
+                    choreo_components::global::GlobalStateModel::default(),
+                )),
             ));
             let behavior = ApplyInteractionModeBehavior::new(
                 global_state_store.clone(),

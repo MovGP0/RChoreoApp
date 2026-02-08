@@ -8,8 +8,8 @@ use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
-use super::mapper::normalize_text;
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
+use super::mapper::normalize_text;
 use super::messages::{RedrawFloorCommand, UpdateDescriptionCommand};
 use nject::injectable;
 

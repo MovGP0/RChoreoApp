@@ -12,21 +12,24 @@ use choreography_settings::Report;
 #[serial_test::serial]
 fn load_settings_preferences_behavior_spec() {
     let suite = rspec::describe("load settings preferences behavior", (), |spec| {
-        spec.it("loads booleans from preferences into settings model", |_| {
-            let preferences = InMemoryPreferences::new();
-            preferences.set_bool(SettingsPreferenceKeys::SHOW_TIMESTAMPS, false);
-            preferences.set_bool(SettingsPreferenceKeys::POSITIONS_AT_SIDE, false);
-            preferences.set_bool(SettingsPreferenceKeys::SNAP_TO_GRID, true);
+        spec.it(
+            "loads booleans from preferences into settings model",
+            |_| {
+                let preferences = InMemoryPreferences::new();
+                preferences.set_bool(SettingsPreferenceKeys::SHOW_TIMESTAMPS, false);
+                preferences.set_bool(SettingsPreferenceKeys::POSITIONS_AT_SIDE, false);
+                preferences.set_bool(SettingsPreferenceKeys::SNAP_TO_GRID, true);
 
-            let behavior = LoadSettingsPreferencesBehavior::new(preferences);
-            let mut settings = SettingsModel::default();
-            let mut disposables = choreo_components::behavior::CompositeDisposable::new();
-            behavior.activate(&mut settings, &mut disposables);
+                let behavior = LoadSettingsPreferencesBehavior::new(preferences);
+                let mut settings = SettingsModel::default();
+                let mut disposables = choreo_components::behavior::CompositeDisposable::new();
+                behavior.activate(&mut settings, &mut disposables);
 
-            assert!(!settings.show_timestamps);
-            assert!(!settings.positions_at_side);
-            assert!(settings.snap_to_grid);
-        });
+                assert!(!settings.show_timestamps);
+                assert!(!settings.positions_at_side);
+                assert!(settings.snap_to_grid);
+            },
+        );
     });
 
     let report = choreography_settings::run_suite(&suite);

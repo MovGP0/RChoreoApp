@@ -30,31 +30,14 @@ pub use choreography_settings_view_model::{ChoreographySettingsViewModel, GridSi
 pub use load_choreography_settings_behavior::LoadChoreographySettingsBehavior;
 pub use load_settings_preferences_behavior::LoadSettingsPreferencesBehavior;
 pub use messages::{
-    RedrawFloorCommand,
-    ReloadChoreographySettingsCommand,
-    ReloadSettingsPreferencesCommand,
-    ShowTimestampsChangedEvent,
-    UpdateAuthorCommand,
-    UpdateCommentCommand,
-    UpdateDateCommand,
-    UpdateDescriptionCommand,
-    UpdateDrawPathFromCommand,
-    UpdateDrawPathToCommand,
-    UpdateFloorBackCommand,
-    UpdateFloorColorCommand,
-    UpdateFloorFrontCommand,
-    UpdateFloorLeftCommand,
-    UpdateFloorRightCommand,
-    UpdateGridLinesCommand,
-    UpdateGridResolutionCommand,
-    UpdateNameCommand,
-    UpdatePositionsAtSideCommand,
-    UpdateSelectedSceneCommand,
-    UpdateShowLegendCommand,
-    UpdateShowTimestampsCommand,
-    UpdateSnapToGridCommand,
-    UpdateSubtitleCommand,
-    UpdateTransparencyCommand,
+    RedrawFloorCommand, ReloadChoreographySettingsCommand, ReloadSettingsPreferencesCommand,
+    ShowTimestampsChangedEvent, UpdateAuthorCommand, UpdateCommentCommand, UpdateDateCommand,
+    UpdateDescriptionCommand, UpdateDrawPathFromCommand, UpdateDrawPathToCommand,
+    UpdateFloorBackCommand, UpdateFloorColorCommand, UpdateFloorFrontCommand,
+    UpdateFloorLeftCommand, UpdateFloorRightCommand, UpdateGridLinesCommand,
+    UpdateGridResolutionCommand, UpdateNameCommand, UpdatePositionsAtSideCommand,
+    UpdateSelectedSceneCommand, UpdateShowLegendCommand, UpdateShowTimestampsCommand,
+    UpdateSnapToGridCommand, UpdateSubtitleCommand, UpdateTransparencyCommand,
     UpdateVariationCommand,
 };
 pub use update_author_behavior::UpdateAuthorBehavior;
@@ -94,7 +77,9 @@ pub struct ChoreographySettingsDependencies<P: crate::preferences::Preferences> 
     pub show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,
 }
 
-pub fn build_choreography_settings_behaviors<P: crate::preferences::Preferences + Clone + 'static>(
+pub fn build_choreography_settings_behaviors<
+    P: crate::preferences::Preferences + Clone + 'static,
+>(
     deps: ChoreographySettingsDependencies<P>,
 ) -> Vec<Box<dyn Behavior<ChoreographySettingsViewModel>>> {
     let global_state = deps.global_state;
@@ -102,12 +87,8 @@ pub fn build_choreography_settings_behaviors<P: crate::preferences::Preferences 
     let redraw_sender = deps.redraw_sender;
     let show_timestamps_sender = deps.show_timestamps_sender;
     vec![
-        Box::new(LoadChoreographySettingsBehavior::new(
-            global_state.clone(),
-        )),
-        Box::new(UpdateSelectedSceneBehavior::new(
-            global_state.clone(),
-        )),
+        Box::new(LoadChoreographySettingsBehavior::new(global_state.clone())),
+        Box::new(UpdateSelectedSceneBehavior::new(global_state.clone())),
         Box::new(UpdateCommentBehavior::new(
             global_state.clone(),
             redraw_sender.clone(),
@@ -202,7 +183,5 @@ pub fn build_choreography_settings_behaviors<P: crate::preferences::Preferences 
 pub fn build_settings_model_behaviors<P: crate::preferences::Preferences + Clone + 'static>(
     preferences: P,
 ) -> Vec<Box<dyn Behavior<choreo_models::SettingsModel>>> {
-    vec![Box::new(LoadSettingsPreferencesBehavior::new(
-        preferences,
-    ))]
+    vec![Box::new(LoadSettingsPreferencesBehavior::new(preferences))]
 }

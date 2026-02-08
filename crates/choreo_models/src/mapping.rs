@@ -149,24 +149,20 @@ fn normalize_scene_id(scene: &mut SceneModel, used_ids: &mut HashSet<i32>, next_
     }
 }
 
-fn parse_date(source: Option<&str>) -> Option<Date>
-{
+fn parse_date(source: Option<&str>) -> Option<Date> {
     let source = source?;
     let format = date_format();
     Date::parse(source, &format).ok()
 }
 
-fn format_date(source: Option<&Date>) -> Option<String>
-{
+fn format_date(source: Option<&Date>) -> Option<String> {
     let source = source?;
     let format = date_format();
     source.format(&format).ok()
 }
 
-fn date_format() -> Vec<FormatItem<'static>>
-{
-    format_description::parse("[year]-[month]-[day]")
-        .expect("valid date format")
+fn date_format() -> Vec<FormatItem<'static>> {
+    format_description::parse("[year]-[month]-[day]").expect("valid date format")
 }
 
 pub(crate) fn role_ptr(role: &Rc<RoleModel>) -> usize {
@@ -177,7 +173,10 @@ pub(crate) fn dancer_ptr(dancer: &Rc<DancerModel>) -> usize {
     Rc::as_ptr(dancer) as usize
 }
 
-pub(crate) fn clone_role(role: &Rc<RoleModel>, role_map: &mut HashMap<usize, Rc<RoleModel>>) -> Rc<RoleModel> {
+pub(crate) fn clone_role(
+    role: &Rc<RoleModel>,
+    role_map: &mut HashMap<usize, Rc<RoleModel>>,
+) -> Rc<RoleModel> {
     let key = role_ptr(role);
     if let Some(existing) = role_map.get(&key) {
         return existing.clone();
@@ -324,7 +323,11 @@ fn map_scene_to_model(
         timestamp: source.timestamp.clone(),
         variation_depth: source.variation_depth,
         variations: map_scene_variations_to_model(&source.variations, dancers, dancers_by_id),
-        current_variation: map_scene_list_to_model(&source.current_variation, dancers, dancers_by_id),
+        current_variation: map_scene_list_to_model(
+            &source.current_variation,
+            dancers,
+            dancers_by_id,
+        ),
         color: source.color.clone(),
     }
 }
@@ -398,7 +401,9 @@ fn dancer_matches_model(candidate: &Rc<DancerModel>, dancer: &Dancer) -> bool {
 }
 
 fn role_matches_model(candidate: &Rc<RoleModel>, role: &Role) -> bool {
-    candidate.z_index == role.z_index && candidate.name == role.name && candidate.color == role.color
+    candidate.z_index == role.z_index
+        && candidate.name == role.name
+        && candidate.color == role.color
 }
 
 fn map_position_from_model(
@@ -409,10 +414,12 @@ fn map_position_from_model(
         .dancer
         .as_ref()
         .and_then(|dancer| dancer_map.get(&dancer_ptr(dancer)).cloned())
-        .or_else(|| source.dancer.as_ref().map(|dancer| {
-            let role = map_role_from_model(&dancer.role);
-            map_dancer_from_model(dancer, role)
-        }));
+        .or_else(|| {
+            source.dancer.as_ref().map(|dancer| {
+                let role = map_role_from_model(&dancer.role);
+                map_dancer_from_model(dancer, role)
+            })
+        });
 
     Position {
         dancer,
@@ -460,7 +467,11 @@ fn map_scene_variations_from_model(
     Some(
         variations
             .iter()
-            .map(|list| list.iter().map(|scene| map_scene_from_model(scene, dancer_map)).collect())
+            .map(|list| {
+                list.iter()
+                    .map(|scene| map_scene_from_model(scene, dancer_map))
+                    .collect()
+            })
             .collect(),
     )
 }

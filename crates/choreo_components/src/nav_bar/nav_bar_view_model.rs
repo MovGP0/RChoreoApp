@@ -8,9 +8,7 @@ use crate::global::{GlobalStateModel, InteractionMode};
 use crate::haptics::HapticFeedback;
 
 use super::{
-    InteractionModeChangedCommand,
-    NavBarSenders,
-    OpenAudioRequestedCommand,
+    InteractionModeChangedCommand, NavBarSenders, OpenAudioRequestedCommand,
     OpenImageRequestedCommand,
 };
 

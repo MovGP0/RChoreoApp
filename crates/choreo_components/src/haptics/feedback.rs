@@ -4,28 +4,24 @@ use super::HapticFeedback;
 pub struct NoopHapticFeedback;
 
 impl NoopHapticFeedback {
-    pub fn new() -> Self
-    {
+    pub fn new() -> Self {
         Self
     }
 }
 
 impl HapticFeedback for NoopHapticFeedback {
-    fn is_supported(&self) -> bool
-    {
+    fn is_supported(&self) -> bool {
         false
     }
 
-    fn perform_click(&self)
-    {
-    }
+    fn perform_click(&self) {}
 }
 
 #[cfg(target_os = "android")]
 mod android {
+    use jni::JavaVM;
     use jni::objects::{GlobalRef, JObject, JValue};
     use jni::sys::jobject;
-    use jni::JavaVM;
     use ndk_context::android_context;
 
     use super::HapticFeedback;
@@ -36,11 +32,10 @@ mod android {
     }
 
     impl AndroidHapticFeedback {
-        pub fn new() -> Self
-        {
+        pub fn new() -> Self {
             let context = android_context();
-            let vm = unsafe { JavaVM::from_raw(context.vm()) }
-                .expect("Failed to attach to Android JVM");
+            let vm =
+                unsafe { JavaVM::from_raw(context.vm()) }.expect("Failed to attach to Android JVM");
             let env = vm
                 .attach_current_thread()
                 .expect("Failed to attach Android thread");
@@ -56,8 +51,10 @@ mod android {
             }
         }
 
-        fn with_env<R>(&self, action: impl FnOnce(&jni::JNIEnv, JObject) -> Option<R>) -> Option<R>
-        {
+        fn with_env<R>(
+            &self,
+            action: impl FnOnce(&jni::JNIEnv, JObject) -> Option<R>,
+        ) -> Option<R> {
             let env = self.vm.attach_current_thread().ok()?;
             action(&env, self.context.as_obj())
         }
@@ -65,8 +62,7 @@ mod android {
         fn with_vibrator<R>(
             &self,
             action: impl FnOnce(&jni::JNIEnv, JObject) -> Option<R>,
-        ) -> Option<R>
-        {
+        ) -> Option<R> {
             self.with_env(|env, context| {
                 let service_name = env.new_string("vibrator").ok()?;
                 let vibrator = env
@@ -85,8 +81,7 @@ mod android {
     }
 
     impl HapticFeedback for AndroidHapticFeedback {
-        fn is_supported(&self) -> bool
-        {
+        fn is_supported(&self) -> bool {
             self.with_vibrator(|env, vibrator| {
                 env.call_method(vibrator, "hasVibrator", "()Z", &[])
                     .ok()?
@@ -96,15 +91,9 @@ mod android {
             .unwrap_or(false)
         }
 
-        fn perform_click(&self)
-        {
+        fn perform_click(&self) {
             let _ = self.with_vibrator(|env, vibrator| {
-                let _ = env.call_method(
-                    vibrator,
-                    "vibrate",
-                    "(J)V",
-                    &[JValue::Long(10)],
-                );
+                let _ = env.call_method(vibrator, "vibrate", "(J)V", &[JValue::Long(10)]);
                 Some(())
             });
         }
@@ -124,20 +113,17 @@ mod ios {
     pub struct IosHapticFeedback;
 
     impl IosHapticFeedback {
-        pub fn new() -> Self
-        {
+        pub fn new() -> Self {
             Self
         }
     }
 
     impl HapticFeedback for IosHapticFeedback {
-        fn is_supported(&self) -> bool
-        {
+        fn is_supported(&self) -> bool {
             true
         }
 
-        fn perform_click(&self)
-        {
+        fn perform_click(&self) {
             unsafe {
                 let generator: *mut Object = msg_send![class!(UIImpactFeedbackGenerator), alloc];
                 let generator: *mut Object = msg_send![generator, initWithStyle: 0];

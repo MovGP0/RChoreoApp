@@ -49,7 +49,10 @@ impl Preferences for FilePreferences {
     }
 
     fn set_string(&self, key: &str, value: String) {
-        self.state.borrow_mut().strings.insert(key.to_string(), value);
+        self.state
+            .borrow_mut()
+            .strings
+            .insert(key.to_string(), value);
         self.save();
     }
 
@@ -94,8 +97,7 @@ fn save_state(path: &Path, state: &PreferencesState) -> std::io::Result<()> {
         fs::create_dir_all(parent)?;
     }
 
-    let json = serde_json::to_string_pretty(state)
-        .map_err(std::io::Error::other)?;
+    let json = serde_json::to_string_pretty(state).map_err(std::io::Error::other)?;
     let temp_path = path.with_extension("tmp");
     fs::write(&temp_path, json)?;
 

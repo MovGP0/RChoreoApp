@@ -25,9 +25,7 @@ impl CompositeDisposable {
 }
 
 pub trait Behavior<T> {
-    fn activate(&self, _view_model: &mut T, _disposables: &mut CompositeDisposable)
-    {
-    }
+    fn activate(&self, _view_model: &mut T, _disposables: &mut CompositeDisposable) {}
 }
 
 pub struct TimerDisposable {
@@ -35,15 +33,13 @@ pub struct TimerDisposable {
 }
 
 impl TimerDisposable {
-    pub fn new(timer: slint::Timer) -> Self
-    {
+    pub fn new(timer: slint::Timer) -> Self {
         Self { timer }
     }
 }
 
 impl Disposable for TimerDisposable {
-    fn dispose(&mut self)
-    {
+    fn dispose(&mut self) {
         self.timer.stop();
     }
 }

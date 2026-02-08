@@ -75,33 +75,19 @@ pub(crate) fn is_icon_match(option: &IconOption, icon_value: Option<&str>) -> bo
     }
 
     let normalized = icon_value.replace('\\', "/");
-    let file_name = normalized
-        .split('/')
-        .next_back()
-        .unwrap_or(icon_value);
-    let name = file_name
-        .split('.')
-        .next()
-        .unwrap_or(file_name);
+    let file_name = normalized.split('/').next_back().unwrap_or(icon_value);
+    let name = file_name.split('.').next().unwrap_or(file_name);
 
-    option.key.eq_ignore_ascii_case(name)
-        || option.icon_name.eq_ignore_ascii_case(name)
+    option.key.eq_ignore_ascii_case(name) || option.icon_name.eq_ignore_ascii_case(name)
 }
 
 pub(crate) fn normalize_icon_name(icon_name: &str) -> String {
     let normalized = icon_name.replace('\\', "/");
-    let file_name = normalized
-        .split('/')
-        .next_back()
-        .unwrap_or(&normalized);
-    let name = file_name
-        .split('.')
-        .next()
-        .unwrap_or(file_name);
+    let file_name = normalized.split('/').next_back().unwrap_or(&normalized);
+    let name = file_name.split('.').next().unwrap_or(file_name);
     if name.trim().is_empty() {
         icon_name.to_string()
     } else {
         name.to_string()
     }
 }
-

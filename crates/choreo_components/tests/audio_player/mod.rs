@@ -105,12 +105,18 @@ impl AudioPlayerTestContext {
         context
     }
 
-    pub fn update_global_state(&self, update: impl FnOnce(&mut choreo_components::global::GlobalStateModel)) {
+    pub fn update_global_state(
+        &self,
+        update: impl FnOnce(&mut choreo_components::global::GlobalStateModel),
+    ) {
         let updated = self.global_state_store.try_update(update);
         assert!(updated, "failed to update global state in test context");
     }
 
-    pub fn read_global_state<T>(&self, read: impl FnOnce(&choreo_components::global::GlobalStateModel) -> T) -> T {
+    pub fn read_global_state<T>(
+        &self,
+        read: impl FnOnce(&choreo_components::global::GlobalStateModel) -> T,
+    ) -> T {
         self.global_state_store
             .try_with_state(read)
             .expect("failed to read global state in test context")
@@ -151,7 +157,8 @@ pub fn scene_view_model(scene_id: i32, name: &str, timestamp: Option<&str>) -> S
     };
 
     let mapper = SceneMapper;
-    let mut view_model = SceneViewModel::new(scene.scene_id, scene.name.clone(), scene.color.clone());
+    let mut view_model =
+        SceneViewModel::new(scene.scene_id, scene.name.clone(), scene.color.clone());
     mapper.map_model_to_view_model(&scene, &mut view_model);
     view_model
 }

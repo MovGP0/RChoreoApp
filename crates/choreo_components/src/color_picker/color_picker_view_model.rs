@@ -1,5 +1,5 @@
-use slint::Color;
 use nject::injectable;
+use slint::Color;
 
 use super::{ColorChangedEvent, ColorPickerDock, Hsb};
 

@@ -8,9 +8,9 @@ use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
-use crate::date;
 use super::choreography_settings_view_model::ChoreographySettingsViewModel;
 use super::messages::{RedrawFloorCommand, UpdateDateCommand};
+use crate::date;
 use nject::injectable;
 
 #[injectable]
@@ -83,5 +83,3 @@ impl Behavior<ChoreographySettingsViewModel> for UpdateDateBehavior {
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }
-
-

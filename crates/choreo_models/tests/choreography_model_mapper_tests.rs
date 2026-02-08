@@ -56,12 +56,24 @@ fn should_map_json_choreography_to_model_when_invoked() {
     check_eq!(errors, result.last_save_date, fixed_last_save_date());
     check_eq!(errors, result.settings.animation_milliseconds, 250);
     check_eq!(errors, result.settings.front_position, FrontPosition::Left);
-    check_eq!(errors, result.settings.dancer_position, FrontPosition::Right);
+    check_eq!(
+        errors,
+        result.settings.dancer_position,
+        FrontPosition::Right
+    );
     check_eq!(errors, result.settings.resolution, 12);
     check_eq!(errors, result.settings.transparency, 0.75);
-    check!(errors, result.settings.positions_at_side, "positions_at_side mismatch");
+    check!(
+        errors,
+        result.settings.positions_at_side,
+        "positions_at_side mismatch"
+    );
     check!(errors, result.settings.grid_lines, "grid_lines mismatch");
-    check!(errors, result.settings.snap_to_grid, "snap_to_grid mismatch");
+    check!(
+        errors,
+        result.settings.snap_to_grid,
+        "snap_to_grid mismatch"
+    );
     check_eq!(errors, result.settings.floor_color, Colors::blue());
     check_eq!(errors, result.settings.dancer_size, 0.9);
     check!(
@@ -103,19 +115,30 @@ fn should_map_json_choreography_to_model_when_invoked() {
         result.scenes[0].fixed_positions,
         "scene 0 fixed_positions mismatch"
     );
-    check_eq!(errors, result.scenes[0].timestamp.as_deref(), Some("00:00:12"));
+    check_eq!(
+        errors,
+        result.scenes[0].timestamp.as_deref(),
+        Some("00:00:12")
+    );
     check_eq!(errors, result.scenes[0].variation_depth, 1);
     check_eq!(errors, result.scenes[0].color, Colors::green());
     check_eq!(errors, result.scenes[0].positions.len(), 2);
     check!(
         errors,
         Rc::ptr_eq(
-            result.scenes[0].positions[0].dancer.as_ref().expect("dancer"),
+            result.scenes[0].positions[0]
+                .dancer
+                .as_ref()
+                .expect("dancer"),
             &result.dancers[0]
         ),
         "scene 0 position 0 dancer reference mismatch"
     );
-    check_eq!(errors, result.scenes[0].positions[0].orientation, Some(90.0));
+    check_eq!(
+        errors,
+        result.scenes[0].positions[0].orientation,
+        Some(90.0)
+    );
     check_eq!(errors, result.scenes[0].positions[0].x, 1.25);
     check_eq!(errors, result.scenes[0].positions[0].y, 2.5);
     check_eq!(errors, result.scenes[0].positions[0].curve1_x, Some(0.1));
@@ -128,7 +151,11 @@ fn should_map_json_choreography_to_model_when_invoked() {
     check_eq!(errors, result.scenes[0].positions[0].movement2_y, Some(0.8));
     check_eq!(errors, result.scenes[0].variations.len(), 1);
     check_eq!(errors, result.scenes[0].variations[0].len(), 1);
-    check_eq!(errors, result.scenes[0].variations[0][0].name, "Variation Scene");
+    check_eq!(
+        errors,
+        result.scenes[0].variations[0][0].name,
+        "Variation Scene"
+    );
     check_eq!(errors, result.scenes[0].current_variation.len(), 1);
     check_eq!(
         errors,
@@ -169,12 +196,24 @@ fn should_map_model_choreography_to_json_when_invoked() {
     check_eq!(errors, result.last_save_date, fixed_last_save_date());
     check_eq!(errors, result.settings.animation_milliseconds, 250);
     check_eq!(errors, result.settings.front_position, FrontPosition::Left);
-    check_eq!(errors, result.settings.dancer_position, FrontPosition::Right);
+    check_eq!(
+        errors,
+        result.settings.dancer_position,
+        FrontPosition::Right
+    );
     check_eq!(errors, result.settings.resolution, 12);
     check_eq!(errors, result.settings.transparency, 0.75);
-    check!(errors, result.settings.positions_at_side, "positions_at_side mismatch");
+    check!(
+        errors,
+        result.settings.positions_at_side,
+        "positions_at_side mismatch"
+    );
     check!(errors, result.settings.grid_lines, "grid_lines mismatch");
-    check!(errors, result.settings.snap_to_grid, "snap_to_grid mismatch");
+    check!(
+        errors,
+        result.settings.snap_to_grid,
+        "snap_to_grid mismatch"
+    );
     check_eq!(errors, result.settings.floor_color, Colors::blue());
     check_eq!(errors, result.settings.dancer_size, 0.9);
     check!(
@@ -206,12 +245,20 @@ fn should_map_model_choreography_to_json_when_invoked() {
         result.scenes[0].fixed_positions,
         "scene 0 fixed_positions mismatch"
     );
-    check_eq!(errors, result.scenes[0].timestamp.as_deref(), Some("00:00:12"));
+    check_eq!(
+        errors,
+        result.scenes[0].timestamp.as_deref(),
+        Some("00:00:12")
+    );
     check_eq!(errors, result.scenes[0].variation_depth, 1);
     check_eq!(errors, result.scenes[0].color, Colors::green());
     check_eq!(
         errors,
-        result.scenes[0].positions.as_ref().expect("positions").len(),
+        result.scenes[0]
+            .positions
+            .as_ref()
+            .expect("positions")
+            .len(),
         2
     );
     check_eq!(
@@ -280,20 +327,12 @@ fn should_map_model_choreography_to_json_when_invoked() {
     );
     check_eq!(
         errors,
-        result.scenes[0]
-            .variations
-            .as_ref()
-            .expect("variations")[0]
-            .len(),
+        result.scenes[0].variations.as_ref().expect("variations")[0].len(),
         1
     );
     check_eq!(
         errors,
-        result.scenes[0]
-            .variations
-            .as_ref()
-            .expect("variations")[0][0]
-            .name,
+        result.scenes[0].variations.as_ref().expect("variations")[0][0].name,
         "Variation Scene"
     );
     check_eq!(
@@ -334,11 +373,7 @@ fn should_assign_unique_positive_scene_ids_when_mapping_json_to_model() {
     let mut source = build_json_choreography();
     source.scenes[0].scene_id = SceneId(0);
     source.scenes[1].scene_id = SceneId(0);
-    source.scenes[0]
-        .variations
-        .as_mut()
-        .expect("variations")[0][0]
-        .scene_id = SceneId(0);
+    source.scenes[0].variations.as_mut().expect("variations")[0][0].scene_id = SceneId(0);
     source.scenes[0]
         .current_variation
         .as_mut()
@@ -361,8 +396,7 @@ fn should_assign_unique_positive_scene_ids_when_mapping_json_to_model() {
 }
 
 fn fixed_last_save_date() -> time::OffsetDateTime {
-    let date = Date::from_calendar_date(2026, Month::January, 2)
-        .expect("valid date");
+    let date = Date::from_calendar_date(2026, Month::January, 2).expect("valid date");
     let time = Time::from_hms(12, 0, 0).expect("valid time");
     PrimitiveDateTime::new(date, time).assume_utc()
 }

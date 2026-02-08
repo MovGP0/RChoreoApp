@@ -13,17 +13,19 @@ use scenes::Report;
 fn show_scene_timestamps_behavior_spec() {
     let suite = rspec::describe("show scene timestamps behavior", (), |spec| {
         spec.it("initializes from choreography settings on activation", |_| {
-            let context = scenes::ScenesTestContext::new();
-            context.update_global_state(|state| {
-                state.choreography.settings.show_timestamps = true;
-            });
+                let context = scenes::ScenesTestContext::new();
+                context.update_global_state(|state| {
+                    state.choreography.settings.show_timestamps = true;
+                });
 
-            let (_sender, receiver) = unbounded::<ShowTimestampsChangedEvent>();
-            let behavior = ShowSceneTimestampsBehavior::new(context.global_state_store.clone(), receiver);
-            context.activate_behaviors(vec![Box::new(behavior) as Box<dyn Behavior<_>>]);
+                let (_sender, receiver) = unbounded::<ShowTimestampsChangedEvent>();
+                let behavior =
+                    ShowSceneTimestampsBehavior::new(context.global_state_store.clone(), receiver);
+                context.activate_behaviors(vec![Box::new(behavior) as Box<dyn Behavior<_>>]);
 
-            assert!(context.view_model.borrow().show_timestamps);
-        });
+                assert!(context.view_model.borrow().show_timestamps);
+            },
+        );
 
         spec.it("updates view model and global state when toggled", |_| {
             let context = scenes::ScenesTestContext::new();
@@ -32,7 +34,8 @@ fn show_scene_timestamps_behavior_spec() {
             });
 
             let (sender, receiver) = unbounded::<ShowTimestampsChangedEvent>();
-            let behavior = ShowSceneTimestampsBehavior::new(context.global_state_store.clone(), receiver);
+            let behavior =
+                ShowSceneTimestampsBehavior::new(context.global_state_store.clone(), receiver);
             context.activate_behaviors(vec![Box::new(behavior) as Box<dyn Behavior<_>>]);
 
             sender
@@ -41,7 +44,8 @@ fn show_scene_timestamps_behavior_spec() {
 
             let applied = context.wait_until(Duration::from_secs(1), || {
                 context.view_model.borrow().show_timestamps
-                    && context.read_global_state(|state| state.choreography.settings.show_timestamps)
+                    && context
+                        .read_global_state(|state| state.choreography.settings.show_timestamps)
             });
             assert!(applied);
         });

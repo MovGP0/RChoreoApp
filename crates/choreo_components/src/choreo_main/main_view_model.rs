@@ -41,8 +41,7 @@ impl MainViewModel {
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
         behaviors: Vec<Box<dyn Behavior<MainViewModel>>>,
         nav_bar: Rc<RefCell<NavBarViewModel>>,
-    ) -> Self
-    {
+    ) -> Self {
         Self {
             disposables: CompositeDisposable::new(),
             global_state,
@@ -73,9 +72,7 @@ impl MainViewModel {
         let mut global_state = self.global_state.borrow_mut();
         let Some(scene) = scene else {
             global_state.is_place_mode = false;
-            self.nav_bar
-                .borrow_mut()
-                .set_mode_selection_enabled(true);
+            self.nav_bar.borrow_mut().set_mode_selection_enabled(true);
             return;
         };
 

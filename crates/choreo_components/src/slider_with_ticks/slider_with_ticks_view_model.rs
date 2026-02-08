@@ -44,7 +44,6 @@ impl SliderWithTicksViewModel {
     pub fn set_value(&mut self, value: f64) {
         self.value = value.clamp(self.minimum, self.maximum);
     }
-
 }
 
 impl Drop for SliderWithTicksViewModel {

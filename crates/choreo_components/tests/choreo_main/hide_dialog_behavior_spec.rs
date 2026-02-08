@@ -3,10 +3,10 @@ use std::time::Duration;
 use crate::choreo_main;
 
 use choreo_components::behavior::Behavior;
-use choreo_components::choreo_main::HideDialogBehavior;
 use choreo_components::choreo_main::CloseDialogCommand;
-use crossbeam_channel::unbounded;
+use choreo_components::choreo_main::HideDialogBehavior;
 use choreo_main::Report;
+use crossbeam_channel::unbounded;
 
 #[test]
 #[serial_test::serial]
@@ -16,7 +16,7 @@ fn hide_dialog_behavior_spec() {
             let (sender, receiver) = unbounded::<CloseDialogCommand>();
             let behavior = HideDialogBehavior::new(receiver);
             let context = choreo_main::ChoreoMainTestContext::new(vec![
-                Box::new(behavior) as Box<dyn Behavior<_>>,
+                Box::new(behavior) as Box<dyn Behavior<_>>
             ]);
 
             {
@@ -24,7 +24,9 @@ fn hide_dialog_behavior_spec() {
                 vm.show_dialog(Some("hello".to_string()));
             }
 
-            sender.send(CloseDialogCommand).expect("send should succeed");
+            sender
+                .send(CloseDialogCommand)
+                .expect("send should succeed");
 
             let closed = context.wait_until(Duration::from_secs(1), || {
                 let vm = context.view_model.borrow();

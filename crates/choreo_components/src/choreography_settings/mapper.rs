@@ -123,5 +123,3 @@ pub(crate) fn find_scene_mut(
         .iter_mut()
         .find(|scene| scene.scene_id == scene_id)
 }
-
-
