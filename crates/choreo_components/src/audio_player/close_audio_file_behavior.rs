@@ -17,15 +17,17 @@ pub struct CloseAudioFileBehavior {
 }
 
 impl CloseAudioFileBehavior {
-    pub fn new(receiver: Receiver<CloseAudioFileCommand>) -> Self
-    {
+    pub fn new(receiver: Receiver<CloseAudioFileCommand>) -> Self {
         Self { receiver }
     }
 }
 
 impl Behavior<AudioPlayerViewModel> for CloseAudioFileBehavior {
-    fn activate(&self, view_model: &mut AudioPlayerViewModel, disposables: &mut CompositeDisposable)
-    {
+    fn activate(
+        &self,
+        view_model: &mut AudioPlayerViewModel,
+        disposables: &mut CompositeDisposable,
+    ) {
         BehaviorLog::behavior_activated("CloseAudioFileBehavior", "AudioPlayerViewModel");
         let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
         else {
@@ -35,7 +37,9 @@ impl Behavior<AudioPlayerViewModel> for CloseAudioFileBehavior {
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
             while receiver.try_recv().is_ok() {
-                let mut view_model = view_model_handle.borrow_mut();
+                let Ok(mut view_model) = view_model_handle.try_borrow_mut() else {
+                    continue;
+                };
                 view_model.player = None;
                 view_model.stream_factory = None;
                 view_model.position = 0.0;

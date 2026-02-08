@@ -3,112 +3,65 @@ use std::path::Path;
 use std::rc::Rc;
 
 use choreo_master_mobile_json::Color as ChoreoColor;
-use crossbeam_channel::{bounded, Receiver, Sender};
-use slint::{Color, ComponentHandle, Image, ModelRc, VecModel};
+use crossbeam_channel::{Receiver, Sender, bounded};
+use slint::{
+    Color,
+    ComponentHandle,
+    Image,
+    ModelRc,
+    VecModel,
+};
 
-use choreo_state_machine::ApplicationStateMachine;
 use crate::audio_player::{
-    AudioPlayerPositionChangedEvent,
-    AudioPlayerViewModel,
+    AudioPlayerPositionChangedEvent, AudioPlayerViewModel, AudioPlayerViewState,
     OpenAudioFileCommand,
 };
-use crate::haptics::HapticFeedback;
-use crate::floor::{
-    CanvasViewHandle,
-    FloorCanvasViewModel,
-    FloorProvider,
-    FloorProviderDependencies,
-    Point,
-    PointerButton,
-    PointerEventArgs,
-    PointerMovedCommand,
-    PointerPressedCommand,
-    PointerReleasedCommand,
-    PointerWheelChangedCommand,
-};
-use crate::global::{GlobalStateModel, GlobalStateActor};
-use crate::scenes::{
-    OpenChoreoActions,
-    OpenChoreoRequested,
-    ScenesDependencies,
-    ScenesPaneViewModel,
-    ScenesProvider,
-};
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::choreography_settings::{
-    ChoreographySettingsViewModel,
-    LoadChoreographySettingsBehavior,
-    ReloadChoreographySettingsCommand,
-    UpdateAuthorBehavior,
-    UpdateAuthorCommand,
-    UpdateCommentBehavior,
-    UpdateCommentCommand,
-    UpdateDateBehavior,
-    UpdateDateCommand,
-    UpdateDescriptionBehavior,
-    UpdateDescriptionCommand,
-    UpdateDrawPathFromBehavior,
-    UpdateDrawPathFromCommand,
-    UpdateDrawPathToBehavior,
-    UpdateDrawPathToCommand,
-    UpdateFloorBackBehavior,
-    UpdateFloorBackCommand,
-    UpdateFloorColorBehavior,
-    UpdateFloorColorCommand,
-    UpdateFloorFrontBehavior,
-    UpdateFloorFrontCommand,
-    UpdateFloorLeftBehavior,
-    UpdateFloorLeftCommand,
-    UpdateFloorRightBehavior,
-    UpdateFloorRightCommand,
-    UpdateGridLinesBehavior,
-    UpdateGridLinesCommand,
-    UpdateGridResolutionBehavior,
-    UpdateGridResolutionCommand,
-    UpdateNameBehavior,
-    UpdateNameCommand,
-    UpdatePositionsAtSideBehavior,
-    UpdatePositionsAtSideCommand,
-    UpdateSelectedSceneBehavior,
-    UpdateSelectedSceneCommand,
-    UpdateShowLegendBehavior,
-    UpdateShowLegendCommand,
-    UpdateShowTimestampsBehavior,
-    UpdateShowTimestampsCommand,
-    UpdateSnapToGridBehavior,
-    UpdateSnapToGridCommand,
-    UpdateSubtitleBehavior,
-    UpdateSubtitleCommand,
-    UpdateTransparencyBehavior,
-    UpdateTransparencyCommand,
-    UpdateVariationBehavior,
-    UpdateVariationCommand,
+    ChoreographySettingsViewModel, LoadChoreographySettingsBehavior,
+    ReloadChoreographySettingsCommand, UpdateAuthorBehavior, UpdateAuthorCommand,
+    UpdateCommentBehavior, UpdateCommentCommand, UpdateDateBehavior, UpdateDateCommand,
+    UpdateDescriptionBehavior, UpdateDescriptionCommand, UpdateDrawPathFromBehavior,
+    UpdateDrawPathFromCommand, UpdateDrawPathToBehavior, UpdateDrawPathToCommand,
+    UpdateFloorBackBehavior, UpdateFloorBackCommand, UpdateFloorColorBehavior,
+    UpdateFloorColorCommand, UpdateFloorFrontBehavior, UpdateFloorFrontCommand,
+    UpdateFloorLeftBehavior, UpdateFloorLeftCommand, UpdateFloorRightBehavior,
+    UpdateFloorRightCommand, UpdateGridLinesBehavior, UpdateGridLinesCommand,
+    UpdateGridResolutionBehavior, UpdateGridResolutionCommand, UpdateNameBehavior,
+    UpdateNameCommand, UpdatePositionsAtSideBehavior, UpdatePositionsAtSideCommand,
+    UpdateSelectedSceneBehavior, UpdateSelectedSceneCommand, UpdateShowLegendBehavior,
+    UpdateShowLegendCommand, UpdateShowTimestampsBehavior, UpdateShowTimestampsCommand,
+    UpdateSnapToGridBehavior, UpdateSnapToGridCommand, UpdateSubtitleBehavior,
+    UpdateSubtitleCommand, UpdateTransparencyBehavior, UpdateTransparencyCommand,
+    UpdateVariationBehavior, UpdateVariationCommand,
+};
+use crate::floor::{
+    CanvasViewHandle, FloorCanvasViewModel, FloorProvider, FloorProviderDependencies, Point,
+    PointerButton, PointerEventArgs, PointerMovedCommand, PointerPressedCommand,
+    PointerReleasedCommand, PointerWheelChangedCommand,
+};
+use crate::global::{GlobalStateActor, GlobalStateModel};
+use crate::haptics::HapticFeedback;
+use crate::nav_bar::{
+    InteractionModeChangedCommand, NavBarSenders, NavBarViewModel,
+    OpenAudioRequestedCommand as NavBarOpenAudioRequestedCommand,
+    OpenImageRequestedCommand as NavBarOpenImageRequestedCommand, apply_nav_bar_view_model,
+    bind_nav_bar,
+};
+use crate::preferences::SharedPreferences;
+use crate::scenes::{
+    OpenChoreoActions, OpenChoreoRequested, ScenesDependencies, ScenesPaneViewModel, ScenesProvider,
 };
 use crate::settings::{
-    MaterialSchemeHelper,
-    SettingsDependencies,
-    SettingsProvider,
-    SettingsViewModel
+    MaterialSchemeHelper, SettingsDependencies, SettingsProvider, SettingsViewModel,
 };
 use crate::shell::ShellMaterialSchemeApplier;
 use crate::time::format_seconds;
 use crate::{Date, MenuItem, SceneListItem, ShellHost};
-use crate::preferences::SharedPreferences;
-use crate::nav_bar::{
-    apply_nav_bar_view_model,
-    bind_nav_bar,
-    InteractionModeChangedCommand,
-    NavBarSenders,
-    OpenAudioRequestedCommand as NavBarOpenAudioRequestedCommand,
-    OpenImageRequestedCommand as NavBarOpenImageRequestedCommand,
-    NavBarViewModel,
-};
-use crate::behavior::{Behavior, CompositeDisposable};
+use choreo_state_machine::ApplicationStateMachine;
 
 use super::{
-    MainViewModel,
-    MainViewModelProvider,
-    MainViewModelProviderDependencies,
-    OpenAudioRequested,
+    MainViewModel, MainViewModelProvider, MainViewModelProviderDependencies, OpenAudioRequested,
     OpenImageRequested,
 };
 
@@ -151,7 +104,11 @@ pub struct MainPageBinding {
     #[allow(dead_code)]
     floor_provider: Rc<RefCell<FloorProvider>>,
     #[allow(dead_code)]
+    audio_player: Rc<RefCell<AudioPlayerViewModel>>,
+    #[allow(dead_code)]
     nav_bar_timer: slint::Timer,
+    #[allow(dead_code)]
+    audio_player_timer: slint::Timer,
     #[allow(dead_code)]
     choreography_settings_disposables: CompositeDisposable,
     open_choreo_sender: Sender<OpenChoreoRequested>,
@@ -208,14 +165,16 @@ impl MainPageBinding {
             .set_self_handle(audio_player_handle);
         AudioPlayerViewModel::activate(&audio_player);
 
-        let floor_provider = Rc::new(RefCell::new(FloorProvider::new(FloorProviderDependencies {
-            global_state: Rc::clone(&deps.global_state),
-            global_state_store: Rc::clone(&deps.global_state_store),
-            state_machine: Rc::clone(&deps.state_machine),
-            preferences: Rc::clone(&deps.preferences),
-            audio_position_receiver: deps.audio_position_receiver,
-            redraw_floor_receiver: deps.redraw_floor_receiver,
-        })));
+        let floor_provider = Rc::new(RefCell::new(FloorProvider::new(
+            FloorProviderDependencies {
+                global_state: Rc::clone(&deps.global_state),
+                global_state_store: Rc::clone(&deps.global_state_store),
+                state_machine: Rc::clone(&deps.state_machine),
+                preferences: Rc::clone(&deps.preferences),
+                audio_position_receiver: deps.audio_position_receiver,
+                redraw_floor_receiver: deps.redraw_floor_receiver,
+            },
+        )));
         floor_provider
             .borrow_mut()
             .initialize_view(view_weak.clone());
@@ -238,31 +197,39 @@ impl MainPageBinding {
         let (update_date_sender, update_date_receiver) = crossbeam_channel::unbounded();
         let (update_variation_sender, update_variation_receiver) = crossbeam_channel::unbounded();
         let (update_author_sender, update_author_receiver) = crossbeam_channel::unbounded();
-        let (update_description_sender, update_description_receiver) = crossbeam_channel::unbounded();
-        let (update_floor_front_sender, update_floor_front_receiver) = crossbeam_channel::unbounded();
+        let (update_description_sender, update_description_receiver) =
+            crossbeam_channel::unbounded();
+        let (update_floor_front_sender, update_floor_front_receiver) =
+            crossbeam_channel::unbounded();
         let (update_floor_back_sender, update_floor_back_receiver) = crossbeam_channel::unbounded();
         let (update_floor_left_sender, update_floor_left_receiver) = crossbeam_channel::unbounded();
-        let (update_floor_right_sender, update_floor_right_receiver) = crossbeam_channel::unbounded();
+        let (update_floor_right_sender, update_floor_right_receiver) =
+            crossbeam_channel::unbounded();
         let (update_grid_resolution_sender, update_grid_resolution_receiver) =
             crossbeam_channel::unbounded();
         let (update_draw_path_from_sender, update_draw_path_from_receiver) =
             crossbeam_channel::unbounded();
-        let (update_draw_path_to_sender, update_draw_path_to_receiver) = crossbeam_channel::unbounded();
+        let (update_draw_path_to_sender, update_draw_path_to_receiver) =
+            crossbeam_channel::unbounded();
         let (update_grid_lines_sender, update_grid_lines_receiver) = crossbeam_channel::unbounded();
         let (update_snap_to_grid_sender, update_snap_to_grid_receiver) =
             crossbeam_channel::unbounded();
-        let (update_floor_color_sender, update_floor_color_receiver) = crossbeam_channel::unbounded();
+        let (update_floor_color_sender, update_floor_color_receiver) =
+            crossbeam_channel::unbounded();
         let (update_show_timestamps_sender, update_show_timestamps_receiver) =
             crossbeam_channel::unbounded();
-        let (update_show_legend_sender, update_show_legend_receiver) = crossbeam_channel::unbounded();
+        let (update_show_legend_sender, update_show_legend_receiver) =
+            crossbeam_channel::unbounded();
         let (update_positions_at_side_sender, update_positions_at_side_receiver) =
             crossbeam_channel::unbounded();
-        let (update_transparency_sender, update_transparency_receiver) = crossbeam_channel::unbounded();
+        let (update_transparency_sender, update_transparency_receiver) =
+            crossbeam_channel::unbounded();
 
-        let load_choreography_settings_behavior = LoadChoreographySettingsBehavior::new_with_receiver(
-            Rc::clone(&deps.global_state_store),
-            reload_settings_receiver,
-        );
+        let load_choreography_settings_behavior =
+            LoadChoreographySettingsBehavior::new_with_receiver(
+                Rc::clone(&deps.global_state_store),
+                reload_settings_receiver,
+            );
         let update_selected_scene_behavior = UpdateSelectedSceneBehavior::new_with_receiver(
             Rc::clone(&deps.global_state_store),
             update_selected_scene_receiver,
@@ -379,7 +346,8 @@ impl MainPageBinding {
 
         let mut choreography_settings_disposables = CompositeDisposable::new();
         {
-            let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+            let mut choreography_settings_view_model =
+                choreography_settings_view_model.borrow_mut();
             load_choreography_settings_behavior.activate(
                 &mut choreography_settings_view_model,
                 &mut choreography_settings_disposables,
@@ -505,9 +473,9 @@ impl MainPageBinding {
             },
         )));
 
-        let view_model = Rc::new(RefCell::new(main_provider.create_main_view_model(
-            Rc::clone(&nav_bar),
-        )));
+        let view_model = Rc::new(RefCell::new(
+            main_provider.create_main_view_model(Rc::clone(&nav_bar)),
+        ));
         {
             let view_model_for_change = Rc::clone(&view_model);
             let floor_provider_for_change = Rc::clone(&floor_provider);
@@ -517,8 +485,7 @@ impl MainPageBinding {
                 let floor_provider = Rc::clone(&floor_provider_for_change);
                 let view_weak = view_weak.clone();
                 slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
-                    if let Some(view) = view_weak.upgrade()
-                    {
+                    if let Some(view) = view_weak.upgrade() {
                         let view_model_snapshot = view_model.borrow();
                         apply_view_model(&view, &view_model_snapshot);
                         drop(view_model_snapshot);
@@ -546,8 +513,7 @@ impl MainPageBinding {
                 let update_selected_scene_sender = update_selected_scene_sender.clone();
                 let view_weak = view_weak.clone();
                 slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
-                    if let Some(view) = view_weak.upgrade()
-                    {
+                    if let Some(view) = view_weak.upgrade() {
                         let scenes_view_model_snapshot = scenes_view_model.borrow();
                         apply_scenes_view_model(&view, &scenes_view_model_snapshot);
                         drop(scenes_view_model_snapshot);
@@ -564,7 +530,9 @@ impl MainPageBinding {
                     }
                 });
             });
-            scenes_view_model.borrow_mut().set_on_change(Some(on_change));
+            scenes_view_model
+                .borrow_mut()
+                .set_on_change(Some(on_change));
         }
 
         {
@@ -593,8 +561,12 @@ impl MainPageBinding {
                 let view_weak = view_weak.clone();
                 slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
                     if let Some(view) = view_weak.upgrade() {
-                        let choreography_settings_view_model = choreography_settings_view_model.borrow();
-                        apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                        let choreography_settings_view_model =
+                            choreography_settings_view_model.borrow();
+                        apply_choreography_settings_view_model(
+                            &view,
+                            &choreography_settings_view_model,
+                        );
                     }
                 });
             });
@@ -629,9 +601,8 @@ impl MainPageBinding {
                         if let Some(picker) = actions_for_audio.pick_audio_path.as_ref()
                             && let Some(path) = picker()
                         {
-                            let _ = open_audio_request_sender.try_send(OpenAudioRequested {
-                                file_path: path,
-                            });
+                            let _ = open_audio_request_sender
+                                .try_send(OpenAudioRequested { file_path: path });
                             nav_bar.borrow_mut().set_audio_player_opened(true);
                         }
                     }
@@ -661,14 +632,31 @@ impl MainPageBinding {
                         if let Some(picker) = actions_for_image.pick_image_path.as_ref()
                             && let Some(path) = picker()
                         {
-                            let _ = open_image_request_sender.try_send(OpenImageRequested {
-                                file_path: path,
-                            });
+                            let _ = open_image_request_sender
+                                .try_send(OpenImageRequested { file_path: path });
                         }
                     }
 
                     while let Ok(mode_command) = nav_bar_mode_receiver.try_recv() {
                         let _ = interaction_mode_sender.try_send(mode_command.mode);
+                    }
+                },
+            );
+            timer
+        };
+
+        let audio_player_timer = {
+            let audio_player = Rc::clone(&audio_player);
+            let view_weak = view_weak.clone();
+            let timer = slint::Timer::default();
+            timer.start(
+                slint::TimerMode::Repeated,
+                std::time::Duration::from_millis(16),
+                move || {
+                    let mut audio_player = audio_player.borrow_mut();
+                    audio_player.sync_from_player();
+                    if let Some(view) = view_weak.upgrade() {
+                        apply_audio_player_view_model(&view, &audio_player);
                     }
                 },
             );
@@ -683,6 +671,7 @@ impl MainPageBinding {
         apply_view_model(&view, &view_model.borrow());
         apply_scenes_view_model(&view, &scenes_view_model.borrow());
         apply_choreography_settings_view_model(&view, &choreography_settings_view_model.borrow());
+        apply_audio_player_view_model(&view, &audio_player.borrow());
         floor_provider.borrow().apply_to_view(&view);
 
         bind_nav_bar(&view, Rc::clone(&nav_bar));
@@ -784,13 +773,17 @@ impl MainPageBinding {
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_scene_name(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_name = value.to_string();
                 let _ = update_selected_scene_sender.send(UpdateSelectedSceneCommand::SceneName(
                     choreography_settings_view_model.scene_name.clone(),
                 ));
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -800,13 +793,17 @@ impl MainPageBinding {
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_scene_text(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_text = value.to_string();
                 let _ = update_selected_scene_sender.send(UpdateSelectedSceneCommand::SceneText(
                     choreography_settings_view_model.scene_text.clone(),
                 ));
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -816,13 +813,16 @@ impl MainPageBinding {
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_scene_fixed_positions(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_fixed_positions = value;
-                let _ = update_selected_scene_sender.send(
-                    UpdateSelectedSceneCommand::SceneFixedPositions(value),
-                );
+                let _ = update_selected_scene_sender
+                    .send(UpdateSelectedSceneCommand::SceneFixedPositions(value));
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -832,14 +832,19 @@ impl MainPageBinding {
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_scene_has_timestamp(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_has_timestamp = value;
-                let _ = update_selected_scene_sender.send(UpdateSelectedSceneCommand::SceneTimestamp {
-                    has_timestamp: choreography_settings_view_model.scene_has_timestamp,
-                    seconds: choreography_settings_view_model.scene_timestamp_seconds,
-                });
+                let _ =
+                    update_selected_scene_sender.send(UpdateSelectedSceneCommand::SceneTimestamp {
+                        has_timestamp: choreography_settings_view_model.scene_has_timestamp,
+                        seconds: choreography_settings_view_model.scene_timestamp_seconds,
+                    });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -849,14 +854,20 @@ impl MainPageBinding {
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_scene_timestamp_parts(move |minutes, seconds, millis| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
-                choreography_settings_view_model.set_scene_timestamp_parts(minutes, seconds, millis);
-                let _ = update_selected_scene_sender.send(UpdateSelectedSceneCommand::SceneTimestamp {
-                    has_timestamp: choreography_settings_view_model.scene_has_timestamp,
-                    seconds: choreography_settings_view_model.scene_timestamp_seconds,
-                });
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
+                choreography_settings_view_model
+                    .set_scene_timestamp_parts(minutes, seconds, millis);
+                let _ =
+                    update_selected_scene_sender.send(UpdateSelectedSceneCommand::SceneTimestamp {
+                        has_timestamp: choreography_settings_view_model.scene_has_timestamp,
+                        seconds: choreography_settings_view_model.scene_timestamp_seconds,
+                    });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -866,13 +877,17 @@ impl MainPageBinding {
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_scene_color(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_color = choreo_color_from_slint(value);
                 let _ = update_selected_scene_sender.send(UpdateSelectedSceneCommand::SceneColor(
                     choreography_settings_view_model.scene_color.clone(),
                 ));
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -882,13 +897,17 @@ impl MainPageBinding {
             let update_comment_sender = update_comment_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_comment(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.comment = value.to_string();
                 let _ = update_comment_sender.send(UpdateCommentCommand {
                     value: choreography_settings_view_model.comment.clone(),
                 });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -898,13 +917,17 @@ impl MainPageBinding {
             let update_name_sender = update_name_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_name(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.name = value.to_string();
                 let _ = update_name_sender.send(UpdateNameCommand {
                     value: choreography_settings_view_model.name.clone(),
                 });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -914,13 +937,17 @@ impl MainPageBinding {
             let update_subtitle_sender = update_subtitle_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_subtitle(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.subtitle = value.to_string();
                 let _ = update_subtitle_sender.send(UpdateSubtitleCommand {
                     value: choreography_settings_view_model.subtitle.clone(),
                 });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -933,13 +960,17 @@ impl MainPageBinding {
                 let Some(new_date) = crate::date::build_date(year, month, day) else {
                     return;
                 };
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.date = new_date;
                 let _ = update_date_sender.send(UpdateDateCommand {
                     value: choreography_settings_view_model.date,
                 });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -949,13 +980,17 @@ impl MainPageBinding {
             let update_variation_sender = update_variation_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_variation(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.variation = value.to_string();
                 let _ = update_variation_sender.send(UpdateVariationCommand {
                     value: choreography_settings_view_model.variation.clone(),
                 });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -965,13 +1000,17 @@ impl MainPageBinding {
             let update_author_sender = update_author_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_author(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.author = value.to_string();
                 let _ = update_author_sender.send(UpdateAuthorCommand {
                     value: choreography_settings_view_model.author.clone(),
                 });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -981,13 +1020,17 @@ impl MainPageBinding {
             let update_description_sender = update_description_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_description(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.description = value.to_string();
                 let _ = update_description_sender.send(UpdateDescriptionCommand {
                     value: choreography_settings_view_model.description.clone(),
                 });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -997,13 +1040,16 @@ impl MainPageBinding {
             let update_positions_at_side_sender = update_positions_at_side_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_positions_at_side(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.positions_at_side = value;
-                let _ = update_positions_at_side_sender.send(UpdatePositionsAtSideCommand {
-                    value,
-                });
+                let _ =
+                    update_positions_at_side_sender.send(UpdatePositionsAtSideCommand { value });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1014,11 +1060,12 @@ impl MainPageBinding {
             let view_weak = view_weak.clone();
             view.on_choreo_update_draw_path_from(move |value| {
                 let choreography_settings_view_model = choreography_settings_view_model.borrow();
-                let _ = update_draw_path_from_sender.send(UpdateDrawPathFromCommand {
-                    value,
-                });
+                let _ = update_draw_path_from_sender.send(UpdateDrawPathFromCommand { value });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1029,11 +1076,12 @@ impl MainPageBinding {
             let view_weak = view_weak.clone();
             view.on_choreo_update_draw_path_to(move |value| {
                 let choreography_settings_view_model = choreography_settings_view_model.borrow();
-                let _ = update_draw_path_to_sender.send(UpdateDrawPathToCommand {
-                    value,
-                });
+                let _ = update_draw_path_to_sender.send(UpdateDrawPathToCommand { value });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1043,13 +1091,15 @@ impl MainPageBinding {
             let update_grid_lines_sender = update_grid_lines_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_grid_lines(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.grid_lines = value;
-                let _ = update_grid_lines_sender.send(UpdateGridLinesCommand {
-                    value,
-                });
+                let _ = update_grid_lines_sender.send(UpdateGridLinesCommand { value });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1060,11 +1110,12 @@ impl MainPageBinding {
             let view_weak = view_weak.clone();
             view.on_choreo_update_snap_to_grid(move |value| {
                 let choreography_settings_view_model = choreography_settings_view_model.borrow();
-                let _ = update_snap_to_grid_sender.send(UpdateSnapToGridCommand {
-                    value,
-                });
+                let _ = update_snap_to_grid_sender.send(UpdateSnapToGridCommand { value });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1075,11 +1126,12 @@ impl MainPageBinding {
             let view_weak = view_weak.clone();
             view.on_choreo_update_show_timestamps(move |value| {
                 let choreography_settings_view_model = choreography_settings_view_model.borrow();
-                let _ = update_show_timestamps_sender.send(UpdateShowTimestampsCommand {
-                    value,
-                });
+                let _ = update_show_timestamps_sender.send(UpdateShowTimestampsCommand { value });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1090,11 +1142,12 @@ impl MainPageBinding {
             let view_weak = view_weak.clone();
             view.on_choreo_update_show_legend(move |value| {
                 let choreography_settings_view_model = choreography_settings_view_model.borrow();
-                let _ = update_show_legend_sender.send(UpdateShowLegendCommand {
-                    value,
-                });
+                let _ = update_show_legend_sender.send(UpdateShowLegendCommand { value });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1104,13 +1157,17 @@ impl MainPageBinding {
             let update_transparency_sender = update_transparency_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_transparency(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.transparency = value as f64;
                 let _ = update_transparency_sender.send(UpdateTransparencyCommand {
                     value: value as f64,
                 });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1120,14 +1177,17 @@ impl MainPageBinding {
             let update_floor_color_sender = update_floor_color_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_floor_color(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 let floor_color = choreo_color_from_slint(value);
                 choreography_settings_view_model.floor_color = floor_color.clone();
-                let _ = update_floor_color_sender.send(UpdateFloorColorCommand {
-                    value: floor_color,
-                });
+                let _ =
+                    update_floor_color_sender.send(UpdateFloorColorCommand { value: floor_color });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1137,14 +1197,16 @@ impl MainPageBinding {
             let update_floor_front_sender = update_floor_front_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_floor_front(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 let clamped = value.clamp(1, 100);
                 choreography_settings_view_model.floor_front = clamped;
-                let _ = update_floor_front_sender.send(UpdateFloorFrontCommand {
-                    value: clamped,
-                });
+                let _ = update_floor_front_sender.send(UpdateFloorFrontCommand { value: clamped });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1154,14 +1216,16 @@ impl MainPageBinding {
             let update_floor_back_sender = update_floor_back_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_floor_back(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 let clamped = value.clamp(1, 100);
                 choreography_settings_view_model.floor_back = clamped;
-                let _ = update_floor_back_sender.send(UpdateFloorBackCommand {
-                    value: clamped,
-                });
+                let _ = update_floor_back_sender.send(UpdateFloorBackCommand { value: clamped });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1171,14 +1235,16 @@ impl MainPageBinding {
             let update_floor_left_sender = update_floor_left_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_floor_left(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 let clamped = value.clamp(1, 100);
                 choreography_settings_view_model.floor_left = clamped;
-                let _ = update_floor_left_sender.send(UpdateFloorLeftCommand {
-                    value: clamped,
-                });
+                let _ = update_floor_left_sender.send(UpdateFloorLeftCommand { value: clamped });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1188,14 +1254,16 @@ impl MainPageBinding {
             let update_floor_right_sender = update_floor_right_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_floor_right(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 let clamped = value.clamp(1, 100);
                 choreography_settings_view_model.floor_right = clamped;
-                let _ = update_floor_right_sender.send(UpdateFloorRightCommand {
-                    value: clamped,
-                });
+                let _ = update_floor_right_sender.send(UpdateFloorRightCommand { value: clamped });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1205,13 +1273,15 @@ impl MainPageBinding {
             let update_grid_resolution_sender = update_grid_resolution_sender.clone();
             let view_weak = view_weak.clone();
             view.on_choreo_update_grid_resolution(move |value| {
-                let mut choreography_settings_view_model = choreography_settings_view_model.borrow_mut();
+                let mut choreography_settings_view_model =
+                    choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.set_grid_resolution(value);
-                let _ = update_grid_resolution_sender.send(UpdateGridResolutionCommand {
-                    value,
-                });
+                let _ = update_grid_resolution_sender.send(UpdateGridResolutionCommand { value });
                 if let Some(view) = view_weak.upgrade() {
-                    apply_choreography_settings_view_model(&view, &choreography_settings_view_model);
+                    apply_choreography_settings_view_model(
+                        &view,
+                        &choreography_settings_view_model,
+                    );
                 }
             });
         }
@@ -1299,6 +1369,92 @@ impl MainPageBinding {
             });
         }
 
+        let audio_player_view_state = Rc::new(RefCell::new(AudioPlayerViewState::new()));
+
+        {
+            let audio_player = Rc::clone(&audio_player);
+            let view_weak = view_weak.clone();
+            view.on_audio_speed_changed(move |value| {
+                let mut audio_player = audio_player.borrow_mut();
+                audio_player.speed = value as f64;
+                audio_player.update_speed_label();
+                let speed = audio_player.speed;
+                if let Some(player) = audio_player.player.as_mut() {
+                    player.set_speed(speed);
+                }
+                if let Some(view) = view_weak.upgrade() {
+                    apply_audio_player_view_model(&view, &audio_player);
+                }
+            });
+        }
+
+        {
+            let audio_player = Rc::clone(&audio_player);
+            let view_weak = view_weak.clone();
+            view.on_audio_position_changed(move |value| {
+                let mut audio_player = audio_player.borrow_mut();
+                audio_player.position = value as f64;
+                if let Some(view) = view_weak.upgrade() {
+                    apply_audio_player_view_model(&view, &audio_player);
+                }
+            });
+        }
+
+        {
+            let audio_player = Rc::clone(&audio_player);
+            let audio_player_view_state = Rc::clone(&audio_player_view_state);
+            let view_weak = view_weak.clone();
+            view.on_audio_position_drag_started(move || {
+                let mut audio_player = audio_player.borrow_mut();
+                audio_player_view_state
+                    .borrow_mut()
+                    .on_position_drag_started(&mut audio_player);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_audio_player_view_model(&view, &audio_player);
+                }
+            });
+        }
+
+        {
+            let audio_player = Rc::clone(&audio_player);
+            let audio_player_view_state = Rc::clone(&audio_player_view_state);
+            let view_weak = view_weak.clone();
+            view.on_audio_position_drag_completed(move || {
+                let mut audio_player = audio_player.borrow_mut();
+                let position = audio_player.position;
+                audio_player_view_state
+                    .borrow_mut()
+                    .on_position_drag_completed(&mut audio_player, position);
+                if let Some(view) = view_weak.upgrade() {
+                    apply_audio_player_view_model(&view, &audio_player);
+                }
+            });
+        }
+
+        {
+            let audio_player = Rc::clone(&audio_player);
+            let view_weak = view_weak.clone();
+            view.on_audio_link_scene_to_position(move || {
+                let mut audio_player = audio_player.borrow_mut();
+                audio_player.link_scene_to_position();
+                if let Some(view) = view_weak.upgrade() {
+                    apply_audio_player_view_model(&view, &audio_player);
+                }
+            });
+        }
+
+        {
+            let audio_player = Rc::clone(&audio_player);
+            let view_weak = view_weak.clone();
+            view.on_audio_toggle_play_pause(move || {
+                let mut audio_player = audio_player.borrow_mut();
+                audio_player.toggle_play_pause();
+                if let Some(view) = view_weak.upgrade() {
+                    apply_audio_player_view_model(&view, &audio_player);
+                }
+            });
+        }
+
         Self {
             view,
             view_model,
@@ -1307,7 +1463,9 @@ impl MainPageBinding {
             choreography_settings_view_model,
             floor_view_model,
             floor_provider,
+            audio_player,
             nav_bar_timer,
+            audio_player_timer,
             choreography_settings_disposables,
             open_choreo_sender,
             open_audio_request_sender,
@@ -1366,23 +1524,18 @@ impl MainPageBinding {
         }
 
         if extension == "svg" {
-            let _ = self
-                .open_image_request_sender
-                .try_send(OpenImageRequested {
-                    file_path: file_path.to_string(),
-                });
+            let _ = self.open_image_request_sender.try_send(OpenImageRequested {
+                file_path: file_path.to_string(),
+            });
             return;
         }
 
         if extension == "mp3" {
-            let _ = self
-                .open_audio_request_sender
-                .try_send(OpenAudioRequested {
-                    file_path: file_path.to_string(),
-                });
+            let _ = self.open_audio_request_sender.try_send(OpenAudioRequested {
+                file_path: file_path.to_string(),
+            });
         }
     }
-
 }
 
 fn apply_view_model(view: &ShellHost, view_model: &MainViewModel) {
@@ -1451,9 +1604,29 @@ fn apply_choreography_settings_view_model(
 
     let grid_resolution_index = view_model.grid_resolution().saturating_sub(1);
     view.set_choreo_grid_resolution_index(grid_resolution_index);
-    view.set_choreo_grid_size_options(ModelRc::new(VecModel::from(
-        build_grid_menu_items(&view_model.grid_size_options),
+    view.set_choreo_grid_size_options(ModelRc::new(VecModel::from(build_grid_menu_items(
+        &view_model.grid_size_options,
+    ))));
+}
+
+fn apply_audio_player_view_model(view: &ShellHost, view_model: &AudioPlayerViewModel) {
+    view.set_audio_speed(view_model.speed as f32);
+    view.set_audio_minimum_speed(view_model.minimum_speed as f32);
+    view.set_audio_maximum_speed(view_model.maximum_speed as f32);
+    view.set_audio_position(view_model.position as f32);
+    view.set_audio_duration(view_model.duration as f32);
+    view.set_audio_tick_values(ModelRc::new(VecModel::from(
+        view_model
+            .tick_values
+            .iter()
+            .map(|value| *value as f32)
+            .collect::<Vec<_>>(),
     )));
+    view.set_audio_can_seek(view_model.can_seek);
+    view.set_audio_can_link_scene_to_position(view_model.can_link_scene_to_position);
+    view.set_audio_is_playing(view_model.is_playing);
+    view.set_audio_speed_label(view_model.speed_label.as_str().into());
+    view.set_audio_duration_label(view_model.duration_label.as_str().into());
 }
 
 fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneListItem> {
@@ -1466,7 +1639,12 @@ fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneL
                 .map(format_seconds)
                 .unwrap_or_default()
                 .into(),
-            color: slint::Color::from_argb_u8(scene.color.a, scene.color.r, scene.color.g, scene.color.b),
+            color: slint::Color::from_argb_u8(
+                scene.color.a,
+                scene.color.r,
+                scene.color.g,
+                scene.color.b,
+            ),
             is_selected: scene.is_selected,
         })
         .collect::<Vec<_>>();
@@ -1474,7 +1652,9 @@ fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneL
     ModelRc::new(VecModel::from(items))
 }
 
-fn build_grid_menu_items(options: &[crate::choreography_settings::GridSizeOption]) -> Vec<MenuItem> {
+fn build_grid_menu_items(
+    options: &[crate::choreography_settings::GridSizeOption],
+) -> Vec<MenuItem> {
     options
         .iter()
         .map(|option| MenuItem {
@@ -1506,4 +1686,3 @@ fn choreo_color_from_slint(color: Color) -> ChoreoColor {
         a: color.alpha(),
     }
 }
-

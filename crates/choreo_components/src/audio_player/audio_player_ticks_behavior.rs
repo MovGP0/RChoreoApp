@@ -8,7 +8,7 @@ use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
-use super::audio_player_link_scene_behavior::{update_can_link, update_ticks};
+use super::audio_player_linking::{build_tick_values, can_link_scene};
 use super::audio_player_view_model::AudioPlayerViewModel;
 
 #[injectable]
@@ -18,15 +18,17 @@ pub struct AudioPlayerTicksBehavior {
 }
 
 impl AudioPlayerTicksBehavior {
-    pub fn new(global_state: Rc<GlobalStateActor>) -> Self
-    {
+    pub fn new(global_state: Rc<GlobalStateActor>) -> Self {
         Self { global_state }
     }
 }
 
 impl Behavior<AudioPlayerViewModel> for AudioPlayerTicksBehavior {
-    fn activate(&self, view_model: &mut AudioPlayerViewModel, disposables: &mut CompositeDisposable)
-    {
+    fn activate(
+        &self,
+        view_model: &mut AudioPlayerViewModel,
+        disposables: &mut CompositeDisposable,
+    ) {
         BehaviorLog::behavior_activated("AudioPlayerTicksBehavior", "AudioPlayerViewModel");
         let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
         else {
@@ -36,13 +38,19 @@ impl Behavior<AudioPlayerViewModel> for AudioPlayerTicksBehavior {
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(100), move || {
             let Some(snapshot) = global_state.try_with_state(|global_state| {
-                (global_state.scenes.clone(), global_state.selected_scene.clone())
+                (
+                    global_state.scenes.clone(),
+                    global_state.selected_scene.clone(),
+                )
             }) else {
                 return;
             };
-            let mut view_model = view_model_handle.borrow_mut();
-            update_ticks(&mut view_model, &snapshot.0);
-            update_can_link(&mut view_model, snapshot.1.as_ref(), &snapshot.0);
+            let Ok(mut view_model) = view_model_handle.try_borrow_mut() else {
+                return;
+            };
+            view_model.tick_values = build_tick_values(view_model.duration, &snapshot.0);
+            view_model.can_link_scene_to_position =
+                can_link_scene(view_model.position, snapshot.1.as_ref(), &snapshot.0);
         });
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }

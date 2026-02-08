@@ -91,6 +91,17 @@ export component ShellHost inherits MaterialWindow {
     in property <bool> floor_has_svg_overlay: false;
     in property <bool> floor_show_placement_overlay: false;
     in property <int> floor_remaining_positions: 0;
+    in property <float> audio_speed: 1.0;
+    in property <float> audio_minimum_speed: 0.8;
+    in property <float> audio_maximum_speed: 1.1;
+    in property <float> audio_position: 0.0;
+    in property <float> audio_duration: 0.0;
+    in property <[float]> audio_tick_values: [];
+    in property <bool> audio_can_seek: false;
+    in property <bool> audio_can_link_scene_to_position: false;
+    in property <bool> audio_is_playing: false;
+    in property <string> audio_speed_label: "";
+    in property <string> audio_duration_label: "";
     out property <float> floor_bounds_left: main_page.floor_bounds_left;
     out property <float> floor_bounds_top: main_page.floor_bounds_top;
     out property <float> floor_bounds_right: main_page.floor_bounds_right;
@@ -147,6 +158,12 @@ export component ShellHost inherits MaterialWindow {
     callback floor_pointer_released(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback floor_pointer_wheel_changed(delta: float, x: float, y: float);
     callback floor_redraw();
+    callback audio_speed_changed(float);
+    callback audio_position_changed(float);
+    callback audio_position_drag_started();
+    callback audio_position_drag_completed();
+    callback audio_link_scene_to_position();
+    callback audio_toggle_play_pause();
 
     title: root.title_text;
     icon: @image-url("app_icon.svg");
@@ -233,6 +250,17 @@ export component ShellHost inherits MaterialWindow {
             floor_has_svg_overlay: root.floor_has_svg_overlay;
             floor_show_placement_overlay: root.floor_show_placement_overlay;
             floor_remaining_positions: root.floor_remaining_positions;
+            audio_speed: root.audio_speed;
+            audio_minimum_speed: root.audio_minimum_speed;
+            audio_maximum_speed: root.audio_maximum_speed;
+            audio_position: root.audio_position;
+            audio_duration: root.audio_duration;
+            audio_tick_values: root.audio_tick_values;
+            audio_can_seek: root.audio_can_seek;
+            audio_can_link_scene_to_position: root.audio_can_link_scene_to_position;
+            audio_is_playing: root.audio_is_playing;
+            audio_speed_label: root.audio_speed_label;
+            audio_duration_label: root.audio_duration_label;
 
             toggle_nav => { root.toggle_nav(); }
             close_nav => { root.close_nav(); }
@@ -297,6 +325,12 @@ export component ShellHost inherits MaterialWindow {
             floor_redraw => {
                 root.floor_redraw();
             }
+            audio_speed_changed(value) => { root.audio_speed_changed(value); }
+            audio_position_changed(value) => { root.audio_position_changed(value); }
+            audio_position_drag_started => { root.audio_position_drag_started(); }
+            audio_position_drag_completed => { root.audio_position_drag_completed(); }
+            audio_link_scene_to_position => { root.audio_link_scene_to_position(); }
+            audio_toggle_play_pause => { root.audio_toggle_play_pause(); }
         }
         settings_page := SettingsPage {
             visible: root.content_index == 1;

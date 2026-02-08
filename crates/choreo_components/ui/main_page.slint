@@ -106,6 +106,17 @@ export component MainPage inherits Rectangle {
     in property <bool> floor_has_svg_overlay: false;
     in property <bool> floor_show_placement_overlay: false;
     in property <int> floor_remaining_positions: 0;
+    in property <float> audio_speed: 1.0;
+    in property <float> audio_minimum_speed: 0.8;
+    in property <float> audio_maximum_speed: 1.1;
+    in property <float> audio_position: 0.0;
+    in property <float> audio_duration: 0.0;
+    in property <[float]> audio_tick_values: [];
+    in property <bool> audio_can_seek: false;
+    in property <bool> audio_can_link_scene_to_position: false;
+    in property <bool> audio_is_playing: false;
+    in property <string> audio_speed_label: "";
+    in property <string> audio_duration_label: "";
     out property <float> floor_bounds_left: floor_canvas.floor_bounds_left;
     out property <float> floor_bounds_top: floor_canvas.floor_bounds_top;
     out property <float> floor_bounds_right: floor_canvas.floor_bounds_right;
@@ -164,6 +175,12 @@ export component MainPage inherits Rectangle {
     callback floor_pointer_released(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback floor_pointer_wheel_changed(delta: float, x: float, y: float);
     callback floor_redraw();
+    callback audio_speed_changed(float);
+    callback audio_position_changed(float);
+    callback audio_position_drag_started();
+    callback audio_position_drag_completed();
+    callback audio_link_scene_to_position();
+    callback audio_toggle_play_pause();
 
     background: MaterialPalette.surface_container_low;
 
@@ -391,6 +408,23 @@ export component MainPage inherits Rectangle {
                 y: parent.height - self.height;
                 width: parent.width;
                 z: 2;
+                speed: root.audio_speed;
+                minimum_speed: root.audio_minimum_speed;
+                maximum_speed: root.audio_maximum_speed;
+                position: root.audio_position;
+                duration: root.audio_duration;
+                tick_values: root.audio_tick_values;
+                can_seek: root.audio_can_seek;
+                can_link_scene_to_position: root.audio_can_link_scene_to_position;
+                is_playing: root.audio_is_playing;
+                speed_label: root.audio_speed_label;
+                duration_label: root.audio_duration_label;
+                speed_changed(value) => { root.audio_speed_changed(value); }
+                position_changed(value) => { root.audio_position_changed(value); }
+                position_drag_started => { root.audio_position_drag_started(); }
+                position_drag_completed => { root.audio_position_drag_completed(); }
+                link_scene_to_position => { root.audio_link_scene_to_position(); }
+                toggle_play_pause => { root.audio_toggle_play_pause(); }
             }
         }
     }

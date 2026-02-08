@@ -16,15 +16,9 @@ fn android_main(app: slint::android::AndroidApp) {
     use std::cell::RefCell;
     use std::rc::Rc;
 
-    use crossbeam_channel::unbounded;
-    use slint::ComponentHandle;
     use choreo_components::audio_player::{
-        build_audio_player_behaviors,
-        AudioPlayerBehaviorDependencies,
-        AudioPlayerViewModel,
-        CloseAudioFileCommand,
-        LinkSceneToPositionCommand,
-        PlatformHapticFeedback,
+        AudioPlayerBehaviorDependencies, AudioPlayerViewModel, CloseAudioFileCommand,
+        LinkSceneToPositionCommand, PlatformHapticFeedback, build_audio_player_behaviors,
     };
     use choreo_components::choreo_main::MainPageActionHandlers;
     use choreo_components::choreo_main::MainPageBinding;
@@ -34,6 +28,8 @@ fn android_main(app: slint::android::AndroidApp) {
     use choreo_components::preferences::{PlatformPreferences, Preferences};
     use choreo_components::shell;
     use choreo_i18n::detect_locale;
+    use crossbeam_channel::{bounded, unbounded};
+    use slint::ComponentHandle;
 
     if let Err(err) = slint::android::init(app) {
         eprintln!("failed to init Slint Android backend: {err}");
@@ -53,10 +49,13 @@ fn android_main(app: slint::android::AndroidApp) {
     let locale = detect_locale();
     i18n::apply_translations(&ui, &locale);
     let preferences: Rc<dyn Preferences> = Rc::new(PlatformPreferences::new("ChoreoApp"));
-    let (open_audio_sender, open_audio_receiver) = unbounded();
-    let (close_audio_sender, close_audio_receiver) = unbounded::<CloseAudioFileCommand>();
-    let (audio_position_sender, audio_position_receiver) = unbounded();
-    let (link_scene_sender, link_scene_receiver) = unbounded::<LinkSceneToPositionCommand>();
+    const AUDIO_CHANNEL_BUFFER: usize = 1;
+    let (open_audio_sender, open_audio_receiver) = bounded(AUDIO_CHANNEL_BUFFER);
+    let (close_audio_sender, close_audio_receiver) =
+        bounded::<CloseAudioFileCommand>(AUDIO_CHANNEL_BUFFER);
+    let (audio_position_sender, audio_position_receiver) = bounded(AUDIO_CHANNEL_BUFFER);
+    let (link_scene_sender, link_scene_receiver) =
+        bounded::<LinkSceneToPositionCommand>(AUDIO_CHANNEL_BUFFER);
     let audio_player_behaviors = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
         global_state_store: Rc::clone(&global_state_store),
         open_audio_receiver,

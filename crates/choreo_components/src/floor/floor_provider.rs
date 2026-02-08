@@ -2,16 +2,16 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
+use crossbeam_channel::{Receiver, Sender, bounded};
 use slint::{Timer, TimerMode};
 
 use choreo_state_machine::ApplicationStateMachine;
 
+use crate::ShellHost;
 use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::behavior::Behavior;
-use crate::global::{GlobalStateModel, GlobalStateActor};
+use crate::global::{GlobalStateActor, GlobalStateModel};
 use crate::preferences::Preferences;
-use crate::ShellHost;
 
 use super::draw_floor_behavior::DrawFloorBehavior;
 use super::floor_adapter::FloorAdapter;
@@ -43,10 +43,9 @@ pub struct FloorProvider {
 }
 
 impl FloorProvider {
-    pub fn new(deps: FloorProviderDependencies) -> Self
-    {
+    pub fn new(deps: FloorProviderDependencies) -> Self {
         const POINTER_EVENT_BUFFER: usize = 256;
-        let (draw_floor_sender, draw_floor_receiver) = unbounded();
+        let (draw_floor_sender, draw_floor_receiver) = bounded(1);
 
         let (gesture_pressed_sender, gesture_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
         let (gesture_moved_sender, gesture_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
@@ -185,16 +184,18 @@ impl FloorProvider {
             let floor_view_model_for_redraw = Rc::clone(&self.floor_view_model);
             let floor_adapter_for_redraw = Rc::clone(&self.floor_adapter);
             let view_weak = view_weak.clone();
-            self.floor_view_model.borrow_mut().set_on_redraw(Some(Rc::new(move || {
-                let floor_view_model = Rc::clone(&floor_view_model_for_redraw);
-                let floor_adapter = Rc::clone(&floor_adapter_for_redraw);
-                let view_weak = view_weak.clone();
-                slint::Timer::single_shot(Duration::from_millis(0), move || {
-                    if let Some(view) = view_weak.upgrade() {
-                        Self::apply_floor_view(&view, &floor_adapter, &floor_view_model);
-                    }
-                });
-            })));
+            self.floor_view_model
+                .borrow_mut()
+                .set_on_redraw(Some(Rc::new(move || {
+                    let floor_view_model = Rc::clone(&floor_view_model_for_redraw);
+                    let floor_adapter = Rc::clone(&floor_adapter_for_redraw);
+                    let view_weak = view_weak.clone();
+                    slint::Timer::single_shot(Duration::from_millis(0), move || {
+                        if let Some(view) = view_weak.upgrade() {
+                            Self::apply_floor_view(&view, &floor_adapter, &floor_view_model);
+                        }
+                    });
+                })));
         }
 
         {
@@ -278,7 +279,9 @@ impl FloorProvider {
         floor_view_model: &Rc<RefCell<FloorCanvasViewModel>>,
     ) {
         let mut floor_view_model = floor_view_model.borrow_mut();
-        floor_adapter.borrow_mut().apply(view, &mut floor_view_model);
+        floor_adapter
+            .borrow_mut()
+            .apply(view, &mut floor_view_model);
     }
 }
 

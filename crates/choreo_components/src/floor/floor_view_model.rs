@@ -1,4 +1,4 @@
-use crossbeam_channel::Sender;
+use crossbeam_channel::{Sender, TrySendError};
 use nject::injectable;
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
@@ -6,12 +6,8 @@ use std::rc::{Rc, Weak};
 use crate::behavior::{Behavior, CompositeDisposable};
 
 use super::messages::{
-    DrawFloorCommand,
-    PointerMovedCommand,
-    PointerPressedCommand,
-    PointerReleasedCommand,
-    PointerWheelChangedCommand,
-    TouchCommand,
+    DrawFloorCommand, PointerMovedCommand, PointerPressedCommand, PointerReleasedCommand,
+    PointerWheelChangedCommand, TouchCommand,
 };
 
 use super::types::{CanvasViewHandle, Matrix, Rect, Size};
@@ -82,7 +78,9 @@ impl FloorCanvasViewModel {
     }
 
     pub fn draw_floor(&mut self) {
-        let _ = self.draw_floor_command_sender.send(DrawFloorCommand);
+        match self.draw_floor_command_sender.try_send(DrawFloorCommand) {
+            Ok(()) | Err(TrySendError::Full(_)) | Err(TrySendError::Disconnected(_)) => {}
+        }
         self.request_redraw();
     }
 

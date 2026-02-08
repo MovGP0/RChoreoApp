@@ -9,16 +9,12 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crossbeam_channel::{unbounded, Sender};
+use crossbeam_channel::{Sender, bounded, unbounded};
 use slint::ComponentHandle;
 
 use choreo_components::audio_player::{
-    build_audio_player_behaviors,
-    AudioPlayerBehaviorDependencies,
-    AudioPlayerViewModel,
-    CloseAudioFileCommand,
-    LinkSceneToPositionCommand,
-    PlatformHapticFeedback,
+    AudioPlayerBehaviorDependencies, AudioPlayerViewModel, CloseAudioFileCommand,
+    LinkSceneToPositionCommand, PlatformHapticFeedback, build_audio_player_behaviors,
 };
 use choreo_components::choreo_main::MainPageActionHandlers;
 use choreo_components::choreo_main::MainPageBinding;
@@ -31,11 +27,11 @@ use choreo_components::shell;
 use choreo_i18n::detect_locale;
 
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::closure::Closure;
 #[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
 
 #[cfg(target_arch = "wasm32")]
 use choreo_components::choreo_main::{OpenAudioRequested, OpenImageRequested};
@@ -59,10 +55,13 @@ pub fn main() {
     let locale = detect_locale();
     i18n::apply_translations(&ui, &locale);
     let preferences: Rc<dyn Preferences> = Rc::new(PlatformPreferences::new("ChoreoApp"));
-    let (open_audio_sender, open_audio_receiver) = unbounded();
-    let (close_audio_sender, close_audio_receiver) = unbounded::<CloseAudioFileCommand>();
-    let (audio_position_sender, audio_position_receiver) = unbounded();
-    let (link_scene_sender, link_scene_receiver) = unbounded::<LinkSceneToPositionCommand>();
+    const AUDIO_CHANNEL_BUFFER: usize = 1;
+    let (open_audio_sender, open_audio_receiver) = bounded(AUDIO_CHANNEL_BUFFER);
+    let (close_audio_sender, close_audio_receiver) =
+        bounded::<CloseAudioFileCommand>(AUDIO_CHANNEL_BUFFER);
+    let (audio_position_sender, audio_position_receiver) = bounded(AUDIO_CHANNEL_BUFFER);
+    let (link_scene_sender, link_scene_receiver) =
+        bounded::<LinkSceneToPositionCommand>(AUDIO_CHANNEL_BUFFER);
     let audio_player_behaviors = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
         global_state_store: Rc::clone(&global_state_store),
         open_audio_receiver,
@@ -195,11 +194,8 @@ impl WebFilePickerActor {
         )?;
         let audio_input =
             Self::create_hidden_file_input(&document, "wasm-audio-picker", "audio/*")?;
-        let image_input = Self::create_hidden_file_input(
-            &document,
-            "wasm-image-picker",
-            ".svg,image/svg+xml",
-        )?;
+        let image_input =
+            Self::create_hidden_file_input(&document, "wasm-image-picker", ".svg,image/svg+xml")?;
         let drop_overlay = Self::create_drop_overlay(&document)?;
 
         let choreo_sender = Rc::new(RefCell::new(None));
@@ -340,22 +336,13 @@ impl WebFilePickerActor {
         };
 
         let body = document.body()?;
-        let _ = body.add_event_listener_with_callback(
-            "dragenter",
-            dragenter.as_ref().unchecked_ref(),
-        );
-        let _ = body.add_event_listener_with_callback(
-            "dragover",
-            dragover.as_ref().unchecked_ref(),
-        );
-        let _ = body.add_event_listener_with_callback(
-            "dragleave",
-            dragleave.as_ref().unchecked_ref(),
-        );
-        let _ = body.add_event_listener_with_callback(
-            "drop",
-            drop.as_ref().unchecked_ref(),
-        );
+        let _ =
+            body.add_event_listener_with_callback("dragenter", dragenter.as_ref().unchecked_ref());
+        let _ =
+            body.add_event_listener_with_callback("dragover", dragover.as_ref().unchecked_ref());
+        let _ =
+            body.add_event_listener_with_callback("dragleave", dragleave.as_ref().unchecked_ref());
+        let _ = body.add_event_listener_with_callback("drop", drop.as_ref().unchecked_ref());
 
         Some(Self {
             choreo_input,

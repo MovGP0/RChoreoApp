@@ -1,14 +1,14 @@
-use std::rc::Rc;
-use std::time::Duration;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
+use std::rc::Rc;
+use std::time::Duration;
 
 use crossbeam_channel::{Receiver, Sender};
 use nject::injectable;
 use slint::TimerMode;
 
-use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::floor::DrawFloorCommand;
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
@@ -49,9 +49,10 @@ impl OpenSvgFileBehavior {
     }
 
     fn restore_last_opened_svg(&self) {
-        let path = self
-            .preferences
-            .get_string(choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE, "");
+        let path = self.preferences.get_string(
+            choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE,
+            "",
+        );
 
         if path.trim().is_empty() {
             return;
@@ -70,7 +71,7 @@ impl OpenSvgFileBehavior {
             return;
         }
 
-        let _ = self.draw_floor_sender.send(DrawFloorCommand);
+        let _ = self.draw_floor_sender.try_send(DrawFloorCommand);
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -106,7 +107,7 @@ impl Behavior<MainViewModel> for OpenSvgFileBehavior {
                     }
 
                     preferences.remove(choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE);
-                    let _ = draw_floor_sender.send(DrawFloorCommand);
+                    let _ = draw_floor_sender.try_send(DrawFloorCommand);
                     continue;
                 }
 
@@ -121,7 +122,7 @@ impl Behavior<MainViewModel> for OpenSvgFileBehavior {
                     choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE,
                     path,
                 );
-                let _ = draw_floor_sender.send(DrawFloorCommand);
+                let _ = draw_floor_sender.try_send(DrawFloorCommand);
             }
         });
         disposables.add(Box::new(TimerDisposable::new(timer)));

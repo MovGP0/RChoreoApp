@@ -1,5 +1,7 @@
+mod audio_player_actor;
 mod audio_player_behavior;
 mod audio_player_link_scene_behavior;
+mod audio_player_linking;
 mod audio_player_position_changed_behavior;
 mod audio_player_ticks_behavior;
 mod audio_player_view_model;
@@ -8,20 +10,19 @@ mod messages;
 mod open_audio_file_behavior;
 mod types;
 
+pub use crate::haptics::{HapticFeedback, NoopHapticFeedback, PlatformHapticFeedback};
+pub use audio_player_actor::create_platform_audio_player;
 pub use audio_player_behavior::AudioPlayerBehavior;
 pub use audio_player_link_scene_behavior::AudioPlayerLinkSceneBehavior;
 pub use audio_player_position_changed_behavior::AudioPlayerPositionChangedBehavior;
 pub use audio_player_ticks_behavior::AudioPlayerTicksBehavior;
 pub use audio_player_view_model::{
-    duration_to_time_text, play_pause_glyph, AudioPlayerViewModel, AudioPlayerViewState,
-    speed_to_percent_text, PlayPauseGlyph,
+    AudioPlayerViewModel, AudioPlayerViewState, PlayPauseGlyph, duration_to_time_text,
+    play_pause_glyph, speed_to_percent_text,
 };
 pub use close_audio_file_behavior::CloseAudioFileBehavior;
-pub use crate::haptics::{HapticFeedback, NoopHapticFeedback, PlatformHapticFeedback};
 pub use messages::{
-    AudioPlayerPositionChangedEvent,
-    CloseAudioFileCommand,
-    LinkSceneToPositionCommand,
+    AudioPlayerPositionChangedEvent, CloseAudioFileCommand, LinkSceneToPositionCommand,
     OpenAudioFileCommand,
 };
 pub use open_audio_file_behavior::OpenAudioFileBehavior;

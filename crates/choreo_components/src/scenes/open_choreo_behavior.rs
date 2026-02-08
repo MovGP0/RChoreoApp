@@ -1,11 +1,11 @@
 use std::path::{Path, PathBuf};
-use std::time::Duration;
 use std::rc::Rc;
+use std::time::Duration;
 
-use crossbeam_channel::{Receiver, Sender};
-use nject::injectable;
 use choreo_master_mobile_json::import;
 use choreo_models::{ChoreographyModelMapper, SettingsPreferenceKeys};
+use crossbeam_channel::{Receiver, Sender};
+use nject::injectable;
 
 use crate::audio_player::{CloseAudioFileCommand, OpenAudioFileCommand};
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
@@ -114,14 +114,15 @@ impl OpenChoreoBehavior {
 
         view_model.update_can_save();
         let _ = self.reload_scenes_sender.send(ReloadScenesCommand);
-        let Some(value) = self.global_state.try_with_state(|global_state| {
-            global_state.choreography.settings.show_timestamps
-        }) else {
+        let Some(value) = self
+            .global_state
+            .try_with_state(|global_state| global_state.choreography.settings.show_timestamps)
+        else {
             return;
         };
-        let _ = self.show_timestamps_sender.send(ShowTimestampsChangedEvent {
-            is_enabled: value,
-        });
+        let _ = self
+            .show_timestamps_sender
+            .send(ShowTimestampsChangedEvent { is_enabled: value });
 
         self.preferences.set_string(
             SettingsPreferenceKeys::LAST_OPENED_CHOREO_FILE,
@@ -154,14 +155,15 @@ impl OpenChoreoBehavior {
 
         view_model.update_can_save();
         let _ = self.reload_scenes_sender.send(ReloadScenesCommand);
-        let Some(value) = self.global_state.try_with_state(|global_state| {
-            global_state.choreography.settings.show_timestamps
-        }) else {
+        let Some(value) = self
+            .global_state
+            .try_with_state(|global_state| global_state.choreography.settings.show_timestamps)
+        else {
             return;
         };
-        let _ = self.show_timestamps_sender.send(ShowTimestampsChangedEvent {
-            is_enabled: value,
-        });
+        let _ = self
+            .show_timestamps_sender
+            .send(ShowTimestampsChangedEvent { is_enabled: value });
 
         if let Some(path) = file_path {
             self.preferences.set_string(
@@ -172,16 +174,17 @@ impl OpenChoreoBehavior {
         } else if let Some(name) = file_name {
             self.preferences
                 .set_string(SettingsPreferenceKeys::LAST_OPENED_CHOREO_FILE, name);
-            let _ = self.close_audio_sender.send(CloseAudioFileCommand);
+            let _ = self.close_audio_sender.try_send(CloseAudioFileCommand);
         } else {
-            let _ = self.close_audio_sender.send(CloseAudioFileCommand);
+            let _ = self.close_audio_sender.try_send(CloseAudioFileCommand);
         }
     }
 
     fn try_load_audio(&self, choreography_path: &Path) {
-        let Some(settings) = self.global_state.try_with_state(|global_state| {
-            global_state.choreography.settings.clone()
-        }) else {
+        let Some(settings) = self
+            .global_state
+            .try_with_state(|global_state| global_state.choreography.settings.clone())
+        else {
             return;
         };
         let mut candidates = Vec::new();
@@ -195,9 +198,7 @@ impl OpenChoreoBehavior {
         if let Some(relative) = settings.music_path_relative.as_ref()
             && !relative.trim().is_empty()
         {
-            let base_dir = choreography_path
-                .parent()
-                .unwrap_or_else(|| Path::new(""));
+            let base_dir = choreography_path.parent().unwrap_or_else(|| Path::new(""));
             candidates.push(base_dir.join(relative).to_string_lossy().into_owned());
         }
 
@@ -213,19 +214,23 @@ impl OpenChoreoBehavior {
         for candidate in candidates {
             let path = PathBuf::from(&candidate);
             if path.exists() {
-                let _ = self.open_audio_sender.send(OpenAudioFileCommand {
+                let _ = self.open_audio_sender.try_send(OpenAudioFileCommand {
                     file_path: candidate,
                 });
                 return;
             }
         }
 
-        let _ = self.close_audio_sender.send(CloseAudioFileCommand);
+        let _ = self.close_audio_sender.try_send(CloseAudioFileCommand);
     }
 }
 
 impl Behavior<ScenesPaneViewModel> for OpenChoreoBehavior {
-    fn activate(&self, view_model: &mut ScenesPaneViewModel, disposables: &mut CompositeDisposable) {
+    fn activate(
+        &self,
+        view_model: &mut ScenesPaneViewModel,
+        disposables: &mut CompositeDisposable,
+    ) {
         BehaviorLog::behavior_activated("OpenChoreoBehavior", "ScenesPaneViewModel");
         self.load_last_opened(view_model);
         let behavior = self.clone();
@@ -241,17 +246,21 @@ impl Behavior<ScenesPaneViewModel> for OpenChoreoBehavior {
         let receiver = self.open_choreo_receiver.clone();
         let behavior = self.clone();
         let timer = slint::Timer::default();
-        timer.start(slint::TimerMode::Repeated, Duration::from_millis(16), move || {
-            while let Ok(request) = receiver.try_recv() {
-                let mut view_model = view_model_handle.borrow_mut();
-                behavior.load_choreo_from_contents(
-                    request.file_path,
-                    request.file_name,
-                    request.contents,
-                    &mut view_model,
-                );
-            }
-        });
+        timer.start(
+            slint::TimerMode::Repeated,
+            Duration::from_millis(16),
+            move || {
+                while let Ok(request) = receiver.try_recv() {
+                    let mut view_model = view_model_handle.borrow_mut();
+                    behavior.load_choreo_from_contents(
+                        request.file_path,
+                        request.file_name,
+                        request.contents,
+                        &mut view_model,
+                    );
+                }
+            },
+        );
         disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }

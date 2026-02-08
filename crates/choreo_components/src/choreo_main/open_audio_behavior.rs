@@ -5,8 +5,8 @@ use nject::injectable;
 use slint::TimerMode;
 
 use crate::audio_player::OpenAudioFileCommand;
-use crate::behavior::{Behavior, CompositeDisposable};
 use crate::behavior::TimerDisposable;
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
 
 use super::main_view_model::MainViewModel;
@@ -28,13 +28,12 @@ impl OpenAudioBehavior {
     pub fn new(
         sender: Sender<OpenAudioFileCommand>,
         receiver: Receiver<OpenAudioRequested>,
-    ) -> Self
-    {
+    ) -> Self {
         Self { sender, receiver }
     }
 
     fn handle_open_audio(&self, command: OpenAudioRequested) {
-        let _ = self.sender.send(OpenAudioFileCommand {
+        let _ = self.sender.try_send(OpenAudioFileCommand {
             file_path: command.file_path,
         });
     }

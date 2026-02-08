@@ -10,20 +10,16 @@ use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use crossbeam_channel::{unbounded, Sender};
-use i_slint_backend_winit::winit;
+use crossbeam_channel::{Sender, bounded, unbounded};
 use i_slint_backend_winit::EventResult;
 use i_slint_backend_winit::WinitWindowAccessor;
+use i_slint_backend_winit::winit;
 use rfd::FileDialog;
 use slint::ComponentHandle;
 
 use choreo_components::audio_player::{
-    build_audio_player_behaviors,
-    AudioPlayerBehaviorDependencies,
-    AudioPlayerViewModel,
-    CloseAudioFileCommand,
-    LinkSceneToPositionCommand,
-    PlatformHapticFeedback,
+    AudioPlayerBehaviorDependencies, AudioPlayerViewModel, CloseAudioFileCommand,
+    LinkSceneToPositionCommand, PlatformHapticFeedback, build_audio_player_behaviors,
 };
 use choreo_components::choreo_main::MainPageActionHandlers;
 use choreo_components::choreo_main::MainPageBinding;
@@ -40,9 +36,7 @@ fn main() -> Result<(), slint::PlatformError> {
         .name("ui".to_string())
         .stack_size(8 * 1024 * 1024)
         .spawn(run_ui)
-        .map_err(|err| {
-            slint::PlatformError::from(format!("Failed to spawn UI thread: {err}"))
-        })?;
+        .map_err(|err| slint::PlatformError::from(format!("Failed to spawn UI thread: {err}")))?;
     match ui_thread.join() {
         Ok(result) => result,
         Err(_) => Err(slint::PlatformError::from("UI thread panicked")),
@@ -58,10 +52,13 @@ fn run_ui() -> Result<(), slint::PlatformError> {
     let locale = detect_locale();
     i18n::apply_translations(&ui, &locale);
     let preferences: Rc<dyn Preferences> = Rc::new(PlatformPreferences::new("ChoreoApp"));
-    let (open_audio_sender, open_audio_receiver) = unbounded();
-    let (close_audio_sender, close_audio_receiver) = unbounded::<CloseAudioFileCommand>();
-    let (audio_position_sender, audio_position_receiver) = unbounded();
-    let (link_scene_sender, link_scene_receiver) = unbounded::<LinkSceneToPositionCommand>();
+    const AUDIO_CHANNEL_BUFFER: usize = 1;
+    let (open_audio_sender, open_audio_receiver) = bounded(AUDIO_CHANNEL_BUFFER);
+    let (close_audio_sender, close_audio_receiver) =
+        bounded::<CloseAudioFileCommand>(AUDIO_CHANNEL_BUFFER);
+    let (audio_position_sender, audio_position_receiver) = bounded(AUDIO_CHANNEL_BUFFER);
+    let (link_scene_sender, link_scene_receiver) =
+        bounded::<LinkSceneToPositionCommand>(AUDIO_CHANNEL_BUFFER);
     let audio_player_behaviors = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
         global_state_store: Rc::clone(&global_state_store),
         open_audio_receiver,
@@ -144,7 +141,9 @@ fn request_open_choreo(sender: Sender<OpenChoreoRequested>) {
         Err(_) => return,
     };
 
-    let file_name = path.file_name().map(|name| name.to_string_lossy().into_owned());
+    let file_name = path
+        .file_name()
+        .map(|name| name.to_string_lossy().into_owned());
     let file_path = Some(path.to_string_lossy().into_owned());
     let _ = sender.send(OpenChoreoRequested {
         file_path,
@@ -197,7 +196,9 @@ fn route_dropped_file(
                 return;
             }
         };
-        let file_name = path.file_name().map(|value| value.to_string_lossy().into_owned());
+        let file_name = path
+            .file_name()
+            .map(|value| value.to_string_lossy().into_owned());
         let file_path = Some(path.to_string_lossy().into_owned());
         let _ = open_choreo_sender.try_send(OpenChoreoRequested {
             file_path,
@@ -209,17 +210,21 @@ fn route_dropped_file(
     }
 
     if extension == "svg" {
-        let _ = open_image_request_sender.try_send(choreo_components::choreo_main::OpenImageRequested {
-            file_path: path.to_string_lossy().into_owned(),
-        });
+        let _ = open_image_request_sender.try_send(
+            choreo_components::choreo_main::OpenImageRequested {
+                file_path: path.to_string_lossy().into_owned(),
+            },
+        );
         eprintln!("desktop drop: loaded .svg file");
         return;
     }
 
     if extension == "mp3" {
-        let _ = open_audio_request_sender.try_send(choreo_components::choreo_main::OpenAudioRequested {
-            file_path: path.to_string_lossy().into_owned(),
-        });
+        let _ = open_audio_request_sender.try_send(
+            choreo_components::choreo_main::OpenAudioRequested {
+                file_path: path.to_string_lossy().into_owned(),
+            },
+        );
         eprintln!("desktop drop: loaded .mp3 file");
         return;
     }
