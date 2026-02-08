@@ -1,4 +1,4 @@
-# OpenTelemetry
+# OpenTelemetry Plan (Desktop Debug Only)
 
 ## Scope
 
@@ -23,10 +23,11 @@
 4. Gate exporting on `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`; if absent, keep existing logging only.
 5. Keep Aspire Dashboard authentication enabled and use the one-time login link (`/login?t=...`) from container logs.
 6. Do not run the container with `--rm`; stopped container and image must remain available in Docker.
-4. Add a debug UI action/button to start a root "user trace session".
-5. Propagate trace context through existing command/event structs by adding optional trace metadata fields.
-6. In behaviors, create child spans for command handling and important state transitions.
-7. Shut down tracer provider on app exit to flush buffered spans.
+7. Use `opentelemetry-semantic-conventions` for standardized span/resource attributes.
+8. Add a debug UI action/button to start a root "user trace session".
+9. Propagate trace context through existing command/event structs by adding optional trace metadata fields.
+10. In behaviors, create child spans for command handling and important state transitions.
+11. Shut down tracer provider on app exit to flush buffered spans.
 
 ## Proposed Crates (Desktop App Only)
 
@@ -37,6 +38,7 @@ In `apps/desktop/Cargo.toml`:
 opentelemetry = { version = "0.31", optional = true }
 opentelemetry_sdk = { version = "0.31", optional = true, features = ["trace"] }
 opentelemetry-otlp = { version = "0.31", optional = true, features = ["trace", "http-proto", "reqwest-blocking-client"] }
+opentelemetry-semantic-conventions = { version = "0.31", optional = true }
 
 [features]
 default = []
@@ -44,6 +46,7 @@ debug-otel = [
   "dep:opentelemetry",
   "dep:opentelemetry_sdk",
   "dep:opentelemetry-otlp",
+  "dep:opentelemetry-semantic-conventions",
 ]
 ```
 
@@ -106,10 +109,10 @@ impl Drop for OTelGuard {
 
 - Add a debug-only UI command such as `StartDebugTraceCommand` from the main page/nav bar.
 - On click, create a root span with attributes:
-  - `ui.action`
-  - `ui.surface`
+  - `otel.name` (span name)
+  - `otel.kind` (`Internal`)
   - `session.id`
-  - `choreo.file` (if any)
+  - `code.filepath` (when available)
 - Store lightweight trace metadata in a shared debug session object (not in ViewModel text fields).
 
 ### Phase 3: Context Propagation Through Messages
@@ -137,6 +140,8 @@ pub struct TraceContext {
   - file open/load (`OpenChoreoBehavior`, `OpenAudioFileBehavior`);
   - state machine transitions (`ApplicationStateMachine::try_apply`);
   - floor redraw/gesture loops where expensive operations happen.
+- Add semantic attributes via `opentelemetry-semantic-conventions` instead of ad-hoc keys where possible.
+- Keep custom app attributes in a small `choreo.*` namespace only when no semantic key exists.
 - Add attributes for command type, file extension, success/failure, and elapsed timing.
 - Keep cardinality bounded (no raw large payload attributes).
 
@@ -222,6 +227,7 @@ Assertions:
 - OpenTelemetry SDK environment variables spec: https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/
 - OpenTelemetry general SDK config (`OTEL_SERVICE_NAME`, etc.): https://opentelemetry.io/docs/languages/sdk-configuration/general/
 - `opentelemetry-otlp` crate docs and feature flags/constants (current latest shown in docs.rs): https://docs.rs/opentelemetry-otlp/latest/opentelemetry_otlp/
+- `opentelemetry-semantic-conventions` crate: https://crates.io/crates/opentelemetry-semantic-conventions
 - `opentelemetry_sdk::trace::BatchSpanProcessor` behavior and exporter/runtime notes: https://docs.rs/opentelemetry_sdk/latest/opentelemetry_sdk/trace/struct.BatchSpanProcessor.html
 - `opentelemetry_sdk::trace::SdkTracerProvider` shutdown/flush semantics: https://docs.rs/opentelemetry_sdk/latest/opentelemetry_sdk/trace/struct.SdkTracerProvider.html
 - Aspire Dashboard overview: https://aspire.dev/dashboard/overview/
