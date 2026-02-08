@@ -27,3 +27,6 @@ mod scale_positions_behavior_spec;
 
 #[path = "floor/test_pointer_event_args_spec.rs"]
 mod test_pointer_event_args_spec;
+
+#[path = "floor/draw_floor_behavior_spec.rs"]
+mod draw_floor_behavior_spec;
