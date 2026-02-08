@@ -7,7 +7,7 @@ export component SliderWithTicks inherits Rectangle {
     in property <int> stop_count: 0;
     in property <float> maximum: 100;
     in property <[float]> tick_values: [];
-    in property <color> tick_color: MaterialPalette.outline;
+    in property <color> tick_color: MaterialPalette.on_surface;
 
     callback drag_started();
     callback drag_completed();
@@ -85,11 +85,12 @@ export component SliderWithTicks inherits Rectangle {
                         // Using the model entry by index avoids ambiguity with repeater
                         // loop bindings and keeps tick placement aligned to the slider.
                         for tick[index] in root.tick_values: Rectangle {
-                            width: MaterialStyleMetrics.size_1;
-                            height: MaterialStyleMetrics.size_24;
+                            width: MaterialStyleMetrics.size_2;
+                            height: track.height + MaterialStyleMetrics.size_16;
                             x: root.value_to_length(track.width, root.tick_values[index])
                                 - (self.width / 2);
                             y: (track.height - self.height) / 2;
+                            border_radius: self.width / 2;
                             background: root.tick_color;
                             visible: root.maximum > root.minimum
                                 && root.tick_values[index] >= root.minimum
