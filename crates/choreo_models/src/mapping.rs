@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::rc::Rc;
 
 use choreo_master_mobile_json::{
@@ -36,11 +37,12 @@ impl ChoreographyModelMapper {
             dancers.push(dancer_model);
         }
 
-        let scenes = source
+        let mut scenes = source
             .scenes
             .iter()
             .map(|scene| map_scene_to_model(scene, &dancers, &dancers_by_id))
-            .collect();
+            .collect::<Vec<_>>();
+        normalize_scene_ids(&mut scenes);
 
         ChoreographyModel {
             comment: source.comment.clone(),
@@ -104,6 +106,46 @@ impl ChoreographyModelMapper {
             description: source.description.clone(),
             last_save_date: source.last_save_date,
         }
+    }
+}
+
+fn normalize_scene_ids(scenes: &mut [SceneModel]) {
+    let mut used_ids = HashSet::new();
+    let mut next_id = scenes
+        .iter()
+        .map(|scene| i64::from(scene.scene_id.0))
+        .max()
+        .unwrap_or(0)
+        .max(0)
+        + 1;
+
+    for scene in scenes {
+        normalize_scene_id(scene, &mut used_ids, &mut next_id);
+    }
+}
+
+fn normalize_scene_id(scene: &mut SceneModel, used_ids: &mut HashSet<i32>, next_id: &mut i64) {
+    let current = scene.scene_id.0;
+    let must_replace = current <= 0 || used_ids.contains(&current);
+    if must_replace {
+        while *next_id > i64::from(i32::MAX) || used_ids.contains(&(*next_id as i32)) {
+            *next_id += 1;
+        }
+        let replacement = *next_id as i32;
+        scene.scene_id = choreo_master_mobile_json::SceneId(replacement);
+        used_ids.insert(replacement);
+        *next_id += 1;
+    } else {
+        used_ids.insert(current);
+    }
+
+    for variation in &mut scene.variations {
+        for nested_scene in variation {
+            normalize_scene_id(nested_scene, used_ids, next_id);
+        }
+    }
+    for nested_scene in &mut scene.current_variation {
+        normalize_scene_id(nested_scene, used_ids, next_id);
     }
 }
 

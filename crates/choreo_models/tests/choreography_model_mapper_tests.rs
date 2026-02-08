@@ -5,6 +5,7 @@ use choreo_models::{
     ChoreographyModel, ChoreographyModelMapper, Colors, DancerModel, FloorModel, PositionModel,
     RoleModel, SceneModel, SettingsModel,
 };
+use std::collections::HashSet;
 use std::rc::Rc;
 use time::{Date, Month, PrimitiveDateTime, Time};
 
@@ -326,6 +327,39 @@ fn should_map_model_choreography_to_json_when_invoked() {
     );
 }
 
+#[test]
+fn should_assign_unique_positive_scene_ids_when_mapping_json_to_model() {
+    // arrange
+    let subject = ChoreographyModelMapper;
+    let mut source = build_json_choreography();
+    source.scenes[0].scene_id = SceneId(0);
+    source.scenes[1].scene_id = SceneId(0);
+    source.scenes[0]
+        .variations
+        .as_mut()
+        .expect("variations")[0][0]
+        .scene_id = SceneId(0);
+    source.scenes[0]
+        .current_variation
+        .as_mut()
+        .expect("current variation")[0]
+        .scene_id = SceneId(0);
+
+    // act
+    let result = subject.map_to_model(&source);
+
+    // assert
+    let mut seen = HashSet::new();
+    collect_scene_ids(&result.scenes, &mut seen);
+
+    let expected_count = count_scenes_recursive(&result.scenes);
+    assert_eq!(seen.len(), expected_count);
+    assert!(
+        seen.iter().all(|id| *id > 0),
+        "expected all mapped scene ids to be > 0, got: {seen:?}"
+    );
+}
+
 fn fixed_last_save_date() -> time::OffsetDateTime {
     let date = Date::from_calendar_date(2026, Month::January, 2)
         .expect("valid date");
@@ -628,4 +662,34 @@ fn build_model_scene(dancer_a: Rc<DancerModel>, dancer_b: Rc<DancerModel>) -> Sc
     });
 
     scene
+}
+
+fn count_scenes_recursive(scenes: &[SceneModel]) -> usize {
+    scenes
+        .iter()
+        .map(|scene| {
+            1 + scene
+                .variations
+                .iter()
+                .map(|variation| count_scenes_recursive(variation))
+                .sum::<usize>()
+                + count_scenes_recursive(&scene.current_variation)
+        })
+        .sum()
+}
+
+fn collect_scene_ids(scenes: &[SceneModel], seen: &mut HashSet<i32>) {
+    for scene in scenes {
+        let inserted = seen.insert(scene.scene_id.0);
+        assert!(
+            inserted,
+            "duplicate scene_id found after mapping: {}",
+            scene.scene_id.0
+        );
+
+        for variation in &scene.variations {
+            collect_scene_ids(variation, seen);
+        }
+        collect_scene_ids(&scene.current_variation, seen);
+    }
 }
