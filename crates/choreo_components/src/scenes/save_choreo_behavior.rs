@@ -4,12 +4,12 @@ use std::rc::Rc;
 use choreo_master_mobile_json::export_to_file;
 use choreo_models::{ChoreographyModelMapper, Colors, SceneModel, SettingsPreferenceKeys};
 use nject::injectable;
-use time::OffsetDateTime;
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
+use crate::time::SystemClock;
 
 use super::mapper::SceneMapper;
 use super::scenes_view_model::ScenesPaneViewModel;
@@ -80,7 +80,7 @@ impl SaveChoreoBehavior {
             }
 
             global_state.choreography.scenes = scenes;
-            global_state.choreography.last_save_date = OffsetDateTime::now_utc();
+            global_state.choreography.last_save_date = SystemClock::now_utc();
 
             let json_mapper = ChoreographyModelMapper;
             json_model = Some(json_mapper.map_to_json(&global_state.choreography));

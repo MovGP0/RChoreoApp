@@ -6,6 +6,8 @@
 #![deny(elided_lifetimes_in_paths)]
 #![deny(clippy::all)]
 
+mod clock;
+
 pub mod errors;
 pub mod models;
 pub mod serialization;

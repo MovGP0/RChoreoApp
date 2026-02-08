@@ -1,8 +1,10 @@
-use time::{Date, Month, OffsetDateTime};
+use time::{Date, Month};
+
+use crate::time::SystemClock;
 
 pub(crate) fn today_date() -> Date
 {
-    OffsetDateTime::now_utc().date()
+    SystemClock::now_utc().date()
 }
 
 pub(crate) fn build_date(year: i32, month: i32, day: i32) -> Option<Date>

@@ -893,6 +893,8 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.18",
  "time 0.3.46",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
@@ -901,8 +903,9 @@ version = "0.1.0"
 dependencies = [
  "choreo_master_mobile_json",
  "crossbeam-channel",
- "js-sys",
  "time 0.3.46",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

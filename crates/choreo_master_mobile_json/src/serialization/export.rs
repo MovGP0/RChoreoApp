@@ -2,8 +2,8 @@ use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use time::OffsetDateTime;
 
+use crate::clock::SystemClock;
 use crate::errors::ChoreoJsonError;
 use crate::models::{
     Choreography, Dancer, DancerId, Position, Role, Scene,
@@ -70,7 +70,7 @@ fn to_value(choreography: &Choreography) -> Result<Value, ChoreoJsonError> {
         .last_save_date
         .format(&time::format_description::well_known::Rfc3339)
         .unwrap_or_else(|_| {
-            OffsetDateTime::now_utc()
+            SystemClock::now_utc()
                 .format(&time::format_description::well_known::Rfc3339)
                 .unwrap_or_default()
         });

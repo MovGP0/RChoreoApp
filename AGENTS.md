@@ -214,6 +214,7 @@ If you encounter a compile error after a code change you did, keep a note here h
 - If `material-1.0` mismatches the Slint version (e.g., `radio-button` accessibility role errors), sync to the template’s `material-1.0` or patch the role to `checkbox`.
 - Keep `material-1.0` synced with the Slint tag in use (`v1.14.1` from `.temp/slint`); do not edit `material-1.0` directly.
 - In Slint functions returning `length`, use units (e.g., `0px`) and avoid binding `width` to parent/root inside layouts; prefer `horizontal-stretch` to prevent layout loops.
+- For platform-independent current time, do not call `OffsetDateTime::now_utc()` directly in app/model code; route through a shared clock abstraction (for example `SystemClock::now_utc()`), and on `wasm32` compute time via `web-sys` (`window.performance().time_origin() + now()`) before converting to `OffsetDateTime`.
 
 # Slint
 

@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
+use crate::clock::SystemClock;
+
 use super::{Dancer, Floor, Role, Scene, Settings};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -48,7 +50,7 @@ impl Default for Choreography {
             variation: None,
             author: None,
             description: None,
-            last_save_date: OffsetDateTime::now_utc(),
+            last_save_date: SystemClock::now_utc(),
         }
     }
 }

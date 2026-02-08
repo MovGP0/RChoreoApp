@@ -4,6 +4,7 @@ use std::fs;
 use std::path::Path;
 use time::OffsetDateTime;
 
+use crate::clock::SystemClock;
 use crate::errors::ChoreoJsonError;
 use crate::models::{
     Choreography, Color, Dancer, DancerId, Floor, Position, Role, Scene, SceneId, Settings,
@@ -36,7 +37,7 @@ fn from_value(value: &Value) -> Result<Choreography, ChoreoJsonError> {
         .and_then(|value| {
             OffsetDateTime::parse(&value, &time::format_description::well_known::Rfc3339).ok()
         })
-        .unwrap_or_else(OffsetDateTime::now_utc);
+        .unwrap_or_else(SystemClock::now_utc);
 
     let settings_value = root
         .get("Settings")

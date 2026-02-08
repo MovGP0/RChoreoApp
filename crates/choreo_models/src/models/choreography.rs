@@ -13,8 +13,11 @@ use crate::models::settings::SettingsModel;
 fn now_utc() -> OffsetDateTime {
     #[cfg(target_arch = "wasm32")]
     {
-        let millis = js_sys::Date::now();
-        let nanos = (millis * 1_000_000.0) as i128;
+        let millis_since_unix_epoch = web_sys::window()
+            .and_then(|window| window.performance())
+            .map(|performance| performance.time_origin() + performance.now())
+            .unwrap_or(0.0);
+        let nanos = (millis_since_unix_epoch * 1_000_000.0) as i128;
         OffsetDateTime::from_unix_timestamp_nanos(nanos)
             .unwrap_or(OffsetDateTime::UNIX_EPOCH)
     }

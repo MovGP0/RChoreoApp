@@ -2,6 +2,15 @@
 mod time;
 
 #[test]
+fn system_clock_now_utc_returns_timestamp() {
+    // act
+    let now = time::subject::SystemClock::now_utc();
+
+    // assert
+    assert!(now.unix_timestamp_nanos() > 0);
+}
+
+#[test]
 fn parse_timestamp_seconds_parses_seconds_only() {
     // arrange
     let subject = "12.5";
