@@ -6,6 +6,7 @@ use nject::injectable;
 use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
+use crate::choreography_settings::RedrawFloorCommand;
 use crate::logging::BehaviorLog;
 use crate::scenes::SceneViewModel;
 use super::messages::{SelectSceneCommand, SelectedSceneChangedEvent};
@@ -15,14 +16,21 @@ use super::scenes_view_model::ScenesPaneViewModel;
 #[inject(
     |select_scene_sender: Sender<SelectSceneCommand>,
      select_scene_receiver: Receiver<SelectSceneCommand>,
-     selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>| {
-        Self::new(select_scene_sender, select_scene_receiver, selected_scene_changed_sender)
+     selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>,
+     redraw_floor_sender: Sender<RedrawFloorCommand>| {
+        Self::new(
+            select_scene_sender,
+            select_scene_receiver,
+            selected_scene_changed_sender,
+            redraw_floor_sender,
+        )
     }
 )]
 pub struct SelectSceneBehavior {
     select_scene_sender: Sender<SelectSceneCommand>,
     receiver: Receiver<SelectSceneCommand>,
     selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>,
+    redraw_floor_sender: Sender<RedrawFloorCommand>,
 }
 
 impl SelectSceneBehavior {
@@ -30,11 +38,13 @@ impl SelectSceneBehavior {
         select_scene_sender: Sender<SelectSceneCommand>,
         receiver: Receiver<SelectSceneCommand>,
         selected_scene_changed_sender: Sender<SelectedSceneChangedEvent>,
+        redraw_floor_sender: Sender<RedrawFloorCommand>,
     ) -> Self {
         Self {
             select_scene_sender,
             receiver,
             selected_scene_changed_sender,
+            redraw_floor_sender,
         }
     }
 
@@ -65,6 +75,7 @@ impl Behavior<ScenesPaneViewModel> for SelectSceneBehavior {
 
         let receiver = self.receiver.clone();
         let selected_scene_changed_sender = self.selected_scene_changed_sender.clone();
+        let redraw_floor_sender = self.redraw_floor_sender.clone();
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
             while let Ok(command) = receiver.try_recv() {
@@ -73,6 +84,7 @@ impl Behavior<ScenesPaneViewModel> for SelectSceneBehavior {
                     let _ = selected_scene_changed_sender.send(SelectedSceneChangedEvent {
                         selected_scene: Some(selected_scene),
                     });
+                    let _ = redraw_floor_sender.send(RedrawFloorCommand);
                 }
             }
         });

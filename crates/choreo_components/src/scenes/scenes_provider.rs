@@ -7,6 +7,7 @@ use choreo_state_machine::ApplicationStateMachine;
 use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::audio_player::{CloseAudioFileCommand, OpenAudioFileCommand};
 use crate::behavior::Behavior;
+use crate::choreography_settings::RedrawFloorCommand;
 use crate::choreography_settings::ShowTimestampsChangedEvent;
 use crate::global::{GlobalStateModel, GlobalStateActor};
 
@@ -40,6 +41,7 @@ pub struct ScenesDependencies {
     pub audio_position_receiver: crossbeam_channel::Receiver<AudioPlayerPositionChangedEvent>,
     pub show_timestamps_sender: Sender<ShowTimestampsChangedEvent>,
     pub show_timestamps_receiver: crossbeam_channel::Receiver<ShowTimestampsChangedEvent>,
+    pub redraw_floor_sender: Sender<RedrawFloorCommand>,
     pub actions: OpenChoreoActions,
 }
 
@@ -73,6 +75,7 @@ impl ScenesProvider {
                 select_scene_sender,
                 select_scene_receiver,
                 selected_scene_changed_sender.clone(),
+                deps.redraw_floor_sender,
             )),
             Box::new(ApplyPlacementModeBehavior::new(
                 deps.global_state_store.clone(),

@@ -193,6 +193,7 @@ impl MainPageBinding {
             audio_position_receiver: audio_position_receiver_for_scenes,
             show_timestamps_sender: show_timestamps_sender.clone(),
             show_timestamps_receiver,
+            redraw_floor_sender: redraw_floor_sender.clone(),
             actions: OpenChoreoActions {
                 request_open_choreo: actions.request_open_choreo.clone(),
             },
