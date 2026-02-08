@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
+use std::time::{Duration, Instant};
 
 use crossbeam_channel::Sender;
 use nject::injectable;
@@ -220,6 +221,8 @@ pub struct AudioPlayerViewState {
     is_user_dragging: bool,
     was_playing: bool,
     is_adjusting_speed: bool,
+    pending_seek_position: Option<f64>,
+    pending_seek_started_at: Option<Instant>,
 }
 
 impl Default for AudioPlayerViewState {
@@ -230,18 +233,24 @@ impl Default for AudioPlayerViewState {
 
 impl AudioPlayerViewState {
     const SPEED_SNAP_STEP: f64 = 0.05;
+    const POSITION_SYNC_TOLERANCE_SECONDS: f64 = 0.2;
+    const POSITION_SYNC_TIMEOUT: Duration = Duration::from_millis(1500);
 
     pub fn new() -> Self {
         Self {
             is_user_dragging: false,
             was_playing: false,
             is_adjusting_speed: false,
+            pending_seek_position: None,
+            pending_seek_started_at: None,
         }
     }
 
     pub fn on_position_drag_started(&mut self, view_model: &mut AudioPlayerViewModel) {
         self.is_user_dragging = true;
         self.was_playing = view_model.is_playing;
+        self.pending_seek_position = None;
+        self.pending_seek_started_at = None;
 
         let Some(player) = view_model.player.as_mut() else {
             return;
@@ -266,11 +275,18 @@ impl AudioPlayerViewState {
             return;
         }
 
+        self.pending_seek_position = Some(position);
+        self.pending_seek_started_at = Some(Instant::now());
+
         if self.was_playing {
             view_model.seek_and_play(position);
         } else {
             view_model.seek(position);
         }
+
+        self.was_playing = false;
+        view_model.position = position;
+        view_model.update_duration_label();
     }
 
     pub fn on_speed_changed(&mut self, view_model: &mut AudioPlayerViewModel, new_value: f64) {
@@ -297,6 +313,30 @@ impl AudioPlayerViewState {
 
     pub fn is_user_dragging(&self) -> bool {
         self.is_user_dragging
+    }
+
+    pub fn should_accept_player_position(&mut self, player_position: f64) -> bool {
+        if self.is_user_dragging {
+            return false;
+        }
+
+        let Some(target_position) = self.pending_seek_position else {
+            return true;
+        };
+
+        let has_reached_target =
+            (player_position - target_position).abs() <= Self::POSITION_SYNC_TOLERANCE_SECONDS;
+        let timed_out = self
+            .pending_seek_started_at
+            .is_some_and(|started_at| started_at.elapsed() >= Self::POSITION_SYNC_TIMEOUT);
+
+        if has_reached_target || timed_out {
+            self.pending_seek_position = None;
+            self.pending_seek_started_at = None;
+            return true;
+        }
+
+        false
     }
 }
 

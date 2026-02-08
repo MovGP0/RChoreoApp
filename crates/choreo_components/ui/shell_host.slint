@@ -161,7 +161,7 @@ export component ShellHost inherits MaterialWindow {
     callback audio_speed_changed(float);
     callback audio_position_changed(float);
     callback audio_position_drag_started();
-    callback audio_position_drag_completed();
+    callback audio_position_drag_completed(float);
     callback audio_link_scene_to_position();
     callback audio_toggle_play_pause();
 
@@ -328,7 +328,7 @@ export component ShellHost inherits MaterialWindow {
             audio_speed_changed(value) => { root.audio_speed_changed(value); }
             audio_position_changed(value) => { root.audio_position_changed(value); }
             audio_position_drag_started => { root.audio_position_drag_started(); }
-            audio_position_drag_completed => { root.audio_position_drag_completed(); }
+            audio_position_drag_completed(value) => { root.audio_position_drag_completed(value); }
             audio_link_scene_to_position => { root.audio_link_scene_to_position(); }
             audio_toggle_play_pause => { root.audio_toggle_play_pause(); }
         }

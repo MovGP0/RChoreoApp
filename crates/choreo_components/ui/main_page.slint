@@ -178,7 +178,7 @@ export component MainPage inherits Rectangle {
     callback audio_speed_changed(float);
     callback audio_position_changed(float);
     callback audio_position_drag_started();
-    callback audio_position_drag_completed();
+    callback audio_position_drag_completed(float);
     callback audio_link_scene_to_position();
     callback audio_toggle_play_pause();
 
@@ -422,7 +422,7 @@ export component MainPage inherits Rectangle {
                 speed_changed(value) => { root.audio_speed_changed(value); }
                 position_changed(value) => { root.audio_position_changed(value); }
                 position_drag_started => { root.audio_position_drag_started(); }
-                position_drag_completed => { root.audio_position_drag_completed(); }
+                position_drag_completed(value) => { root.audio_position_drag_completed(value); }
                 link_scene_to_position => { root.audio_link_scene_to_position(); }
                 toggle_play_pause => { root.audio_toggle_play_pause(); }
             }

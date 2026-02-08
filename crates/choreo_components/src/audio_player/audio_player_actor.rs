@@ -5,7 +5,7 @@ use crossbeam_channel::{Receiver, Sender, TrySendError, bounded};
 
 use super::types::AudioPlayer;
 
-const AUDIO_COMMAND_BUFFER: usize = 64;
+const AUDIO_COMMAND_BUFFER: usize = 1;
 
 pub fn create_platform_audio_player(file_path: String) -> Box<dyn AudioPlayer> {
     #[cfg(target_arch = "wasm32")]

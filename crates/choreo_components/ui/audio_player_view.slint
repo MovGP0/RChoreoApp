@@ -5,7 +5,7 @@ export component AudioPlayerView inherits Rectangle {
     in property <float> speed;
     in property <float> minimum_speed;
     in property <float> maximum_speed;
-    in-out property <float> position;
+    in property <float> position;
     in property <float> duration;
     in property <[float]> tick_values;
     in property <bool> can_seek;
@@ -17,7 +17,7 @@ export component AudioPlayerView inherits Rectangle {
     callback speed_changed(float);
     callback position_changed(float);
     callback position_drag_started();
-    callback position_drag_completed();
+    callback position_drag_completed(float);
     callback link_scene_to_position();
     callback toggle_play_pause();
 
@@ -59,12 +59,12 @@ export component AudioPlayerView inherits Rectangle {
         SliderWithTicks {
             minimum: 0;
             maximum: duration;
-            value <=> position;
+            value: position;
             enabled: can_seek;
             tick_color: MaterialPalette.tertiary;
             value_changed(value) => { position_changed(value); }
             drag_started => { position_drag_started(); }
-            drag_completed => { position_drag_completed(); }
+            drag_completed(value) => { position_drag_completed(value); }
             tick_values: tick_values;
         }
 

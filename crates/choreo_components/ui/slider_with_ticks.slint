@@ -10,7 +10,7 @@ export component SliderWithTicks inherits Rectangle {
     in property <color> tick_color: MaterialPalette.on_surface;
 
     callback drag_started();
-    callback drag_completed();
+    callback drag_completed(float);
     callback value_changed(float);
 
     property <int> steps: root.stop_count > 0 ? (root.maximum - root.minimum) / root.stop_count : 1;
@@ -36,7 +36,7 @@ export component SliderWithTicks inherits Rectangle {
     function end_drag() {
         if (root.is_dragging) {
             root.is_dragging = false;
-            root.drag_completed();
+            root.drag_completed(root.value);
         }
     }
 
@@ -125,14 +125,14 @@ export component SliderWithTicks inherits Rectangle {
                             }
 
                             moved => {
-                                root.set_value(root.length_to_value(state_layer.x + (self.mouse_x - self.pressed_x), track.width));
+                                root.set_value_without_emit(root.length_to_value(state_layer.x + (self.mouse_x - self.pressed_x), track.width));
                             }
 
                             pointer_event(event) => {
                                 if (event.kind == PointerEventKind.down && event.button == PointerEventButton.left) {
                                     root.begin_drag();
                                 }
-                                if (event.kind == PointerEventKind.up) {
+                                if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
                                     root.end_drag();
                                 }
                             }
@@ -143,9 +143,9 @@ export component SliderWithTicks inherits Rectangle {
                 pointer_event(event) => {
                     if (event.kind == PointerEventKind.down && event.button == PointerEventButton.left) {
                         root.begin_drag();
-                        root.set_value(root.length_to_value(self.mouse_x, track.width));
+                        root.set_value_without_emit(root.length_to_value(self.mouse_x, track.width));
                     }
-                    if (event.kind == PointerEventKind.up) {
+                    if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
                         root.end_drag();
                     }
                 }
@@ -188,17 +188,29 @@ export component SliderWithTicks inherits Rectangle {
     }
 
     function set_value(value: float) {
+        root.set_value_internal(value, true);
+    }
+
+    function set_value_without_emit(value: float) {
+        root.set_value_internal(value, false);
+    }
+
+    function set_value_internal(value: float, emit_event: bool) {
         if (root.steps > 1) {
             let snapped = clamp(round(value / root.steps) * root.steps, root.minimum, root.maximum);
             if (snapped != root.value) {
                 root.value = snapped;
-                root.value_changed(root.value);
+                if (emit_event) {
+                    root.value_changed(root.value);
+                }
             }
         } else {
             let clamped = clamp(value, root.minimum, root.maximum);
             if (clamped != root.value) {
                 root.value = clamped;
-                root.value_changed(root.value);
+                if (emit_event) {
+                    root.value_changed(root.value);
+                }
             }
         }
     }

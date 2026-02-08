@@ -36,6 +36,29 @@ fn audio_player_view_state_spec() {
                 assert!(state.is_playing);
             },
         );
+
+        spec.it(
+            "ignores stale agent position until dragged target is acknowledged",
+            |_| {
+                let context = audio_player::AudioPlayerTestContext::new(vec![]);
+                let player_state = Rc::new(RefCell::new(TestAudioPlayerState::default()));
+                context.view_model.borrow_mut().set_player(Box::new(TestAudioPlayer {
+                    state: Rc::clone(&player_state),
+                }));
+
+                let mut view_state = AudioPlayerViewState::new();
+
+                {
+                    let mut view_model = context.view_model.borrow_mut();
+                    view_model.is_playing = false;
+                    view_state.on_position_drag_started(&mut view_model);
+                    view_state.on_position_drag_completed(&mut view_model, 18.0);
+                }
+
+                assert!(!view_state.should_accept_player_position(4.0));
+                assert!(view_state.should_accept_player_position(18.0));
+            },
+        );
     });
 
     let report = audio_player::run_suite(&suite);

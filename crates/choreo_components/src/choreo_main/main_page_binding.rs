@@ -658,7 +658,15 @@ impl MainPageBinding {
                 std::time::Duration::from_millis(16),
                 move || {
                     let mut audio_player = audio_player.borrow_mut();
-                    if !audio_player_view_state.borrow().is_user_dragging() {
+                    let player_position = audio_player
+                        .player
+                        .as_ref()
+                        .map(|player| player.current_position())
+                        .unwrap_or(audio_player.position);
+                    if audio_player_view_state
+                        .borrow_mut()
+                        .should_accept_player_position(player_position)
+                    {
                         audio_player.sync_from_player();
                     }
                     if let Some((scenes, selected_scene)) =
@@ -1442,9 +1450,11 @@ impl MainPageBinding {
             let audio_player = Rc::clone(&audio_player);
             let audio_player_view_state = Rc::clone(&audio_player_view_state);
             let view_weak = view_weak.clone();
-            view.on_audio_position_drag_completed(move || {
+            view.on_audio_position_drag_completed(move |value| {
                 let mut audio_player = audio_player.borrow_mut();
-                let position = audio_player.position;
+                let position = value as f64;
+                audio_player.position = position;
+                audio_player.update_duration_label();
                 audio_player_view_state
                     .borrow_mut()
                     .on_position_drag_completed(&mut audio_player, position);
