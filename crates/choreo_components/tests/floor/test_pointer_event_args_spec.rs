@@ -1,4 +1,4 @@
-mod floor;
+use crate::floor;
 
 use floor::Report;
 use choreo_components::floor::{Point, PointerButton, PointerEventArgs};

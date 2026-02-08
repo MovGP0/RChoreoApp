@@ -1,40 +1,47 @@
-mod floor;
+use crate::floor;
 
 use floor::Report;
-use choreo_components::floor::RedrawFloorBehavior;
-
-fn count_draws(receiver: &crossbeam_channel::Receiver<choreo_components::floor::DrawFloorCommand>) -> usize {
-    receiver.try_iter().count()
-}
+use std::time::Duration;
 
 #[test]
 fn redraw_floor_behavior_spec() {
     let suite = rspec::describe("redraw floor behavior", (), |spec| {
         spec.it("redraws when choreography changes", |_| {
-            let mut context = floor::FloorTestContext::new();
+            let context = floor::FloorTestContext::new();
             context.configure_canvas();
-            let behavior = RedrawFloorBehavior;
 
-            behavior.handle_choreography_changed(&mut context.view_model);
-            assert!(count_draws(&context.draw_floor_receiver) > 0);
+            context.update_global_state(|state| {
+                state.choreography.name = "Updated".to_string();
+            });
+            context.send_redraw_command();
+
+            let redrawn = context.wait_until(Duration::from_secs(1), || context.draw_count() > 0);
+            assert!(redrawn);
         });
 
         spec.it("redraws when selected scene changes", |_| {
-            let mut context = floor::FloorTestContext::new();
+            let context = floor::FloorTestContext::new();
             context.configure_canvas();
-            let behavior = RedrawFloorBehavior;
 
-            behavior.handle_selected_scene_changed(&mut context.view_model);
-            assert!(count_draws(&context.draw_floor_receiver) > 0);
+            let (_, scene) = floor::build_three_position_choreography();
+            let scene_view_model = floor::map_scene_view_model(&scene);
+            context.update_global_state(|state| {
+                state.selected_scene = Some(scene_view_model);
+            });
+            context.send_redraw_command();
+
+            let redrawn = context.wait_until(Duration::from_secs(1), || context.draw_count() > 0);
+            assert!(redrawn);
         });
 
         spec.it("redraws when redraw command is published", |_| {
-            let mut context = floor::FloorTestContext::new();
+            let context = floor::FloorTestContext::new();
             context.configure_canvas();
-            let behavior = RedrawFloorBehavior;
 
-            behavior.handle_redraw_command(&mut context.view_model);
-            assert!(count_draws(&context.draw_floor_receiver) > 0);
+            context.send_redraw_command();
+
+            let redrawn = context.wait_until(Duration::from_secs(1), || context.draw_count() > 0);
+            assert!(redrawn);
         });
     });
 

@@ -1,117 +1,83 @@
-mod floor;
-
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use crate::floor;
 
 use floor::Report;
-use choreo_components::floor::{Point, ScaleAroundDancerBehavior, TimeProvider};
+use choreo_components::floor::Point;
 use choreo_components::global::InteractionMode;
 use choreo_state_machine::ScaleAroundDancerStartedTrigger;
 
-#[derive(Debug)]
-struct TestTimeProvider {
-    now: Mutex<Duration>,
-}
-
-impl TestTimeProvider {
-    fn new(initial: Duration) -> Self {
-        Self {
-            now: Mutex::new(initial),
-        }
-    }
-
-    fn advance(&self, delta: Duration) {
-        let mut guard = self.now.lock().expect("time lock");
-        *guard += delta;
-    }
-}
-
-impl TimeProvider for TestTimeProvider {
-    fn now(&self) -> Duration {
-        *self.now.lock().expect("time lock")
-    }
-}
-
-struct SharedTimeProvider {
-    inner: Arc<TestTimeProvider>,
-}
-
-impl TimeProvider for SharedTimeProvider {
-    fn now(&self) -> Duration {
-        self.inner.now()
-    }
-}
-
-fn setup_context() -> (floor::FloorTestContext, ScaleAroundDancerBehavior, Arc<TestTimeProvider>) {
-    let mut context = floor::FloorTestContext::new();
+fn setup_context() -> floor::FloorTestContext {
+    let context = floor::FloorTestContext::new();
     context.configure_canvas();
 
     let (choreography, scene) = floor::build_three_position_choreography();
     let scene_view_model = floor::map_scene_view_model(&scene);
-    context.global_state.choreography = choreography;
-    context.global_state.selected_scene = Some(scene_view_model.clone());
-    context.global_state.scenes = vec![scene_view_model];
-    context.global_state.interaction_mode = InteractionMode::RotateAroundDancer;
-    let _ = context.state_machine.try_apply(&ScaleAroundDancerStartedTrigger);
 
-    let time_provider = Arc::new(TestTimeProvider::new(Duration::from_secs(0)));
-    let behavior = ScaleAroundDancerBehavior::with_time_provider(Box::new(SharedTimeProvider {
-        inner: time_provider.clone(),
-    }));
+    context.update_global_state(|state| {
+        state.choreography = choreography;
+        state.selected_scene = Some(scene_view_model.clone());
+        state.scenes = vec![scene_view_model];
+        state.interaction_mode = InteractionMode::RotateAroundDancer;
+    });
 
-    (context, behavior, time_provider)
+    context.update_state_machine(|state_machine| {
+        let _ = state_machine.try_apply(&ScaleAroundDancerStartedTrigger);
+    });
+
+    context
 }
 
-fn select_rectangle(
-    behavior: &mut ScaleAroundDancerBehavior,
-    context: &mut floor::FloorTestContext,
-    start: Point,
-    end: Point,
-) {
-    let view_start = floor::floor_to_view_point(&context.view_model, &context.global_state.choreography, start);
-    let view_end = floor::floor_to_view_point(&context.view_model, &context.global_state.choreography, end);
-    behavior.handle_pointer_pressed(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_pressed(view_start));
-    behavior.handle_pointer_moved(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_moved(view_end));
-    behavior.handle_pointer_released(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_released(view_end));
+fn select_rectangle(context: &floor::FloorTestContext, start: Point, end: Point) {
+    let view_start = floor::floor_to_view_point(context, start);
+    let view_end = floor::floor_to_view_point(context, end);
+    context.send_pointer_pressed(view_start);
+    context.send_pointer_moved(view_end);
+    context.send_pointer_released(view_end);
 }
 
-fn double_tap(
-    behavior: &mut ScaleAroundDancerBehavior,
-    context: &mut floor::FloorTestContext,
-    time_provider: &TestTimeProvider,
-    point: Point,
-) {
-    let view_point = floor::floor_to_view_point(&context.view_model, &context.global_state.choreography, point);
-    behavior.handle_pointer_pressed(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_pressed(view_point));
-    behavior.handle_pointer_released(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_released(view_point));
-    time_provider.advance(Duration::from_millis(100));
-    behavior.handle_pointer_pressed(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_pressed(view_point));
-    behavior.handle_pointer_released(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_released(view_point));
+fn double_tap(context: &floor::FloorTestContext, point: Point) {
+    let view_point = floor::floor_to_view_point(context, point);
+    context.send_pointer_pressed(view_point);
+    context.send_pointer_released(view_point);
+    floor::sleep_ms(100);
+    context.send_pointer_pressed(view_point);
+    context.send_pointer_released(view_point);
 }
 
-fn drag_from_to(
-    behavior: &mut ScaleAroundDancerBehavior,
-    context: &mut floor::FloorTestContext,
-    start: Point,
-    end: Point,
-) {
-    let view_start = floor::floor_to_view_point(&context.view_model, &context.global_state.choreography, start);
-    let view_end = floor::floor_to_view_point(&context.view_model, &context.global_state.choreography, end);
-    behavior.handle_pointer_pressed(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_pressed(view_start));
-    behavior.handle_pointer_moved(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_moved(view_end));
-    behavior.handle_pointer_released(&context.view_model, &mut context.global_state, &mut context.state_machine, floor::pointer_released(view_end));
+fn double_tap_touch(context: &floor::FloorTestContext, point: Point) {
+    let view_point = floor::floor_to_view_point(context, point);
+    context.send_touch(1, choreo_components::floor::TouchAction::Pressed, view_point, true);
+    context.send_touch(1, choreo_components::floor::TouchAction::Released, view_point, false);
+    floor::sleep_ms(100);
+    context.send_touch(1, choreo_components::floor::TouchAction::Pressed, view_point, true);
+    context.send_touch(1, choreo_components::floor::TouchAction::Released, view_point, false);
+}
+
+fn drag_from_to(context: &floor::FloorTestContext, start: Point, end: Point) {
+    let view_start = floor::floor_to_view_point(context, start);
+    let view_end = floor::floor_to_view_point(context, end);
+    context.send_pointer_pressed(view_start);
+    context.send_pointer_moved(view_end);
+    context.send_pointer_released(view_end);
+}
+
+fn drag_touch_from_to(context: &floor::FloorTestContext, start: Point, end: Point) {
+    let view_start = floor::floor_to_view_point(context, start);
+    let view_end = floor::floor_to_view_point(context, end);
+    context.send_touch(1, choreo_components::floor::TouchAction::Pressed, view_start, true);
+    context.send_touch(1, choreo_components::floor::TouchAction::Moved, view_end, true);
+    context.send_touch(1, choreo_components::floor::TouchAction::Released, view_end, false);
 }
 
 #[test]
 fn scale_around_dancer_behavior_spec() {
     let suite = rspec::describe("scale around dancer behavior", (), |spec| {
         spec.it("rotates around tapped dancer", |_| {
-            let (mut context, mut behavior, time_provider) = setup_context();
-            select_rectangle(&mut behavior, &mut context, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
-            double_tap(&mut behavior, &mut context, &time_provider, Point::new(-1.0, 1.0));
-            drag_from_to(&mut behavior, &mut context, Point::new(-1.0, 2.0), Point::new(0.0, 1.0));
+            let context = setup_context();
+            select_rectangle(&context, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
+            double_tap_touch(&context, Point::new(-1.0, 1.0));
+            drag_touch_from_to(&context, Point::new(-1.0, 2.0), Point::new(0.0, 1.0));
 
-            let scene = context.global_state.selected_scene.as_ref().expect("scene");
+            let scene = context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
             let first = &scene.positions[0];
             let second = &scene.positions[1];
             let third = &scene.positions[2];
@@ -125,12 +91,12 @@ fn scale_around_dancer_behavior_spec() {
         });
 
         spec.it("rotates around tapped dancer with mouse", |_| {
-            let (mut context, mut behavior, time_provider) = setup_context();
-            select_rectangle(&mut behavior, &mut context, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
-            double_tap(&mut behavior, &mut context, &time_provider, Point::new(-1.0, 1.0));
-            drag_from_to(&mut behavior, &mut context, Point::new(-1.0, 2.0), Point::new(0.0, 1.0));
+            let context = setup_context();
+            select_rectangle(&context, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
+            double_tap(&context, Point::new(-1.0, 1.0));
+            drag_from_to(&context, Point::new(-1.0, 2.0), Point::new(0.0, 1.0));
 
-            let scene = context.global_state.selected_scene.as_ref().expect("scene");
+            let scene = context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
             let second = &scene.positions[1];
             floor::assert_close(second.x, -1.0, 0.0001);
             floor::assert_close(second.y, -1.0, 0.0001);

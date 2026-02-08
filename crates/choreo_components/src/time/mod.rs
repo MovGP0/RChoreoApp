@@ -22,14 +22,14 @@ pub(crate) fn parse_timestamp_seconds(value: &str) -> Option<f64> {
 
 pub(crate) fn format_seconds(value: f64) -> String {
     let mut text = format!("{value:.3}");
-    if let Some(dot) = text.find('.') {
+    if text.find('.').is_some() {
         while text.ends_with('0') {
             text.pop();
         }
         if text.ends_with('.') {
             text.pop();
         }
-        if text.len() == dot {
+        if text.is_empty() {
             text.push('0');
         }
     }

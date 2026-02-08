@@ -1,10 +1,16 @@
 #![allow(dead_code)]
 
+use choreo_components::behavior::Behavior;
+use choreo_components::choreography_settings::RedrawFloorCommand;
 use choreo_components::floor::{
     CanvasViewHandle,
     DrawFloorCommand,
     FloorCanvasViewModel,
+    FloorPointerEventSenders,
+    GestureHandlingBehavior,
     Matrix,
+    MovePositionsBehavior,
+    PlacePositionBehavior,
     Point,
     PointerButton,
     PointerEventArgs,
@@ -13,21 +19,39 @@ use choreo_components::floor::{
     PointerReleasedCommand,
     PointerWheelChangedCommand,
     Rect,
+    RedrawFloorBehavior,
+    RotateAroundCenterBehavior,
+    ScaleAroundDancerBehavior,
+    ScalePositionsBehavior,
     Size,
     TouchAction,
     TouchCommand,
     TouchDeviceType,
     TouchEventArgs,
 };
-use choreo_components::global::GlobalStateModel;
+use choreo_components::global::{GlobalStateActor, GlobalStateModel};
 use choreo_components::scenes::SceneViewModel;
-use choreo_models::{ChoreographyModel, DancerModel, FloorModel, PositionModel, RoleModel, SceneModel, SettingsModel};
+use choreo_models::{
+    ChoreographyModel,
+    DancerModel,
+    FloorModel,
+    PositionModel,
+    RoleModel,
+    SceneModel,
+    SettingsModel,
+};
 use choreo_state_machine::ApplicationStateMachine;
-use rspec::{ConfigurationBuilder, Logger, Runner};
+use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
 pub use rspec::report::Report;
+use rspec::{ConfigurationBuilder, Logger, Runner};
+use std::cell::RefCell;
 use std::io;
 use std::rc::Rc;
 use std::sync::Arc;
+use std::thread;
+use std::time::{Duration, Instant};
+
+const POINTER_EVENT_BUFFER: usize = 256;
 
 pub fn run_suite<T>(suite: &rspec::block::Suite<T>) -> rspec::report::SuiteReport
 where
@@ -43,43 +67,253 @@ where
 }
 
 pub struct FloorTestContext {
-    pub global_state: GlobalStateModel,
-    pub state_machine: ApplicationStateMachine,
-    pub view_model: FloorCanvasViewModel,
-    pub draw_floor_receiver: crossbeam_channel::Receiver<DrawFloorCommand>,
+    pub global_state_store: Rc<GlobalStateActor>,
+    pub state_machine: Rc<RefCell<ApplicationStateMachine>>,
+    pub view_model: Rc<RefCell<FloorCanvasViewModel>>,
+    pub draw_floor_receiver: Receiver<DrawFloorCommand>,
+    redraw_floor_sender: Sender<RedrawFloorCommand>,
 }
 
 impl FloorTestContext {
     pub fn new() -> Self {
-        let (sender, receiver) = crossbeam_channel::unbounded();
-        let view_model = FloorCanvasViewModel::new(sender, Vec::new());
-        let state_machine = ApplicationStateMachine::with_default_transitions(Box::new(GlobalStateModel::default()));
+        let global_state_store = GlobalStateActor::new();
+        let state_machine = Rc::new(RefCell::new(
+            ApplicationStateMachine::with_default_transitions(Box::new(GlobalStateModel::default())),
+        ));
 
-        Self {
-            global_state: GlobalStateModel::default(),
+        let (draw_floor_sender, draw_floor_receiver) = unbounded();
+        let (redraw_floor_sender, redraw_floor_receiver) = unbounded();
+
+        let (gesture_pressed_sender, gesture_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (gesture_moved_sender, gesture_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (gesture_released_sender, gesture_released_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (gesture_wheel_sender, gesture_wheel_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (gesture_touch_sender, gesture_touch_receiver) = bounded(POINTER_EVENT_BUFFER);
+
+        let (place_pressed_sender, place_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (place_moved_sender, place_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (place_released_sender, place_released_receiver) = bounded(POINTER_EVENT_BUFFER);
+
+        let (move_pressed_sender, move_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (move_moved_sender, move_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (move_released_sender, move_released_receiver) = bounded(POINTER_EVENT_BUFFER);
+
+        let (rotate_pressed_sender, rotate_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (rotate_moved_sender, rotate_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (rotate_released_sender, rotate_released_receiver) = bounded(POINTER_EVENT_BUFFER);
+
+        let (scale_pressed_sender, scale_pressed_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (scale_moved_sender, scale_moved_receiver) = bounded(POINTER_EVENT_BUFFER);
+        let (scale_released_sender, scale_released_receiver) = bounded(POINTER_EVENT_BUFFER);
+
+        let (scale_dancer_pressed_sender, scale_dancer_pressed_receiver) =
+            bounded(POINTER_EVENT_BUFFER);
+        let (scale_dancer_moved_sender, scale_dancer_moved_receiver) =
+            bounded(POINTER_EVENT_BUFFER);
+        let (scale_dancer_released_sender, scale_dancer_released_receiver) =
+            bounded(POINTER_EVENT_BUFFER);
+
+        let floor_event_senders = FloorPointerEventSenders {
+            pointer_pressed_senders: vec![
+                gesture_pressed_sender,
+                place_pressed_sender,
+                move_pressed_sender,
+                rotate_pressed_sender,
+                scale_pressed_sender,
+                scale_dancer_pressed_sender,
+            ],
+            pointer_moved_senders: vec![
+                gesture_moved_sender,
+                place_moved_sender,
+                move_moved_sender,
+                rotate_moved_sender,
+                scale_moved_sender,
+                scale_dancer_moved_sender,
+            ],
+            pointer_released_senders: vec![
+                gesture_released_sender,
+                place_released_sender,
+                move_released_sender,
+                rotate_released_sender,
+                scale_released_sender,
+                scale_dancer_released_sender,
+            ],
+            pointer_wheel_changed_senders: vec![gesture_wheel_sender],
+            touch_senders: vec![gesture_touch_sender],
+        };
+
+        let view_model = Rc::new(RefCell::new(FloorCanvasViewModel::new(
+            draw_floor_sender,
+            floor_event_senders,
+        )));
+        view_model
+            .borrow_mut()
+            .set_self_handle(Rc::downgrade(&view_model));
+
+        let floor_behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>> = vec![
+            Box::new(RedrawFloorBehavior::new(redraw_floor_receiver)),
+            Box::new(GestureHandlingBehavior::new(
+                Rc::clone(&state_machine),
+                gesture_pressed_receiver,
+                gesture_moved_receiver,
+                gesture_released_receiver,
+                gesture_wheel_receiver,
+                gesture_touch_receiver,
+            )),
+            Box::new(PlacePositionBehavior::new(
+                Rc::clone(&global_state_store),
+                Rc::clone(&state_machine),
+                place_pressed_receiver,
+                place_moved_receiver,
+                place_released_receiver,
+            )),
+            Box::new(MovePositionsBehavior::new(
+                Rc::clone(&global_state_store),
+                Rc::clone(&state_machine),
+                move_pressed_receiver,
+                move_moved_receiver,
+                move_released_receiver,
+            )),
+            Box::new(RotateAroundCenterBehavior::new(
+                Rc::clone(&global_state_store),
+                Rc::clone(&state_machine),
+                rotate_pressed_receiver,
+                rotate_moved_receiver,
+                rotate_released_receiver,
+            )),
+            Box::new(ScalePositionsBehavior::new(
+                Rc::clone(&global_state_store),
+                Rc::clone(&state_machine),
+                scale_pressed_receiver,
+                scale_moved_receiver,
+                scale_released_receiver,
+            )),
+            Box::new(ScaleAroundDancerBehavior::new(
+                Rc::clone(&global_state_store),
+                Rc::clone(&state_machine),
+                scale_dancer_pressed_receiver,
+                scale_dancer_moved_receiver,
+                scale_dancer_released_receiver,
+            )),
+        ];
+
+        FloorCanvasViewModel::activate(&view_model, floor_behaviors);
+
+        let context = Self {
+            global_state_store,
             state_machine,
             view_model,
-            draw_floor_receiver: receiver,
-        }
+            draw_floor_receiver,
+            redraw_floor_sender,
+        };
+
+        context.pump_events();
+        context
     }
 
-    pub fn configure_canvas(&mut self) {
-        self.view_model.set_floor_bounds(Rect::new(0.0, 0.0, 100.0, 100.0));
-        self.view_model.set_canvas_size(Size::new(100.0, 100.0));
-        self.view_model.set_transformation_matrix(Matrix::identity());
+    pub fn configure_canvas(&self) {
+        let mut view_model = self.view_model.borrow_mut();
+        view_model.set_floor_bounds(Rect::new(0.0, 0.0, 100.0, 100.0));
+        view_model.set_canvas_size(Size::new(100.0, 100.0));
+        view_model.set_transformation_matrix(Matrix::identity());
+    }
+
+    pub fn set_transformation_matrix(&self, matrix: Matrix) {
+        self.view_model.borrow_mut().set_transformation_matrix(matrix);
+    }
+
+    pub fn update_global_state(&self, update: impl FnOnce(&mut GlobalStateModel)) {
+        let updated = self.global_state_store.try_update(update);
+        assert!(updated, "failed to update global state in test context");
+    }
+
+    pub fn read_global_state<T>(&self, read: impl FnOnce(&GlobalStateModel) -> T) -> T {
+        self.global_state_store
+            .try_with_state(read)
+            .expect("failed to read global state in test context")
+    }
+
+    pub fn update_state_machine(&self, update: impl FnOnce(&mut ApplicationStateMachine)) {
+        update(&mut self.state_machine.borrow_mut());
+    }
+
+    pub fn send_pointer_pressed(&self, point: Point) {
+        self.view_model.borrow().pointer_pressed(pointer_pressed(point));
+        self.pump_events();
+    }
+
+    pub fn send_pointer_moved(&self, point: Point) {
+        self.view_model.borrow().pointer_moved(pointer_moved(point));
+        self.pump_events();
+    }
+
+    pub fn send_pointer_released(&self, point: Point) {
+        self.view_model.borrow().pointer_released(pointer_released(point));
+        self.pump_events();
+    }
+
+    pub fn send_pointer_wheel_changed(&self, delta: f64, position: Option<Point>) {
+        self.view_model
+            .borrow()
+            .pointer_wheel_changed(pointer_wheel_changed(delta, position));
+        self.pump_events();
+    }
+
+    pub fn send_touch(&self, id: i64, action: TouchAction, point: Point, in_contact: bool) {
+        self.view_model
+            .borrow()
+            .touch(touch_command(id, action, point, in_contact));
+        self.pump_events();
+    }
+
+    pub fn send_redraw_command(&self) {
+        self.redraw_floor_sender
+            .send(RedrawFloorCommand)
+            .expect("redraw command send should succeed");
+        self.pump_events();
+    }
+
+    pub fn state_kind(&self) -> choreo_state_machine::StateKind {
+        self.state_machine.borrow().state().kind()
+    }
+
+    pub fn draw_count(&self) -> usize {
+        self.draw_floor_receiver.try_iter().count()
+    }
+
+    pub fn wait_until(&self, timeout: Duration, mut predicate: impl FnMut() -> bool) -> bool {
+        let deadline = Instant::now() + timeout;
+        while Instant::now() < deadline {
+            if predicate() {
+                return true;
+            }
+            self.pump_events();
+            thread::sleep(Duration::from_millis(10));
+        }
+        predicate()
+    }
+
+    pub fn pump_events(&self) {
+        for _ in 0..3 {
+            slint::platform::update_timers_and_animations();
+            thread::sleep(Duration::from_millis(20));
+        }
+        slint::platform::update_timers_and_animations();
     }
 }
 
-pub fn floor_to_view_point(
-    view_model: &FloorCanvasViewModel,
-    choreography: &ChoreographyModel,
-    floor_point: Point,
-) -> Point {
+pub fn floor_to_view_point(context: &FloorTestContext, floor_point: Point) -> Point {
+    let (floor_width, floor_height) = context.read_global_state(|state| {
+        (
+            (state.choreography.floor.size_left + state.choreography.floor.size_right) as f64,
+            (state.choreography.floor.size_front + state.choreography.floor.size_back) as f64,
+        )
+    });
+
+    let view_model = context.view_model.borrow();
     let floor_bounds = view_model.floor_bounds();
     let width = floor_bounds.width() as f64;
     let height = floor_bounds.height() as f64;
-    let floor_width = (choreography.floor.size_left + choreography.floor.size_right) as f64;
-    let floor_height = (choreography.floor.size_front + choreography.floor.size_back) as f64;
     let scale = (width / floor_width).min(height / floor_height);
     let center_x = floor_bounds.left as f64 + width / 2.0;
     let center_y = floor_bounds.top as f64 + height / 2.0;
@@ -324,7 +558,10 @@ pub fn map_scene_view_model(scene: &SceneModel) -> SceneViewModel {
         name: scene.name.clone(),
         text: scene.text.clone().unwrap_or_default(),
         fixed_positions: scene.fixed_positions,
-        timestamp: scene.timestamp.as_ref().and_then(|value| value.parse::<f64>().ok()),
+        timestamp: scene
+            .timestamp
+            .as_ref()
+            .and_then(|value| value.parse::<f64>().ok()),
         is_selected: false,
         positions: scene.positions.clone(),
         variation_depth: scene.variation_depth,
@@ -332,4 +569,8 @@ pub fn map_scene_view_model(scene: &SceneModel) -> SceneViewModel {
         current_variation: scene.current_variation.clone(),
         color: scene.color.clone(),
     }
+}
+
+pub fn sleep_ms(duration_ms: u64) {
+    thread::sleep(Duration::from_millis(duration_ms));
 }
