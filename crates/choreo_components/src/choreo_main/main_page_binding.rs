@@ -4,13 +4,7 @@ use std::rc::Rc;
 
 use choreo_master_mobile_json::Color as ChoreoColor;
 use crossbeam_channel::{Receiver, Sender, bounded};
-use slint::{
-    Color,
-    ComponentHandle,
-    Image,
-    ModelRc,
-    VecModel,
-};
+use slint::{Color, ComponentHandle, Image, ModelRc, VecModel};
 
 use crate::audio_player::{
     AudioPlayerPositionChangedEvent, AudioPlayerViewModel, AudioPlayerViewState,
@@ -1610,11 +1604,17 @@ fn apply_choreography_settings_view_model(
 }
 
 fn apply_audio_player_view_model(view: &ShellHost, view_model: &AudioPlayerViewModel) {
+    let slider_duration = if view_model.duration > 0.0 {
+        view_model.duration
+    } else {
+        view_model.position.max(1.0)
+    };
+
     view.set_audio_speed(view_model.speed as f32);
     view.set_audio_minimum_speed(view_model.minimum_speed as f32);
     view.set_audio_maximum_speed(view_model.maximum_speed as f32);
     view.set_audio_position(view_model.position as f32);
-    view.set_audio_duration(view_model.duration as f32);
+    view.set_audio_duration(slider_duration as f32);
     view.set_audio_tick_values(ModelRc::new(VecModel::from(
         view_model
             .tick_values

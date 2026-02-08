@@ -33,11 +33,18 @@ export component AudioPlayerView inherits Rectangle {
         spacing: 12px;
 
         Slider {
-            minimum: minimum_speed;
-            maximum: maximum_speed;
-            value: speed;
+            // Material Slider currently assumes a zero-based range when translating
+            // pointer positions; normalize speed to avoid collapsing to minimum.
+            minimum: 0;
+            maximum: 100;
+            value: maximum_speed == minimum_speed
+                ? 0
+                : (speed - minimum_speed) / (maximum_speed - minimum_speed) * 100;
             width: 240px;
-            value_changed(value) => { speed_changed(value); }
+            value_changed(value) => {
+                let span = maximum_speed - minimum_speed;
+                speed_changed(span == 0 ? minimum_speed : minimum_speed + span * (value / 100));
+            }
         }
 
         MaterialText {

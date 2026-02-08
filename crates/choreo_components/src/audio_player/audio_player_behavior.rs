@@ -1,9 +1,6 @@
-use std::time::Duration;
-
 use nject::injectable;
-use slint::TimerMode;
 
-use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
+use crate::behavior::{Behavior, CompositeDisposable};
 use crate::logging::BehaviorLog;
 
 use super::audio_player_view_model::AudioPlayerViewModel;
@@ -15,22 +12,9 @@ pub struct AudioPlayerBehavior;
 impl Behavior<AudioPlayerViewModel> for AudioPlayerBehavior {
     fn activate(
         &self,
-        view_model: &mut AudioPlayerViewModel,
-        disposables: &mut CompositeDisposable,
+        _view_model: &mut AudioPlayerViewModel,
+        _disposables: &mut CompositeDisposable,
     ) {
         BehaviorLog::behavior_activated("AudioPlayerBehavior", "AudioPlayerViewModel");
-        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
-        else {
-            return;
-        };
-
-        let timer = slint::Timer::default();
-        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
-            let Ok(mut view_model) = view_model_handle.try_borrow_mut() else {
-                return;
-            };
-            view_model.sync_from_player();
-        });
-        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }

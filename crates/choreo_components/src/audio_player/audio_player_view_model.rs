@@ -180,7 +180,11 @@ impl AudioPlayerViewModel {
     }
 
     pub fn update_duration_label(&mut self) {
-        self.duration_label = duration_to_time_text(self.duration);
+        self.duration_label = format!(
+            "{} / {}",
+            duration_to_time_text(self.position),
+            duration_to_time_text(self.duration),
+        );
     }
 
     fn sync_capabilities(&mut self, player: &dyn AudioPlayer) {

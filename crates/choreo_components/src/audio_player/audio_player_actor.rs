@@ -59,6 +59,11 @@ mod native {
     use std::time::Duration;
 
     use rodio::{Decoder, OutputStream, Sink, Source};
+    use symphonia::core::formats::FormatOptions;
+    use symphonia::core::io::MediaSourceStream;
+    use symphonia::core::meta::MetadataOptions;
+    use symphonia::core::probe::Hint;
+    use symphonia::default::get_probe;
 
     use super::*;
 
@@ -402,12 +407,55 @@ mod native {
             return 0.0;
         };
         let Some(decoder) = Decoder::new(BufReader::new(file)).ok() else {
-            return 0.0;
+            return read_duration_seconds_with_symphonia(file_path);
         };
-        decoder
+        let rodio_duration = decoder
             .total_duration()
             .map(|value| value.as_secs_f64())
-            .unwrap_or(0.0)
+            .unwrap_or(0.0);
+        if rodio_duration > 0.0 {
+            rodio_duration
+        } else {
+            read_duration_seconds_with_symphonia(file_path)
+        }
+    }
+
+    fn read_duration_seconds_with_symphonia(file_path: &str) -> f64 {
+        let Some(file) = File::open(file_path).ok() else {
+            return 0.0;
+        };
+        let mss = MediaSourceStream::new(Box::new(file), Default::default());
+        let mut hint = Hint::new();
+        if let Some(extension) = std::path::Path::new(file_path)
+            .extension()
+            .and_then(|value| value.to_str())
+        {
+            hint.with_extension(extension);
+        }
+
+        let Ok(probed) = get_probe().format(
+            &hint,
+            mss,
+            &FormatOptions::default(),
+            &MetadataOptions::default(),
+        ) else {
+            return 0.0;
+        };
+        let track = match probed.format.default_track() {
+            Some(track) => track,
+            None => return 0.0,
+        };
+
+        let sample_rate = match track.codec_params.sample_rate {
+            Some(sample_rate) if sample_rate > 0 => sample_rate,
+            _ => return 0.0,
+        };
+        let n_frames = match track.codec_params.n_frames {
+            Some(n_frames) if n_frames > 0 => n_frames,
+            _ => return 0.0,
+        };
+
+        n_frames as f64 / sample_rate as f64
     }
 
     fn clamp_position(position: f64, duration: f64) -> f64 {
