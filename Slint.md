@@ -263,3 +263,8 @@ Material colors are exposed as `out` properties on `MaterialPalette`. Bind them 
 ```slint
 background: MaterialPalette.surface_container_low;
 ```
+
+## Lessons Learned
+
+- Use parenthesized `if` conditions (for example `if (event.text == Key.LeftArrow) { ... }`) to avoid parser errors.
+- In functions/callbacks, avoid bare `return;`; rewrite logic with positive-condition blocks instead.
