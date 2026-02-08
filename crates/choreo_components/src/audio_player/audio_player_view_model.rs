@@ -241,19 +241,18 @@ impl AudioPlayerViewState {
 
     pub fn on_position_drag_started(&mut self, view_model: &mut AudioPlayerViewModel) {
         self.is_user_dragging = true;
-        self.was_playing = false;
+        self.was_playing = view_model.is_playing;
 
         let Some(player) = view_model.player.as_mut() else {
             return;
         };
 
-        if !player.is_playing() {
+        if !self.was_playing && !player.is_playing() {
             return;
         }
 
         player.pause();
         view_model.is_playing = false;
-        self.was_playing = true;
     }
 
     pub fn on_position_drag_completed(

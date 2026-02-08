@@ -10,6 +10,9 @@ mod audio_player_position_changed_behavior_spec;
 #[path = "audio_player/audio_player_ticks_behavior_spec.rs"]
 mod audio_player_ticks_behavior_spec;
 
+#[path = "audio_player/audio_player_view_state_spec.rs"]
+mod audio_player_view_state_spec;
+
 #[path = "audio_player/close_audio_file_behavior_spec.rs"]
 mod close_audio_file_behavior_spec;
 
