@@ -1,4 +1,4 @@
-# OpenTelemetry Plan (Desktop Debug Only)
+# OpenTelemetry
 
 ## Scope
 
@@ -23,10 +23,10 @@
 4. Gate exporting on `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`; if absent, keep existing logging only.
 5. Keep Aspire Dashboard authentication enabled and use the one-time login link (`/login?t=...`) from container logs.
 6. Do not run the container with `--rm`; stopped container and image must remain available in Docker.
-7. Add a debug UI action/button to start a root "user trace session".
-8. Propagate trace context through existing command/event structs by adding optional trace metadata fields.
-9. In behaviors, create child spans for command handling and important state transitions.
-10. Shut down tracer provider on app exit to flush buffered spans.
+4. Add a debug UI action/button to start a root "user trace session".
+5. Propagate trace context through existing command/event structs by adding optional trace metadata fields.
+6. In behaviors, create child spans for command handling and important state transitions.
+7. Shut down tracer provider on app exit to flush buffered spans.
 
 ## Proposed Crates (Desktop App Only)
 
@@ -49,13 +49,13 @@ debug-otel = [
 
 Then compile-enable in desktop debug CI/dev command:
 
-```text
+```sh
 cargo run -p rchoreo_desktop --features debug-otel
 ```
 
 And runtime-enable export via env vars (Aspire local OTLP/HTTP):
 
-```text
+```sh
 OTEL_SERVICE_NAME=rchoreo_desktop_debug
 OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
@@ -158,7 +158,7 @@ pub struct TraceContext {
 
 Pull and run Aspire Dashboard (latest) as local collector + web UI:
 
-```text
+```sh
 docker pull mcr.microsoft.com/dotnet/aspire-dashboard:latest
 docker run -d --name aspire-dashboard ^
   -p 18888:18888 ^
@@ -169,7 +169,7 @@ docker run -d --name aspire-dashboard ^
 
 Get the secure login link from container logs (PowerShell):
 
-```text
+```sh
 docker logs aspire-dashboard 2>&1 | Select-String "login\?t="
 ```
 
@@ -177,7 +177,7 @@ Open the returned `http://localhost:18888/login?t=...` link in browser.
 
 Run app with env vars and debug feature:
 
-```text
+```sh
 OTEL_SERVICE_NAME=rchoreo_desktop_debug
 OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
@@ -186,7 +186,7 @@ cargo run -p rchoreo_desktop --features debug-otel
 
 Container lifecycle (keep container/image after stop):
 
-```text
+```sh
 docker stop aspire-dashboard
 docker start aspire-dashboard
 ```
