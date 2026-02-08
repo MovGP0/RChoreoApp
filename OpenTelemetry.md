@@ -165,10 +165,10 @@ Pull and run Aspire Dashboard (latest) as local collector + web UI:
 
 ```sh
 docker pull mcr.microsoft.com/dotnet/aspire-dashboard:latest
-docker run -d --name aspire-dashboard ^
-  -p 18888:18888 ^
-  -p 4317:18889 ^
-  -p 4318:18890 ^
+docker run -d --name aspire-dashboard `
+  -p 18888:18888 `
+  -p 4317:18889 `
+  -p 4318:18890 `
   mcr.microsoft.com/dotnet/aspire-dashboard:latest
 ```
 

@@ -219,3 +219,7 @@ If you encounter a compile error after a code change you did, keep a note here h
 # Slint
 
 See `Slint.md` for additional instructions.
+
+# Open Telemetry
+
+See `OpenTelemetry.md` for activity tracing.
