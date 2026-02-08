@@ -205,6 +205,8 @@ export component FloorCanvasView inherits Rectangle {
                 + root.pan_y * 1px;
             property <length> center_x: floor_x + floor_width / 2;
             property <length> center_y: floor_y + floor_height / 2;
+            property <length> origin_x: floor_x + root.floor_left * content.scale * 1px;
+            property <length> origin_y: floor_y + root.floor_front * content.scale * 1px;
             property <float> floor_width_px: floor_width / 1px;
             property <float> floor_height_px: floor_height / 1px;
 
@@ -234,7 +236,7 @@ export component FloorCanvasView inherits Rectangle {
                     height: parent.height;
                     background: root.grid_color;
                     opacity: 0.5;
-                    x: parent.width / 2 - self.width / 2 - (i + 1) * content.scale * 1px;
+                    x: content.origin_x - floor_rect.x - self.width / 2 - (i + 1) * content.scale * 1px;
                     y: 0px;
                 }
 
@@ -243,7 +245,7 @@ export component FloorCanvasView inherits Rectangle {
                     height: parent.height;
                     background: root.grid_color;
                     opacity: 0.5;
-                    x: parent.width / 2 - self.width / 2 + (i + 1) * content.scale * 1px;
+                    x: content.origin_x - floor_rect.x - self.width / 2 + (i + 1) * content.scale * 1px;
                     y: 0px;
                 }
 
@@ -253,7 +255,7 @@ export component FloorCanvasView inherits Rectangle {
                     background: root.grid_color;
                     opacity: 0.5;
                     x: 0px;
-                    y: parent.height / 2 - self.height / 2 - (i + 1) * content.scale * 1px;
+                    y: content.origin_y - floor_rect.y - self.height / 2 - (i + 1) * content.scale * 1px;
                 }
 
                 for i in root.floor_back : Rectangle {
@@ -262,7 +264,7 @@ export component FloorCanvasView inherits Rectangle {
                     background: root.grid_color;
                     opacity: 0.5;
                     x: 0px;
-                    y: parent.height / 2 - self.height / 2 + (i + 1) * content.scale * 1px;
+                    y: content.origin_y - floor_rect.y - self.height / 2 + (i + 1) * content.scale * 1px;
                 }
             }
 
@@ -278,7 +280,7 @@ export component FloorCanvasView inherits Rectangle {
                     width: root.center_line_thickness;
                     height: parent.height;
                     background: root.floor_border_color;
-                    x: parent.width / 2 - self.width / 2;
+                    x: content.origin_x - floor_rect.x - self.width / 2;
                     y: 0px;
                 }
 
@@ -287,7 +289,7 @@ export component FloorCanvasView inherits Rectangle {
                     height: root.center_line_thickness;
                     background: root.floor_border_color;
                     x: 0px;
-                    y: parent.height / 2 - self.height / 2;
+                    y: content.origin_y - floor_rect.y - self.height / 2;
                 }
 
                 Rectangle {
@@ -295,8 +297,8 @@ export component FloorCanvasView inherits Rectangle {
                     height: root.center_dot_size;
                     border-radius: self.width / 2;
                     background: root.floor_border_color;
-                    x: parent.width / 2 - self.width / 2;
-                    y: parent.height / 2 - self.height / 2;
+                    x: content.origin_x - floor_rect.x - self.width / 2;
+                    y: content.origin_y - floor_rect.y - self.height / 2;
                 }
             }
 
@@ -313,8 +315,8 @@ export component FloorCanvasView inherits Rectangle {
                     source: root.svg_overlay;
                     width: content.layout_width_px * 1px * content.zoom;
                     height: content.content_height_px * 1px * content.zoom;
-                    x: content.center_x - self.width / 2;
-                    y: content.center_y - self.height / 2;
+                    x: content.origin_x - self.width / 2;
+                    y: content.origin_y - self.height / 2;
                     image-fit: contain;
                 }
             }
@@ -334,7 +336,7 @@ export component FloorCanvasView inherits Rectangle {
                     font-size: root.axis_label_size;
                     font-weight: root.axis_label_weight;
                     horizontal-alignment: center;
-                    x: content.center_x + label.value * content.scale * 1px - self.width / 2;
+                    x: content.origin_x + label.value * content.scale * 1px - self.width / 2;
                     y: floor_rect.y - root.axis_label_offset - root.axis_label_floor_padding - self.height;
                 }
 
@@ -344,7 +346,7 @@ export component FloorCanvasView inherits Rectangle {
                     font-size: root.axis_label_size;
                     font-weight: root.axis_label_weight;
                     horizontal-alignment: center;
-                    x: content.center_x + label.value * content.scale * 1px - self.width / 2;
+                    x: content.origin_x + label.value * content.scale * 1px - self.width / 2;
                     y: floor_rect.y + floor_rect.height + root.axis_label_offset + root.axis_label_floor_padding;
                 }
 
@@ -355,7 +357,7 @@ export component FloorCanvasView inherits Rectangle {
                     font-weight: root.axis_label_weight;
                     horizontal-alignment: right;
                     x: floor_rect.x - root.axis_label_offset - self.width;
-                    y: content.center_y - label.value * content.scale * 1px - self.height / 2;
+                    y: content.origin_y - label.value * content.scale * 1px - self.height / 2;
                 }
 
                 for label in root.axis_labels_y: Text {
@@ -365,7 +367,7 @@ export component FloorCanvasView inherits Rectangle {
                     font-weight: root.axis_label_weight;
                     horizontal-alignment: left;
                     x: floor_rect.x + floor_rect.width + root.axis_label_offset;
-                    y: content.center_y - label.value * content.scale * 1px - self.height / 2;
+                    y: content.origin_y - label.value * content.scale * 1px - self.height / 2;
                 }
             }
 
@@ -415,8 +417,8 @@ export component FloorCanvasView inherits Rectangle {
                     background: position.has_dancer ? position.fill_color : root.empty_position_fill_color;
                     border-width: root.dancer_border_thickness;
                     border-color: position.has_dancer ? position.border_color : root.empty_position_border_color;
-                    x: content.center_x + position.x * content.scale * 1px - self.width / 2;
-                    y: content.center_y - position.y * content.scale * 1px - self.height / 2;
+                    x: content.origin_x + position.x * content.scale * 1px - self.width / 2;
+                    y: content.origin_y - position.y * content.scale * 1px - self.height / 2;
 
                     if position.is_selected : Rectangle {
                         width: parent.width + root.dancer_selection_padding * 2;
@@ -453,8 +455,8 @@ export component FloorCanvasView inherits Rectangle {
                     vertical-alignment: center;
                     width: root.dancer_size * content.scale * 1px;
                     height: root.dancer_size * content.scale * 1px;
-                    x: content.center_x + position.x * content.scale * 1px - self.width / 2;
-                    y: content.center_y - position.y * content.scale * 1px - self.height / 2;
+                    x: content.origin_x + position.x * content.scale * 1px - self.width / 2;
+                    y: content.origin_y - position.y * content.scale * 1px - self.height / 2;
                 }
             }
 

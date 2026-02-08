@@ -349,10 +349,12 @@ impl FloorTestContext {
 }
 
 pub fn floor_to_view_point(context: &FloorTestContext, floor_point: Point) -> Point {
-    let (floor_width, floor_height) = context.read_global_state(|state| {
+    let (floor_width, floor_height, floor_left, floor_front) = context.read_global_state(|state| {
         (
             (state.choreography.floor.size_left + state.choreography.floor.size_right) as f64,
             (state.choreography.floor.size_front + state.choreography.floor.size_back) as f64,
+            state.choreography.floor.size_left as f64,
+            state.choreography.floor.size_front as f64,
         )
     });
 
@@ -361,10 +363,10 @@ pub fn floor_to_view_point(context: &FloorTestContext, floor_point: Point) -> Po
     let width = floor_bounds.width() as f64;
     let height = floor_bounds.height() as f64;
     let scale = (width / floor_width).min(height / floor_height);
-    let center_x = floor_bounds.left as f64 + width / 2.0;
-    let center_y = floor_bounds.top as f64 + height / 2.0;
-    let canvas_x = center_x + floor_point.x * scale;
-    let canvas_y = center_y - floor_point.y * scale;
+    let origin_x = floor_bounds.left as f64 + floor_left * scale;
+    let origin_y = floor_bounds.top as f64 + floor_front * scale;
+    let canvas_x = origin_x + floor_point.x * scale;
+    let canvas_y = origin_y - floor_point.y * scale;
 
     view_model
         .transformation_matrix

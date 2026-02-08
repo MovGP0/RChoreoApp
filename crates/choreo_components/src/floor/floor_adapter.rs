@@ -151,8 +151,13 @@ impl FloorAdapter {
 
         let floor_width_meters = (floor_left + floor_right) as f32;
         let floor_height_meters = (floor_front + floor_back) as f32;
-        let render_transform =
-            build_floor_render_transform(view_model, floor_width_meters, floor_height_meters);
+        let render_transform = build_floor_render_transform(
+            view_model,
+            floor_left as f32,
+            floor_front as f32,
+            floor_width_meters,
+            floor_height_meters,
+        );
 
         let (curves, dashed_segments) = self.build_curves(
             previous_scene.as_ref(),
@@ -372,22 +377,24 @@ struct FloorRenderTransform {
     scale: f32,
     offset_x: f32,
     offset_y: f32,
-    width_px: f32,
-    height_px: f32,
+    origin_floor_x: f32,
+    origin_floor_y: f32,
 }
 
 impl FloorRenderTransform {
     fn to_local(&self, point: Point) -> (f32, f32) {
-        let center_x = self.offset_x + self.width_px / 2.0;
-        let center_y = self.offset_y + self.height_px / 2.0;
-        let x = center_x + point.x as f32 * self.scale;
-        let y = center_y - point.y as f32 * self.scale;
+        let origin_x = self.offset_x + self.origin_floor_x * self.scale;
+        let origin_y = self.offset_y + self.origin_floor_y * self.scale;
+        let x = origin_x + point.x as f32 * self.scale;
+        let y = origin_y - point.y as f32 * self.scale;
         (x, y)
     }
 }
 
 fn build_floor_render_transform(
     view_model: &FloorCanvasViewModel,
+    floor_left_meters: f32,
+    floor_front_meters: f32,
     floor_width_meters: f32,
     floor_height_meters: f32,
 ) -> Option<FloorRenderTransform> {
@@ -415,8 +422,8 @@ fn build_floor_render_transform(
         scale,
         offset_x: bounds.left,
         offset_y: bounds.top,
-        width_px,
-        height_px,
+        origin_floor_x: floor_left_meters,
+        origin_floor_y: floor_front_meters,
     })
 }
 

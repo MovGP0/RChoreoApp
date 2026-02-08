@@ -467,11 +467,11 @@ impl RotateAroundCenterBehavior {
             return None;
         }
 
-        let center_x = floor_bounds.left as f64 + width / 2.0;
-        let center_y = floor_bounds.top as f64 + height / 2.0;
+        let origin_x = floor_bounds.left as f64 + floor.size_left as f64 * scale;
+        let origin_y = floor_bounds.top as f64 + floor.size_front as f64 * scale;
 
-        let position_x = (transformed.x - center_x) / scale;
-        let position_y = (center_y - transformed.y) / scale;
+        let position_x = (transformed.x - origin_x) / scale;
+        let position_y = (origin_y - transformed.y) / scale;
         Some(Point::new(position_x, position_y))
     }
 }
