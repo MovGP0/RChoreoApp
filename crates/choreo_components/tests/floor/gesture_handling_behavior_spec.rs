@@ -4,6 +4,7 @@ use choreo_components::floor::Point;
 use std::time::Duration;
 
 #[test]
+#[serial_test::serial]
 fn gesture_handling_behavior_spec() {
     let suite = rspec::describe("gesture handling behavior", (), |spec| {
         spec.it("applies pan translation on pointer drag", |_| {

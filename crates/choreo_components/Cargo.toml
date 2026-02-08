@@ -38,3 +38,5 @@ slint-build = "1.15.0"
 
 [dev-dependencies]
 rspec = "1.0.0"
+i-slint-backend-testing = "1.15.0"
+serial_test = "3.2.0"

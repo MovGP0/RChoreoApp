@@ -4,9 +4,10 @@ use floor::Report;
 use choreo_components::floor::Point;
 use choreo_components::global::InteractionMode;
 use choreo_state_machine::ScalePositionsStartedTrigger;
+use std::time::Duration;
 
 fn setup_context() -> floor::FloorTestContext {
-    let context = floor::FloorTestContext::new();
+    let context = floor::FloorTestContext::new_without_gesture();
     context.configure_canvas();
 
     let (choreography, scene) = floor::build_three_position_choreography();
@@ -43,6 +44,7 @@ fn drag_from_to(context: &floor::FloorTestContext, start: Point, end: Point) {
 }
 
 #[test]
+#[serial_test::serial]
 fn scale_positions_behavior_spec() {
     let suite = rspec::describe("scale positions behavior", (), |spec| {
         spec.it("scales selected positions", |_| {
@@ -50,17 +52,19 @@ fn scale_positions_behavior_spec() {
             select_rectangle(&context, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
             drag_from_to(&context, Point::new(2.0, 1.0), Point::new(4.0, 1.0));
 
-            let scene = context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
-            let first = &scene.positions[0];
-            let second = &scene.positions[1];
-            let third = &scene.positions[2];
-
-            floor::assert_close(first.x, -2.0, 0.0001);
-            floor::assert_close(first.y, 1.0, 0.0001);
-            floor::assert_close(second.x, 2.0, 0.0001);
-            floor::assert_close(second.y, 1.0, 0.0001);
-            floor::assert_close(third.x, 3.0, 0.0001);
-            floor::assert_close(third.y, -2.0, 0.0001);
+            let scaled = context.wait_until(Duration::from_secs(1), || {
+                let scene = context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
+                let first = &scene.positions[0];
+                let second = &scene.positions[1];
+                let third = &scene.positions[2];
+                (first.x - -2.0).abs() < 0.0001
+                    && (first.y - 1.0).abs() < 0.0001
+                    && (second.x - 2.0).abs() < 0.0001
+                    && (second.y - 1.0).abs() < 0.0001
+                    && (third.x - 3.0).abs() < 0.0001
+                    && (third.y - -2.0).abs() < 0.0001
+            });
+            assert!(scaled);
         });
     });
 

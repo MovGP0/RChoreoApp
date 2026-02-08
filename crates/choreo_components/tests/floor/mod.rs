@@ -45,6 +45,7 @@ use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
 pub use rspec::report::Report;
 use rspec::{ConfigurationBuilder, Logger, Runner};
 use std::cell::RefCell;
+use std::cell::Cell;
 use std::io;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -52,12 +53,26 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 const POINTER_EVENT_BUFFER: usize = 256;
+thread_local! {
+    static INIT_TEST_BACKEND: Cell<bool> = const { Cell::new(false) };
+}
+
+fn ensure_slint_test_backend() {
+    INIT_TEST_BACKEND.with(|initialized| {
+        if initialized.get() {
+            return;
+        }
+        i_slint_backend_testing::init_no_event_loop();
+        initialized.set(true);
+    });
+}
 
 pub fn run_suite<T>(suite: &rspec::block::Suite<T>) -> rspec::report::SuiteReport
 where
     T: Clone + Send + Sync + std::fmt::Debug,
 {
     let configuration = ConfigurationBuilder::default()
+        .parallel(false)
         .exit_on_failure(false)
         .build()
         .expect("rspec configuration should build");
@@ -76,6 +91,16 @@ pub struct FloorTestContext {
 
 impl FloorTestContext {
     pub fn new() -> Self {
+        Self::new_internal(true)
+    }
+
+    pub fn new_without_gesture() -> Self {
+        Self::new_internal(false)
+    }
+
+    fn new_internal(include_gesture_behavior: bool) -> Self {
+        ensure_slint_test_backend();
+
         let global_state_store = GlobalStateActor::new();
         let state_machine = Rc::new(RefCell::new(
             ApplicationStateMachine::with_default_transitions(Box::new(GlobalStateModel::default())),
@@ -113,33 +138,44 @@ impl FloorTestContext {
         let (scale_dancer_released_sender, scale_dancer_released_receiver) =
             bounded(POINTER_EVENT_BUFFER);
 
+        let mut pointer_pressed_senders = vec![
+            place_pressed_sender,
+            move_pressed_sender,
+            rotate_pressed_sender,
+            scale_pressed_sender,
+            scale_dancer_pressed_sender,
+        ];
+        let mut pointer_moved_senders = vec![
+            place_moved_sender,
+            move_moved_sender,
+            rotate_moved_sender,
+            scale_moved_sender,
+            scale_dancer_moved_sender,
+        ];
+        let mut pointer_released_senders = vec![
+            place_released_sender,
+            move_released_sender,
+            rotate_released_sender,
+            scale_released_sender,
+            scale_dancer_released_sender,
+        ];
+        let mut pointer_wheel_changed_senders = Vec::new();
+        let mut touch_senders = Vec::new();
+
+        if include_gesture_behavior {
+            pointer_pressed_senders.push(gesture_pressed_sender);
+            pointer_moved_senders.push(gesture_moved_sender);
+            pointer_released_senders.push(gesture_released_sender);
+            pointer_wheel_changed_senders.push(gesture_wheel_sender);
+            touch_senders.push(gesture_touch_sender);
+        }
+
         let floor_event_senders = FloorPointerEventSenders {
-            pointer_pressed_senders: vec![
-                gesture_pressed_sender,
-                place_pressed_sender,
-                move_pressed_sender,
-                rotate_pressed_sender,
-                scale_pressed_sender,
-                scale_dancer_pressed_sender,
-            ],
-            pointer_moved_senders: vec![
-                gesture_moved_sender,
-                place_moved_sender,
-                move_moved_sender,
-                rotate_moved_sender,
-                scale_moved_sender,
-                scale_dancer_moved_sender,
-            ],
-            pointer_released_senders: vec![
-                gesture_released_sender,
-                place_released_sender,
-                move_released_sender,
-                rotate_released_sender,
-                scale_released_sender,
-                scale_dancer_released_sender,
-            ],
-            pointer_wheel_changed_senders: vec![gesture_wheel_sender],
-            touch_senders: vec![gesture_touch_sender],
+            pointer_pressed_senders,
+            pointer_moved_senders,
+            pointer_released_senders,
+            pointer_wheel_changed_senders,
+            touch_senders,
         };
 
         let view_model = Rc::new(RefCell::new(FloorCanvasViewModel::new(
@@ -150,52 +186,55 @@ impl FloorTestContext {
             .borrow_mut()
             .set_self_handle(Rc::downgrade(&view_model));
 
-        let floor_behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>> = vec![
-            Box::new(RedrawFloorBehavior::new(redraw_floor_receiver)),
-            Box::new(GestureHandlingBehavior::new(
+        let mut floor_behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>> =
+            vec![Box::new(RedrawFloorBehavior::new(redraw_floor_receiver))];
+
+        if include_gesture_behavior {
+            floor_behaviors.push(Box::new(GestureHandlingBehavior::new(
                 Rc::clone(&state_machine),
                 gesture_pressed_receiver,
                 gesture_moved_receiver,
                 gesture_released_receiver,
                 gesture_wheel_receiver,
                 gesture_touch_receiver,
-            )),
-            Box::new(PlacePositionBehavior::new(
-                Rc::clone(&global_state_store),
-                Rc::clone(&state_machine),
-                place_pressed_receiver,
-                place_moved_receiver,
-                place_released_receiver,
-            )),
-            Box::new(MovePositionsBehavior::new(
-                Rc::clone(&global_state_store),
-                Rc::clone(&state_machine),
-                move_pressed_receiver,
-                move_moved_receiver,
-                move_released_receiver,
-            )),
-            Box::new(RotateAroundCenterBehavior::new(
-                Rc::clone(&global_state_store),
-                Rc::clone(&state_machine),
-                rotate_pressed_receiver,
-                rotate_moved_receiver,
-                rotate_released_receiver,
-            )),
-            Box::new(ScalePositionsBehavior::new(
-                Rc::clone(&global_state_store),
-                Rc::clone(&state_machine),
-                scale_pressed_receiver,
-                scale_moved_receiver,
-                scale_released_receiver,
-            )),
-            Box::new(ScaleAroundDancerBehavior::new(
-                Rc::clone(&global_state_store),
-                Rc::clone(&state_machine),
-                scale_dancer_pressed_receiver,
-                scale_dancer_moved_receiver,
-                scale_dancer_released_receiver,
-            )),
-        ];
+            )));
+        }
+
+        floor_behaviors.push(Box::new(PlacePositionBehavior::new(
+            Rc::clone(&global_state_store),
+            Rc::clone(&state_machine),
+            place_pressed_receiver,
+            place_moved_receiver,
+            place_released_receiver,
+        )));
+        floor_behaviors.push(Box::new(MovePositionsBehavior::new(
+            Rc::clone(&global_state_store),
+            Rc::clone(&state_machine),
+            move_pressed_receiver,
+            move_moved_receiver,
+            move_released_receiver,
+        )));
+        floor_behaviors.push(Box::new(RotateAroundCenterBehavior::new(
+            Rc::clone(&global_state_store),
+            Rc::clone(&state_machine),
+            rotate_pressed_receiver,
+            rotate_moved_receiver,
+            rotate_released_receiver,
+        )));
+        floor_behaviors.push(Box::new(ScalePositionsBehavior::new(
+            Rc::clone(&global_state_store),
+            Rc::clone(&state_machine),
+            scale_pressed_receiver,
+            scale_moved_receiver,
+            scale_released_receiver,
+        )));
+        floor_behaviors.push(Box::new(ScaleAroundDancerBehavior::new(
+            Rc::clone(&global_state_store),
+            Rc::clone(&state_machine),
+            scale_dancer_pressed_receiver,
+            scale_dancer_moved_receiver,
+            scale_dancer_released_receiver,
+        )));
 
         FloorCanvasViewModel::activate(&view_model, floor_behaviors);
 
@@ -277,6 +316,14 @@ impl FloorTestContext {
         self.state_machine.borrow().state().kind()
     }
 
+    pub fn wait_for_state(
+        &self,
+        timeout: Duration,
+        predicate: impl Fn(choreo_state_machine::StateKind) -> bool,
+    ) -> bool {
+        self.wait_until(timeout, || predicate(self.state_kind()))
+    }
+
     pub fn draw_count(&self) -> usize {
         self.draw_floor_receiver.try_iter().count()
     }
@@ -288,15 +335,14 @@ impl FloorTestContext {
                 return true;
             }
             self.pump_events();
-            thread::sleep(Duration::from_millis(10));
         }
         predicate()
     }
 
     pub fn pump_events(&self) {
         for _ in 0..3 {
+            i_slint_backend_testing::mock_elapsed_time(Duration::from_millis(20));
             slint::platform::update_timers_and_animations();
-            thread::sleep(Duration::from_millis(20));
         }
         slint::platform::update_timers_and_animations();
     }

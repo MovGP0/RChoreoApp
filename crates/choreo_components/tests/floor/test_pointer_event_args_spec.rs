@@ -4,6 +4,7 @@ use floor::Report;
 use choreo_components::floor::{Point, PointerButton, PointerEventArgs};
 
 #[test]
+#[serial_test::serial]
 fn test_pointer_event_args_spec() {
     let suite = rspec::describe("pointer event args", (), |spec| {
         spec.it("exposes position and button", |_| {

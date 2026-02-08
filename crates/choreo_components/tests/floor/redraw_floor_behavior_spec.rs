@@ -4,6 +4,7 @@ use floor::Report;
 use std::time::Duration;
 
 #[test]
+#[serial_test::serial]
 fn redraw_floor_behavior_spec() {
     let suite = rspec::describe("redraw floor behavior", (), |spec| {
         spec.it("redraws when choreography changes", |_| {

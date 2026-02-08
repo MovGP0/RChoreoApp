@@ -6,6 +6,7 @@ use choreo_state_machine::PlacePositionsStartedTrigger;
 use std::time::Duration;
 
 #[test]
+#[serial_test::serial]
 fn place_position_behavior_spec() {
     let suite = rspec::describe("place position behavior", (), |spec| {
         spec.it("places a new position on click", |_| {
