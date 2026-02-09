@@ -12,6 +12,7 @@ use slint::{Color, Image, ModelRc, VecModel};
 use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::floor::{FloorCanvasViewModel, Point, Rect, Size};
 use crate::global::GlobalStateModel;
+use crate::observability::start_internal_span;
 use crate::preferences::Preferences;
 use crate::{AxisLabel, FloorCurve, FloorPosition, LegendEntry, LineSegment, ShellHost};
 
@@ -22,6 +23,7 @@ pub struct FloorAdapter {
     audio_position_receiver: Receiver<AudioPlayerPositionChangedEvent>,
     current_audio_seconds: Option<f64>,
     role_border_colors: HashMap<i32, Color>,
+    last_interpolation_trace_key: Option<String>,
 }
 
 impl FloorAdapter {
@@ -38,6 +40,7 @@ impl FloorAdapter {
             audio_position_receiver,
             current_audio_seconds: None,
             role_border_colors: HashMap::new(),
+            last_interpolation_trace_key: None,
         }
     }
 
@@ -119,13 +122,14 @@ impl FloorAdapter {
         let current_scene = current_scene.as_ref();
         let scene_positions = current_scene.map(|scene| scene.positions.as_slice());
 
-        let (positions, legend_entries) = self.build_positions_and_legend(
-            scene_positions,
-            current_scene,
-            next_scene.as_ref(),
-            &selected_positions,
-            transparency,
-        );
+        let (positions, legend_entries, interpolated_count, interpolated_values) = self
+            .build_positions_and_legend(
+                scene_positions,
+                current_scene,
+                next_scene.as_ref(),
+                &selected_positions,
+                transparency,
+            );
 
         view.set_floor_positions(ModelRc::new(VecModel::from(positions)));
 
@@ -187,6 +191,13 @@ impl FloorAdapter {
 
         view.set_floor_remaining_positions(remaining_positions as i32);
         view.set_floor_show_placement_overlay(remaining_positions > 0);
+
+        self.trace_interpolation_refresh(
+            current_scene,
+            next_scene.as_ref(),
+            interpolated_count,
+            &interpolated_values,
+        );
     }
 
     pub fn poll_audio_position(&mut self) -> bool {
@@ -245,15 +256,17 @@ impl FloorAdapter {
         next_scene: Option<&crate::scenes::SceneViewModel>,
         selected_positions: &[PositionModel],
         transparency: f64,
-    ) -> (Vec<FloorPosition>, Vec<LegendEntry>) {
+    ) -> (Vec<FloorPosition>, Vec<LegendEntry>, usize, String) {
         let Some(positions) = positions else {
-            return (Vec::new(), Vec::new());
+            return (Vec::new(), Vec::new(), 0, String::new());
         };
 
         let interpolation =
             build_interpolation(current_scene, next_scene, self.current_audio_seconds);
         let mut floor_positions = Vec::with_capacity(positions.len());
         let mut legend_entries = Vec::new();
+        let mut interpolation_samples = Vec::new();
+        const MAX_INTERPOLATION_SAMPLES: usize = 64;
 
         for position in positions {
             let has_dancer = position.dancer.is_some();
@@ -271,6 +284,19 @@ impl FloorAdapter {
                     let (x, y) = interpolate_position(position, &next_position, *t);
                     draw_x = x;
                     draw_y = y;
+                    if interpolation_samples.len() < MAX_INTERPOLATION_SAMPLES {
+                        let key = dancer_key(dancer).unwrap_or_else(|| dancer.name.clone());
+                        interpolation_samples.push(format!(
+                            "{{\"dancer\":\"{}\",\"from\":[{:.3},{:.3}],\"to\":[{:.3},{:.3}],\"draw\":[{:.3},{:.3}]}}",
+                            key,
+                            position.x,
+                            position.y,
+                            next_position.x,
+                            next_position.y,
+                            draw_x,
+                            draw_y
+                        ));
+                    }
                 }
 
                 fill_color = apply_transparency(color_from_choreo(&dancer.color), transparency);
@@ -318,7 +344,71 @@ impl FloorAdapter {
                 .cmp(&b.name.to_string().to_lowercase())
         });
 
-        (floor_positions, legend_entries)
+        (
+            floor_positions,
+            legend_entries,
+            interpolation_samples.len(),
+            format!("[{}]", interpolation_samples.join(",")),
+        )
+    }
+
+    fn trace_interpolation_refresh(
+        &mut self,
+        current_scene: Option<&crate::scenes::SceneViewModel>,
+        next_scene: Option<&crate::scenes::SceneViewModel>,
+        interpolated_count: usize,
+        interpolated_values: &str,
+    ) {
+        let current_timestamp = current_scene.and_then(|scene| scene.timestamp);
+        let next_timestamp = next_scene.and_then(|scene| scene.timestamp);
+        let interpolation =
+            build_interpolation(current_scene, next_scene, self.current_audio_seconds)
+                .map(|(t, _)| t);
+        let interpolation_percent = interpolation.map(|value| value * 100.0);
+        let scene_pair = format!(
+            "{}->{}",
+            current_scene
+                .map(|scene| format!("{:?}", scene.scene_id))
+                .unwrap_or_else(|| "none".to_string()),
+            next_scene
+                .map(|scene| format!("{:?}", scene.scene_id))
+                .unwrap_or_else(|| "none".to_string())
+        );
+        let trace_key = format!(
+            "{}|{:.1}|{:.3}|{:.3}|{}",
+            scene_pair,
+            self.current_audio_seconds.unwrap_or(-1.0),
+            current_timestamp.unwrap_or(-1.0),
+            next_timestamp.unwrap_or(-1.0),
+            interpolation_percent
+                .map(|value| format!("{value:.1}"))
+                .unwrap_or_else(|| "none".to_string())
+        );
+        if self.last_interpolation_trace_key.as_ref() == Some(&trace_key) {
+            return;
+        }
+        self.last_interpolation_trace_key = Some(trace_key);
+
+        let mut span = start_internal_span("floor.render.interpolation", None);
+        span.set_string_attribute("choreo.floor.scene_pair", scene_pair);
+        if let Some(audio_seconds) = self.current_audio_seconds {
+            span.set_f64_attribute("choreo.floor.audio_seconds", audio_seconds);
+        }
+        if let Some(current_timestamp) = current_timestamp {
+            span.set_f64_attribute("choreo.floor.current_timestamp", current_timestamp);
+        }
+        if let Some(next_timestamp) = next_timestamp {
+            span.set_f64_attribute("choreo.floor.next_timestamp", next_timestamp);
+        }
+        if let Some(interpolation_percent) = interpolation_percent {
+            span.set_f64_attribute("choreo.floor.interpolation_percent", interpolation_percent);
+        }
+        span.set_bool_attribute("choreo.floor.has_interpolation", interpolation.is_some());
+        span.set_f64_attribute("choreo.floor.interpolated_count", interpolated_count as f64);
+        span.set_string_attribute(
+            "choreo.floor.interpolated_positions",
+            interpolated_values.to_string(),
+        );
     }
 
     fn build_curves(

@@ -11,6 +11,7 @@ use crate::ShellHost;
 use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::behavior::Behavior;
 use crate::global::{GlobalStateActor, GlobalStateModel};
+use crate::observability::start_internal_span;
 use crate::preferences::Preferences;
 
 use super::draw_floor_behavior::DrawFloorBehavior;
@@ -191,6 +192,11 @@ impl FloorProvider {
                     let floor_adapter = Rc::clone(&floor_adapter_for_redraw);
                     let view_weak = view_weak.clone();
                     slint::Timer::single_shot(Duration::from_millis(0), move || {
+                        let mut span = start_internal_span("floor.render.refresh_event", None);
+                        span.set_string_attribute(
+                            "choreo.floor.refresh_source",
+                            "view_model_redraw".to_string(),
+                        );
                         if let Some(view) = view_weak.upgrade() {
                             Self::apply_floor_view(&view, &floor_adapter, &floor_view_model);
                         }
@@ -211,6 +217,11 @@ impl FloorProvider {
                         return;
                     }
 
+                    let mut span = start_internal_span("floor.render.refresh_event", None);
+                    span.set_string_attribute(
+                        "choreo.floor.refresh_source",
+                        "audio_position_timer".to_string(),
+                    );
                     if let Some(view) = view_weak.upgrade() {
                         let mut floor_view_model = floor_view_model.borrow_mut();
                         adapter.apply(&view, &mut floor_view_model);
@@ -224,6 +235,11 @@ impl FloorProvider {
             let floor_adapter = Rc::clone(&self.floor_adapter);
             let view_weak = view_weak.clone();
             slint::Timer::single_shot(Duration::from_millis(0), move || {
+                let mut span = start_internal_span("floor.render.refresh_event", None);
+                span.set_string_attribute(
+                    "choreo.floor.refresh_source",
+                    "initial_render".to_string(),
+                );
                 if let Some(view) = view_weak.upgrade() {
                     Self::apply_floor_view(&view, &floor_adapter, &floor_view_model);
                     floor_view_model.borrow_mut().draw_floor();
@@ -251,6 +267,11 @@ impl FloorProvider {
                     }
 
                     *last = Some(current);
+                    let mut span = start_internal_span("floor.render.refresh_event", None);
+                    span.set_string_attribute(
+                        "choreo.floor.refresh_source",
+                        "layout_timer".to_string(),
+                    );
                     Self::apply_floor_view(&view, &floor_adapter, &floor_view_model);
                 },
             );

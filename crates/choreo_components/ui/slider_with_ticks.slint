@@ -128,7 +128,7 @@ export component SliderWithTicks inherits Rectangle {
                             }
 
                             moved => {
-                                root.set_drag_value_without_emit(root.length_to_value(state_layer.x + (self.mouse_x - self.pressed_x), track.width));
+                                root.set_drag_value(root.length_to_value(state_layer.x + (self.mouse_x - self.pressed_x), track.width));
                             }
 
                             pointer_event(event) => {
@@ -146,7 +146,7 @@ export component SliderWithTicks inherits Rectangle {
                 pointer_event(event) => {
                     if (event.kind == PointerEventKind.down && event.button == PointerEventButton.left) {
                         root.begin_drag();
-                        root.set_drag_value_without_emit(root.length_to_value(self.mouse_x, track.width));
+                        root.set_drag_value(root.length_to_value(self.mouse_x, track.width));
                     }
                     if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
                         root.end_drag();

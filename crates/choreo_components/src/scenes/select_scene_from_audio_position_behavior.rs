@@ -56,8 +56,14 @@ impl SelectSceneFromAudioPositionBehavior {
         let Some(first_timestamp) = first_scene.timestamp else {
             return false;
         };
+        let first_next_timestamp = view_model
+            .scenes
+            .get(start_index + 1)
+            .and_then(|scene| scene.timestamp);
 
-        if position_seconds < first_timestamp {
+        if position_seconds < first_timestamp
+            && first_next_timestamp.is_some_and(|next| next > first_timestamp)
+        {
             view_model.set_selected_scene(Some(first_scene.clone()));
             return previous_id != Some(first_scene.scene_id);
         }
@@ -77,6 +83,9 @@ impl SelectSceneFromAudioPositionBehavior {
             let Some(next_timestamp) = next_scene.timestamp else {
                 continue;
             };
+            if next_timestamp <= current_timestamp {
+                continue;
+            }
 
             if position_seconds >= current_timestamp && position_seconds < next_timestamp {
                 view_model.set_selected_scene(Some(current_scene.clone()));
