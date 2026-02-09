@@ -542,6 +542,7 @@ impl MainPageBinding {
             let floor_provider_for_change = Rc::clone(&floor_provider);
             let choreography_settings_view_model_for_change =
                 Rc::clone(&choreography_settings_view_model);
+            let audio_player_for_change = Rc::clone(&audio_player);
             let reload_settings_sender = reload_settings_sender.clone();
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
@@ -550,14 +551,31 @@ impl MainPageBinding {
                 let floor_provider = Rc::clone(&floor_provider_for_change);
                 let choreography_settings_view_model =
                     Rc::clone(&choreography_settings_view_model_for_change);
+                let audio_player = Rc::clone(&audio_player_for_change);
                 let reload_settings_sender = reload_settings_sender.clone();
                 let update_selected_scene_sender = update_selected_scene_sender.clone();
                 let view_weak = view_weak.clone();
                 slint::Timer::single_shot(std::time::Duration::from_millis(0), move || {
                     if let Some(view) = view_weak.upgrade() {
                         let scenes_view_model_snapshot = scenes_view_model.borrow();
+                        let selected_scene_timestamp =
+                            scenes_view_model_snapshot.selected_scene().and_then(|scene| scene.timestamp);
                         apply_scenes_view_model(&view, &scenes_view_model_snapshot);
                         drop(scenes_view_model_snapshot);
+                        if let Some(timestamp_seconds) = selected_scene_timestamp {
+                            let mut span =
+                                start_internal_span("audio_player.scene_selection_timestamp_applied", None);
+                            span.set_f64_attribute("choreo.scene.timestamp_seconds", timestamp_seconds);
+                            let mut audio_player = audio_player.borrow_mut();
+                            let previous_position = audio_player.position;
+                            audio_player.position = timestamp_seconds;
+                            audio_player.seek(timestamp_seconds);
+                            audio_player.update_duration_label();
+                            span.set_f64_attribute("choreo.audio.previous_position_seconds", previous_position);
+                            span.set_f64_attribute("choreo.audio.new_position_seconds", audio_player.position);
+                            span.set_bool_attribute("choreo.audio.can_seek", audio_player.can_seek);
+                            apply_audio_player_view_model(&view, &audio_player);
+                        }
                         floor_provider.borrow().apply_to_view(&view);
                         let _ = reload_settings_sender.send(ReloadChoreographySettingsCommand);
                         let _ = update_selected_scene_sender
