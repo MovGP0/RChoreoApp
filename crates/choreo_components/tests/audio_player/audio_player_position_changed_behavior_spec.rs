@@ -13,7 +13,7 @@ fn audio_player_position_changed_behavior_spec() {
     let suite = rspec::describe("audio player position changed behavior", (), |spec| {
         spec.it("publishes when position changes", |_| {
             let (sender, receiver) = bounded(16);
-            let behavior = AudioPlayerPositionChangedBehavior::new(sender);
+            let behavior = AudioPlayerPositionChangedBehavior::new(vec![sender]);
             let context = audio_player::AudioPlayerTestContext::new(vec![
                 Box::new(behavior) as Box<dyn Behavior<_>>
             ]);

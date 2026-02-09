@@ -39,7 +39,7 @@ pub struct AudioPlayerBehaviorDependencies {
     pub global_state_store: Rc<GlobalStateActor>,
     pub open_audio_receiver: Receiver<OpenAudioFileCommand>,
     pub close_audio_receiver: Receiver<CloseAudioFileCommand>,
-    pub position_changed_sender: Sender<AudioPlayerPositionChangedEvent>,
+    pub position_changed_senders: Vec<Sender<AudioPlayerPositionChangedEvent>>,
     pub link_scene_receiver: Receiver<LinkSceneToPositionCommand>,
     pub preferences: Rc<dyn Preferences>,
 }
@@ -61,7 +61,7 @@ pub fn build_audio_player_behaviors(
             deps.link_scene_receiver,
         )),
         Box::new(AudioPlayerPositionChangedBehavior::new(
-            deps.position_changed_sender,
+            deps.position_changed_senders,
         )),
     ]
 }

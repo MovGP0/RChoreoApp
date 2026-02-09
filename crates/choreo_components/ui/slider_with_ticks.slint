@@ -152,6 +152,12 @@ export component SliderWithTicks inherits Rectangle {
                         root.end_drag();
                     }
                 }
+
+                moved => {
+                    if (root.is_dragging && self.pressed) {
+                        root.set_drag_value(root.length_to_value(self.mouse_x, track.width));
+                    }
+                }
             }
 
             key_pressed(event) => {

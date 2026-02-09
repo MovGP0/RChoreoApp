@@ -80,7 +80,8 @@ impl FloorAdapter {
             let global_state = self.global_state.borrow();
             let choreography = &global_state.choreography;
             let settings = &choreography.settings;
-            let (previous_scene, current_scene, next_scene) = get_adjacent_scenes(&global_state);
+            let (previous_scene, current_scene, next_scene) =
+                get_adjacent_scenes_for_audio_or_selected(&global_state, self.current_audio_seconds);
 
             (
                 choreography.name.clone(),
@@ -1134,6 +1135,42 @@ fn get_adjacent_scenes(
     let next = scenes.get(index + 1).cloned();
 
     (previous, current, next)
+}
+
+fn get_adjacent_scenes_for_audio_or_selected(
+    global_state: &GlobalStateModel,
+    current_audio_seconds: Option<f64>,
+) -> (
+    Option<crate::scenes::SceneViewModel>,
+    Option<crate::scenes::SceneViewModel>,
+    Option<crate::scenes::SceneViewModel>,
+) {
+    if let Some(audio_seconds) = current_audio_seconds {
+        let scenes = &global_state.scenes;
+        for index in 0..scenes.len().saturating_sub(1) {
+            let current = scenes[index].clone();
+            let next = scenes[index + 1].clone();
+            let Some(current_timestamp) = current.timestamp else {
+                continue;
+            };
+            let Some(next_timestamp) = next.timestamp else {
+                continue;
+            };
+            if next_timestamp <= current_timestamp {
+                continue;
+            }
+            if audio_seconds >= current_timestamp && audio_seconds <= next_timestamp {
+                let previous = if index > 0 {
+                    scenes.get(index - 1).cloned()
+                } else {
+                    None
+                };
+                return (previous, Some(current), Some(next));
+            }
+        }
+    }
+
+    get_adjacent_scenes(global_state)
 }
 
 fn color_from_choreo(color: &ChoreoColor) -> Color {

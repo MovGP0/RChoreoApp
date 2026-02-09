@@ -72,7 +72,7 @@ impl ScenesProvider {
                 select_scene_sender,
                 select_scene_receiver,
                 selected_scene_changed_sender.clone(),
-                deps.redraw_floor_sender,
+                deps.redraw_floor_sender.clone(),
             )),
             Box::new(ApplyPlacementModeBehavior::new(
                 deps.global_state_store.clone(),
@@ -82,6 +82,7 @@ impl ScenesProvider {
             Box::new(SelectSceneFromAudioPositionBehavior::new(
                 deps.audio_position_receiver,
                 selected_scene_changed_sender,
+                deps.redraw_floor_sender.clone(),
             )),
             Box::new(OpenChoreoBehavior::new(OpenChoreoBehaviorDependencies {
                 global_state: deps.global_state_store.clone(),

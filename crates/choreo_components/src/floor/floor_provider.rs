@@ -210,7 +210,7 @@ impl FloorProvider {
             let view_weak = view_weak.clone();
             self.floor_audio_timer.start(
                 TimerMode::Repeated,
-                Duration::from_millis(100),
+                Duration::from_millis(16),
                 move || {
                     let mut adapter = floor_adapter.borrow_mut();
                     if !adapter.poll_audio_position() {
@@ -262,7 +262,7 @@ impl FloorProvider {
 
                     let current = FloorLayoutSnapshot::from_view(&view);
                     let mut last = last_snapshot.borrow_mut();
-                    if last.is_some_and(|previous| previous == current) {
+                    if last.is_some_and(|previous| !previous.has_meaningful_change(current)) {
                         return;
                     }
 
@@ -306,7 +306,7 @@ impl FloorProvider {
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy)]
 struct FloorLayoutSnapshot {
     floor_bounds_left: f32,
     floor_bounds_top: f32,
@@ -317,6 +317,17 @@ struct FloorLayoutSnapshot {
 }
 
 impl FloorLayoutSnapshot {
+    fn has_meaningful_change(self, other: Self) -> bool {
+        const EPSILON: f32 = 0.25;
+
+        (self.floor_bounds_left - other.floor_bounds_left).abs() > EPSILON
+            || (self.floor_bounds_top - other.floor_bounds_top).abs() > EPSILON
+            || (self.floor_bounds_right - other.floor_bounds_right).abs() > EPSILON
+            || (self.floor_bounds_bottom - other.floor_bounds_bottom).abs() > EPSILON
+            || (self.floor_canvas_width - other.floor_canvas_width).abs() > EPSILON
+            || (self.floor_canvas_height - other.floor_canvas_height).abs() > EPSILON
+    }
+
     fn from_view(view: &ShellHost) -> Self {
         Self {
             floor_bounds_left: view.get_floor_bounds_left(),

@@ -53,14 +53,20 @@ fn android_main(app: slint::android::AndroidApp) {
     let (open_audio_sender, open_audio_receiver) = bounded(AUDIO_CHANNEL_BUFFER);
     let (close_audio_sender, close_audio_receiver) =
         bounded::<CloseAudioFileCommand>(AUDIO_CHANNEL_BUFFER);
-    let (audio_position_sender, audio_position_receiver) = bounded(AUDIO_CHANNEL_BUFFER);
+    let (audio_position_sender_for_scenes, audio_position_receiver_for_scenes) =
+        bounded(AUDIO_CHANNEL_BUFFER);
+    let (audio_position_sender_for_floor, audio_position_receiver_for_floor) =
+        bounded(AUDIO_CHANNEL_BUFFER);
     let (link_scene_sender, link_scene_receiver) =
         bounded::<LinkSceneToPositionCommand>(AUDIO_CHANNEL_BUFFER);
     let audio_player_behaviors = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
         global_state_store: Rc::clone(&global_state_store),
         open_audio_receiver,
         close_audio_receiver,
-        position_changed_sender: audio_position_sender,
+        position_changed_senders: vec![
+            audio_position_sender_for_scenes,
+            audio_position_sender_for_floor,
+        ],
         link_scene_receiver,
         preferences: Rc::clone(&preferences),
     });
@@ -91,7 +97,8 @@ fn android_main(app: slint::android::AndroidApp) {
             haptic_feedback: Some(Box::new(PlatformHapticFeedback::new())),
             open_audio_sender,
             close_audio_sender,
-            audio_position_receiver,
+            audio_position_receiver_for_scenes,
+            audio_position_receiver_for_floor,
             scenes_show_dialog_sender,
             scenes_close_dialog_sender,
             redraw_floor_sender,

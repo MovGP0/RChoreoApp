@@ -30,3 +30,6 @@ mod test_pointer_event_args_spec;
 
 #[path = "floor/draw_floor_behavior_spec.rs"]
 mod draw_floor_behavior_spec;
+
+#[path = "floor/audio_position_interpolation_spec.rs"]
+mod audio_position_interpolation_spec;

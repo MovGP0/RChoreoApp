@@ -78,7 +78,8 @@ pub struct MainPageDependencies {
     pub haptic_feedback: Option<Box<dyn HapticFeedback>>,
     pub open_audio_sender: Sender<OpenAudioFileCommand>,
     pub close_audio_sender: Sender<crate::audio_player::CloseAudioFileCommand>,
-    pub audio_position_receiver: Receiver<AudioPlayerPositionChangedEvent>,
+    pub audio_position_receiver_for_scenes: Receiver<AudioPlayerPositionChangedEvent>,
+    pub audio_position_receiver_for_floor: Receiver<AudioPlayerPositionChangedEvent>,
     pub scenes_show_dialog_sender: Sender<crate::scenes::ShowDialogCommand>,
     pub scenes_close_dialog_sender: Sender<crate::scenes::CloseDialogCommand>,
     pub redraw_floor_sender: Sender<crate::choreography_settings::RedrawFloorCommand>,
@@ -177,7 +178,6 @@ impl MainPageBinding {
         })
         .settings_view_model();
         let (show_timestamps_sender, show_timestamps_receiver) = crossbeam_channel::unbounded();
-        let audio_position_receiver_for_scenes = deps.audio_position_receiver.clone();
         let scenes_provider = ScenesProvider::new(ScenesDependencies {
             global_state: deps.global_state.clone(),
             global_state_store,
@@ -188,7 +188,7 @@ impl MainPageBinding {
             haptic_feedback: None,
             open_audio_sender,
             close_audio_sender,
-            audio_position_receiver: audio_position_receiver_for_scenes,
+            audio_position_receiver: deps.audio_position_receiver_for_scenes,
             show_timestamps_sender: show_timestamps_sender.clone(),
             show_timestamps_receiver,
             redraw_floor_sender: redraw_floor_sender.clone(),
@@ -212,7 +212,7 @@ impl MainPageBinding {
                 global_state_store: Rc::clone(&deps.global_state_store),
                 state_machine: Rc::clone(&deps.state_machine),
                 preferences: Rc::clone(&deps.preferences),
-                audio_position_receiver: deps.audio_position_receiver,
+                audio_position_receiver: deps.audio_position_receiver_for_floor,
                 redraw_floor_receiver: deps.redraw_floor_receiver,
             },
         )));

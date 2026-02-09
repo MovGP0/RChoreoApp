@@ -13,14 +13,14 @@ use super::audio_player_view_model::AudioPlayerViewModel;
 use super::messages::AudioPlayerPositionChangedEvent;
 
 #[injectable]
-#[inject(|publisher: Sender<AudioPlayerPositionChangedEvent>| Self::new(publisher))]
+#[inject(|publishers: Vec<Sender<AudioPlayerPositionChangedEvent>>| Self::new(publishers))]
 pub struct AudioPlayerPositionChangedBehavior {
-    publisher: Sender<AudioPlayerPositionChangedEvent>,
+    publishers: Vec<Sender<AudioPlayerPositionChangedEvent>>,
 }
 
 impl AudioPlayerPositionChangedBehavior {
-    pub fn new(publisher: Sender<AudioPlayerPositionChangedEvent>) -> Self {
-        Self { publisher }
+    pub fn new(publishers: Vec<Sender<AudioPlayerPositionChangedEvent>>) -> Self {
+        Self { publishers }
     }
 }
 
@@ -38,7 +38,7 @@ impl Behavior<AudioPlayerViewModel> for AudioPlayerPositionChangedBehavior {
         else {
             return;
         };
-        let publisher = self.publisher.clone();
+        let publishers = self.publishers.clone();
         let last_position = Rc::new(RefCell::new(None::<f64>));
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
@@ -51,9 +51,11 @@ impl Behavior<AudioPlayerViewModel> for AudioPlayerPositionChangedBehavior {
             };
             if should_publish {
                 *last_position = Some(position);
-                let _ = publisher.try_send(AudioPlayerPositionChangedEvent {
-                    position_seconds: position,
-                });
+                for publisher in &publishers {
+                    let _ = publisher.try_send(AudioPlayerPositionChangedEvent {
+                        position_seconds: position,
+                    });
+                }
             }
         });
         disposables.add(Box::new(TimerDisposable::new(timer)));
