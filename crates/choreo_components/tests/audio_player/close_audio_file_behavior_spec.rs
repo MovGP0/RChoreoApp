@@ -43,7 +43,9 @@ fn close_audio_file_behavior_spec() {
             }
 
             sender
-                .send(CloseAudioFileCommand)
+                .send(CloseAudioFileCommand {
+                    trace_context: None,
+                })
                 .expect("send should succeed");
 
             let reset = context.wait_until(Duration::from_secs(1), || {

@@ -174,9 +174,13 @@ impl OpenChoreoBehavior {
         } else if let Some(name) = file_name {
             self.preferences
                 .set_string(SettingsPreferenceKeys::LAST_OPENED_CHOREO_FILE, name);
-            let _ = self.close_audio_sender.try_send(CloseAudioFileCommand);
+            let _ = self.close_audio_sender.try_send(CloseAudioFileCommand {
+                trace_context: None,
+            });
         } else {
-            let _ = self.close_audio_sender.try_send(CloseAudioFileCommand);
+            let _ = self.close_audio_sender.try_send(CloseAudioFileCommand {
+                trace_context: None,
+            });
         }
     }
 
@@ -216,12 +220,15 @@ impl OpenChoreoBehavior {
             if path.exists() {
                 let _ = self.open_audio_sender.try_send(OpenAudioFileCommand {
                     file_path: candidate,
+                    trace_context: None,
                 });
                 return;
             }
         }
 
-        let _ = self.close_audio_sender.try_send(CloseAudioFileCommand);
+        let _ = self.close_audio_sender.try_send(CloseAudioFileCommand {
+            trace_context: None,
+        });
     }
 }
 

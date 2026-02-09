@@ -224,9 +224,11 @@ fn route_dropped_file(
     }
 
     if extension == "mp3" {
+        let trace_context = observability::capture_trace_context("desktop.drop_open_audio");
         let _ = open_audio_request_sender.try_send(
             choreo_components::choreo_main::OpenAudioRequested {
                 file_path: path.to_string_lossy().into_owned(),
+                trace_context,
             },
         );
         eprintln!("desktop drop: loaded .mp3 file");

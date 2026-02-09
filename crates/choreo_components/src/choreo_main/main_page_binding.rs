@@ -4,13 +4,7 @@ use std::rc::Rc;
 
 use choreo_master_mobile_json::Color as ChoreoColor;
 use crossbeam_channel::{Receiver, Sender, bounded};
-use slint::{
-    Color,
-    ComponentHandle,
-    Image,
-    ModelRc,
-    VecModel,
-};
+use slint::{Color, ComponentHandle, Image, ModelRc, VecModel};
 
 use crate::audio_player::{
     AudioPlayerPositionChangedEvent, AudioPlayerViewModel, AudioPlayerViewState,
@@ -53,11 +47,7 @@ use crate::scenes::{
     OpenChoreoActions, OpenChoreoRequested, ScenesDependencies, ScenesPaneViewModel, ScenesProvider,
 };
 use crate::settings::{
-    MaterialSchemeHelper,
-    SettingsDependencies,
-    SettingsProvider,
-    SettingsViewModel,
-    ThemeMode
+    MaterialSchemeHelper, SettingsDependencies, SettingsProvider, SettingsViewModel, ThemeMode,
 };
 use crate::shell::ShellMaterialSchemeApplier;
 use crate::time::format_seconds;
@@ -607,8 +597,10 @@ impl MainPageBinding {
                         if let Some(picker) = actions_for_audio.pick_audio_path.as_ref()
                             && let Some(path) = picker()
                         {
-                            let _ = open_audio_request_sender
-                                .try_send(OpenAudioRequested { file_path: path });
+                            let _ = open_audio_request_sender.try_send(OpenAudioRequested {
+                                file_path: path,
+                                trace_context: None,
+                            });
                             nav_bar.borrow_mut().set_audio_player_opened(true);
                         }
                     }
@@ -683,7 +675,8 @@ impl MainPageBinding {
                             )
                         })
                     {
-                        audio_player.tick_values = build_tick_values(audio_player.duration, &scenes);
+                        audio_player.tick_values =
+                            build_tick_values(audio_player.duration, &scenes);
                         audio_player.can_link_scene_to_position = selected_scene.is_some();
                     }
                     if let Some(view) = view_weak.upgrade() {
@@ -1676,6 +1669,7 @@ impl MainPageBinding {
         if extension == "mp3" {
             let _ = self.open_audio_request_sender.try_send(OpenAudioRequested {
                 file_path: file_path.to_string(),
+                trace_context: None,
             });
         }
     }

@@ -72,7 +72,9 @@ fn audio_player_link_scene_behavior_spec() {
 
                 context.view_model.borrow_mut().position = 5.24;
                 link_sender
-                    .send(LinkSceneToPositionCommand)
+                    .send(LinkSceneToPositionCommand {
+                        trace_context: None,
+                    })
                     .expect("send should succeed");
 
                 let linked = context.wait_until(Duration::from_secs(1), || {

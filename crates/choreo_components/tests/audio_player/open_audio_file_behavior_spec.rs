@@ -47,6 +47,7 @@ fn open_audio_file_behavior_spec() {
                 sender
                     .send(OpenAudioFileCommand {
                         file_path: file_path.to_string_lossy().into_owned(),
+                        trace_context: None,
                     })
                     .expect("send should succeed");
 
@@ -77,6 +78,7 @@ fn open_audio_file_behavior_spec() {
             sender
                 .send(OpenAudioFileCommand {
                     file_path: "   ".to_string(),
+                    trace_context: None,
                 })
                 .expect("send should succeed");
             context.pump_events();

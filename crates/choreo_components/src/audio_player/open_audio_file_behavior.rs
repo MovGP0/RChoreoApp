@@ -1,4 +1,5 @@
 use std::io;
+use std::path::Path;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -9,6 +10,7 @@ use slint::TimerMode;
 
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::logging::BehaviorLog;
+use crate::observability::start_internal_span;
 use crate::preferences::Preferences;
 
 use super::audio_player_view_model::AudioPlayerViewModel;
@@ -55,7 +57,22 @@ impl Behavior<AudioPlayerViewModel> for OpenAudioFileBehavior {
             let Some(command) = latest_command else {
                 return;
             };
+
+            let mut span = start_internal_span(
+                "audio_player.open_audio_file",
+                command.trace_context.as_ref(),
+            );
+
+            let extension = Path::new(command.file_path.as_str())
+                .extension()
+                .and_then(|value| value.to_str())
+                .unwrap_or_default()
+                .to_ascii_lowercase();
+            span.set_string_attribute("choreo.command.type", "OpenAudioFileCommand".to_string());
+            span.set_string_attribute("choreo.audio.file_extension", extension);
+
             if command.file_path.trim().is_empty() {
+                span.set_bool_attribute("choreo.success", false);
                 return;
             }
 
@@ -74,6 +91,7 @@ impl Behavior<AudioPlayerViewModel> for OpenAudioFileBehavior {
             }
 
             preferences.set_string(SettingsPreferenceKeys::LAST_OPENED_AUDIO_FILE, file_path);
+            span.set_bool_attribute("choreo.success", true);
         });
 
         disposables.add(Box::new(TimerDisposable::new(timer)));

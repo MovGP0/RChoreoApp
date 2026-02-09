@@ -10,6 +10,7 @@ debug-otel = [
   "dep:opentelemetry_sdk",
   "dep:opentelemetry-otlp",
   "dep:opentelemetry-semantic-conventions",
+  "choreo_components/otel",
 ]
 
 [dependencies]

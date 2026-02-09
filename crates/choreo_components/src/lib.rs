@@ -19,6 +19,7 @@ pub mod haptics;
 pub mod i18n;
 pub mod logging;
 pub mod nav_bar;
+pub mod observability;
 pub mod preferences;
 pub mod scenes;
 pub mod settings;

@@ -24,6 +24,7 @@ fn open_audio_behavior_spec() {
             sender
                 .send(OpenAudioRequested {
                     file_path: "C:/music.mp3".to_string(),
+                    trace_context: None,
                 })
                 .expect("send should succeed");
 

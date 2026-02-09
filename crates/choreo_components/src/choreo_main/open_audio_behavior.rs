@@ -35,6 +35,7 @@ impl OpenAudioBehavior {
     fn handle_open_audio(&self, command: OpenAudioRequested) {
         let _ = self.sender.try_send(OpenAudioFileCommand {
             file_path: command.file_path,
+            trace_context: command.trace_context,
         });
     }
 }

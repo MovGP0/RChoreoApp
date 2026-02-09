@@ -8,6 +8,7 @@ use slint::TimerMode;
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::{GlobalStateActor, GlobalStateModel};
 use crate::logging::BehaviorLog;
+use crate::observability::start_internal_span;
 use crate::time::format_seconds;
 
 use super::audio_player_linking::{build_tick_values, can_link_scene, try_get_linked_timestamp};
@@ -53,16 +54,27 @@ impl Behavior<AudioPlayerViewModel> for AudioPlayerLinkSceneBehavior {
         let receiver = self.receiver.clone();
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
-            while receiver.try_recv().is_ok() {
+            while let Ok(command) = receiver.try_recv() {
+                let mut span = start_internal_span(
+                    "audio_player.link_scene_to_position",
+                    command.trace_context.as_ref(),
+                );
+                span.set_string_attribute(
+                    "choreo.command.type",
+                    "LinkSceneToPositionCommand".to_string(),
+                );
                 let Ok(mut view_model) = view_model_handle.try_borrow_mut() else {
+                    span.set_bool_attribute("choreo.success", false);
                     continue;
                 };
                 let updated = global_state.try_update(|global_state| {
                     handle_link_scene_to_position(&mut view_model, global_state);
                 });
                 if !updated {
+                    span.set_bool_attribute("choreo.success", false);
                     return;
                 }
+                span.set_bool_attribute("choreo.success", true);
             }
         });
         disposables.add(Box::new(TimerDisposable::new(timer)));

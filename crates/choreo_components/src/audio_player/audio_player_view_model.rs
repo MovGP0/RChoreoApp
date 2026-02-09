@@ -187,7 +187,9 @@ impl AudioPlayerViewModel {
         {
             haptic.perform_click();
         }
-        let _ = self.link_scene_sender.try_send(LinkSceneToPositionCommand);
+        let _ = self.link_scene_sender.try_send(LinkSceneToPositionCommand {
+            trace_context: None,
+        });
     }
 
     pub fn update_speed_label(&mut self) {

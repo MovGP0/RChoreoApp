@@ -1,3 +1,5 @@
+use crate::observability::TraceContext;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CloseDialogCommand;
 
@@ -9,6 +11,7 @@ pub struct OpenSvgFileCommand {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OpenAudioRequested {
     pub file_path: String,
+    pub trace_context: Option<TraceContext>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
