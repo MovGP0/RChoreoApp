@@ -3,11 +3,24 @@ name = "rchoreo_desktop"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+debug-otel = [
+  "dep:opentelemetry",
+  "dep:opentelemetry_sdk",
+  "dep:opentelemetry-otlp",
+  "dep:opentelemetry-semantic-conventions",
+]
+
 [dependencies]
 slint = "1.14.1"
 i-slint-backend-winit = "1.14.1"
 crossbeam-channel = "0.5.15"
 rfd = "0.17.2"
+opentelemetry = { version = "0.31", optional = true }
+opentelemetry_sdk = { version = "0.31", optional = true, features = ["trace"] }
+opentelemetry-otlp = { version = "0.31", optional = true, features = ["trace", "http-proto", "reqwest-blocking-client"] }
+opentelemetry-semantic-conventions = { version = "0.31", optional = true }
 choreo_algorithms = { path = "../../crates/choreo_algorithms", package = "choreo_algorithms" }
 choreo_i18n = { path = "../../crates/choreo_i18n", package = "choreo_i18n" }
 choreo_master_mobile_json = { path = "../../crates/choreo_master_mobile_json", package = "choreo_master_mobile_json" }

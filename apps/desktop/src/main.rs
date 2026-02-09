@@ -31,6 +31,8 @@ use choreo_components::scenes::OpenChoreoRequested;
 use choreo_components::shell;
 use choreo_i18n::detect_locale;
 
+mod observability;
+
 fn main() -> Result<(), slint::PlatformError> {
     let ui_thread = std::thread::Builder::new()
         .name("ui".to_string())
@@ -44,6 +46,8 @@ fn main() -> Result<(), slint::PlatformError> {
 }
 
 fn run_ui() -> Result<(), slint::PlatformError> {
+    let _otel_guard = observability::init_debug_otel();
+    let _ = observability::capture_trace_context("ui.start");
     let ui = shell::create_shell_host()?;
     let global_provider = GlobalProvider::new();
     let global_state = global_provider.global_state();
