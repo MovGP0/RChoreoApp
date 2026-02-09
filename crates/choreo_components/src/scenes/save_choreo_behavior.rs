@@ -8,6 +8,7 @@ use nject::injectable;
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
+use crate::observability::start_internal_span;
 use crate::preferences::Preferences;
 use crate::time::SystemClock;
 
@@ -31,15 +32,19 @@ impl SaveChoreoBehavior {
     }
 
     fn save(&self, view_model: &mut ScenesPaneViewModel) {
+        let mut span = start_internal_span("scenes.save_choreo", None);
         let path = self
             .preferences
             .get_string(SettingsPreferenceKeys::LAST_OPENED_CHOREO_FILE, "");
         if path.trim().is_empty() {
+            span.set_bool_attribute("choreo.success", false);
             return;
         }
 
         let path = Path::new(&path);
+        span.set_string_attribute("choreo.file.path", path.to_string_lossy().into_owned());
         if !path.exists() {
+            span.set_bool_attribute("choreo.success", false);
             return;
         }
 
@@ -47,6 +52,7 @@ impl SaveChoreoBehavior {
         let updated = self.global_state.try_update(|global_state| {
             let mapper = SceneMapper;
             let mut scenes = Vec::with_capacity(global_state.scenes.len());
+            span.set_f64_attribute("choreo.scenes.count", global_state.scenes.len() as f64);
             for scene_view_model in &global_state.scenes {
                 let mut model_scene = global_state
                     .choreography
@@ -86,11 +92,13 @@ impl SaveChoreoBehavior {
             json_model = Some(json_mapper.map_to_json(&global_state.choreography));
         });
         if !updated {
+            span.set_bool_attribute("choreo.success", false);
             return;
         }
         if let Some(json_model) = json_model {
             let _ = export_to_file(path, &json_model);
         }
+        span.set_bool_attribute("choreo.success", true);
         view_model.update_can_save();
     }
 }

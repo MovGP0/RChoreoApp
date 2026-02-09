@@ -8,6 +8,7 @@ use super::scenes_view_model::{SceneViewModel, ScenesPaneViewModel};
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
+use crate::observability::start_internal_span;
 
 #[injectable]
 #[inject(|global_state: Rc<GlobalStateActor>| Self::new(global_state))]
@@ -21,6 +22,8 @@ impl InsertSceneBehavior {
     }
 
     fn insert_scene(&self, view_model: &mut ScenesPaneViewModel, insert_after: bool) {
+        let mut span = start_internal_span("scenes.insert_scene", None);
+        span.set_bool_attribute("choreo.scenes.insert_after", insert_after);
         let selected_scene_id = self
             .global_state
             .try_with_state(|global_state| {
@@ -30,6 +33,9 @@ impl InsertSceneBehavior {
                     .map(|scene| scene.scene_id)
             })
             .flatten();
+        if let Some(selected_scene_id) = selected_scene_id {
+            span.set_string_attribute("choreo.scene.selected_id", format!("{selected_scene_id:?}"));
+        }
 
         let mut selected_scene = None;
         let updated = self.global_state.try_update(|global_state| {
@@ -71,7 +77,12 @@ impl InsertSceneBehavior {
             selected_scene = global_state.selected_scene.clone();
         });
         if !updated {
+            span.set_bool_attribute("choreo.success", false);
             return;
+        }
+        span.set_bool_attribute("choreo.success", true);
+        if let Some(scene) = selected_scene.as_ref() {
+            span.set_string_attribute("choreo.scene.id", format!("{:?}", scene.scene_id));
         }
 
         view_model.refresh_scenes();

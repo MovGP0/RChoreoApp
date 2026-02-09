@@ -12,6 +12,7 @@ use slint::TimerMode;
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
+use crate::observability::start_internal_span;
 
 use super::messages::SelectedSceneChangedEvent;
 use super::scenes_view_model::SceneViewModel;
@@ -48,13 +49,19 @@ impl ApplyPlacementModeBehavior {
         state_machine: &Option<Rc<RefCell<ApplicationStateMachine>>>,
         selected_scene: Option<&SceneViewModel>,
     ) {
+        let mut span = start_internal_span("scenes.apply_placement_mode", None);
+        span.set_bool_attribute("choreo.scenes.has_selected_scene", selected_scene.is_some());
+        span.set_bool_attribute("choreo.scenes.has_state_machine", state_machine.is_some());
         if selected_scene.is_none() {
             let updated = global_state.try_update(|global_state| {
                 global_state.is_place_mode = false;
             });
             if !updated {
+                span.set_bool_attribute("choreo.success", false);
                 return;
             }
+            span.set_bool_attribute("choreo.success", true);
+            span.set_bool_attribute("choreo.scenes.is_place_mode", false);
             if let Some(state_machine) = state_machine {
                 state_machine
                     .borrow_mut()
@@ -80,10 +87,15 @@ impl ApplyPlacementModeBehavior {
                 )
             })
         else {
+            span.set_bool_attribute("choreo.success", false);
             return;
         };
+        span.set_f64_attribute("choreo.scenes.dancer_count", dancer_count as f64);
+        span.set_f64_attribute("choreo.scenes.position_count", position_count as f64);
+        span.set_string_attribute("choreo.scene.id", format!("{scene_id:?}"));
 
         let should_place = dancer_count > 0 && position_count < dancer_count;
+        span.set_bool_attribute("choreo.scenes.should_place", should_place);
         let updated = global_state.try_update(|global_state| {
             global_state.is_place_mode = should_place;
             if should_place
@@ -99,8 +111,11 @@ impl ApplyPlacementModeBehavior {
             }
         });
         if !updated {
+            span.set_bool_attribute("choreo.success", false);
             return;
         }
+        span.set_bool_attribute("choreo.success", true);
+        span.set_bool_attribute("choreo.scenes.is_place_mode", should_place);
 
         if let Some(state_machine) = state_machine {
             let trigger: &dyn ApplicationTrigger = if should_place {

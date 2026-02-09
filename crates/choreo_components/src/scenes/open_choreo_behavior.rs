@@ -12,6 +12,7 @@ use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::choreography_settings::ShowTimestampsChangedEvent;
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
+use crate::observability::start_internal_span;
 use crate::preferences::Preferences;
 
 use super::messages::{OpenChoreoRequested, ReloadScenesCommand};
@@ -70,35 +71,46 @@ impl OpenChoreoBehavior {
     }
 
     fn open_choreo(&self) {
+        let mut span = start_internal_span("scenes.open_choreo.requested", None);
         let Some(request_open) = self.actions.request_open_choreo.as_ref() else {
+            span.set_bool_attribute("choreo.success", false);
             return;
         };
 
         request_open(self.open_choreo_sender.clone());
+        span.set_bool_attribute("choreo.success", true);
     }
 
     fn load_last_opened(&self, view_model: &mut ScenesPaneViewModel) {
+        let mut span = start_internal_span("scenes.open_choreo.load_last_opened", None);
         let path = self
             .preferences
             .get_string(SettingsPreferenceKeys::LAST_OPENED_CHOREO_FILE, "");
         if path.trim().is_empty() {
+            span.set_bool_attribute("choreo.success", false);
             return;
         }
 
         let path_buf = PathBuf::from(path);
         if !path_buf.exists() {
+            span.set_bool_attribute("choreo.success", false);
             return;
         }
 
         self.load_choreo(&path_buf, view_model);
+        span.set_bool_attribute("choreo.success", true);
     }
 
     fn load_choreo(&self, path: &Path, view_model: &mut ScenesPaneViewModel) {
+        let mut span = start_internal_span("scenes.open_choreo.load_path", None);
+        span.set_string_attribute("choreo.file.path", path.to_string_lossy().into_owned());
         let Ok(contents) = std::fs::read_to_string(path) else {
+            span.set_bool_attribute("choreo.success", false);
             return;
         };
 
         let Ok(json_model) = import(&contents) else {
+            span.set_bool_attribute("choreo.success", false);
             return;
         };
 
@@ -109,6 +121,7 @@ impl OpenChoreoBehavior {
             global_state.choreography = mapped;
         });
         if !updated {
+            span.set_bool_attribute("choreo.success", false);
             return;
         }
 
@@ -130,6 +143,7 @@ impl OpenChoreoBehavior {
         );
 
         self.try_load_audio(path);
+        span.set_bool_attribute("choreo.success", true);
     }
 
     fn load_choreo_from_contents(
@@ -139,7 +153,15 @@ impl OpenChoreoBehavior {
         contents: String,
         view_model: &mut ScenesPaneViewModel,
     ) {
+        let mut span = start_internal_span("scenes.open_choreo.load_contents", None);
+        if let Some(file_path) = file_path.as_ref() {
+            span.set_string_attribute("choreo.file.path", file_path.clone());
+        }
+        if let Some(file_name) = file_name.as_ref() {
+            span.set_string_attribute("choreo.file.name", file_name.clone());
+        }
         let Ok(json_model) = import(&contents) else {
+            span.set_bool_attribute("choreo.success", false);
             return;
         };
 
@@ -150,6 +172,7 @@ impl OpenChoreoBehavior {
             global_state.choreography = mapped;
         });
         if !updated {
+            span.set_bool_attribute("choreo.success", false);
             return;
         }
 
@@ -182,13 +205,20 @@ impl OpenChoreoBehavior {
                 trace_context: None,
             });
         }
+        span.set_bool_attribute("choreo.success", true);
     }
 
     fn try_load_audio(&self, choreography_path: &Path) {
+        let mut span = start_internal_span("scenes.open_choreo.try_load_audio", None);
+        span.set_string_attribute(
+            "choreo.file.path",
+            choreography_path.to_string_lossy().into_owned(),
+        );
         let Some(settings) = self
             .global_state
             .try_with_state(|global_state| global_state.choreography.settings.clone())
         else {
+            span.set_bool_attribute("choreo.success", false);
             return;
         };
         let mut candidates = Vec::new();
@@ -214,6 +244,7 @@ impl OpenChoreoBehavior {
                 candidates.push(stored);
             }
         }
+        span.set_f64_attribute("choreo.audio.candidate_count", candidates.len() as f64);
 
         for candidate in candidates {
             let path = PathBuf::from(&candidate);
@@ -222,6 +253,7 @@ impl OpenChoreoBehavior {
                     file_path: candidate,
                     trace_context: None,
                 });
+                span.set_bool_attribute("choreo.success", true);
                 return;
             }
         }
@@ -229,6 +261,7 @@ impl OpenChoreoBehavior {
         let _ = self.close_audio_sender.try_send(CloseAudioFileCommand {
             trace_context: None,
         });
+        span.set_bool_attribute("choreo.success", false);
     }
 }
 
@@ -258,6 +291,9 @@ impl Behavior<ScenesPaneViewModel> for OpenChoreoBehavior {
             Duration::from_millis(16),
             move || {
                 while let Ok(request) = receiver.try_recv() {
+                    let mut span = start_internal_span("scenes.open_choreo.command_handled", None);
+                    span.set_bool_attribute("choreo.scenes.has_file_path", request.file_path.is_some());
+                    span.set_bool_attribute("choreo.scenes.has_file_name", request.file_name.is_some());
                     let mut view_model = view_model_handle.borrow_mut();
                     behavior.load_choreo_from_contents(
                         request.file_path,

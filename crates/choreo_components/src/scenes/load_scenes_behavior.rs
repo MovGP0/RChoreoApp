@@ -8,6 +8,7 @@ use slint::TimerMode;
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
+use crate::observability::start_internal_span;
 
 use super::mapper::SceneMapper;
 use super::messages::{ReloadScenesCommand, SelectedSceneChangedEvent};
@@ -44,6 +45,7 @@ impl LoadScenesBehavior {
         global_state: &Rc<GlobalStateActor>,
         view_model: &mut ScenesPaneViewModel,
     ) -> Option<SceneViewModel> {
+        let mut span = start_internal_span("scenes.load_scenes", None);
         let scenes = global_state.try_with_state(|global_state| {
             let mapper = SceneMapper;
             global_state
@@ -61,6 +63,7 @@ impl LoadScenesBehavior {
                 })
                 .collect::<Vec<_>>()
         })?;
+        span.set_f64_attribute("choreo.scenes.count", scenes.len() as f64);
 
         let selected_scene = scenes.first().cloned();
         let updated = global_state.try_update(|global_state| {
@@ -68,12 +71,18 @@ impl LoadScenesBehavior {
             global_state.selected_scene = selected_scene.clone();
         });
         if !updated {
+            span.set_bool_attribute("choreo.success", false);
             return None;
         }
+        span.set_bool_attribute("choreo.success", true);
 
         view_model.refresh_scenes();
         view_model.set_selected_scene(selected_scene);
-        view_model.selected_scene()
+        let selected = view_model.selected_scene();
+        if let Some(scene) = selected.as_ref() {
+            span.set_string_attribute("choreo.scene.id", format!("{:?}", scene.scene_id));
+        }
+        selected
     }
 }
 
@@ -104,6 +113,7 @@ impl Behavior<ScenesPaneViewModel> for LoadScenesBehavior {
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
             while receiver.try_recv().is_ok() {
+                let _span = start_internal_span("scenes.reload_scenes.command_handled", None);
                 let mut view_model = view_model_handle.borrow_mut();
                 let selected_scene = Self::load(&global_state, &mut view_model);
                 if let Some(selected_scene) = selected_scene {

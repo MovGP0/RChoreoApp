@@ -8,6 +8,7 @@ use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::choreography_settings::RedrawFloorCommand;
 use crate::logging::BehaviorLog;
+use crate::observability::start_internal_span;
 use crate::scenes::SelectedSceneChangedEvent;
 
 use super::scenes_view_model::ScenesPaneViewModel;
@@ -95,9 +96,18 @@ impl Behavior<ScenesPaneViewModel> for SelectSceneFromAudioPositionBehavior {
         let timer = slint::Timer::default();
         timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
             while let Ok(event) = receiver.try_recv() {
+                let mut span = start_internal_span("scenes.select_scene_from_position", None);
+                span.set_f64_attribute("choreo.audio.position_seconds", event.position_seconds);
                 let mut view_model = view_model_handle.borrow_mut();
                 let changed = Self::update_selection(&mut view_model, event.position_seconds);
+                span.set_bool_attribute("choreo.scenes.selection_changed", changed);
                 if changed {
+                    if let Some(selected_scene) = view_model.selected_scene() {
+                        span.set_string_attribute(
+                            "choreo.scene.id",
+                            format!("{:?}", selected_scene.scene_id),
+                        );
+                    }
                     let _ = selected_scene_changed_sender.send(SelectedSceneChangedEvent {
                         selected_scene: view_model.selected_scene(),
                     });
