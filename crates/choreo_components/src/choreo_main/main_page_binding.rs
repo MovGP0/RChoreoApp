@@ -998,6 +998,15 @@ impl MainPageBinding {
         }
 
         {
+            let view_weak = view_weak.clone();
+            view.on_settings_navigate_back(move || {
+                if let Some(view) = view_weak.upgrade() {
+                    view.set_content_index(0);
+                }
+            });
+        }
+
+        {
             let settings_view_model = Rc::clone(&settings_view_model);
             view.on_settings_update_use_system_theme(move |value| {
                 settings_view_model

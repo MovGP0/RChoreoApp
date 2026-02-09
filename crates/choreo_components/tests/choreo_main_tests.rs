@@ -19,5 +19,11 @@ mod open_svg_file_behavior_spec;
 #[path = "choreo_main/show_dialog_behavior_spec.rs"]
 mod show_dialog_behavior_spec;
 
+#[path = "choreo_main/navigate_main_to_settings_spec.rs"]
+mod navigate_main_to_settings_spec;
+
+#[path = "choreo_main/navigate_settings_to_main_spec.rs"]
+mod navigate_settings_to_main_spec;
+
 #[path = "choreo_main/timestamp_sync_spec.rs"]
 mod timestamp_sync_spec;

@@ -142,6 +142,7 @@ export component ShellHost inherits MaterialWindow {
     callback settings_update_primary_color(color);
     callback settings_update_secondary_color(color);
     callback settings_update_tertiary_color(color);
+    callback settings_navigate_back();
     callback choreo_update_scene_name(string);
     callback choreo_update_scene_text(string);
     callback choreo_update_scene_fixed_positions(bool);
@@ -367,6 +368,7 @@ export component ShellHost inherits MaterialWindow {
             update_primary_color(value) => { root.settings_update_primary_color(value); }
             update_secondary_color(value) => { root.settings_update_secondary_color(value); }
             update_tertiary_color(value) => { root.settings_update_tertiary_color(value); }
+            navigate_back => { root.settings_navigate_back(); }
         }
         dancer_settings_page := DancerSettingsPage {
             visible: root.content_index == 2;

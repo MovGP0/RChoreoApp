@@ -1,4 +1,4 @@
-import { MaterialPalette, MaterialText, MaterialTypography, ScrollView, Switch, Vertical, Horizontal } from "@material";
+import { IconButton, MaterialPalette, MaterialText, MaterialTypography, ScrollView, Switch, Vertical, Horizontal } from "@material";
 import { ColorPicker } from "color_picker.slint";
 import { Translations } from "translations.slint";
 
@@ -28,6 +28,7 @@ export component SettingsPage inherits Rectangle {
     callback update_primary_color(color);
     callback update_secondary_color(color);
     callback update_tertiary_color(color);
+    callback navigate_back();
 
     background: MaterialPalette.surface_container_low;
 
@@ -36,10 +37,20 @@ export component SettingsPage inherits Rectangle {
             padding: 24px;
             spacing: 12px;
 
-            MaterialText {
-                text: title_text;
-                font-size: MaterialTypography.headline_small.font_size;
-                font-weight: MaterialTypography.headline_small.font_weight;
+            Horizontal {
+                spacing: 8px;
+
+                IconButton {
+                    icon: @image-url("icons/ArrowLeft.svg");
+                    tooltip: title_text;
+                    clicked => { navigate_back(); }
+                }
+
+                MaterialText {
+                    text: title_text;
+                    font-size: MaterialTypography.headline_small.font_size;
+                    font-weight: MaterialTypography.headline_small.font_weight;
+                }
             }
 
             Rectangle {
