@@ -133,6 +133,9 @@ Check if the unit tests work
 ```sh
 cargo test -p PROJECTNAME
 ```
+Let the user test and confirm the changes manually. Do not create a commit before the user confirms the changes work as expected.
+If the user finds any issues, fix them and repeat the checks above until the user confirms the changes are good.
+
 Only when the changes are verified, you can close the bd ticket.
 
 ## Rust Common Mistakes to Avoid
