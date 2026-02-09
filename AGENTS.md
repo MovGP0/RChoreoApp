@@ -23,6 +23,25 @@
 ## Unit Testing
 See `UnitTesting.md` for detailed instructions.
 
+## Spec Driven Development
+
+Use Spec Driven Development (SDD) as the default workflow for behavior changes and bug fixes:
+
+1. Write or extend `_spec.rs` tests first for the target scenario.
+2. Run the smallest relevant test target and confirm it fails (red).
+3. Implement the minimal production change needed to satisfy the spec.
+4. Re-run the same focused spec until it passes (green).
+5. Refactor only when specs stay green and behavior is unchanged.
+6. Add regression coverage for discovered edge cases before closing the task.
+
+Rules:
+- Prefer `rspec` BDD style (`describe`/`it`) for new behavior scenarios.
+- Keep specs behavior-focused (user-visible outcome), not implementation-coupled.
+- For synchronization/state-flow work, codify scenarios in a document first (for example `Timestamp.md`), then map each scenario to one or more specs.
+- Do not introduce business logic changes without a corresponding failing spec first, unless fixing build/lint breakages required to run tests.
+- When a bug is reported, first reproduce it with a spec; the fix is complete only when that spec passes and remains in the suite.
+- If essential logic required by a spec is missing (for example a class/function does not exist yet), first create a clear `TODO:` list in the spec file that documents the planned implementation steps and required seams; once the classes/functions are in place, replace those `TODO:` entries with the actual spec code.
+
 ## Model View Behavior Pattern
 See `ModelViewBehavior.md` for detailed instructions.
 Key rules:
