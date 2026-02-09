@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
+use std::time::Instant;
 
 use choreo_master_mobile_json::Color as ChoreoColor;
 use crossbeam_channel::{Receiver, Sender, bounded};
@@ -42,6 +43,7 @@ use crate::nav_bar::{
     OpenImageRequestedCommand as NavBarOpenImageRequestedCommand, apply_nav_bar_view_model,
     bind_nav_bar,
 };
+use crate::observability::start_internal_span;
 use crate::preferences::SharedPreferences;
 use crate::scenes::{
     OpenChoreoActions, OpenChoreoRequested, ScenesDependencies, ScenesPaneViewModel, ScenesProvider,
@@ -110,6 +112,49 @@ pub struct MainPageBinding {
     open_choreo_sender: Sender<OpenChoreoRequested>,
     open_audio_request_sender: Sender<OpenAudioRequested>,
     open_image_request_sender: Sender<OpenImageRequested>,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct AudioSyncTraceSample {
+    actor_position_seconds: f64,
+    view_model_position_seconds: f64,
+    should_accept_position: bool,
+    is_user_dragging: bool,
+    pending_seek_position_seconds: Option<f64>,
+    is_playing: bool,
+    can_seek: bool,
+    was_playing_before_drag: bool,
+    is_adjusting_speed: bool,
+}
+
+impl AudioSyncTraceSample {
+    fn has_meaningful_change(self, previous: Self) -> bool {
+        const POSITION_EPSILON_SECONDS: f64 = 0.05;
+
+        (self.actor_position_seconds - previous.actor_position_seconds).abs()
+            > POSITION_EPSILON_SECONDS
+            || (self.view_model_position_seconds - previous.view_model_position_seconds).abs()
+                > POSITION_EPSILON_SECONDS
+            || option_f64_changed(
+                self.pending_seek_position_seconds,
+                previous.pending_seek_position_seconds,
+                POSITION_EPSILON_SECONDS,
+            )
+            || self.should_accept_position != previous.should_accept_position
+            || self.is_user_dragging != previous.is_user_dragging
+            || self.is_playing != previous.is_playing
+            || self.can_seek != previous.can_seek
+            || self.was_playing_before_drag != previous.was_playing_before_drag
+            || self.is_adjusting_speed != previous.is_adjusting_speed
+    }
+}
+
+fn option_f64_changed(current: Option<f64>, previous: Option<f64>, epsilon: f64) -> bool {
+    match (current, previous) {
+        (Some(current), Some(previous)) => (current - previous).abs() > epsilon,
+        (None, None) => false,
+        _ => true,
+    }
 }
 
 impl MainPageBinding {
@@ -650,23 +695,147 @@ impl MainPageBinding {
             let audio_player_view_state = Rc::clone(&audio_player_view_state);
             let global_state_store = Rc::clone(&deps.global_state_store);
             let view_weak = view_weak.clone();
+            let last_metrics_emitted_at = Rc::new(RefCell::new(
+                Instant::now() - std::time::Duration::from_secs(1),
+            ));
+            let last_accept_decision = Rc::new(RefCell::new(None::<bool>));
+            let last_sync_sample = Rc::new(RefCell::new(None::<AudioSyncTraceSample>));
             let timer = slint::Timer::default();
             timer.start(
                 slint::TimerMode::Repeated,
                 std::time::Duration::from_millis(16),
                 move || {
                     let mut audio_player = audio_player.borrow_mut();
+                    let view_model_position_before = audio_player.position;
                     let player_position = audio_player
                         .player
                         .as_ref()
                         .map(|player| player.current_position())
                         .unwrap_or(audio_player.position);
-                    if audio_player_view_state
-                        .borrow_mut()
-                        .should_accept_player_position(player_position)
+
+                    let (state_before, should_accept, state_after) = {
+                        let mut state = audio_player_view_state.borrow_mut();
+                        let before = state.snapshot();
+                        let should_accept = state.should_accept_player_position(player_position);
+                        let after = state.snapshot();
+                        (before, should_accept, after)
+                    };
+
                     {
+                        let mut last_accept_decision = last_accept_decision.borrow_mut();
+                        if *last_accept_decision != Some(should_accept) {
+                            let mut span = start_internal_span(
+                                "audio_player.sync_loop.decision_changed",
+                                None,
+                            );
+                            span.set_bool_attribute(
+                                "choreo.audio.should_accept_position",
+                                should_accept,
+                            );
+                            span.set_bool_attribute(
+                                "choreo.audio.is_user_dragging",
+                                state_after.is_user_dragging,
+                            );
+                            span.set_f64_attribute(
+                                "choreo.audio.actor_position_seconds",
+                                player_position,
+                            );
+                            span.set_f64_attribute(
+                                "choreo.audio.view_model_position_seconds",
+                                view_model_position_before,
+                            );
+                            if let Some(pending_seek) = state_after.pending_seek_position {
+                                span.set_f64_attribute(
+                                    "choreo.audio.pending_seek_position_seconds",
+                                    pending_seek,
+                                );
+                            }
+                            if let Some(pending_seek_age) = state_after.pending_seek_age_seconds {
+                                span.set_f64_attribute(
+                                    "choreo.audio.pending_seek_age_seconds",
+                                    pending_seek_age,
+                                );
+                            }
+                            *last_accept_decision = Some(should_accept);
+                        }
+                    }
+
+                    if should_accept {
                         audio_player.sync_from_player();
                     }
+
+                    let current_sample = AudioSyncTraceSample {
+                        actor_position_seconds: player_position,
+                        view_model_position_seconds: audio_player.position,
+                        should_accept_position: should_accept,
+                        is_user_dragging: state_after.is_user_dragging,
+                        pending_seek_position_seconds: state_after.pending_seek_position,
+                        is_playing: audio_player.is_playing,
+                        can_seek: audio_player.can_seek,
+                        was_playing_before_drag: state_after.was_playing,
+                        is_adjusting_speed: state_after.is_adjusting_speed,
+                    };
+                    let changed = last_sync_sample
+                        .borrow()
+                        .is_none_or(|previous| current_sample.has_meaningful_change(previous));
+                    let now = Instant::now();
+                    let emit_metrics = changed
+                        && now.duration_since(*last_metrics_emitted_at.borrow())
+                            >= std::time::Duration::from_millis(500);
+                    if emit_metrics {
+                        *last_metrics_emitted_at.borrow_mut() = now;
+                        *last_sync_sample.borrow_mut() = Some(current_sample);
+                        let mut span = start_internal_span("audio_player.sync_loop.sample", None);
+                        span.set_f64_attribute(
+                            "choreo.audio.actor_position_seconds",
+                            player_position,
+                        );
+                        span.set_f64_attribute(
+                            "choreo.audio.view_model_position_before_seconds",
+                            view_model_position_before,
+                        );
+                        span.set_f64_attribute(
+                            "choreo.audio.view_model_position_after_seconds",
+                            audio_player.position,
+                        );
+                        span.set_bool_attribute(
+                            "choreo.audio.should_accept_position",
+                            should_accept,
+                        );
+                        span.set_bool_attribute(
+                            "choreo.audio.is_user_dragging",
+                            state_after.is_user_dragging,
+                        );
+                        span.set_bool_attribute("choreo.audio.is_playing", audio_player.is_playing);
+                        span.set_bool_attribute("choreo.audio.can_seek", audio_player.can_seek);
+                        span.set_bool_attribute(
+                            "choreo.audio.was_playing_before_drag",
+                            state_after.was_playing,
+                        );
+                        span.set_bool_attribute(
+                            "choreo.audio.is_adjusting_speed",
+                            state_after.is_adjusting_speed,
+                        );
+                        if let Some(pending_seek) = state_before.pending_seek_position {
+                            span.set_f64_attribute(
+                                "choreo.audio.pending_seek_before_seconds",
+                                pending_seek,
+                            );
+                        }
+                        if let Some(pending_seek) = state_after.pending_seek_position {
+                            span.set_f64_attribute(
+                                "choreo.audio.pending_seek_after_seconds",
+                                pending_seek,
+                            );
+                        }
+                        if let Some(pending_seek_age) = state_after.pending_seek_age_seconds {
+                            span.set_f64_attribute(
+                                "choreo.audio.pending_seek_age_seconds",
+                                pending_seek_age,
+                            );
+                        }
+                    }
+
                     if let Some((scenes, selected_scene)) =
                         global_state_store.try_with_state(|global_state| {
                             (
@@ -1491,12 +1660,19 @@ impl MainPageBinding {
             let audio_player = Rc::clone(&audio_player);
             let view_weak = view_weak.clone();
             view.on_audio_speed_changed(move |value| {
+                let mut span = start_internal_span("audio_player.ui.speed_changed", None);
                 let mut audio_player = audio_player.borrow_mut();
+                let previous_speed = audio_player.speed;
                 audio_player.speed = value as f64;
                 audio_player.update_speed_label();
                 let speed = audio_player.speed;
+                span.set_f64_attribute("choreo.audio.previous_speed", previous_speed);
+                span.set_f64_attribute("choreo.audio.new_speed", speed);
                 if let Some(player) = audio_player.player.as_mut() {
                     player.set_speed(speed);
+                    span.set_bool_attribute("choreo.audio.player_available", true);
+                } else {
+                    span.set_bool_attribute("choreo.audio.player_available", false);
                 }
                 if let Some(view) = view_weak.upgrade() {
                     apply_audio_player_view_model(&view, &audio_player);
@@ -1523,15 +1699,40 @@ impl MainPageBinding {
             });
         }
 
+        let slider_drag_start_position = Rc::new(RefCell::new(None::<f64>));
+        let slider_drag_start_time = Rc::new(RefCell::new(None::<Instant>));
+
         {
             let audio_player = Rc::clone(&audio_player);
             let audio_player_view_state = Rc::clone(&audio_player_view_state);
             let view_weak = view_weak.clone();
+            let slider_drag_start_position = Rc::clone(&slider_drag_start_position);
+            let slider_drag_start_time = Rc::clone(&slider_drag_start_time);
             view.on_audio_position_drag_started(move || {
+                let mut pointer_down_span =
+                    start_internal_span("audio_player.ui.slider_pointer_down", None);
+                let mut span = start_internal_span("audio_player.ui.position_drag_started", None);
                 let mut audio_player = audio_player.borrow_mut();
-                audio_player_view_state
-                    .borrow_mut()
-                    .on_position_drag_started(&mut audio_player);
+                *slider_drag_start_position.borrow_mut() = Some(audio_player.position);
+                *slider_drag_start_time.borrow_mut() = Some(Instant::now());
+                span.set_f64_attribute("choreo.audio.drag_start_position", audio_player.position);
+                span.set_bool_attribute("choreo.audio.was_playing", audio_player.is_playing);
+                pointer_down_span
+                    .set_f64_attribute("choreo.audio.pointer_down_position", audio_player.position);
+                pointer_down_span
+                    .set_bool_attribute("choreo.audio.was_playing", audio_player.is_playing);
+                let snapshot = {
+                    let mut state = audio_player_view_state.borrow_mut();
+                    state.on_position_drag_started(&mut audio_player);
+                    state.snapshot()
+                };
+                span.set_bool_attribute("choreo.audio.is_user_dragging", snapshot.is_user_dragging);
+                if let Some(pending_seek) = snapshot.pending_seek_position {
+                    span.set_f64_attribute(
+                        "choreo.audio.pending_seek_position_seconds",
+                        pending_seek,
+                    );
+                }
                 if let Some(view) = view_weak.upgrade() {
                     apply_audio_player_view_model(&view, &audio_player);
                 }
@@ -1542,14 +1743,62 @@ impl MainPageBinding {
             let audio_player = Rc::clone(&audio_player);
             let audio_player_view_state = Rc::clone(&audio_player_view_state);
             let view_weak = view_weak.clone();
+            let slider_drag_start_position = Rc::clone(&slider_drag_start_position);
+            let slider_drag_start_time = Rc::clone(&slider_drag_start_time);
             view.on_audio_position_drag_completed(move |value| {
+                let mut pointer_up_span =
+                    start_internal_span("audio_player.ui.slider_pointer_up", None);
+                let mut span = start_internal_span("audio_player.ui.position_drag_completed", None);
                 let mut audio_player = audio_player.borrow_mut();
+                let previous_position = audio_player.position;
                 let position = value as f64;
+                let drag_start_position = slider_drag_start_position
+                    .borrow()
+                    .unwrap_or(previous_position);
+                let drag_elapsed_seconds = slider_drag_start_time
+                    .borrow()
+                    .map(|started_at| started_at.elapsed().as_secs_f64())
+                    .unwrap_or(0.0);
                 audio_player.position = position;
                 audio_player.update_duration_label();
-                audio_player_view_state
-                    .borrow_mut()
-                    .on_position_drag_completed(&mut audio_player, position);
+                span.set_f64_attribute("choreo.audio.drag_start_position", previous_position);
+                span.set_f64_attribute("choreo.audio.drag_target_position", position);
+                span.set_bool_attribute("choreo.audio.can_seek", audio_player.can_seek);
+                pointer_up_span.set_f64_attribute("choreo.audio.pointer_up_position", position);
+                pointer_up_span
+                    .set_f64_attribute("choreo.audio.drag_start_position", drag_start_position);
+                pointer_up_span
+                    .set_f64_attribute("choreo.audio.drag_elapsed_seconds", drag_elapsed_seconds);
+                let snapshot = {
+                    let mut state = audio_player_view_state.borrow_mut();
+                    state.on_position_drag_completed(&mut audio_player, position);
+                    state.snapshot()
+                };
+                span.set_bool_attribute("choreo.audio.is_user_dragging", snapshot.is_user_dragging);
+                if let Some(pending_seek) = snapshot.pending_seek_position {
+                    span.set_f64_attribute(
+                        "choreo.audio.pending_seek_position_seconds",
+                        pending_seek,
+                    );
+                }
+                if let Some(pending_seek_age) = snapshot.pending_seek_age_seconds {
+                    span.set_f64_attribute(
+                        "choreo.audio.pending_seek_age_seconds",
+                        pending_seek_age,
+                    );
+                }
+                let is_click = (position - drag_start_position).abs() <= 0.01;
+                if is_click {
+                    let mut click_span = start_internal_span("audio_player.ui.slider_click", None);
+                    click_span.set_f64_attribute("choreo.audio.click_target_position", position);
+                    click_span.set_f64_attribute(
+                        "choreo.audio.click_elapsed_seconds",
+                        drag_elapsed_seconds,
+                    );
+                    click_span.set_bool_attribute("choreo.audio.can_seek", audio_player.can_seek);
+                }
+                *slider_drag_start_position.borrow_mut() = None;
+                *slider_drag_start_time.borrow_mut() = None;
                 if let Some(view) = view_weak.upgrade() {
                     apply_audio_player_view_model(&view, &audio_player);
                 }
@@ -1561,17 +1810,26 @@ impl MainPageBinding {
             let global_state_store = Rc::clone(&deps.global_state_store);
             let view_weak = view_weak.clone();
             view.on_audio_link_scene_to_position(move || {
+                let mut span = start_internal_span("audio_player.ui.link_scene_to_position", None);
                 let mut audio_player = audio_player.borrow_mut();
+                span.set_f64_attribute("choreo.audio.position_seconds", audio_player.position);
                 if let Some(haptic) = &audio_player.haptic_feedback
                     && haptic.is_supported()
                 {
                     haptic.perform_click();
                 }
-                link_selected_scene_to_audio_position(
+                let linked_result = link_selected_scene_to_audio_position(
                     &global_state_store,
                     audio_player.position,
                     &mut audio_player,
                 );
+                if let Some((scene_id, linked_timestamp)) = linked_result {
+                    span.set_bool_attribute("choreo.success", true);
+                    span.set_string_attribute("choreo.scene.id", scene_id);
+                    span.set_f64_attribute("choreo.scene.timestamp_seconds", linked_timestamp);
+                } else {
+                    span.set_bool_attribute("choreo.success", false);
+                }
                 if let Some(view) = view_weak.upgrade() {
                     apply_audio_player_view_model(&view, &audio_player);
                 }
@@ -1582,8 +1840,12 @@ impl MainPageBinding {
             let audio_player = Rc::clone(&audio_player);
             let view_weak = view_weak.clone();
             view.on_audio_toggle_play_pause(move || {
+                let mut span = start_internal_span("audio_player.ui.toggle_play_pause", None);
                 let mut audio_player = audio_player.borrow_mut();
+                span.set_bool_attribute("choreo.audio.was_playing", audio_player.is_playing);
+                span.set_f64_attribute("choreo.audio.position_seconds", audio_player.position);
                 audio_player.toggle_play_pause();
+                span.set_bool_attribute("choreo.audio.is_playing", audio_player.is_playing);
                 if let Some(view) = view_weak.upgrade() {
                     apply_audio_player_view_model(&view, &audio_player);
                 }
@@ -1792,13 +2054,17 @@ fn link_selected_scene_to_audio_position(
     global_state_store: &GlobalStateActor,
     audio_position: f64,
     audio_player: &mut AudioPlayerViewModel,
-) {
+) -> Option<(String, f64)> {
+    let mut linked_scene_id = None;
+    let mut linked_timestamp = None;
     let updated = global_state_store.try_update(|global_state| {
         let Some(selected_scene) = global_state.selected_scene.as_mut() else {
             return;
         };
         let selected_scene_id = selected_scene.scene_id;
         let rounded_timestamp = round_to_100_millis(audio_position);
+        linked_scene_id = Some(format!("{selected_scene_id:?}"));
+        linked_timestamp = Some(rounded_timestamp);
         selected_scene.timestamp = Some(rounded_timestamp);
         if let Some(scene) = global_state
             .scenes
@@ -1817,7 +2083,7 @@ fn link_selected_scene_to_audio_position(
         }
     });
     if !updated {
-        return;
+        return None;
     }
 
     if let Some((scenes, selected_scene)) = global_state_store.try_with_state(|global_state| {
@@ -1829,6 +2095,8 @@ fn link_selected_scene_to_audio_position(
         audio_player.tick_values = build_tick_values(audio_player.duration, &scenes);
         audio_player.can_link_scene_to_position = selected_scene.is_some();
     }
+
+    linked_scene_id.zip(linked_timestamp)
 }
 
 fn round_to_100_millis(seconds: f64) -> f64 {

@@ -17,9 +17,12 @@ fn audio_player_view_state_spec() {
             |_| {
                 let context = audio_player::AudioPlayerTestContext::new(vec![]);
                 let player_state = Rc::new(RefCell::new(TestAudioPlayerState::default()));
-                context.view_model.borrow_mut().set_player(Box::new(TestAudioPlayer {
-                    state: Rc::clone(&player_state),
-                }));
+                context
+                    .view_model
+                    .borrow_mut()
+                    .set_player(Box::new(TestAudioPlayer {
+                        state: Rc::clone(&player_state),
+                    }));
 
                 let mut view_state = AudioPlayerViewState::new();
 
@@ -42,9 +45,12 @@ fn audio_player_view_state_spec() {
             |_| {
                 let context = audio_player::AudioPlayerTestContext::new(vec![]);
                 let player_state = Rc::new(RefCell::new(TestAudioPlayerState::default()));
-                context.view_model.borrow_mut().set_player(Box::new(TestAudioPlayer {
-                    state: Rc::clone(&player_state),
-                }));
+                context
+                    .view_model
+                    .borrow_mut()
+                    .set_player(Box::new(TestAudioPlayer {
+                        state: Rc::clone(&player_state),
+                    }));
 
                 let mut view_state = AudioPlayerViewState::new();
 

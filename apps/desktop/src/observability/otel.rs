@@ -21,13 +21,17 @@ impl Drop for OTelGuard {
 }
 
 pub(crate) fn init_debug_otel() -> OTelGuard {
-    if !has_otel_endpoint() {
+    let Some(endpoint) = resolve_traces_endpoint() else {
+        eprintln!(
+            "otel init: disabled (missing OTEL_EXPORTER_OTLP_ENDPOINT or OTEL_EXPORTER_OTLP_TRACES_ENDPOINT)"
+        );
         return OTelGuard { provider: None };
-    }
+    };
 
-    match build_provider() {
+    match build_provider(&endpoint) {
         Some(provider) => {
             global::set_tracer_provider(provider.clone());
+            eprintln!("otel init: enabled, endpoint={endpoint}");
             OTelGuard {
                 provider: Some(provider),
             }
@@ -37,9 +41,7 @@ pub(crate) fn init_debug_otel() -> OTelGuard {
 }
 
 pub(crate) fn capture_trace_context(action_name: &str) -> Option<TraceContext> {
-    if !has_otel_endpoint() {
-        return None;
-    }
+    resolve_traces_endpoint()?;
 
     let tracer = global::tracer("rchoreo_desktop");
     let mut span = tracer
@@ -55,7 +57,7 @@ pub(crate) fn capture_trace_context(action_name: &str) -> Option<TraceContext> {
     Some(trace_context)
 }
 
-fn build_provider() -> Option<SdkTracerProvider> {
+fn build_provider(endpoint: &str) -> Option<SdkTracerProvider> {
     let service_name = std::env::var("OTEL_SERVICE_NAME")
         .ok()
         .filter(|value| !value.trim().is_empty())
@@ -66,6 +68,7 @@ fn build_provider() -> Option<SdkTracerProvider> {
 
     let exporter = match opentelemetry_otlp::SpanExporter::builder()
         .with_http()
+        .with_endpoint(endpoint.to_string())
         .with_protocol(opentelemetry_otlp::Protocol::HttpBinary)
         .build()
     {
@@ -84,12 +87,22 @@ fn build_provider() -> Option<SdkTracerProvider> {
     )
 }
 
-fn has_otel_endpoint() -> bool {
-    has_env_var("OTEL_EXPORTER_OTLP_ENDPOINT") || has_env_var("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
-}
-
-fn has_env_var(name: &str) -> bool {
+fn env_var(name: &str) -> Option<String> {
     std::env::var(name)
         .ok()
-        .is_some_and(|value| !value.trim().is_empty())
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+}
+
+fn resolve_traces_endpoint() -> Option<String> {
+    if let Some(endpoint) = env_var("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") {
+        return Some(endpoint);
+    }
+
+    let endpoint = env_var("OTEL_EXPORTER_OTLP_ENDPOINT")?;
+    if endpoint.ends_with('/') {
+        return Some(format!("{endpoint}v1/traces"));
+    }
+
+    Some(format!("{endpoint}/v1/traces"))
 }

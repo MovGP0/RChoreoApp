@@ -29,6 +29,16 @@ impl SpanGuard {
             span.set_attribute(KeyValue::new(_key, _value));
         }
     }
+
+    pub fn set_f64_attribute(&mut self, _key: &'static str, _value: f64) {
+        #[cfg(feature = "otel")]
+        if let Some(span) = self.span.as_mut() {
+            use opentelemetry::KeyValue;
+            use opentelemetry::trace::Span;
+
+            span.set_attribute(KeyValue::new(_key, _value));
+        }
+    }
 }
 
 impl Drop for SpanGuard {

@@ -227,6 +227,15 @@ pub struct AudioPlayerViewState {
     pending_seek_started_at: Option<Instant>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct AudioPlayerViewStateSnapshot {
+    pub is_user_dragging: bool,
+    pub was_playing: bool,
+    pub is_adjusting_speed: bool,
+    pub pending_seek_position: Option<f64>,
+    pub pending_seek_age_seconds: Option<f64>,
+}
+
 impl Default for AudioPlayerViewState {
     fn default() -> Self {
         Self::new()
@@ -315,6 +324,18 @@ impl AudioPlayerViewState {
 
     pub fn is_user_dragging(&self) -> bool {
         self.is_user_dragging
+    }
+
+    pub fn snapshot(&self) -> AudioPlayerViewStateSnapshot {
+        AudioPlayerViewStateSnapshot {
+            is_user_dragging: self.is_user_dragging,
+            was_playing: self.was_playing,
+            is_adjusting_speed: self.is_adjusting_speed,
+            pending_seek_position: self.pending_seek_position,
+            pending_seek_age_seconds: self
+                .pending_seek_started_at
+                .map(|started_at| started_at.elapsed().as_secs_f64()),
+        }
     }
 
     pub fn should_accept_player_position(&mut self, player_position: f64) -> bool {

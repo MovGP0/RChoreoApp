@@ -68,8 +68,14 @@ impl Behavior<AudioPlayerViewModel> for OpenAudioFileBehavior {
                 .and_then(|value| value.to_str())
                 .unwrap_or_default()
                 .to_ascii_lowercase();
+            let file_name = Path::new(command.file_path.as_str())
+                .file_name()
+                .and_then(|value| value.to_str())
+                .unwrap_or_default()
+                .to_string();
             span.set_string_attribute("choreo.command.type", "OpenAudioFileCommand".to_string());
             span.set_string_attribute("choreo.audio.file_extension", extension);
+            span.set_string_attribute("choreo.audio.file_name", file_name);
 
             if command.file_path.trim().is_empty() {
                 span.set_bool_attribute("choreo.success", false);

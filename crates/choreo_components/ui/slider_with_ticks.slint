@@ -2,7 +2,7 @@ import { MaterialPalette, MaterialStyleMetrics, StateLayer } from "@material";
 
 export component SliderWithTicks inherits Rectangle {
     in property <bool> enabled: true;
-    in-out property <float> value;
+    in property <float> value;
     in property <float> minimum;
     in property <int> stop_count: 0;
     in property <float> maximum: 100;
@@ -15,11 +15,13 @@ export component SliderWithTicks inherits Rectangle {
 
     property <int> steps: root.stop_count > 0 ? (root.maximum - root.minimum) / root.stop_count : 1;
     property <bool> is_dragging: false;
+    property <float> drag_value: root.value;
+    property <float> visual_value: root.is_dragging ? root.drag_value : root.value;
 
     min_height: MaterialStyleMetrics.size_16 + MaterialStyleMetrics.size_8;
     accessible-role: slider;
     accessible-enabled: root.enabled;
-    accessible-value: root.value;
+    accessible-value: root.visual_value;
     accessible-value-minimum: root.minimum;
     accessible-value-maximum: root.maximum;
     accessible-value-step: min(steps, (root.maximum - root.minimum) / 100);
@@ -28,6 +30,7 @@ export component SliderWithTicks inherits Rectangle {
 
     function begin_drag() {
         if (root.enabled && !root.is_dragging) {
+            root.drag_value = root.value;
             root.is_dragging = true;
             root.drag_started();
         }
@@ -36,7 +39,7 @@ export component SliderWithTicks inherits Rectangle {
     function end_drag() {
         if (root.is_dragging) {
             root.is_dragging = false;
-            root.drag_completed(root.value);
+            root.drag_completed(root.drag_value);
         }
     }
 
@@ -100,7 +103,7 @@ export component SliderWithTicks inherits Rectangle {
                 }
 
                 state_layer := Rectangle {
-                    x: root.value_to_length(track.width, root.value);
+                    x: root.value_to_length(track.width, root.visual_value);
                     width: 0;
                     height: track.height + (MaterialStyleMetrics.size_14 * 2);
                     StateLayer {
@@ -125,7 +128,7 @@ export component SliderWithTicks inherits Rectangle {
                             }
 
                             moved => {
-                                root.set_value_without_emit(root.length_to_value(state_layer.x + (self.mouse_x - self.pressed_x), track.width));
+                                root.set_drag_value_without_emit(root.length_to_value(state_layer.x + (self.mouse_x - self.pressed_x), track.width));
                             }
 
                             pointer_event(event) => {
@@ -143,7 +146,7 @@ export component SliderWithTicks inherits Rectangle {
                 pointer_event(event) => {
                     if (event.kind == PointerEventKind.down && event.button == PointerEventButton.left) {
                         root.begin_drag();
-                        root.set_value_without_emit(root.length_to_value(self.mouse_x, track.width));
+                        root.set_drag_value_without_emit(root.length_to_value(self.mouse_x, track.width));
                     }
                     if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
                         root.end_drag();
@@ -153,11 +156,11 @@ export component SliderWithTicks inherits Rectangle {
 
             key_pressed(event) => {
                 if (event.text == Key.LeftArrow) {
-                    root.set_value(root.value - root.steps);
+                    root.value_changed(root.normalize_value(root.value - root.steps));
                     return accept;
                 }
                 if (event.text == Key.RightArrow) {
-                    root.set_value(root.value + root.steps);
+                    root.value_changed(root.normalize_value(root.value + root.steps));
                     return accept;
                 }
                 reject
@@ -187,31 +190,29 @@ export component SliderWithTicks inherits Rectangle {
         return root.minimum + (x * (root.maximum - root.minimum) / width);
     }
 
-    function set_value(value: float) {
-        root.set_value_internal(value, true);
-    }
-
-    function set_value_without_emit(value: float) {
-        root.set_value_internal(value, false);
-    }
-
-    function set_value_internal(value: float, emit_event: bool) {
+    pure function normalize_value(value: float) -> float {
         if (root.steps > 1) {
-            let snapped = clamp(round(value / root.steps) * root.steps, root.minimum, root.maximum);
-            if (snapped != root.value) {
-                root.value = snapped;
-                if (emit_event) {
-                    root.value_changed(root.value);
-                }
-            }
-        } else {
-            let clamped = clamp(value, root.minimum, root.maximum);
-            if (clamped != root.value) {
-                root.value = clamped;
-                if (emit_event) {
-                    root.value_changed(root.value);
-                }
-            }
+            return clamp(round(value / root.steps) * root.steps, root.minimum, root.maximum);
+        }
+
+        return clamp(value, root.minimum, root.maximum);
+    }
+
+    function set_drag_value(value: float) {
+        root.set_drag_value_internal(value, true);
+    }
+
+    function set_drag_value_without_emit(value: float) {
+        root.set_drag_value_internal(value, false);
+    }
+
+    function set_drag_value_internal(value: float, emit_event: bool) {
+        let normalized = root.normalize_value(value);
+        if (normalized != root.drag_value) {
+            root.drag_value = normalized;
+        }
+        if (emit_event) {
+            root.value_changed(root.drag_value);
         }
     }
 }
