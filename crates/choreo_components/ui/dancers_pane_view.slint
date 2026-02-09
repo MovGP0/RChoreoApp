@@ -1,0 +1,108 @@
+import {
+    Horizontal,
+    IconButton,
+    ListView,
+    MaterialPalette,
+    MaterialText,
+    MaterialTypography,
+    Vertical
+} from "@material";
+import { DancerListItemView } from "dancer_list_item_view.slint";
+import { Translations } from "translations.slint";
+
+export struct DancerRoleItem {
+    z_index: int,
+    name: string,
+    color: color,
+}
+
+export struct DancerListItem {
+    dancer_id: int,
+    name: string,
+    shortcut: string,
+    role: DancerRoleItem,
+    icon_name: string,
+    color: color,
+}
+
+export component DancersPaneView inherits Rectangle {
+    in property <[DancerListItem]> dancer_items;
+    in property <int> selected_dancer_index;
+    in property <bool> can_delete_dancer;
+    in property <string> title_text: Translations.dancers_title;
+
+    callback select_dancer(int);
+    callback add_dancer();
+    callback delete_dancer();
+
+    background: MaterialPalette.surface;
+
+    Vertical {
+        width: parent.width;
+        height: parent.height;
+        padding: 12px;
+        spacing: 12px;
+
+        MaterialText {
+            text: root.title_text;
+            font-size: MaterialTypography.title_medium.font_size;
+            font-weight: MaterialTypography.title_medium.font_weight;
+            color: MaterialPalette.on_surface;
+        }
+
+        Rectangle {
+            background: MaterialPalette.surface_container;
+            border-width: 1px;
+            border-color: MaterialPalette.outline_variant;
+            border-radius: 12px;
+            vertical-stretch: 1;
+
+            Vertical {
+                width: parent.width;
+                height: parent.height;
+                padding: 8px;
+
+                ListView {
+                    vertical-stretch: 1;
+                    for dancer_item[index] in root.dancer_items: Rectangle {
+                        height: 56px;
+                        background: transparent;
+
+                        DancerListItemView {
+                            x: 0px;
+                            y: 3px;
+                            width: parent.width;
+                            height: parent.height - 6px;
+                            dancer_id: dancer_item.dancer_id;
+                            dancer_name: dancer_item.name;
+                            dancer_shortcut: dancer_item.shortcut;
+                            dancer_role_name: dancer_item.role.name;
+                            dancer_role_z_index: dancer_item.role.z_index;
+                            dancer_role_color: dancer_item.role.color;
+                            dancer_icon_name: dancer_item.icon_name;
+                            dancer_color: dancer_item.color;
+                            is_selected: index == root.selected_dancer_index;
+                            select => { root.select_dancer(index); }
+                        }
+                    }
+                }
+            }
+        }
+
+        Horizontal {
+            spacing: 8px;
+
+            IconButton {
+                icon: @image-url("icons/AccountMultiplePlus.svg");
+                tooltip: "+";
+                clicked => { root.add_dancer(); }
+            }
+            IconButton {
+                icon: @image-url("icons/AccountMultipleRemove.svg");
+                tooltip: "-";
+                enabled: root.can_delete_dancer;
+                clicked => { root.delete_dancer(); }
+            }
+        }
+    }
+}

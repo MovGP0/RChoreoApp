@@ -1,8 +1,117 @@
 import { ListView, MaterialPalette, MaterialText, MaterialTypography, TextButton, TextField, Vertical } from "@material";
 import { Translations } from "translations.slint";
 
+// DEBUG BLOCK 1 - Additional imports for XAML-like layout
+import {
+    DropDownMenu,
+    MaterialAnimations,
+    MenuItem,
+    ScrollView
+} from "@material";
+import { ColorPicker } from "color_picker.slint";
+import { DialogHost } from "dialog_host.slint";
+import { DancerListItem, DancersPaneView } from "dancers_pane_view.slint";
+import { HamburgerToggleButton } from "hamburger_toggle_button.slint";
+
+
+// DEBUG BLOCK 2 - Drawer host component (left drawer)
+component DancerSettingsDrawerHost inherits Rectangle {
+    in property <length> left_drawer_width: 420px;
+    in-out property <bool> is_left_open: false;
+    in property <bool> left_close_on_click_away: true;
+    in property <color> overlay_color: MaterialPalette.background_modal;
+    in property <color> drawer_background: MaterialPalette.surface;
+    in property <[DancerListItem]> dancer_items;
+    in property <int> selected_dancer_index;
+    in property <bool> can_delete_dancer;
+    in property <string> title_text: Translations.dancers_title;
+
+    callback overlay_clicked();
+    callback left_close_requested();
+    callback select_dancer(int);
+    callback add_dancer();
+    callback delete_dancer();
+
+    property <bool> overlay_visible: root.is_left_open && root.left_close_on_click_away;
+
+    clip: true;
+
+    content := Rectangle {
+        width: parent.width;
+        height: parent.height;
+        background: transparent;
+        z: 0;
+        @children
+    }
+
+    overlay := TouchArea {
+        visible: root.overlay_visible;
+        enabled: root.overlay_visible;
+        width: parent.width;
+        height: parent.height;
+        z: 1;
+
+        Rectangle {
+            width: parent.width;
+            height: parent.height;
+            background: root.overlay_color;
+        }
+
+        clicked => {
+            if (root.left_close_on_click_away && root.is_left_open) {
+                root.left_close_requested();
+                root.is_left_open = false;
+            }
+            root.overlay_clicked();
+        }
+    }
+
+    panel_area := Rectangle {
+        x: 0px;
+        y: 0px;
+        width: parent.width;
+        height: parent.height;
+        background: transparent;
+        z: 2;
+
+        left_panel := Rectangle {
+            visible: root.is_left_open;
+            x: root.is_left_open ? 0px : -self.width;
+            y: 0px;
+            width: root.left_drawer_width;
+            height: parent.height;
+            background: root.drawer_background;
+            z: 2;
+
+            animate x {
+                duration: MaterialAnimations.standard_decelerate_duration;
+                easing: MaterialAnimations.standard_easing;
+            }
+
+            Rectangle {
+                width: parent.width;
+                height: parent.height;
+                background: MaterialPalette.surface;
+
+                DancersPaneView {
+                    width: parent.width;
+                    height: parent.height;
+                    dancer_items: root.dancer_items;
+                    selected_dancer_index: root.selected_dancer_index;
+                    can_delete_dancer: root.can_delete_dancer;
+                    title_text: root.title_text;
+
+                    select_dancer(index) => { root.select_dancer(index); }
+                    add_dancer => { root.add_dancer(); }
+                    delete_dancer => { root.delete_dancer(); }
+                }
+            }
+        }
+    }
+}
+
 export component DancerSettingsPage inherits Rectangle {
-    in property <[string]> dancer_names;
+    in property <[DancerListItem]> dancer_items;
     in property <int> selected_dancer_index;
     in property <[string]> role_names;
     in property <int> selected_role_index;
@@ -15,6 +124,23 @@ export component DancerSettingsPage inherits Rectangle {
     in property <string> swap_title_text: Translations.dancer_swap_section_title;
     in property <string> save_text: Translations.common_ok;
     in property <string> cancel_text: Translations.common_cancel;
+
+    // DEBUG BLOCK 3 - Extra properties/callbacks for XAML-like page
+    in property <[MenuItem]> role_options;
+    in property <[MenuItem]> dancer_options;
+    in property <[MenuItem]> icon_options;
+    in property <int> swap_from_index: -1;
+    in property <int> swap_to_index: -1;
+    in property <int> selected_icon_index: -1;
+    in property <color> dancer_color: MaterialPalette.primary;
+    in-out property <bool> is_dancer_list_open: true;
+    in-out property <bool> is_dialog_open: false;
+    in property <string> dialog_content: "";
+    property <length> top_bar_height: 64px;
+    callback update_dancer_color(color);
+    callback update_swap_from(int);
+    callback update_swap_to(int);
+    callback close_dialog();
 
     callback select_dancer(int);
     callback add_dancer();
@@ -29,89 +155,308 @@ export component DancerSettingsPage inherits Rectangle {
 
     background: MaterialPalette.surface_container_low;
 
-    Vertical {
-        spacing: 12px;
-        padding: 8px;
-        horizontal-stretch: 1;
-        vertical-stretch: 1;
+    // DEBUG BLOCK 4A (ACTIVE): DialogHost + top bar only
+    DialogHost {
+        width: parent.width;
+        height: parent.height;
+        is_open: root.is_dialog_open;
+        close_on_click_away: true;
+        dialog_content: root.dialog_content;
+        dialog_background: MaterialPalette.surface_container_high;
+        overlay_color: MaterialPalette.background_modal;
+        close_requested => { root.close_dialog(); }
 
         Rectangle {
-            background: MaterialPalette.surface;
-            border-width: 1px;
-            border-color: MaterialPalette.outline_variant;
-            border-radius: 8px;
-            Vertical {
-                spacing: 6px;
-                padding: 12px;
-                horizontal-stretch: 1;
-                vertical-stretch: 1;
-                MaterialText {
-                    text: title_text;
-                    font-size: MaterialTypography.title_large.font_size;
-                    font-weight: MaterialTypography.title_large.font_weight;
-                }
-                ListView {
-                    for name in dancer_names: MaterialText {
-                        text: name;
-                        font-size: MaterialTypography.body_medium.font_size;
-                        font-weight: MaterialTypography.body_medium.font_weight;
+            width: parent.width;
+            height: parent.height;
+            background: MaterialPalette.surface_container_low;
+
+            Rectangle {
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: root.top_bar_height;
+                background: MaterialPalette.surface;
+                z: 3;
+
+                HorizontalLayout {
+                    padding: 8px;
+                    spacing: 12px;
+
+                    HamburgerToggleButton {
+                        width: 48px;
+                        height: 48px;
+                        checked <=> root.is_dancer_list_open;
+                        toggle_on_click: false;
+                        tooltip: root.title_text;
+                        clicked => { root.is_dancer_list_open = !root.is_dancer_list_open; }
+                    }
+
+                    MaterialText {
+                        text: root.title_text;
+                        font-size: MaterialTypography.title_large.font_size;
+                        font-weight: MaterialTypography.title_large.font_weight;
+                        color: MaterialPalette.on_surface;
+                        vertical-alignment: center;
                     }
                 }
-                TextButton { text: "+"; clicked => { add_dancer(); } }
-                TextButton { text: "-"; enabled: can_delete_dancer; clicked => { delete_dancer(); } }
             }
-        }
 
-        Rectangle {
-            background: MaterialPalette.surface;
-            border-width: 1px;
-            border-color: MaterialPalette.outline_variant;
-            border-radius: 8px;
-            Vertical {
-                spacing: 6px;
-                padding: 12px;
-                horizontal-stretch: 1;
-                vertical-stretch: 1;
-                TextField { label: Translations.dancer_name_label; text: dancer_name; edited(v) => { update_dancer_name(v); } }
-                TextField { label: Translations.dancer_shortcut_label; text: dancer_shortcut; edited(v) => { update_dancer_shortcut(v); } }
-                TextField { label: Translations.dancer_icon_label; text: dancer_icon_name; edited(v) => { update_dancer_icon(v); } }
-            }
-        }
+            // DEBUG BLOCK 4B (ACTIVE): drawer wrapper + rectangle-only content scaffold
+            DancerSettingsDrawerHost {
+                x: 0px;
+                y: root.top_bar_height;
+                width: parent.width;
+                height: parent.height - root.top_bar_height;
+                left_drawer_width: 420px;
+                drawer_background: MaterialPalette.surface;
+                overlay_color: MaterialPalette.background_modal;
+                is_left_open <=> root.is_dancer_list_open;
+                left_close_on_click_away: true;
+                dancer_items: root.dancer_items;
+                selected_dancer_index: root.selected_dancer_index;
+                can_delete_dancer: root.can_delete_dancer;
+                title_text: root.title_text;
 
-        Rectangle {
-            background: MaterialPalette.surface;
-            border-width: 1px;
-            border-color: MaterialPalette.outline_variant;
-            border-radius: 8px;
-            Vertical {
-                spacing: 6px;
-                padding: 12px;
-                horizontal-stretch: 1;
-                vertical-stretch: 1;
-                MaterialText {
-                    text: swap_title_text;
-                    font-size: MaterialTypography.title_medium.font_size;
-                    font-weight: MaterialTypography.title_medium.font_weight;
+                select_dancer(index) => { root.select_dancer(index); }
+                add_dancer => { root.add_dancer(); }
+                delete_dancer => { root.delete_dancer(); }
+
+                Rectangle {
+                    width: parent.width;
+                    height: parent.height;
+                    background: MaterialPalette.surface_container_low;
+
+                    Rectangle {
+                        x: 16px;
+                        y: 16px;
+                        width: Math.min(parent.width - 32px, 720px);
+                        height: parent.height - 88px;
+                        background: MaterialPalette.surface;
+                        border-width: 1px;
+                        border-color: MaterialPalette.outline_variant;
+                        border-radius: 10px;
+                    }
+
+                    Rectangle {
+                        x: 0px;
+                        y: parent.height - 56px;
+                        width: parent.width;
+                        height: 56px;
+                        background: MaterialPalette.surface;
+                        border-width: 1px;
+                        border-color: MaterialPalette.outline_variant;
+
+                        HorizontalLayout {
+                            padding: 8px;
+                            spacing: 8px;
+                            alignment: end;
+
+                            TextButton {
+                                text: root.cancel_text;
+                                clicked => { root.cancel(); }
+                            }
+
+                            TextButton {
+                                text: root.save_text;
+                                clicked => { root.save(); }
+                            }
+                        }
+                    }
                 }
-                TextButton { text: Translations.dancer_swap_button; enabled: can_swap_dancers; clicked => { swap_dancers(); } }
-            }
-        }
-
-        Rectangle {
-            background: MaterialPalette.surface;
-            border-width: 1px;
-            border-color: MaterialPalette.outline_variant;
-            border-radius: 8px;
-            Vertical {
-                spacing: 6px;
-                padding: 12px;
-                horizontal-stretch: 1;
-                vertical-stretch: 1;
-                TextButton { text: cancel_text; clicked => { cancel(); } }
-                TextButton { text: save_text; clicked => { save(); } }
             }
         }
     }
+
+    /*
+    DEBUG BLOCK 4B: replace placeholder body with DancerSettingsDrawerHost wrapper.
+    DEBUG BLOCK 4C: inside main content, enable details card (role/name/shortcut).
+    DEBUG BLOCK 4D: extend details card with color picker + icon dropdown.
+    DEBUG BLOCK 4E: enable swap card (from/to dropdowns + swap button).
+    DEBUG BLOCK 4F: enable bottom-right action bar (cancel/ok).
+
+    Preserved full reference body that was removed (for block-by-block uncommenting):
+
+    DancerSettingsDrawerHost {
+        x: 0px;
+        y: root.top_bar_height;
+        width: parent.width;
+        height: parent.height - root.top_bar_height;
+        left_drawer_width: 420px;
+        drawer_background: MaterialPalette.surface;
+        overlay_color: MaterialPalette.background_modal;
+        is_left_open <=> root.is_dancer_list_open;
+        left_close_on_click_away: true;
+        dancer_items: root.dancer_items;
+        selected_dancer_index: root.selected_dancer_index;
+        can_delete_dancer: root.can_delete_dancer;
+        title_text: root.title_text;
+
+        select_dancer(index) => { root.select_dancer(index); }
+        add_dancer => { root.add_dancer(); }
+        delete_dancer => { root.delete_dancer(); }
+
+        Rectangle {
+            width: parent.width;
+            height: parent.height;
+            background: MaterialPalette.surface_container_low;
+
+            Vertical {
+                width: parent.width;
+                height: parent.height;
+                spacing: 12px;
+
+                ScrollView {
+                    horizontal-stretch: 1;
+                    vertical-stretch: 1;
+
+                    content := Vertical {
+                        width: parent.width;
+                        padding: 16px;
+                        spacing: 12px;
+
+                        Rectangle {
+                            width: Math.min(parent.width - 16px, 720px);
+                            x: (parent.width - self.width) / 2;
+                            background: MaterialPalette.surface;
+                            border-width: 1px;
+                            border-color: MaterialPalette.outline_variant;
+                            border-radius: 10px;
+
+                            Vertical {
+                                padding: 12px;
+                                spacing: 10px;
+
+                                MaterialText {
+                                    text: Translations.dancer_title;
+                                    font-size: MaterialTypography.title_large.font_size;
+                                    font-weight: MaterialTypography.title_large.font_weight;
+                                    color: MaterialPalette.on_surface;
+                                }
+
+                                MaterialText {
+                                    text: Translations.dancer_role_label;
+                                    font-size: MaterialTypography.body_small.font_size;
+                                    font-weight: MaterialTypography.body_small.font_weight;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                DropDownMenu {
+                                    items: root.role_options;
+                                    current_index: root.role_options.length > 0 ? root.selected_role_index : -1;
+                                    selected(index) => { root.select_role(index); }
+                                }
+
+                                TextField {
+                                    label: Translations.dancer_name_label;
+                                    text: root.dancer_name;
+                                    edited(value) => { root.update_dancer_name(value); }
+                                }
+                                TextField {
+                                    label: Translations.dancer_shortcut_label;
+                                    text: root.dancer_shortcut;
+                                    edited(value) => { root.update_dancer_shortcut(value); }
+                                }
+
+                                MaterialText {
+                                    text: Translations.dancer_color_label;
+                                    font-size: MaterialTypography.body_small.font_size;
+                                    font-weight: MaterialTypography.body_small.font_weight;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                ColorPicker {
+                                    selected_color: root.dancer_color;
+                                    color_changed(value) => { root.update_dancer_color(value); }
+                                }
+
+                                MaterialText {
+                                    text: Translations.dancer_icon_label;
+                                    font-size: MaterialTypography.body_small.font_size;
+                                    font-weight: MaterialTypography.body_small.font_weight;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                DropDownMenu {
+                                    items: root.icon_options;
+                                    current_index: root.icon_options.length > 0 ? root.selected_icon_index : -1;
+                                    selected(index) => {
+                                        if (index >= 0 && index < root.icon_options.length) {
+                                            root.update_dancer_icon(root.icon_options[index].text);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: Math.min(parent.width - 16px, 720px);
+                            x: (parent.width - self.width) / 2;
+                            background: MaterialPalette.surface;
+                            border-width: 1px;
+                            border-color: MaterialPalette.outline_variant;
+                            border-radius: 10px;
+
+                            Vertical {
+                                padding: 12px;
+                                spacing: 10px;
+
+                                MaterialText {
+                                    text: root.swap_title_text;
+                                    font-size: MaterialTypography.title_medium.font_size;
+                                    font-weight: MaterialTypography.title_medium.font_weight;
+                                    color: MaterialPalette.on_surface;
+                                }
+
+                                MaterialText {
+                                    text: Translations.dancer_swap_from_label;
+                                    font-size: MaterialTypography.body_small.font_size;
+                                    font-weight: MaterialTypography.body_small.font_weight;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                DropDownMenu {
+                                    items: root.dancer_options;
+                                    current_index: root.dancer_options.length > 0 ? root.swap_from_index : -1;
+                                    selected(index) => { root.update_swap_from(index); }
+                                }
+
+                                MaterialText {
+                                    text: Translations.dancer_swap_to_label;
+                                    font-size: MaterialTypography.body_small.font_size;
+                                    font-weight: MaterialTypography.body_small.font_weight;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                DropDownMenu {
+                                    items: root.dancer_options;
+                                    current_index: root.dancer_options.length > 0 ? root.swap_to_index : -1;
+                                    selected(index) => { root.update_swap_to(index); }
+                                }
+
+                                TextButton {
+                                    text: Translations.dancer_swap_button;
+                                    enabled: root.can_swap_dancers;
+                                    clicked => { root.swap_dancers(); }
+                                }
+                            }
+                        }
+                    }
+
+                    viewport_height: content.height;
+                }
+
+                Rectangle {
+                    width: parent.width;
+                    background: MaterialPalette.surface;
+                    border-width: 1px;
+                    border-color: MaterialPalette.outline_variant;
+
+                    HorizontalLayout {
+                        padding: 12px;
+                        spacing: 8px;
+                        alignment: end;
+                        TextButton { text: root.cancel_text; clicked => { root.cancel(); } }
+                        TextButton { text: root.save_text; clicked => { root.save(); } }
+                    }
+                }
+            }
+        }
+    }
+    */
 }
-
-

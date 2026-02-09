@@ -1,0 +1,57 @@
+import { MaterialPalette, MaterialText, MaterialTypography } from "@material";
+
+export component DancerListItemView inherits Rectangle {
+    in property <int> dancer_id: -1;
+    in property <string> dancer_name;
+    in property <string> dancer_shortcut;
+    in property <string> dancer_role_name;
+    in property <int> dancer_role_z_index: 0;
+    in property <color> dancer_role_color: MaterialPalette.outline_variant;
+    in property <string> dancer_icon_name;
+    in property <color> dancer_color: MaterialPalette.primary;
+    in property <bool> is_selected: false;
+
+    callback select();
+
+    background: root.is_selected ? MaterialPalette.secondary_container : MaterialPalette.surface;
+    border-width: 1px;
+    border-color: root.is_selected ? MaterialPalette.primary : MaterialPalette.outline_variant;
+    border-radius: 8px;
+
+    TouchArea {
+        width: parent.width;
+        height: parent.height;
+        clicked => { root.select(); }
+    }
+
+    Rectangle {
+        x: 10px;
+        y: parent.height / 2 - 14px;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: root.dancer_color;
+    }
+
+    MaterialText {
+        x: 46px;
+        y: 8px;
+        width: parent.width - 84px;
+        text: root.dancer_name;
+        color: root.is_selected ? MaterialPalette.on_secondary_container : MaterialPalette.on_surface;
+        font-size: MaterialTypography.body_medium.font_size;
+        font-weight: MaterialTypography.body_medium.font_weight;
+        overflow: elide;
+    }
+
+    MaterialText {
+        x: 46px;
+        y: 28px;
+        width: parent.width - 84px;
+        text: root.dancer_role_name + " (" + root.dancer_role_z_index + ")  [" + root.dancer_shortcut + "]";
+        color: MaterialPalette.on_surface_variant;
+        font-size: MaterialTypography.body_small.font_size;
+        font-weight: MaterialTypography.body_small.font_weight;
+        overflow: elide;
+    }
+}
