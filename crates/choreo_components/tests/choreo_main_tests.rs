@@ -22,8 +22,14 @@ mod show_dialog_behavior_spec;
 #[path = "choreo_main/navigate_main_to_settings_spec.rs"]
 mod navigate_main_to_settings_spec;
 
+#[path = "choreo_main/navigate_main_to_dancers_spec.rs"]
+mod navigate_main_to_dancers_spec;
+
 #[path = "choreo_main/navigate_settings_to_main_spec.rs"]
 mod navigate_settings_to_main_spec;
+
+#[path = "choreo_main/navigate_dancers_to_main_spec.rs"]
+mod navigate_dancers_to_main_spec;
 
 #[path = "choreo_main/timestamp_sync_spec.rs"]
 mod timestamp_sync_spec;

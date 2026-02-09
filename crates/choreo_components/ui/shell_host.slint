@@ -143,6 +143,7 @@ export component ShellHost inherits MaterialWindow {
     callback settings_update_secondary_color(color);
     callback settings_update_tertiary_color(color);
     callback settings_navigate_back();
+    callback dancer_settings_cancel();
     callback choreo_update_scene_name(string);
     callback choreo_update_scene_text(string);
     callback choreo_update_scene_fixed_positions(bool);
@@ -372,6 +373,7 @@ export component ShellHost inherits MaterialWindow {
         }
         dancer_settings_page := DancerSettingsPage {
             visible: root.content_index == 2;
+            cancel => { root.dancer_settings_cancel(); }
         }
     }
 }
