@@ -26,6 +26,7 @@ pub mod settings;
 pub mod shell;
 pub mod slider_with_ticks;
 pub mod splash_screen;
+pub mod timestamp_state_machine;
 pub mod time;
 
 mod ui {

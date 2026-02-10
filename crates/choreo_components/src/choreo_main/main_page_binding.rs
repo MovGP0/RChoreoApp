@@ -1842,10 +1842,17 @@ impl MainPageBinding {
             let view_weak = view_weak.clone();
             view.on_audio_position_changed(move |value| {
                 let mut audio_player = audio_player.borrow_mut();
-                audio_player.position = value as f64;
+                let position = value as f64;
+                audio_player.position = position;
                 audio_player.update_duration_label();
-                if !audio_player_view_state.borrow().is_user_dragging() {
-                    let position = audio_player.position;
+                if audio_player_view_state.borrow().is_user_dragging() {
+                    audio_player_view_state
+                        .borrow_mut()
+                        .on_position_preview_changed(position);
+                } else {
+                    audio_player_view_state
+                        .borrow_mut()
+                        .on_position_seek_committed(position);
                     audio_player.seek(position);
                     audio_player.update_duration_label();
                 }

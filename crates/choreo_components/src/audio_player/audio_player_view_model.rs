@@ -1,11 +1,14 @@
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
-use std::time::{Duration, Instant};
-
 use crossbeam_channel::Sender;
 use nject::injectable;
 
 use crate::behavior::{Behavior, CompositeDisposable};
+use crate::timestamp_state_machine::{
+    OwnershipPhase,
+    TimestampEvent,
+    TimestampOwnershipStateMachine
+};
 
 use super::messages::LinkSceneToPositionCommand;
 use super::types::{AudioPlayer, StreamFactory};
@@ -160,7 +163,7 @@ impl AudioPlayerViewModel {
         }
 
         player.seek(position);
-        self.position = player.current_position();
+        self.position = position;
     }
 
     pub fn seek_and_play(&mut self, position: f64) {
@@ -173,7 +176,7 @@ impl AudioPlayerViewModel {
         }
 
         player.seek_and_play(position);
-        self.position = player.current_position();
+        self.position = position;
         self.is_playing = true;
     }
 
@@ -220,11 +223,7 @@ impl AudioPlayerViewModel {
 }
 
 pub struct AudioPlayerViewState {
-    is_user_dragging: bool,
-    was_playing: bool,
-    is_adjusting_speed: bool,
-    pending_seek_position: Option<f64>,
-    pending_seek_started_at: Option<Instant>,
+    machine: TimestampOwnershipStateMachine,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -244,30 +243,27 @@ impl Default for AudioPlayerViewState {
 
 impl AudioPlayerViewState {
     const SPEED_SNAP_STEP: f64 = 0.05;
-    const POSITION_SYNC_TOLERANCE_SECONDS: f64 = 0.2;
-    const POSITION_SYNC_TIMEOUT: Duration = Duration::from_millis(1500);
 
     pub fn new() -> Self {
         Self {
-            is_user_dragging: false,
-            was_playing: false,
-            is_adjusting_speed: false,
-            pending_seek_position: None,
-            pending_seek_started_at: None,
+            machine: TimestampOwnershipStateMachine::new(),
         }
     }
 
     pub fn on_position_drag_started(&mut self, view_model: &mut AudioPlayerViewModel) {
-        self.is_user_dragging = true;
-        self.was_playing = view_model.is_playing;
-        self.pending_seek_position = None;
-        self.pending_seek_started_at = None;
+        self.machine.set_playback_from_player(
+            view_model.player.is_some(),
+            view_model.is_playing,
+        );
+        let was_playing = self.machine.apply_event(TimestampEvent::DragStarted {
+            is_playing: view_model.is_playing,
+        });
 
         let Some(player) = view_model.player.as_mut() else {
             return;
         };
 
-        if !self.was_playing && !player.is_playing() {
+        if !was_playing && !player.is_playing() {
             return;
         }
 
@@ -275,33 +271,43 @@ impl AudioPlayerViewState {
         view_model.is_playing = false;
     }
 
+    pub fn on_position_preview_changed(&mut self, position: f64) {
+        self.machine
+            .apply_event(TimestampEvent::PreviewPositionChanged { position });
+    }
+
     pub fn on_position_drag_completed(
         &mut self,
         view_model: &mut AudioPlayerViewModel,
         position: f64,
     ) {
-        self.is_user_dragging = false;
-
         if !view_model.can_seek {
+            self.machine.complete_seek_commit();
             return;
         }
 
-        self.pending_seek_position = Some(position);
-        self.pending_seek_started_at = Some(Instant::now());
+        self.machine
+            .apply_event(TimestampEvent::SeekCommitted { position });
+        let was_playing = self.machine.complete_seek_commit();
 
-        if self.was_playing {
+        if was_playing {
             view_model.seek_and_play(position);
         } else {
             view_model.seek(position);
         }
 
-        self.was_playing = false;
         view_model.position = position;
         view_model.update_duration_label();
     }
 
+    pub fn on_position_seek_committed(&mut self, position: f64) {
+        self.machine
+            .apply_event(TimestampEvent::SeekCommitted { position });
+        let _ = self.machine.complete_seek_commit();
+    }
+
     pub fn on_speed_changed(&mut self, view_model: &mut AudioPlayerViewModel, new_value: f64) {
-        if self.is_adjusting_speed {
+        if self.machine.is_adjusting_speed() {
             return;
         }
 
@@ -316,50 +322,31 @@ impl AudioPlayerViewState {
             return;
         }
 
-        self.is_adjusting_speed = true;
+        self.machine.set_is_adjusting_speed(true);
         view_model.speed = snapped;
         view_model.update_speed_label();
-        self.is_adjusting_speed = false;
+        self.machine.set_is_adjusting_speed(false);
     }
 
     pub fn is_user_dragging(&self) -> bool {
-        self.is_user_dragging
+        self.machine.is_user_previewing()
     }
 
     pub fn snapshot(&self) -> AudioPlayerViewStateSnapshot {
+        let state = self.machine.snapshot();
         AudioPlayerViewStateSnapshot {
-            is_user_dragging: self.is_user_dragging,
-            was_playing: self.was_playing,
-            is_adjusting_speed: self.is_adjusting_speed,
-            pending_seek_position: self.pending_seek_position,
-            pending_seek_age_seconds: self
-                .pending_seek_started_at
-                .map(|started_at| started_at.elapsed().as_secs_f64()),
+            is_user_dragging: state.ownership_phase == OwnershipPhase::UserPreview,
+            was_playing: state.was_playing_before_seek,
+            is_adjusting_speed: state.is_adjusting_speed,
+            pending_seek_position: state.pending_seek_position,
+            pending_seek_age_seconds: state.pending_seek_age_seconds,
         }
     }
 
     pub fn should_accept_player_position(&mut self, player_position: f64) -> bool {
-        if self.is_user_dragging {
-            return false;
-        }
-
-        let Some(target_position) = self.pending_seek_position else {
-            return true;
-        };
-
-        let has_reached_target =
-            (player_position - target_position).abs() <= Self::POSITION_SYNC_TOLERANCE_SECONDS;
-        let timed_out = self
-            .pending_seek_started_at
-            .is_some_and(|started_at| started_at.elapsed() >= Self::POSITION_SYNC_TIMEOUT);
-
-        if has_reached_target || timed_out {
-            self.pending_seek_position = None;
-            self.pending_seek_started_at = None;
-            return true;
-        }
-
-        false
+        self.machine.apply_event(TimestampEvent::ActorPositionSampled {
+            position: player_position,
+        })
     }
 }
 
