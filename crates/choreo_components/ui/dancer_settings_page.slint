@@ -235,6 +235,57 @@ export component DancerSettingsPage inherits Rectangle {
                         border-width: 1px;
                         border-color: MaterialPalette.outline_variant;
                         border-radius: 10px;
+                        ScrollView {
+                            width: parent.width;
+                            height: parent.height;
+                            horizontal_scrollbar_policy: ScrollBarPolicy.always_off;
+
+                            content := Vertical {
+                                padding: 12px;
+                                spacing: 10px;
+
+                                MaterialText {
+                                    text: Translations.dancer_title;
+                                    font-size: MaterialTypography.title_large.font_size;
+                                    font-weight: MaterialTypography.title_large.font_weight;
+                                    color: MaterialPalette.on_surface;
+                                }
+
+                                MaterialText {
+                                    text: Translations.dancer_role_label;
+                                    font-size: MaterialTypography.body_small.font_size;
+                                    font-weight: MaterialTypography.body_small.font_weight;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                DropDownMenu {
+                                    items: root.role_options;
+                                    current_index: root.role_options.length > 0 ? root.selected_role_index : -1;
+                                    selected(index) => { root.select_role(index); }
+                                }
+
+                                TextField {
+                                    label: Translations.dancer_name_label;
+                                    text: root.dancer_name;
+                                    edited(value) => { root.update_dancer_name(value); }
+                                }
+                                TextField {
+                                    label: Translations.dancer_shortcut_label;
+                                    text: root.dancer_shortcut;
+                                    edited(value) => { root.update_dancer_shortcut(value); }
+                                }
+
+                                MaterialText {
+                                    text: Translations.dancer_color_label;
+                                    font-size: MaterialTypography.body_small.font_size;
+                                    font-weight: MaterialTypography.body_small.font_weight;
+                                    color: MaterialPalette.on_surface_variant;
+                                }
+                                ColorPicker {
+                                    selected_color: root.dancer_color;
+                                    color_changed(value) => { root.update_dancer_color(value); }
+                                }
+                            }
+                        }
                     }
 
                     Rectangle {
