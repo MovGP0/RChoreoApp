@@ -1,8 +1,12 @@
-import { ListView, MaterialPalette, MaterialText, MaterialTypography, TextButton, TextField, Vertical } from "@material";
 import { Translations } from "translations.slint";
-
-// DEBUG BLOCK 1 - Additional imports for XAML-like layout
 import {
+    ListView,
+    MaterialPalette,
+    MaterialText,
+    MaterialTypography,
+    TextButton,
+    TextField,
+    Vertical,
     DropDownMenu,
     MaterialAnimations,
     MenuItem,
@@ -13,8 +17,6 @@ import { DialogHost } from "dialog_host.slint";
 import { DancerListItem, DancersPaneView } from "dancers_pane_view.slint";
 import { HamburgerToggleButton } from "hamburger_toggle_button.slint";
 
-
-// DEBUG BLOCK 2 - Drawer host component (left drawer)
 component DancerSettingsDrawerHost inherits Rectangle {
     in property <length> left_drawer_width: 420px;
     in-out property <bool> is_left_open: false;
@@ -125,7 +127,6 @@ export component DancerSettingsPage inherits Rectangle {
     in property <string> save_text: Translations.common_ok;
     in property <string> cancel_text: Translations.common_cancel;
 
-    // DEBUG BLOCK 3 - Extra properties/callbacks for XAML-like page
     in property <[MenuItem]> role_options;
     in property <[MenuItem]> dancer_options;
     in property <[MenuItem]> icon_options;
@@ -155,7 +156,6 @@ export component DancerSettingsPage inherits Rectangle {
 
     background: MaterialPalette.surface_container_low;
 
-    // DEBUG BLOCK 4A (ACTIVE): DialogHost + top bar only
     DialogHost {
         width: parent.width;
         height: parent.height;
@@ -202,7 +202,6 @@ export component DancerSettingsPage inherits Rectangle {
                 }
             }
 
-            // DEBUG BLOCK 4B (ACTIVE): drawer wrapper + rectangle-only content scaffold
             DancerSettingsDrawerHost {
                 x: 0px;
                 y: root.top_bar_height;

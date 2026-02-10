@@ -11,8 +11,11 @@ use choreo_components::choreo_main::{MainPageActionHandlers, MainPageBinding, Ma
 use choreo_components::global::GlobalProvider;
 use choreo_components::preferences::{InMemoryPreferences, Preferences};
 use choreo_components::shell;
+use choreo_master_mobile_json::DancerId;
+use choreo_models::{Colors, DancerModel, RoleModel};
 use crossbeam_channel::{bounded, unbounded};
 use choreo_main::Report;
+use slint::Model;
 
 fn create_binding() -> MainPageBinding {
     let ui = shell::create_shell_host().expect("shell should be created");
@@ -20,6 +23,24 @@ fn create_binding() -> MainPageBinding {
     let global_state = global_provider.global_state();
     let global_state_store = global_provider.global_state_store();
     let state_machine = global_provider.state_machine();
+    let seeded = global_state_store.try_update(|state| {
+        let role = Rc::new(RoleModel {
+            z_index: 0,
+            name: "Lead".to_string(),
+            color: Colors::transparent(),
+        });
+        let dancer = Rc::new(DancerModel {
+            dancer_id: DancerId(1),
+            role: role.clone(),
+            name: "Alice".to_string(),
+            shortcut: "A".to_string(),
+            color: Colors::transparent(),
+            icon: None,
+        });
+        state.choreography.roles = vec![role];
+        state.choreography.dancers = vec![dancer];
+    });
+    assert!(seeded, "failed to seed global state");
     let preferences: Rc<dyn Preferences> = Rc::new(InMemoryPreferences::new());
 
     let (open_audio_sender, open_audio_receiver) = bounded(1);
@@ -104,6 +125,22 @@ fn navigate_main_to_dancers_spec() {
                 assert_eq!(view.get_content_index(), 2);
             });
         });
+
+        spec.it(
+            "loads dancer list items into the dancers settings page when opened",
+            |_| {
+                run_in_ui_thread(|| {
+                    i_slint_backend_testing::init_no_event_loop();
+
+                    let binding = create_binding();
+                    let view = binding.view();
+
+                    view.invoke_scenes_navigate_to_dancer_settings();
+                    let dancer_items = view.get_dancer_settings_dancer_items();
+                    assert!(dancer_items.row_count() >= 1);
+                });
+            },
+        );
     });
 
     let report = choreo_main::run_suite(&suite);

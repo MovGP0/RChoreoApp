@@ -98,6 +98,11 @@ impl DancersTestContext {
         self.provider.close_dialog_sender()
     }
 
+    pub fn reload_dancer_settings(&self) {
+        self.provider.reload();
+        self.pump_events();
+    }
+
     pub fn update_global_state(
         &self,
         update: impl FnOnce(&mut choreo_components::global::GlobalStateModel),

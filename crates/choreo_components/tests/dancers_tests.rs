@@ -16,6 +16,9 @@ mod hide_dancer_dialog_behavior_spec;
 #[path = "dancers/load_dancer_settings_behavior_spec.rs"]
 mod load_dancer_settings_behavior_spec;
 
+#[path = "dancers/reload_dancer_settings_behavior_spec.rs"]
+mod reload_dancer_settings_behavior_spec;
+
 #[path = "dancers/save_dancer_settings_behavior_spec.rs"]
 mod save_dancer_settings_behavior_spec;
 

@@ -1,28 +1,51 @@
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::time::Duration;
 
-use choreo_models::{DancerModel, RoleModel};
-use crossbeam_channel::Sender;
+use choreo_models::{
+    DancerModel,
+    RoleModel
+};
+use crossbeam_channel::{
+    Receiver,
+    Sender
+};
 use nject::injectable;
+use slint::TimerMode;
 
-use crate::behavior::{Behavior, CompositeDisposable};
+use crate::behavior::{
+    Behavior,
+    CompositeDisposable,
+    TimerDisposable
+};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
 use super::dancer_settings_view_model::DancerSettingsViewModel;
 use super::mapper::{default_role, ensure_default_roles};
-use super::messages::{DancerSelectionCommand, UpdateSwapSelectionCommand};
+use super::messages::{
+    DancerSelectionCommand,
+    ReloadDancerSettingsCommand,
+    UpdateSwapSelectionCommand
+};
 
 #[injectable]
 #[inject(
     |global_state: Rc<GlobalStateActor>,
+     reload_receiver: Receiver<ReloadDancerSettingsCommand>,
      selection_sender: Sender<DancerSelectionCommand>,
      swap_selection_sender: Sender<UpdateSwapSelectionCommand>| {
-        Self::new(global_state, selection_sender, swap_selection_sender)
+        Self::new(
+            global_state,
+            reload_receiver,
+            selection_sender,
+            swap_selection_sender
+        )
     }
 )]
 pub struct LoadDancerSettingsBehavior {
     global_state: Rc<GlobalStateActor>,
+    reload_receiver: Receiver<ReloadDancerSettingsCommand>,
     selection_sender: Sender<DancerSelectionCommand>,
     swap_selection_sender: Sender<UpdateSwapSelectionCommand>,
 }
@@ -30,11 +53,13 @@ pub struct LoadDancerSettingsBehavior {
 impl LoadDancerSettingsBehavior {
     pub(super) fn new(
         global_state: Rc<GlobalStateActor>,
+        reload_receiver: Receiver<ReloadDancerSettingsCommand>,
         selection_sender: Sender<DancerSelectionCommand>,
         swap_selection_sender: Sender<UpdateSwapSelectionCommand>,
     ) -> Self {
         Self {
             global_state,
+            reload_receiver,
             selection_sender,
             swap_selection_sender,
         }
@@ -99,11 +124,36 @@ impl Behavior<DancerSettingsViewModel> for LoadDancerSettingsBehavior {
     fn activate(
         &self,
         view_model: &mut DancerSettingsViewModel,
-        _disposables: &mut CompositeDisposable,
+        disposables: &mut CompositeDisposable,
     ) {
         BehaviorLog::behavior_activated("LoadDancerSettingsBehavior", "DancerSettingsViewModel");
         self.load(view_model);
         let _ = self.selection_sender.send(DancerSelectionCommand::Refresh);
         let _ = self.swap_selection_sender.send(UpdateSwapSelectionCommand);
+
+        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
+        else {
+            return;
+        };
+
+        let behavior = Self {
+            global_state: Rc::clone(&self.global_state),
+            reload_receiver: self.reload_receiver.clone(),
+            selection_sender: self.selection_sender.clone(),
+            swap_selection_sender: self.swap_selection_sender.clone(),
+        };
+        let reload_receiver = self.reload_receiver.clone();
+        let timer = slint::Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
+            while reload_receiver.try_recv().is_ok() {
+                let mut view_model = view_model_handle.borrow_mut();
+                behavior.load(&mut view_model);
+                let _ = behavior.selection_sender.send(DancerSelectionCommand::Refresh);
+                let _ = behavior
+                    .swap_selection_sender
+                    .send(UpdateSwapSelectionCommand);
+            }
+        });
+        disposables.add(Box::new(TimerDisposable::new(timer)));
     }
 }

@@ -16,6 +16,9 @@ pub struct DeleteDancerCommand;
 pub struct SaveDancerSettingsCommand;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReloadDancerSettingsCommand;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CancelDancerSettingsCommand;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

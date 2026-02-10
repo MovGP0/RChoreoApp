@@ -14,9 +14,9 @@ use super::hide_dancer_dialog_behavior::HideDancerDialogBehavior;
 use super::load_dancer_settings_behavior::LoadDancerSettingsBehavior;
 use super::messages::{
     AddDancerCommand, CancelDancerSettingsCommand, CloseDancerDialogCommand,
-    DancerSelectionCommand, DeleteDancerCommand, SaveDancerSettingsCommand, SelectRoleCommand,
-    ShowDancerDialogCommand, SwapDancersCommand, UpdateDancerIconCommand,
-    UpdateSwapSelectionCommand,
+    DancerSelectionCommand, DeleteDancerCommand, ReloadDancerSettingsCommand,
+    SaveDancerSettingsCommand, SelectRoleCommand, ShowDancerDialogCommand, SwapDancersCommand,
+    UpdateDancerIconCommand, UpdateSwapSelectionCommand,
 };
 use super::save_dancer_settings_behavior::SaveDancerSettingsBehavior;
 use super::selected_dancer_state_behavior::SelectedDancerStateBehavior;
@@ -35,12 +35,14 @@ pub struct DancersProvider {
     dancer_settings_view_model: Rc<RefCell<DancerSettingsViewModel>>,
     show_dialog_sender: Sender<ShowDancerDialogCommand>,
     close_dialog_sender: Sender<CloseDancerDialogCommand>,
+    reload_sender: Sender<ReloadDancerSettingsCommand>,
 }
 
 impl DancersProvider {
     pub fn new(deps: DancersProviderDependencies) -> Self {
         let (show_dialog_sender, show_dialog_receiver) = unbounded();
         let (close_dialog_sender, close_dialog_receiver) = unbounded();
+        let (reload_sender, reload_receiver) = unbounded();
         let (add_dancer_sender, add_dancer_receiver) = unbounded();
         let (delete_dancer_sender, delete_dancer_receiver) = unbounded();
         let (save_sender, save_receiver) = unbounded();
@@ -54,6 +56,7 @@ impl DancersProvider {
         let behaviors: Vec<Box<dyn crate::behavior::Behavior<DancerSettingsViewModel>>> = vec![
             Box::new(LoadDancerSettingsBehavior::new(
                 deps.global_state.clone(),
+                reload_receiver,
                 selection_sender.clone(),
                 swap_selection_sender.clone(),
             )),
@@ -170,6 +173,7 @@ impl DancersProvider {
             dancer_settings_view_model,
             show_dialog_sender,
             close_dialog_sender,
+            reload_sender,
         }
     }
 
@@ -183,5 +187,9 @@ impl DancersProvider {
 
     pub fn close_dialog_sender(&self) -> Sender<CloseDancerDialogCommand> {
         self.close_dialog_sender.clone()
+    }
+
+    pub fn reload(&self) {
+        let _ = self.reload_sender.send(ReloadDancerSettingsCommand);
     }
 }

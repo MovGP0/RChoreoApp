@@ -4,60 +4,138 @@ use std::rc::Rc;
 use std::time::Instant;
 
 use choreo_master_mobile_json::Color as ChoreoColor;
-use crossbeam_channel::{Receiver, Sender, bounded};
-use slint::{Color, ComponentHandle, Image, ModelRc, VecModel};
+use crossbeam_channel::{
+    Receiver,
+    Sender,
+    bounded
+};
+use slint::{
+    Color,
+    ComponentHandle,
+    Image,
+    ModelRc,
+    VecModel
+};
 
 use crate::audio_player::{
-    AudioPlayerPositionChangedEvent, AudioPlayerViewModel, AudioPlayerViewState,
-    OpenAudioFileCommand, build_tick_values,
+    AudioPlayerPositionChangedEvent,
+    AudioPlayerViewModel,
+    AudioPlayerViewState,
+    OpenAudioFileCommand,
+    build_tick_values,
 };
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::choreography_settings::{
-    ChoreographySettingsViewModel, LoadChoreographySettingsBehavior,
-    ReloadChoreographySettingsCommand, UpdateAuthorBehavior, UpdateAuthorCommand,
-    UpdateCommentBehavior, UpdateCommentCommand, UpdateDateBehavior, UpdateDateCommand,
-    UpdateDescriptionBehavior, UpdateDescriptionCommand, UpdateDrawPathFromBehavior,
-    UpdateDrawPathFromCommand, UpdateDrawPathToBehavior, UpdateDrawPathToCommand,
-    UpdateFloorBackBehavior, UpdateFloorBackCommand, UpdateFloorColorBehavior,
-    UpdateFloorColorCommand, UpdateFloorFrontBehavior, UpdateFloorFrontCommand,
-    UpdateFloorLeftBehavior, UpdateFloorLeftCommand, UpdateFloorRightBehavior,
-    UpdateFloorRightCommand, UpdateGridLinesBehavior, UpdateGridLinesCommand,
-    UpdateGridResolutionBehavior, UpdateGridResolutionCommand, UpdateNameBehavior,
-    UpdateNameCommand, UpdatePositionsAtSideBehavior, UpdatePositionsAtSideCommand,
-    UpdateSelectedSceneBehavior, UpdateSelectedSceneCommand, UpdateShowLegendBehavior,
-    UpdateShowLegendCommand, UpdateShowTimestampsBehavior, UpdateShowTimestampsCommand,
-    UpdateSnapToGridBehavior, UpdateSnapToGridCommand, UpdateSubtitleBehavior,
-    UpdateSubtitleCommand, UpdateTransparencyBehavior, UpdateTransparencyCommand,
-    UpdateVariationBehavior, UpdateVariationCommand,
+    ChoreographySettingsViewModel,
+    LoadChoreographySettingsBehavior,
+    ReloadChoreographySettingsCommand,
+    UpdateAuthorBehavior,
+    UpdateAuthorCommand,
+    UpdateCommentBehavior,
+    UpdateCommentCommand,
+    UpdateDateBehavior,
+    UpdateDateCommand,
+    UpdateDescriptionBehavior,
+    UpdateDescriptionCommand,
+    UpdateDrawPathFromBehavior,
+    UpdateDrawPathFromCommand,
+    UpdateDrawPathToBehavior,
+    UpdateDrawPathToCommand,
+    UpdateFloorBackBehavior,
+    UpdateFloorBackCommand,
+    UpdateFloorColorBehavior,
+    UpdateFloorColorCommand,
+    UpdateFloorFrontBehavior,
+    UpdateFloorFrontCommand,
+    UpdateFloorLeftBehavior,
+    UpdateFloorLeftCommand,
+    UpdateFloorRightBehavior,
+    UpdateFloorRightCommand,
+    UpdateGridLinesBehavior,
+    UpdateGridLinesCommand,
+    UpdateGridResolutionBehavior,
+    UpdateGridResolutionCommand,
+    UpdateNameBehavior,
+    UpdateNameCommand,
+    UpdatePositionsAtSideBehavior,
+    UpdatePositionsAtSideCommand,
+    UpdateSelectedSceneBehavior,
+    UpdateSelectedSceneCommand,
+    UpdateShowLegendBehavior,
+    UpdateShowLegendCommand,
+    UpdateShowTimestampsBehavior,
+    UpdateShowTimestampsCommand,
+    UpdateSnapToGridBehavior,
+    UpdateSnapToGridCommand,
+    UpdateSubtitleBehavior,
+    UpdateSubtitleCommand,
+    UpdateTransparencyBehavior,
+    UpdateTransparencyCommand,
+    UpdateVariationBehavior,
+    UpdateVariationCommand,
+};
+use crate::dancers::{
+    DancerSettingsViewModel,
+    DancersProvider,
+    DancersProviderDependencies
 };
 use crate::floor::{
-    CanvasViewHandle, FloorCanvasViewModel, FloorProvider, FloorProviderDependencies, Point,
-    PointerButton, PointerEventArgs, PointerMovedCommand, PointerPressedCommand,
-    PointerReleasedCommand, PointerWheelChangedCommand,
+    CanvasViewHandle,
+    FloorCanvasViewModel,
+    FloorProvider,
+    FloorProviderDependencies,
+    Point,
+    PointerButton,
+    PointerEventArgs,
+    PointerMovedCommand,
+    PointerPressedCommand,
+    PointerReleasedCommand,
+    PointerWheelChangedCommand,
 };
 use crate::global::{GlobalStateActor, GlobalStateModel};
 use crate::haptics::HapticFeedback;
 use crate::nav_bar::{
-    InteractionModeChangedCommand, NavBarSenders, NavBarViewModel,
+    InteractionModeChangedCommand,
+    NavBarSenders,
+    NavBarViewModel,
     OpenAudioRequestedCommand as NavBarOpenAudioRequestedCommand,
-    OpenImageRequestedCommand as NavBarOpenImageRequestedCommand, apply_nav_bar_view_model,
+    OpenImageRequestedCommand as NavBarOpenImageRequestedCommand,
+    apply_nav_bar_view_model,
     bind_nav_bar,
 };
 use crate::observability::start_internal_span;
 use crate::preferences::SharedPreferences;
 use crate::scenes::{
-    OpenChoreoActions, OpenChoreoRequested, ScenesDependencies, ScenesPaneViewModel, ScenesProvider,
+    OpenChoreoActions,
+    OpenChoreoRequested,
+    ScenesDependencies,
+    ScenesPaneViewModel,
+    ScenesProvider,
 };
 use crate::settings::{
-    MaterialSchemeHelper, SettingsDependencies, SettingsProvider, SettingsViewModel, ThemeMode,
+    MaterialSchemeHelper,
+    SettingsDependencies,
+    SettingsProvider,
+    SettingsViewModel,
+    ThemeMode,
 };
 use crate::shell::ShellMaterialSchemeApplier;
 use crate::time::format_seconds;
-use crate::{Date, MenuItem, SceneListItem, ShellHost};
+use crate::{
+    DancerListItem,
+    DancerRoleItem,
+    Date,
+    MenuItem,
+    SceneListItem,
+    ShellHost
+};
 use choreo_state_machine::ApplicationStateMachine;
 
 use super::{
-    MainViewModel, MainViewModelProvider, MainViewModelProviderDependencies, OpenAudioRequested,
+    MainViewModel,
+    MainViewModelProvider,
+    MainViewModelProviderDependencies,
+    OpenAudioRequested,
     OpenImageRequested,
 };
 
@@ -93,6 +171,8 @@ pub struct MainPageBinding {
     view_model: Rc<RefCell<MainViewModel>>,
     scenes_view_model: Rc<RefCell<ScenesPaneViewModel>>,
     #[allow(dead_code)]
+    dancers_view_model: Rc<RefCell<DancerSettingsViewModel>>,
+    #[allow(dead_code)]
     settings_view_model: Rc<RefCell<SettingsViewModel>>,
     #[allow(dead_code)]
     choreography_settings_view_model: Rc<RefCell<ChoreographySettingsViewModel>>,
@@ -103,9 +183,13 @@ pub struct MainPageBinding {
     #[allow(dead_code)]
     audio_player: Rc<RefCell<AudioPlayerViewModel>>,
     #[allow(dead_code)]
+    dancers_provider: Rc<DancersProvider>,
+    #[allow(dead_code)]
     nav_bar_timer: slint::Timer,
     #[allow(dead_code)]
     settings_timer: slint::Timer,
+    #[allow(dead_code)]
+    dancers_timer: slint::Timer,
     #[allow(dead_code)]
     audio_player_timer: slint::Timer,
     #[allow(dead_code)]
@@ -198,6 +282,11 @@ impl MainPageBinding {
         });
         let open_choreo_sender = scenes_provider.open_choreo_sender();
         let scenes_view_model = scenes_provider.scenes_view_model();
+        let dancers_provider = Rc::new(DancersProvider::new(DancersProviderDependencies {
+            global_state: Rc::clone(&deps.global_state_store),
+            haptic_feedback: None,
+        }));
+        let dancers_view_model = dancers_provider.dancer_settings_view_model();
 
         let audio_player = Rc::clone(&deps.audio_player);
         let audio_player_handle = Rc::downgrade(&audio_player);
@@ -230,41 +319,28 @@ impl MainPageBinding {
             .set_self_handle(Rc::downgrade(&choreography_settings_view_model));
 
         let (reload_settings_sender, reload_settings_receiver) = crossbeam_channel::unbounded();
-        let (update_selected_scene_sender, update_selected_scene_receiver) =
-            crossbeam_channel::unbounded();
+        let (update_selected_scene_sender, update_selected_scene_receiver) = crossbeam_channel::unbounded();
         let (update_comment_sender, update_comment_receiver) = crossbeam_channel::unbounded();
         let (update_name_sender, update_name_receiver) = crossbeam_channel::unbounded();
         let (update_subtitle_sender, update_subtitle_receiver) = crossbeam_channel::unbounded();
         let (update_date_sender, update_date_receiver) = crossbeam_channel::unbounded();
         let (update_variation_sender, update_variation_receiver) = crossbeam_channel::unbounded();
         let (update_author_sender, update_author_receiver) = crossbeam_channel::unbounded();
-        let (update_description_sender, update_description_receiver) =
-            crossbeam_channel::unbounded();
-        let (update_floor_front_sender, update_floor_front_receiver) =
-            crossbeam_channel::unbounded();
+        let (update_description_sender, update_description_receiver) = crossbeam_channel::unbounded();
+        let (update_floor_front_sender, update_floor_front_receiver) = crossbeam_channel::unbounded();
         let (update_floor_back_sender, update_floor_back_receiver) = crossbeam_channel::unbounded();
         let (update_floor_left_sender, update_floor_left_receiver) = crossbeam_channel::unbounded();
-        let (update_floor_right_sender, update_floor_right_receiver) =
-            crossbeam_channel::unbounded();
-        let (update_grid_resolution_sender, update_grid_resolution_receiver) =
-            crossbeam_channel::unbounded();
-        let (update_draw_path_from_sender, update_draw_path_from_receiver) =
-            crossbeam_channel::unbounded();
-        let (update_draw_path_to_sender, update_draw_path_to_receiver) =
-            crossbeam_channel::unbounded();
+        let (update_floor_right_sender, update_floor_right_receiver) = crossbeam_channel::unbounded();
+        let (update_grid_resolution_sender, update_grid_resolution_receiver) = crossbeam_channel::unbounded();
+        let (update_draw_path_from_sender, update_draw_path_from_receiver) = crossbeam_channel::unbounded();
+        let (update_draw_path_to_sender, update_draw_path_to_receiver) = crossbeam_channel::unbounded();
         let (update_grid_lines_sender, update_grid_lines_receiver) = crossbeam_channel::unbounded();
-        let (update_snap_to_grid_sender, update_snap_to_grid_receiver) =
-            crossbeam_channel::unbounded();
-        let (update_floor_color_sender, update_floor_color_receiver) =
-            crossbeam_channel::unbounded();
-        let (update_show_timestamps_sender, update_show_timestamps_receiver) =
-            crossbeam_channel::unbounded();
-        let (update_show_legend_sender, update_show_legend_receiver) =
-            crossbeam_channel::unbounded();
-        let (update_positions_at_side_sender, update_positions_at_side_receiver) =
-            crossbeam_channel::unbounded();
-        let (update_transparency_sender, update_transparency_receiver) =
-            crossbeam_channel::unbounded();
+        let (update_snap_to_grid_sender, update_snap_to_grid_receiver) = crossbeam_channel::unbounded();
+        let (update_floor_color_sender, update_floor_color_receiver) = crossbeam_channel::unbounded();
+        let (update_show_timestamps_sender, update_show_timestamps_receiver) = crossbeam_channel::unbounded();
+        let (update_show_legend_sender, update_show_legend_receiver) = crossbeam_channel::unbounded();
+        let (update_positions_at_side_sender, update_positions_at_side_receiver) = crossbeam_channel::unbounded();
+        let (update_transparency_sender, update_transparency_receiver) = crossbeam_channel::unbounded();
 
         let load_choreography_settings_behavior =
             LoadChoreographySettingsBehavior::new_with_receiver(
@@ -496,12 +572,9 @@ impl MainPageBinding {
         let open_image_request_sender = main_provider.open_image_request_sender();
 
         const NAV_BAR_EVENT_BUFFER: usize = 64;
-        let (nav_bar_open_audio_sender, nav_bar_open_audio_receiver) =
-            bounded::<NavBarOpenAudioRequestedCommand>(NAV_BAR_EVENT_BUFFER);
-        let (nav_bar_open_image_sender, nav_bar_open_image_receiver) =
-            bounded::<NavBarOpenImageRequestedCommand>(NAV_BAR_EVENT_BUFFER);
-        let (nav_bar_mode_sender, nav_bar_mode_receiver) =
-            bounded::<InteractionModeChangedCommand>(NAV_BAR_EVENT_BUFFER);
+        let (nav_bar_open_audio_sender, nav_bar_open_audio_receiver) = bounded::<NavBarOpenAudioRequestedCommand>(NAV_BAR_EVENT_BUFFER);
+        let (nav_bar_open_image_sender, nav_bar_open_image_receiver) = bounded::<NavBarOpenImageRequestedCommand>(NAV_BAR_EVENT_BUFFER);
+        let (nav_bar_mode_sender, nav_bar_mode_receiver) = bounded::<InteractionModeChangedCommand>(NAV_BAR_EVENT_BUFFER);
 
         let nav_bar = Rc::new(RefCell::new(NavBarViewModel::new(
             global_state.clone(),
@@ -891,6 +964,23 @@ impl MainPageBinding {
             timer
         };
 
+        let dancers_timer = {
+            let dancers_view_model = Rc::clone(&dancers_view_model);
+            let view_weak = view_weak.clone();
+            let timer = slint::Timer::default();
+            timer.start(
+                slint::TimerMode::Repeated,
+                std::time::Duration::from_millis(16),
+                move || {
+                    if let Some(view) = view_weak.upgrade() {
+                        let dancers_view_model = dancers_view_model.borrow();
+                        apply_dancer_settings_view_model(&view, &dancers_view_model);
+                    }
+                },
+            );
+            timer
+        };
+
         view_model
             .borrow_mut()
             .set_self_handle(Rc::downgrade(&view_model));
@@ -898,6 +988,7 @@ impl MainPageBinding {
 
         apply_view_model(&view, &view_model.borrow());
         apply_scenes_view_model(&view, &scenes_view_model.borrow());
+        apply_dancer_settings_view_model(&view, &dancers_view_model.borrow());
         apply_settings_view_model(&view, &settings_view_model.borrow());
         apply_choreography_settings_view_model(&view, &choreography_settings_view_model.borrow());
         apply_audio_player_view_model(&view, &audio_player.borrow());
@@ -987,9 +1078,13 @@ impl MainPageBinding {
         {
             let scenes_view_model = Rc::clone(&scenes_view_model);
             let view_weak = view_weak.clone();
+            let dancers_provider = Rc::clone(&dancers_provider);
             view.on_scenes_navigate_to_dancer_settings(move || {
                 if let Some(view) = view_weak.upgrade() {
                     let next_index = if view.get_content_index() == 2 { 0 } else { 2 };
+                    if next_index == 2 {
+                        dancers_provider.reload();
+                    }
                     view.set_content_index(next_index);
                 }
                 let mut view_model = scenes_view_model.borrow_mut();
@@ -1012,6 +1107,31 @@ impl MainPageBinding {
                 if let Some(view) = view_weak.upgrade() {
                     view.set_content_index(0);
                 }
+            });
+        }
+
+        {
+            let dancers_view_model = Rc::clone(&dancers_view_model);
+            view.on_dancer_settings_select_dancer(move |index| {
+                if index < 0 {
+                    return;
+                }
+
+                dancers_view_model.borrow_mut().select_dancer(index as usize);
+            });
+        }
+
+        {
+            let dancers_view_model = Rc::clone(&dancers_view_model);
+            view.on_dancer_settings_add_dancer(move || {
+                dancers_view_model.borrow_mut().add_dancer();
+            });
+        }
+
+        {
+            let dancers_view_model = Rc::clone(&dancers_view_model);
+            view.on_dancer_settings_delete_dancer(move || {
+                dancers_view_model.borrow_mut().delete_dancer();
             });
         }
 
@@ -1892,13 +2012,16 @@ impl MainPageBinding {
             view,
             view_model,
             scenes_view_model,
+            dancers_view_model,
             settings_view_model,
             choreography_settings_view_model,
             floor_view_model,
             floor_provider,
             audio_player,
+            dancers_provider,
             nav_bar_timer,
             settings_timer,
+            dancers_timer,
             audio_player_timer,
             choreography_settings_disposables,
             open_choreo_sender,
@@ -1995,6 +2118,26 @@ fn apply_scenes_view_model(view: &ShellHost, view_model: &ScenesPaneViewModel) {
     view.set_scenes_can_delete_scene(view_model.can_delete_scene);
     view.set_scenes_can_navigate_to_settings(view_model.can_navigate_to_settings);
     view.set_scenes_can_navigate_to_dancer_settings(view_model.can_navigate_to_dancer_settings);
+}
+
+fn apply_dancer_settings_view_model(view: &ShellHost, view_model: &DancerSettingsViewModel) {
+    let selected_dancer_index = view_model
+        .selected_dancer
+        .as_ref()
+        .and_then(|selected| {
+            view_model
+                .dancers
+                .iter()
+                .position(|dancer| dancer.dancer_id == selected.dancer_id)
+        })
+        .and_then(|index| i32::try_from(index).ok())
+        .unwrap_or(-1);
+
+    view.set_dancer_settings_dancer_items(ModelRc::new(VecModel::from(build_dancer_items(
+        &view_model.dancers,
+    ))));
+    view.set_dancer_settings_selected_dancer_index(selected_dancer_index);
+    view.set_dancer_settings_can_delete_dancer(view_model.can_delete_dancer);
 }
 
 fn apply_settings_view_model(view: &ShellHost, view_model: &SettingsViewModel) {
@@ -2162,6 +2305,24 @@ fn build_scene_items(scenes: &[crate::scenes::SceneViewModel]) -> ModelRc<SceneL
         .collect::<Vec<_>>();
 
     ModelRc::new(VecModel::from(items))
+}
+
+fn build_dancer_items(dancers: &[Rc<choreo_models::DancerModel>]) -> Vec<DancerListItem> {
+    dancers
+        .iter()
+        .map(|dancer| DancerListItem {
+            dancer_id: dancer.dancer_id.0,
+            name: dancer.name.as_str().into(),
+            shortcut: dancer.shortcut.as_str().into(),
+            role: DancerRoleItem {
+                z_index: dancer.role.z_index,
+                name: dancer.role.name.as_str().into(),
+                color: slint_color_from_choreo(&dancer.role.color),
+            },
+            icon_name: dancer.icon.as_deref().unwrap_or_default().into(),
+            color: slint_color_from_choreo(&dancer.color),
+        })
+        .collect()
 }
 
 fn build_grid_menu_items(
