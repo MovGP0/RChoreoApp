@@ -226,67 +226,123 @@ export component DancerSettingsPage inherits Rectangle {
                     height: parent.height;
                     background: MaterialPalette.surface_container_low;
 
-                    Rectangle {
+                    ScrollView {
                         x: 16px;
                         y: 16px;
                         width: Math.min(parent.width - 32px, 720px);
                         height: parent.height - 88px;
-                        background: MaterialPalette.surface;
-                        border-width: 1px;
-                        border-color: MaterialPalette.outline_variant;
-                        border-radius: 10px;
-                        ScrollView {
+                        horizontal_scrollbar_policy: ScrollBarPolicy.always_off;
+
+                        content := Vertical {
                             width: parent.width;
-                            height: parent.height;
-                            horizontal_scrollbar_policy: ScrollBarPolicy.always_off;
+                            spacing: 12px;
 
-                            content := Vertical {
+                            Rectangle {
                                 width: parent.width;
-                                padding: 12px;
-                                spacing: 12px;
+                                background: MaterialPalette.surface;
+                                border-width: 1px;
+                                border-color: MaterialPalette.outline_variant;
+                                border-radius: 12px;
 
-                                MaterialText {
-                                    text: Translations.dancer_title;
-                                    font-size: MaterialTypography.title_large.font_size;
-                                    font-weight: MaterialTypography.title_large.font_weight;
-                                    color: MaterialPalette.on_surface;
-                                }
+                                VerticalLayout {
+                                    padding: 12px;
+                                    spacing: 12px;
 
-                                MaterialText {
-                                    text: Translations.dancer_role_label;
-                                    font-size: MaterialTypography.body_small.font_size;
-                                    font-weight: MaterialTypography.body_small.font_weight;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                                role_drop_down := DropDownMenu {
-                                    items: root.role_options;
-                                    current_index: root.role_options.length > 0 ? root.selected_role_index : -1;
-                                    height: 60px;
-                                    selected(index) => { root.select_role(index); }
-                                }
+                                    MaterialText {
+                                        text: Translations.dancer_title;
+                                        font-size: MaterialTypography.title_large.font_size;
+                                        font-weight: MaterialTypography.title_large.font_weight;
+                                        color: MaterialPalette.on_surface;
+                                    }
 
-                                TextField {
-                                    label: Translations.dancer_name_label;
-                                    text: root.dancer_name;
-                                    height: 60px;
-                                    edited(value) => { root.update_dancer_name(value); }
-                                }
-                                TextField {
-                                    label: Translations.dancer_shortcut_label;
-                                    text: root.dancer_shortcut;
-                                    height: 60px;
-                                    edited(value) => { root.update_dancer_shortcut(value); }
-                                }
+                                    MaterialText {
+                                        text: Translations.dancer_role_label;
+                                        font-size: MaterialTypography.body_small.font_size;
+                                        font-weight: MaterialTypography.body_small.font_weight;
+                                        color: MaterialPalette.on_surface_variant;
+                                    }
+                                    role_drop_down := DropDownMenu {
+                                        items: root.role_options;
+                                        current_index: root.role_options.length > 0 ? root.selected_role_index : -1;
+                                        height: 60px;
+                                        selected(index) => { root.select_role(index); }
+                                    }
 
-                                MaterialText {
-                                    text: Translations.dancer_color_label;
-                                    font-size: MaterialTypography.body_small.font_size;
-                                    font-weight: MaterialTypography.body_small.font_weight;
-                                    color: MaterialPalette.on_surface_variant;
+                                    TextField {
+                                        label: Translations.dancer_name_label;
+                                        text: root.dancer_name;
+                                        height: 60px;
+                                        edited(value) => { root.update_dancer_name(value); }
+                                    }
+                                    TextField {
+                                        label: Translations.dancer_shortcut_label;
+                                        text: root.dancer_shortcut;
+                                        height: 60px;
+                                        edited(value) => { root.update_dancer_shortcut(value); }
+                                    }
+
+                                    MaterialText {
+                                        text: Translations.dancer_color_label;
+                                        font-size: MaterialTypography.body_small.font_size;
+                                        font-weight: MaterialTypography.body_small.font_weight;
+                                        color: MaterialPalette.on_surface_variant;
+                                    }
+                                    dancer_color_picker := ColorPicker {
+                                        selected_color: root.dancer_color;
+                                        color_changed(value) => { root.update_dancer_color(value); }
+                                    }
                                 }
-                                dancer_color_picker := ColorPicker {
-                                    selected_color: root.dancer_color;
-                                    color_changed(value) => { root.update_dancer_color(value); }
+                            }
+
+                            Rectangle {
+                                width: parent.width;
+                                background: MaterialPalette.surface;
+                                border-width: 1px;
+                                border-color: MaterialPalette.outline_variant;
+                                border-radius: 12px;
+
+                                VerticalLayout {
+                                    padding: 12px;
+                                    spacing: 12px;
+
+                                    MaterialText {
+                                        text: root.swap_title_text;
+                                        font-size: MaterialTypography.title_medium.font_size;
+                                        font-weight: MaterialTypography.title_medium.font_weight;
+                                        color: MaterialPalette.on_surface;
+                                    }
+
+                                    MaterialText {
+                                        text: Translations.dancer_swap_from_label;
+                                        font-size: MaterialTypography.body_small.font_size;
+                                        font-weight: MaterialTypography.body_small.font_weight;
+                                        color: MaterialPalette.on_surface_variant;
+                                    }
+                                    DropDownMenu {
+                                        items: root.dancer_options;
+                                        current_index: root.dancer_options.length > 0 ? root.swap_from_index : -1;
+                                        height: 60px;
+                                        selected(index) => { root.update_swap_from(index); }
+                                    }
+
+                                    MaterialText {
+                                        text: Translations.dancer_swap_to_label;
+                                        font-size: MaterialTypography.body_small.font_size;
+                                        font-weight: MaterialTypography.body_small.font_weight;
+                                        color: MaterialPalette.on_surface_variant;
+                                    }
+                                    DropDownMenu {
+                                        items: root.dancer_options;
+                                        current_index: root.dancer_options.length > 0 ? root.swap_to_index : -1;
+                                        height: 60px;
+                                        selected(index) => { root.update_swap_to(index); }
+                                    }
+
+                                    TextButton {
+                                        text: Translations.dancer_swap_button;
+                                        enabled: root.can_swap_dancers;
+                                        clicked => { root.swap_dancers(); }
+                                    }
                                 }
                             }
                         }
@@ -331,196 +387,4 @@ export component DancerSettingsPage inherits Rectangle {
     changed dancer_color => {
         dancer_color_picker.selected_color = root.dancer_color;
     }
-
-    /*
-    DEBUG BLOCK 4B: replace placeholder body with DancerSettingsDrawerHost wrapper.
-    DEBUG BLOCK 4C: inside main content, enable details card (role/name/shortcut).
-    DEBUG BLOCK 4D: extend details card with color picker + icon dropdown.
-    DEBUG BLOCK 4E: enable swap card (from/to dropdowns + swap button).
-    DEBUG BLOCK 4F: enable bottom-right action bar (cancel/ok).
-
-    Preserved full reference body that was removed (for block-by-block uncommenting):
-
-    DancerSettingsDrawerHost {
-        x: 0px;
-        y: root.top_bar_height;
-        width: parent.width;
-        height: parent.height - root.top_bar_height;
-        left_drawer_width: 420px;
-        drawer_background: MaterialPalette.surface;
-        overlay_color: MaterialPalette.background_modal;
-        is_left_open <=> root.is_dancer_list_open;
-        left_close_on_click_away: true;
-        dancer_items: root.dancer_items;
-        selected_dancer_index: root.selected_dancer_index;
-        can_delete_dancer: root.can_delete_dancer;
-        title_text: root.title_text;
-
-        select_dancer(index) => { root.select_dancer(index); }
-        add_dancer => { root.add_dancer(); }
-        delete_dancer => { root.delete_dancer(); }
-
-        Rectangle {
-            width: parent.width;
-            height: parent.height;
-            background: MaterialPalette.surface_container_low;
-
-            Vertical {
-                width: parent.width;
-                height: parent.height;
-                spacing: 12px;
-
-                ScrollView {
-                    horizontal-stretch: 1;
-                    vertical-stretch: 1;
-
-                    content := Vertical {
-                        width: parent.width;
-                        padding: 16px;
-                        spacing: 12px;
-
-                        Rectangle {
-                            width: Math.min(parent.width - 16px, 720px);
-                            x: (parent.width - self.width) / 2;
-                            background: MaterialPalette.surface;
-                            border-width: 1px;
-                            border-color: MaterialPalette.outline_variant;
-                            border-radius: 10px;
-
-                            Vertical {
-                                padding: 12px;
-                                spacing: 10px;
-
-                                MaterialText {
-                                    text: Translations.dancer_title;
-                                    font-size: MaterialTypography.title_large.font_size;
-                                    font-weight: MaterialTypography.title_large.font_weight;
-                                    color: MaterialPalette.on_surface;
-                                }
-
-                                MaterialText {
-                                    text: Translations.dancer_role_label;
-                                    font-size: MaterialTypography.body_small.font_size;
-                                    font-weight: MaterialTypography.body_small.font_weight;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                                DropDownMenu {
-                                    items: root.role_options;
-                                    current_index: root.role_options.length > 0 ? root.selected_role_index : -1;
-                                    selected(index) => { root.select_role(index); }
-                                }
-
-                                TextField {
-                                    label: Translations.dancer_name_label;
-                                    text: root.dancer_name;
-                                    edited(value) => { root.update_dancer_name(value); }
-                                }
-                                TextField {
-                                    label: Translations.dancer_shortcut_label;
-                                    text: root.dancer_shortcut;
-                                    edited(value) => { root.update_dancer_shortcut(value); }
-                                }
-
-                                MaterialText {
-                                    text: Translations.dancer_color_label;
-                                    font-size: MaterialTypography.body_small.font_size;
-                                    font-weight: MaterialTypography.body_small.font_weight;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                                ColorPicker {
-                                    selected_color: root.dancer_color;
-                                    color_changed(value) => { root.update_dancer_color(value); }
-                                }
-
-                                MaterialText {
-                                    text: Translations.dancer_icon_label;
-                                    font-size: MaterialTypography.body_small.font_size;
-                                    font-weight: MaterialTypography.body_small.font_weight;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                                DropDownMenu {
-                                    items: root.icon_options;
-                                    current_index: root.icon_options.length > 0 ? root.selected_icon_index : -1;
-                                    selected(index) => {
-                                        if (index >= 0 && index < root.icon_options.length) {
-                                            root.update_dancer_icon(root.icon_options[index].text);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        Rectangle {
-                            width: Math.min(parent.width - 16px, 720px);
-                            x: (parent.width - self.width) / 2;
-                            background: MaterialPalette.surface;
-                            border-width: 1px;
-                            border-color: MaterialPalette.outline_variant;
-                            border-radius: 10px;
-
-                            Vertical {
-                                padding: 12px;
-                                spacing: 10px;
-
-                                MaterialText {
-                                    text: root.swap_title_text;
-                                    font-size: MaterialTypography.title_medium.font_size;
-                                    font-weight: MaterialTypography.title_medium.font_weight;
-                                    color: MaterialPalette.on_surface;
-                                }
-
-                                MaterialText {
-                                    text: Translations.dancer_swap_from_label;
-                                    font-size: MaterialTypography.body_small.font_size;
-                                    font-weight: MaterialTypography.body_small.font_weight;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                                DropDownMenu {
-                                    items: root.dancer_options;
-                                    current_index: root.dancer_options.length > 0 ? root.swap_from_index : -1;
-                                    selected(index) => { root.update_swap_from(index); }
-                                }
-
-                                MaterialText {
-                                    text: Translations.dancer_swap_to_label;
-                                    font-size: MaterialTypography.body_small.font_size;
-                                    font-weight: MaterialTypography.body_small.font_weight;
-                                    color: MaterialPalette.on_surface_variant;
-                                }
-                                DropDownMenu {
-                                    items: root.dancer_options;
-                                    current_index: root.dancer_options.length > 0 ? root.swap_to_index : -1;
-                                    selected(index) => { root.update_swap_to(index); }
-                                }
-
-                                TextButton {
-                                    text: Translations.dancer_swap_button;
-                                    enabled: root.can_swap_dancers;
-                                    clicked => { root.swap_dancers(); }
-                                }
-                            }
-                        }
-                    }
-
-                    viewport_height: content.height;
-                }
-
-                Rectangle {
-                    width: parent.width;
-                    background: MaterialPalette.surface;
-                    border-width: 1px;
-                    border-color: MaterialPalette.outline_variant;
-
-                    HorizontalLayout {
-                        padding: 12px;
-                        spacing: 8px;
-                        alignment: end;
-                        TextButton { text: root.cancel_text; clicked => { root.cancel(); } }
-                        TextButton { text: root.save_text; clicked => { root.save(); } }
-                    }
-                }
-            }
-        }
-    }
-    */
 }
