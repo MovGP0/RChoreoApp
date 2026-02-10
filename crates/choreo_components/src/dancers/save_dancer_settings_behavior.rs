@@ -11,6 +11,7 @@ use slint::TimerMode;
 use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
+use crate::scenes::SceneViewModel;
 
 use super::dancer_settings_view_model::DancerSettingsViewModel;
 use super::mapper::update_scene_dancers;
@@ -62,7 +63,68 @@ impl SaveDancerSettingsBehavior {
             for scene in &mut choreography.scenes {
                 update_scene_dancers(scene, &dancer_map);
             }
+
+            for scene in &mut global_state.scenes {
+                Self::update_scene_view_model_dancers(scene, &dancer_map);
+            }
+
+            if let Some(selected_scene) = global_state.selected_scene.as_mut() {
+                Self::update_scene_view_model_dancers(selected_scene, &dancer_map);
+            }
+
+            for index in (0..global_state.selected_positions.len()).rev() {
+                let dancer_id = global_state.selected_positions[index]
+                    .dancer
+                    .as_ref()
+                    .map(|dancer| dancer.dancer_id);
+                let Some(dancer_id) = dancer_id else {
+                    continue;
+                };
+
+                if let Some(new_dancer) = dancer_map.get(&dancer_id) {
+                    global_state.selected_positions[index].dancer = Some(new_dancer.clone());
+                } else {
+                    global_state.selected_positions.remove(index);
+                }
+            }
+
+            for index in (0..global_state.selected_positions_snapshot.len()).rev() {
+                let dancer_id = global_state.selected_positions_snapshot[index]
+                    .dancer
+                    .as_ref()
+                    .map(|dancer| dancer.dancer_id);
+                let Some(dancer_id) = dancer_id else {
+                    continue;
+                };
+
+                if let Some(new_dancer) = dancer_map.get(&dancer_id) {
+                    global_state.selected_positions_snapshot[index].dancer = Some(new_dancer.clone());
+                } else {
+                    global_state.selected_positions_snapshot.remove(index);
+                }
+            }
         })
+    }
+
+    fn update_scene_view_model_dancers(
+        scene: &mut SceneViewModel,
+        dancer_map: &HashMap<DancerId, Rc<DancerModel>>,
+    ) {
+        for index in (0..scene.positions.len()).rev() {
+            let dancer_id = scene.positions[index]
+                .dancer
+                .as_ref()
+                .map(|dancer| dancer.dancer_id);
+            let Some(dancer_id) = dancer_id else {
+                continue;
+            };
+
+            if let Some(new_dancer) = dancer_map.get(&dancer_id) {
+                scene.positions[index].dancer = Some(new_dancer.clone());
+            } else {
+                scene.positions.remove(index);
+            }
+        }
     }
 }
 

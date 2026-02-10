@@ -1175,8 +1175,19 @@ impl MainPageBinding {
 
         {
             let dancers_view_model = Rc::clone(&dancers_view_model);
+            let redraw_floor_sender = redraw_floor_sender.clone();
+            let view_weak = view_weak.clone();
             view.on_dancer_settings_save(move || {
-                dancers_view_model.borrow_mut().save();
+                let dancers_view_model = Rc::clone(&dancers_view_model);
+                let redraw_floor_sender = redraw_floor_sender.clone();
+                let view_weak = view_weak.clone();
+                slint::Timer::single_shot(std::time::Duration::from_millis(20), move || {
+                    dancers_view_model.borrow_mut().save();
+                    let _ = redraw_floor_sender.send(crate::choreography_settings::RedrawFloorCommand);
+                    if let Some(view) = view_weak.upgrade() {
+                        view.set_content_index(0);
+                    }
+                });
             });
         }
 

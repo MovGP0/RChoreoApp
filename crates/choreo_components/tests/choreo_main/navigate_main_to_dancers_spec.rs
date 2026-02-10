@@ -11,14 +11,15 @@ use choreo_components::audio_player::{
 use choreo_components::choreo_main::{MainPageActionHandlers, MainPageBinding, MainPageDependencies};
 use choreo_components::global::GlobalProvider;
 use choreo_components::preferences::{InMemoryPreferences, Preferences};
+use choreo_components::scenes::SceneViewModel;
 use choreo_components::shell;
-use choreo_master_mobile_json::DancerId;
-use choreo_models::{Colors, DancerModel, RoleModel};
+use choreo_master_mobile_json::{DancerId, SceneId};
+use choreo_models::{Colors, DancerModel, PositionModel, RoleModel, SceneModel};
 use crossbeam_channel::{bounded, unbounded};
 use choreo_main::Report;
 use slint::Model;
 
-fn create_binding() -> MainPageBinding {
+fn create_binding() -> (MainPageBinding, Rc<choreo_components::global::GlobalStateActor>) {
     let ui = shell::create_shell_host().expect("shell should be created");
     let global_provider = GlobalProvider::new();
     let global_state = global_provider.global_state();
@@ -61,8 +62,49 @@ fn create_binding() -> MainPageBinding {
             },
             icon: None,
         });
+        let scene_model = SceneModel {
+            scene_id: SceneId(1),
+            positions: vec![PositionModel {
+                dancer: Some(dancer.clone()),
+                orientation: None,
+                x: 0.0,
+                y: 0.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                movement1_x: None,
+                movement1_y: None,
+                movement2_x: None,
+                movement2_y: None,
+            }],
+            name: "Scene 1".to_string(),
+            text: None,
+            fixed_positions: false,
+            timestamp: None,
+            variation_depth: 0,
+            variations: Vec::new(),
+            current_variation: Vec::new(),
+            color: Colors::transparent(),
+        };
+        let scene_view_model = SceneViewModel {
+            scene_id: scene_model.scene_id,
+            name: scene_model.name.clone(),
+            text: "".to_string(),
+            fixed_positions: scene_model.fixed_positions,
+            timestamp: None,
+            is_selected: true,
+            positions: scene_model.positions.clone(),
+            variation_depth: scene_model.variation_depth,
+            variations: scene_model.variations.clone(),
+            current_variation: scene_model.current_variation.clone(),
+            color: scene_model.color.clone(),
+        };
         state.choreography.roles = vec![gentleman_role, lady_role];
         state.choreography.dancers = vec![dancer, second_dancer];
+        state.choreography.scenes = vec![scene_model];
+        state.scenes = vec![scene_view_model.clone()];
+        state.selected_scene = Some(scene_view_model);
     });
     assert!(seeded, "failed to seed global state");
     let preferences: Rc<dyn Preferences> = Rc::new(InMemoryPreferences::new());
@@ -91,11 +133,11 @@ fn create_binding() -> MainPageBinding {
     let (scenes_close_dialog_sender, _scenes_close_dialog_receiver) = unbounded();
     let (redraw_floor_sender, redraw_floor_receiver) = unbounded();
 
-    MainPageBinding::new(
+    let binding = MainPageBinding::new(
         ui,
         MainPageDependencies {
             global_state,
-            global_state_store,
+            global_state_store: Rc::clone(&global_state_store),
             state_machine,
             audio_player,
             haptic_feedback: None,
@@ -110,7 +152,9 @@ fn create_binding() -> MainPageBinding {
             preferences,
             actions: MainPageActionHandlers::default(),
         },
-    )
+    );
+
+    (binding, global_state_store)
 }
 
 fn run_in_ui_thread(test: impl FnOnce() + Send + 'static) {
@@ -154,7 +198,7 @@ fn navigate_main_to_dancers_spec() {
             run_in_ui_thread(|| {
                 i_slint_backend_testing::init_no_event_loop();
 
-                let binding = create_binding();
+                let (binding, _global_state_store) = create_binding();
                 let view = binding.view();
 
                 assert_eq!(view.get_content_index(), 0);
@@ -169,7 +213,7 @@ fn navigate_main_to_dancers_spec() {
                 run_in_ui_thread(|| {
                     i_slint_backend_testing::init_no_event_loop();
 
-                    let binding = create_binding();
+                    let (binding, _global_state_store) = create_binding();
                     let view = binding.view();
 
                     view.invoke_scenes_navigate_to_dancer_settings();
@@ -185,7 +229,7 @@ fn navigate_main_to_dancers_spec() {
                 run_in_ui_thread(|| {
                     i_slint_backend_testing::init_no_event_loop();
 
-                    let binding = create_binding();
+                    let (binding, _global_state_store) = create_binding();
                     let view = binding.view();
 
                     view.invoke_scenes_navigate_to_dancer_settings();
@@ -216,6 +260,7 @@ fn navigate_main_to_dancers_spec() {
                 });
             },
         );
+
     });
 
     let report = choreo_main::run_suite(&suite);

@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::{Duration, Instant};
 
 use crate::choreo_main;
 
@@ -88,6 +89,19 @@ fn run_in_ui_thread(test: impl FnOnce() + Send + 'static) {
     }
 }
 
+fn wait_until(timeout: Duration, mut predicate: impl FnMut() -> bool) -> bool {
+    let deadline = Instant::now() + timeout;
+    while Instant::now() < deadline {
+        if predicate() {
+            return true;
+        }
+        i_slint_backend_testing::mock_elapsed_time(Duration::from_millis(20));
+        slint::platform::update_timers_and_animations();
+    }
+
+    predicate()
+}
+
 #[test]
 #[serial_test::serial]
 fn navigate_dancers_to_main_spec() {
@@ -102,6 +116,20 @@ fn navigate_dancers_to_main_spec() {
                 view.set_content_index(2);
                 view.invoke_dancer_settings_cancel();
                 assert_eq!(view.get_content_index(), 0);
+            });
+        });
+
+        spec.it("returns to the main page when dancer settings ok is requested", |_| {
+            run_in_ui_thread(|| {
+                i_slint_backend_testing::init_no_event_loop();
+
+                let binding = create_binding();
+                let view = binding.view();
+
+                view.set_content_index(2);
+                view.invoke_dancer_settings_save();
+                let navigated = wait_until(Duration::from_secs(1), || view.get_content_index() == 0);
+                assert!(navigated);
             });
         });
     });
