@@ -1,10 +1,10 @@
 import {
     Horizontal,
     IconButton,
-    ListView,
     MaterialPalette,
     MaterialText,
     MaterialTypography,
+    ScrollView,
     Vertical
 } from "@material";
 import { DancerListItemView } from "dancer_list_item_view.slint";
@@ -57,13 +57,16 @@ export component DancersPaneView inherits Rectangle {
             border-radius: 12px;
             vertical-stretch: 1;
 
-            Vertical {
-                width: parent.width;
-                height: parent.height;
-                padding: 8px;
+            ScrollView {
+                x: 8px;
+                y: 8px;
+                width: parent.width - 16px;
+                height: parent.height - 16px;
+                horizontal_scrollbar_policy: ScrollBarPolicy.always_off;
 
-                ListView {
-                    vertical-stretch: 1;
+                content := Vertical {
+                    width: parent.width;
+
                     for dancer_item[index] in root.dancer_items: Rectangle {
                         height: 56px;
                         background: transparent;
