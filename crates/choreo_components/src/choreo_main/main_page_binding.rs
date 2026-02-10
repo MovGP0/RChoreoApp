@@ -1103,7 +1103,9 @@ impl MainPageBinding {
 
         {
             let view_weak = view_weak.clone();
+            let dancers_view_model = Rc::clone(&dancers_view_model);
             view.on_dancer_settings_cancel(move || {
+                dancers_view_model.borrow_mut().cancel();
                 if let Some(view) = view_weak.upgrade() {
                     view.set_content_index(0);
                 }
@@ -1132,6 +1134,49 @@ impl MainPageBinding {
             let dancers_view_model = Rc::clone(&dancers_view_model);
             view.on_dancer_settings_delete_dancer(move || {
                 dancers_view_model.borrow_mut().delete_dancer();
+            });
+        }
+
+        {
+            let dancers_view_model = Rc::clone(&dancers_view_model);
+            view.on_dancer_settings_select_role(move |index| {
+                if index < 0 {
+                    return;
+                }
+
+                dancers_view_model.borrow_mut().select_role(index as usize);
+            });
+        }
+
+        {
+            let dancers_view_model = Rc::clone(&dancers_view_model);
+            view.on_dancer_settings_update_dancer_name(move |value| {
+                dancers_view_model.borrow_mut().update_dancer_name(value.to_string());
+            });
+        }
+
+        {
+            let dancers_view_model = Rc::clone(&dancers_view_model);
+            view.on_dancer_settings_update_dancer_shortcut(move |value| {
+                dancers_view_model
+                    .borrow_mut()
+                    .update_dancer_shortcut(value.to_string());
+            });
+        }
+
+        {
+            let dancers_view_model = Rc::clone(&dancers_view_model);
+            view.on_dancer_settings_update_dancer_color(move |value| {
+                dancers_view_model
+                    .borrow_mut()
+                    .update_dancer_color(choreo_color_from_slint(value));
+            });
+        }
+
+        {
+            let dancers_view_model = Rc::clone(&dancers_view_model);
+            view.on_dancer_settings_save(move || {
+                dancers_view_model.borrow_mut().save();
             });
         }
 
@@ -2145,6 +2190,42 @@ fn apply_dancer_settings_view_model(view: &ShellHost, view_model: &DancerSetting
     ))));
     view.set_dancer_settings_selected_dancer_index(selected_dancer_index);
     view.set_dancer_settings_can_delete_dancer(view_model.can_delete_dancer);
+    view.set_dancer_settings_role_options(ModelRc::new(VecModel::from(build_role_menu_items(
+        &view_model.roles,
+    ))));
+
+    let selected_role_index = view_model
+        .selected_role
+        .as_ref()
+        .and_then(|selected| {
+            view_model
+                .roles
+                .iter()
+                .position(|role| role.z_index == selected.z_index)
+        })
+        .and_then(|index| i32::try_from(index).ok())
+        .unwrap_or(-1);
+
+    let dancer_name = view_model
+        .selected_dancer
+        .as_ref()
+        .map(|dancer| dancer.name.clone())
+        .unwrap_or_default();
+    let dancer_shortcut = view_model
+        .selected_dancer
+        .as_ref()
+        .map(|dancer| dancer.shortcut.clone())
+        .unwrap_or_default();
+    let dancer_color = view_model
+        .selected_dancer
+        .as_ref()
+        .map(|dancer| slint_color_from_choreo(&dancer.color))
+        .unwrap_or_else(|| Color::from_argb_u8(255, 0, 0, 0));
+
+    view.set_dancer_settings_selected_role_index(selected_role_index);
+    view.set_dancer_settings_dancer_name(dancer_name.into());
+    view.set_dancer_settings_dancer_shortcut(dancer_shortcut.into());
+    view.set_dancer_settings_dancer_color(dancer_color);
 }
 
 fn apply_settings_view_model(view: &ShellHost, view_model: &SettingsViewModel) {
@@ -2340,6 +2421,18 @@ fn build_grid_menu_items(
         .map(|option| MenuItem {
             icon: Image::default(),
             text: option.display.as_str().into(),
+            trailing_text: "".into(),
+            enabled: true,
+        })
+        .collect()
+}
+
+fn build_role_menu_items(roles: &[Rc<choreo_models::RoleModel>]) -> Vec<MenuItem> {
+    roles
+        .iter()
+        .map(|role| MenuItem {
+            icon: Image::default(),
+            text: role.name.as_str().into(),
             trailing_text: "".into(),
             enabled: true,
         })

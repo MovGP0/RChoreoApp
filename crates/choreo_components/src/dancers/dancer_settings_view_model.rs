@@ -22,6 +22,7 @@ pub struct IconOption {
 type DancerActionHandler = Rc<dyn Fn(&mut DancerSettingsViewModel)>;
 type DancerIndexHandler = Rc<dyn Fn(&mut DancerSettingsViewModel, usize)>;
 type DancerTextHandler = Rc<dyn Fn(&mut DancerSettingsViewModel, String)>;
+type DancerColorHandler = Rc<dyn Fn(&mut DancerSettingsViewModel, Color)>;
 
 #[derive(Clone, Default)]
 pub struct DancerSettingsViewModelActions {
@@ -31,6 +32,7 @@ pub struct DancerSettingsViewModelActions {
     pub select_role: Option<DancerIndexHandler>,
     pub update_dancer_name: Option<DancerTextHandler>,
     pub update_dancer_shortcut: Option<DancerTextHandler>,
+    pub update_dancer_color: Option<DancerColorHandler>,
     pub update_dancer_icon: Option<DancerTextHandler>,
     pub swap_dancers: Option<DancerActionHandler>,
     pub save: Option<DancerActionHandler>,
@@ -148,6 +150,12 @@ impl DancerSettingsViewModel {
 
     pub fn update_dancer_shortcut(&mut self, value: String) {
         if let Some(handler) = self.actions.update_dancer_shortcut.clone() {
+            handler(self, value);
+        }
+    }
+
+    pub fn update_dancer_color(&mut self, value: Color) {
+        if let Some(handler) = self.actions.update_dancer_color.clone() {
             handler(self, value);
         }
     }

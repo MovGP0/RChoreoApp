@@ -31,6 +31,9 @@ mod selected_icon_behavior_spec;
 #[path = "dancers/selected_role_behavior_spec.rs"]
 mod selected_role_behavior_spec;
 
+#[path = "dancers/update_dancer_details_behavior_spec.rs"]
+mod update_dancer_details_behavior_spec;
+
 #[path = "dancers/show_dancer_dialog_behavior_spec.rs"]
 mod show_dancer_dialog_behavior_spec;
 

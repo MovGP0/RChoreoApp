@@ -16,10 +16,11 @@ use super::messages::{
     AddDancerCommand, CancelDancerSettingsCommand, CloseDancerDialogCommand,
     DancerSelectionCommand, DeleteDancerCommand, ReloadDancerSettingsCommand,
     SaveDancerSettingsCommand, SelectRoleCommand, ShowDancerDialogCommand, SwapDancersCommand,
-    UpdateDancerIconCommand, UpdateSwapSelectionCommand,
+    UpdateDancerDetailsCommand, UpdateDancerIconCommand, UpdateSwapSelectionCommand,
 };
 use super::save_dancer_settings_behavior::SaveDancerSettingsBehavior;
 use super::selected_dancer_state_behavior::SelectedDancerStateBehavior;
+use super::update_dancer_details_behavior::UpdateDancerDetailsBehavior;
 use super::selected_icon_behavior::SelectedIconBehavior;
 use super::selected_role_behavior::SelectedRoleBehavior;
 use super::show_dancer_dialog_behavior::ShowDancerDialogBehavior;
@@ -51,6 +52,7 @@ impl DancersProvider {
         let (selection_sender, selection_receiver) = unbounded();
         let (swap_selection_sender, swap_selection_receiver) = unbounded();
         let (select_role_sender, select_role_receiver) = unbounded();
+        let (update_details_sender, update_details_receiver) = unbounded();
         let (update_icon_sender, update_icon_receiver) = unbounded();
 
         let behaviors: Vec<Box<dyn crate::behavior::Behavior<DancerSettingsViewModel>>> = vec![
@@ -71,6 +73,7 @@ impl DancersProvider {
                 swap_selection_sender.clone(),
             )),
             Box::new(SelectedDancerStateBehavior::new(selection_receiver)),
+            Box::new(UpdateDancerDetailsBehavior::new(update_details_receiver)),
             Box::new(SelectedIconBehavior::new(update_icon_receiver)),
             Box::new(SelectedRoleBehavior::new(select_role_receiver)),
             Box::new(SwapDancerSelectionBehavior::new(swap_selection_receiver)),
@@ -100,6 +103,9 @@ impl DancersProvider {
         let add_dancer_sender_for_action = add_dancer_sender.clone();
         let delete_dancer_sender_for_action = delete_dancer_sender.clone();
         let select_role_sender_for_action = select_role_sender.clone();
+        let update_details_sender_for_name = update_details_sender.clone();
+        let update_details_sender_for_shortcut = update_details_sender.clone();
+        let update_details_sender_for_color = update_details_sender.clone();
         let update_icon_sender_for_action = update_icon_sender.clone();
         let swap_sender_for_action = swap_sender.clone();
         let save_sender_for_action = save_sender.clone();
@@ -119,39 +125,15 @@ impl DancersProvider {
             select_role: Some(Rc::new(move |_view_model, index| {
                 let _ = select_role_sender_for_action.send(SelectRoleCommand { index });
             })),
-            update_dancer_name: Some(Rc::new(|view_model, value| {
-                let Some(selected) = view_model.selected_dancer.as_ref() else {
-                    return;
-                };
-                let updated = Rc::new(choreo_models::DancerModel {
-                    name: value,
-                    ..(**selected).clone()
-                });
-                if let Some(index) = view_model
-                    .dancers
-                    .iter()
-                    .position(|dancer| dancer.dancer_id == updated.dancer_id)
-                {
-                    view_model.dancers[index] = updated.clone();
-                }
-                view_model.selected_dancer = Some(updated);
+            update_dancer_name: Some(Rc::new(move |_view_model, value| {
+                let _ = update_details_sender_for_name.send(UpdateDancerDetailsCommand::Name(value));
             })),
-            update_dancer_shortcut: Some(Rc::new(|view_model, value| {
-                let Some(selected) = view_model.selected_dancer.as_ref() else {
-                    return;
-                };
-                let updated = Rc::new(choreo_models::DancerModel {
-                    shortcut: value,
-                    ..(**selected).clone()
-                });
-                if let Some(index) = view_model
-                    .dancers
-                    .iter()
-                    .position(|dancer| dancer.dancer_id == updated.dancer_id)
-                {
-                    view_model.dancers[index] = updated.clone();
-                }
-                view_model.selected_dancer = Some(updated);
+            update_dancer_shortcut: Some(Rc::new(move |_view_model, value| {
+                let _ = update_details_sender_for_shortcut
+                    .send(UpdateDancerDetailsCommand::Shortcut(value));
+            })),
+            update_dancer_color: Some(Rc::new(move |_view_model, value| {
+                let _ = update_details_sender_for_color.send(UpdateDancerDetailsCommand::Color(value));
             })),
             update_dancer_icon: Some(Rc::new(move |_view_model, value| {
                 let _ = update_icon_sender_for_action.send(UpdateDancerIconCommand { value });

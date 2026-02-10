@@ -35,6 +35,11 @@ export component ShellHost inherits MaterialWindow {
     in property <[DancerListItem]> dancer_settings_dancer_items: [];
     in property <int> dancer_settings_selected_dancer_index: -1;
     in property <bool> dancer_settings_can_delete_dancer: false;
+    in property <[MenuItem]> dancer_settings_role_options: [];
+    in property <int> dancer_settings_selected_role_index: -1;
+    in property <string> dancer_settings_dancer_name: "";
+    in property <string> dancer_settings_dancer_shortcut: "";
+    in property <color> dancer_settings_dancer_color: MaterialPalette.primary;
     in property <bool> settings_use_system_theme: true;
     in property <bool> settings_is_dark_mode: false;
     in property <bool> settings_use_primary_color: false;
@@ -151,6 +156,11 @@ export component ShellHost inherits MaterialWindow {
     callback dancer_settings_select_dancer(int);
     callback dancer_settings_add_dancer();
     callback dancer_settings_delete_dancer();
+    callback dancer_settings_select_role(int);
+    callback dancer_settings_update_dancer_name(string);
+    callback dancer_settings_update_dancer_shortcut(string);
+    callback dancer_settings_update_dancer_color(color);
+    callback dancer_settings_save();
     callback choreo_update_scene_name(string);
     callback choreo_update_scene_text(string);
     callback choreo_update_scene_fixed_positions(bool);
@@ -383,10 +393,20 @@ export component ShellHost inherits MaterialWindow {
             dancer_items: root.dancer_settings_dancer_items;
             selected_dancer_index: root.dancer_settings_selected_dancer_index;
             can_delete_dancer: root.dancer_settings_can_delete_dancer;
+            role_options: root.dancer_settings_role_options;
+            selected_role_index: root.dancer_settings_selected_role_index;
+            dancer_name: root.dancer_settings_dancer_name;
+            dancer_shortcut: root.dancer_settings_dancer_shortcut;
+            dancer_color: root.dancer_settings_dancer_color;
             cancel => { root.dancer_settings_cancel(); }
             select_dancer(index) => { root.dancer_settings_select_dancer(index); }
             add_dancer => { root.dancer_settings_add_dancer(); }
             delete_dancer => { root.dancer_settings_delete_dancer(); }
+            select_role(index) => { root.dancer_settings_select_role(index); }
+            update_dancer_name(value) => { root.dancer_settings_update_dancer_name(value); }
+            update_dancer_shortcut(value) => { root.dancer_settings_update_dancer_shortcut(value); }
+            update_dancer_color(value) => { root.dancer_settings_update_dancer_color(value); }
+            save => { root.dancer_settings_save(); }
         }
     }
 }

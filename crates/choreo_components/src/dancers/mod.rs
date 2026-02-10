@@ -14,6 +14,7 @@ mod selected_role_behavior;
 mod show_dancer_dialog_behavior;
 mod swap_dancer_selection_behavior;
 mod swap_dancers_behavior;
+mod update_dancer_details_behavior;
 
 pub use add_dancer_behavior::AddDancerBehavior;
 pub use cancel_dancer_settings_behavior::CancelDancerSettingsBehavior;
@@ -32,3 +33,4 @@ pub use selected_role_behavior::SelectedRoleBehavior;
 pub use show_dancer_dialog_behavior::ShowDancerDialogBehavior;
 pub use swap_dancer_selection_behavior::SwapDancerSelectionBehavior;
 pub use swap_dancers_behavior::SwapDancersBehavior;
+pub use update_dancer_details_behavior::UpdateDancerDetailsBehavior;

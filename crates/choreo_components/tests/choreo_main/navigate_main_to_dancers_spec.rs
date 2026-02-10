@@ -24,20 +24,25 @@ fn create_binding() -> MainPageBinding {
     let global_state_store = global_provider.global_state_store();
     let state_machine = global_provider.state_machine();
     let seeded = global_state_store.try_update(|state| {
-        let role = Rc::new(RoleModel {
+        let gentleman_role = Rc::new(RoleModel {
             z_index: 0,
-            name: "Lead".to_string(),
+            name: "Gentleman".to_string(),
+            color: Colors::transparent(),
+        });
+        let lady_role = Rc::new(RoleModel {
+            z_index: 1,
+            name: "Lady".to_string(),
             color: Colors::transparent(),
         });
         let dancer = Rc::new(DancerModel {
             dancer_id: DancerId(1),
-            role: role.clone(),
+            role: gentleman_role.clone(),
             name: "Alice".to_string(),
             shortcut: "A".to_string(),
             color: Colors::transparent(),
             icon: None,
         });
-        state.choreography.roles = vec![role];
+        state.choreography.roles = vec![gentleman_role, lady_role];
         state.choreography.dancers = vec![dancer];
     });
     assert!(seeded, "failed to seed global state");

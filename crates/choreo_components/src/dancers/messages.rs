@@ -42,3 +42,10 @@ pub struct SelectRoleCommand {
 pub struct UpdateDancerIconCommand {
     pub value: String,
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum UpdateDancerDetailsCommand {
+    Name(String),
+    Shortcut(String),
+    Color(choreo_master_mobile_json::Color),
+}
