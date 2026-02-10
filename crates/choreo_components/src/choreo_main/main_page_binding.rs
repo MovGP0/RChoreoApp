@@ -1175,6 +1175,37 @@ impl MainPageBinding {
 
         {
             let dancers_view_model = Rc::clone(&dancers_view_model);
+            view.on_dancer_settings_update_swap_from(move |index| {
+                if index < 0 {
+                    return;
+                }
+
+                dancers_view_model
+                    .borrow_mut()
+                    .update_swap_from(index as usize);
+            });
+        }
+
+        {
+            let dancers_view_model = Rc::clone(&dancers_view_model);
+            view.on_dancer_settings_update_swap_to(move |index| {
+                if index < 0 {
+                    return;
+                }
+
+                dancers_view_model.borrow_mut().update_swap_to(index as usize);
+            });
+        }
+
+        {
+            let dancers_view_model = Rc::clone(&dancers_view_model);
+            view.on_dancer_settings_swap(move || {
+                dancers_view_model.borrow_mut().swap_dancers();
+            });
+        }
+
+        {
+            let dancers_view_model = Rc::clone(&dancers_view_model);
             let redraw_floor_sender = redraw_floor_sender.clone();
             let view_weak = view_weak.clone();
             view.on_dancer_settings_save(move || {
@@ -2201,9 +2232,13 @@ fn apply_dancer_settings_view_model(view: &ShellHost, view_model: &DancerSetting
     ))));
     view.set_dancer_settings_selected_dancer_index(selected_dancer_index);
     view.set_dancer_settings_can_delete_dancer(view_model.can_delete_dancer);
+    view.set_dancer_settings_can_swap_dancers(view_model.can_swap_dancers);
     view.set_dancer_settings_role_options(ModelRc::new(VecModel::from(build_role_menu_items(
         &view_model.roles,
     ))));
+    view.set_dancer_settings_dancer_options(ModelRc::new(VecModel::from(
+        build_dancer_menu_items(&view_model.dancers),
+    )));
 
     let selected_role_index = view_model
         .selected_role
@@ -2232,11 +2267,35 @@ fn apply_dancer_settings_view_model(view: &ShellHost, view_model: &DancerSetting
         .as_ref()
         .map(|dancer| slint_color_from_choreo(&dancer.color))
         .unwrap_or_else(|| Color::from_argb_u8(255, 0, 0, 0));
+    let swap_from_index = view_model
+        .swap_from_dancer
+        .as_ref()
+        .and_then(|selected| {
+            view_model
+                .dancers
+                .iter()
+                .position(|dancer| dancer.dancer_id == selected.dancer_id)
+        })
+        .and_then(|index| i32::try_from(index).ok())
+        .unwrap_or(-1);
+    let swap_to_index = view_model
+        .swap_to_dancer
+        .as_ref()
+        .and_then(|selected| {
+            view_model
+                .dancers
+                .iter()
+                .position(|dancer| dancer.dancer_id == selected.dancer_id)
+        })
+        .and_then(|index| i32::try_from(index).ok())
+        .unwrap_or(-1);
 
     view.set_dancer_settings_selected_role_index(selected_role_index);
     view.set_dancer_settings_dancer_name(dancer_name.into());
     view.set_dancer_settings_dancer_shortcut(dancer_shortcut.into());
     view.set_dancer_settings_dancer_color(dancer_color);
+    view.set_dancer_settings_swap_from_index(swap_from_index);
+    view.set_dancer_settings_swap_to_index(swap_to_index);
 }
 
 fn apply_settings_view_model(view: &ShellHost, view_model: &SettingsViewModel) {
@@ -2446,6 +2505,30 @@ fn build_role_menu_items(roles: &[Rc<choreo_models::RoleModel>]) -> Vec<MenuItem
             text: role.name.as_str().into(),
             trailing_text: "".into(),
             enabled: true,
+        })
+        .collect()
+}
+
+fn build_dancer_menu_items(dancers: &[Rc<choreo_models::DancerModel>]) -> Vec<MenuItem> {
+    dancers
+        .iter()
+        .map(|dancer| {
+            let text = if dancer.name.trim().is_empty() {
+                if dancer.shortcut.trim().is_empty() {
+                    format!("#{}", dancer.dancer_id.0)
+                } else {
+                    dancer.shortcut.clone()
+                }
+            } else {
+                dancer.name.clone()
+            };
+
+            MenuItem {
+                icon: Image::default(),
+                text: text.into(),
+                trailing_text: "".into(),
+                enabled: true,
+            }
         })
         .collect()
 }

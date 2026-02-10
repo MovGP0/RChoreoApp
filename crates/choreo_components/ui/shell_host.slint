@@ -35,8 +35,12 @@ export component ShellHost inherits MaterialWindow {
     in property <[DancerListItem]> dancer_settings_dancer_items: [];
     in property <int> dancer_settings_selected_dancer_index: -1;
     in property <bool> dancer_settings_can_delete_dancer: false;
+    in property <bool> dancer_settings_can_swap_dancers: false;
     in property <[MenuItem]> dancer_settings_role_options: [];
+    in property <[MenuItem]> dancer_settings_dancer_options: [];
     in property <int> dancer_settings_selected_role_index: -1;
+    in property <int> dancer_settings_swap_from_index: -1;
+    in property <int> dancer_settings_swap_to_index: -1;
     in property <string> dancer_settings_dancer_name: "";
     in property <string> dancer_settings_dancer_shortcut: "";
     in property <color> dancer_settings_dancer_color: MaterialPalette.primary;
@@ -160,6 +164,9 @@ export component ShellHost inherits MaterialWindow {
     callback dancer_settings_update_dancer_name(string);
     callback dancer_settings_update_dancer_shortcut(string);
     callback dancer_settings_update_dancer_color(color);
+    callback dancer_settings_update_swap_from(int);
+    callback dancer_settings_update_swap_to(int);
+    callback dancer_settings_swap();
     callback dancer_settings_save();
     callback choreo_update_scene_name(string);
     callback choreo_update_scene_text(string);
@@ -393,8 +400,12 @@ export component ShellHost inherits MaterialWindow {
             dancer_items: root.dancer_settings_dancer_items;
             selected_dancer_index: root.dancer_settings_selected_dancer_index;
             can_delete_dancer: root.dancer_settings_can_delete_dancer;
+            can_swap_dancers: root.dancer_settings_can_swap_dancers;
             role_options: root.dancer_settings_role_options;
+            dancer_options: root.dancer_settings_dancer_options;
             selected_role_index: root.dancer_settings_selected_role_index;
+            swap_from_index: root.dancer_settings_swap_from_index;
+            swap_to_index: root.dancer_settings_swap_to_index;
             dancer_name: root.dancer_settings_dancer_name;
             dancer_shortcut: root.dancer_settings_dancer_shortcut;
             dancer_color: root.dancer_settings_dancer_color;
@@ -406,6 +417,9 @@ export component ShellHost inherits MaterialWindow {
             update_dancer_name(value) => { root.dancer_settings_update_dancer_name(value); }
             update_dancer_shortcut(value) => { root.dancer_settings_update_dancer_shortcut(value); }
             update_dancer_color(value) => { root.dancer_settings_update_dancer_color(value); }
+            update_swap_from(value) => { root.dancer_settings_update_swap_from(value); }
+            update_swap_to(value) => { root.dancer_settings_update_swap_to(value); }
+            swap_dancers => { root.dancer_settings_swap(); }
             save => { root.dancer_settings_save(); }
         }
     }

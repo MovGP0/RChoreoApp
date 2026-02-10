@@ -34,6 +34,8 @@ pub struct DancerSettingsViewModelActions {
     pub update_dancer_shortcut: Option<DancerTextHandler>,
     pub update_dancer_color: Option<DancerColorHandler>,
     pub update_dancer_icon: Option<DancerTextHandler>,
+    pub update_swap_from: Option<DancerIndexHandler>,
+    pub update_swap_to: Option<DancerIndexHandler>,
     pub swap_dancers: Option<DancerActionHandler>,
     pub save: Option<DancerActionHandler>,
     pub cancel: Option<DancerActionHandler>,
@@ -170,6 +172,18 @@ impl DancerSettingsViewModel {
         self.perform_click();
         if let Some(handler) = self.actions.swap_dancers.clone() {
             handler(self);
+        }
+    }
+
+    pub fn update_swap_from(&mut self, index: usize) {
+        if let Some(handler) = self.actions.update_swap_from.clone() {
+            handler(self, index);
+        }
+    }
+
+    pub fn update_swap_to(&mut self, index: usize) {
+        if let Some(handler) = self.actions.update_swap_to.clone() {
+            handler(self, index);
         }
     }
 

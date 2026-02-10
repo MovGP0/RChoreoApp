@@ -28,6 +28,16 @@ pub struct SwapDancersCommand;
 pub struct UpdateSwapSelectionCommand;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UpdateSwapFromCommand {
+    pub index: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UpdateSwapToCommand {
+    pub index: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DancerSelectionCommand {
     Select(usize),
     Refresh,

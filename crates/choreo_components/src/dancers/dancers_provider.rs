@@ -16,7 +16,8 @@ use super::messages::{
     AddDancerCommand, CancelDancerSettingsCommand, CloseDancerDialogCommand,
     DancerSelectionCommand, DeleteDancerCommand, ReloadDancerSettingsCommand,
     SaveDancerSettingsCommand, SelectRoleCommand, ShowDancerDialogCommand, SwapDancersCommand,
-    UpdateDancerDetailsCommand, UpdateDancerIconCommand, UpdateSwapSelectionCommand,
+    UpdateDancerDetailsCommand, UpdateDancerIconCommand, UpdateSwapFromCommand,
+    UpdateSwapSelectionCommand, UpdateSwapToCommand,
 };
 use super::save_dancer_settings_behavior::SaveDancerSettingsBehavior;
 use super::selected_dancer_state_behavior::SelectedDancerStateBehavior;
@@ -51,6 +52,8 @@ impl DancersProvider {
         let (swap_sender, swap_receiver) = unbounded();
         let (selection_sender, selection_receiver) = unbounded();
         let (swap_selection_sender, swap_selection_receiver) = unbounded();
+        let (swap_from_sender, swap_from_receiver) = unbounded();
+        let (swap_to_sender, swap_to_receiver) = unbounded();
         let (select_role_sender, select_role_receiver) = unbounded();
         let (update_details_sender, update_details_receiver) = unbounded();
         let (update_icon_sender, update_icon_receiver) = unbounded();
@@ -76,9 +79,13 @@ impl DancersProvider {
             Box::new(UpdateDancerDetailsBehavior::new(update_details_receiver)),
             Box::new(SelectedIconBehavior::new(update_icon_receiver)),
             Box::new(SelectedRoleBehavior::new(select_role_receiver)),
-            Box::new(SwapDancerSelectionBehavior::new(swap_selection_receiver)),
+            Box::new(SwapDancerSelectionBehavior::new(
+                swap_selection_receiver,
+                swap_from_receiver,
+                swap_to_receiver,
+            )),
             Box::new(SwapDancersBehavior::new(
-                show_dialog_sender.clone(),
+                selection_sender.clone(),
                 swap_receiver,
             )),
             Box::new(HideDancerDialogBehavior::new(close_dialog_receiver)),
@@ -107,6 +114,8 @@ impl DancersProvider {
         let update_details_sender_for_shortcut = update_details_sender.clone();
         let update_details_sender_for_color = update_details_sender.clone();
         let update_icon_sender_for_action = update_icon_sender.clone();
+        let swap_from_sender_for_action = swap_from_sender.clone();
+        let swap_to_sender_for_action = swap_to_sender.clone();
         let swap_sender_for_action = swap_sender.clone();
         let save_sender_for_action = save_sender.clone();
         let cancel_sender_for_action = cancel_sender.clone();
@@ -137,6 +146,12 @@ impl DancersProvider {
             })),
             update_dancer_icon: Some(Rc::new(move |_view_model, value| {
                 let _ = update_icon_sender_for_action.send(UpdateDancerIconCommand { value });
+            })),
+            update_swap_from: Some(Rc::new(move |_view_model, index| {
+                let _ = swap_from_sender_for_action.send(UpdateSwapFromCommand { index });
+            })),
+            update_swap_to: Some(Rc::new(move |_view_model, index| {
+                let _ = swap_to_sender_for_action.send(UpdateSwapToCommand { index });
             })),
             swap_dancers: Some(Rc::new(move |_view_model| {
                 let _ = swap_sender_for_action.send(SwapDancersCommand);
