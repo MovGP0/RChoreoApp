@@ -62,6 +62,18 @@ Key rules:
   - `crates/choreo_components/material-1.0/ui/styling/material_schemes.slint`
 - Do not add `style_behavior.rs` classes for styling. Behaviors are reserved for business logic.
 
+## UI Layout Grid
+
+- Use a strict `12px` base grid for layout dimensions.
+- Allowed values for spacing, padding, margins, gaps, widths, and heights are multiples of `12px` only:
+  - `12px`, `24px`, `36px`, `48px`, `60px`, `72px`, `84px`, `96px`, ...
+- Values like `10px`, `14px`, `56px`, etc. are not allowed for layout sizing/spacing.
+- Exceptions are only allowed for:
+  - Hairlines/borders/strokes (`1px` or `2px`)
+  - Corner radii and icon glyph sizes when required by Material components
+  - Third-party control internals that are not configurable
+- For exceptions, add a short code comment explaining why a non-grid value is required.
+
 ## MaterialDesignThemes to Slint (Material) replacement list
 
 - App root: `material_window.slint` (MaterialWindow).

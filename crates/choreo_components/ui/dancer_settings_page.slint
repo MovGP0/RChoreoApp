@@ -241,8 +241,9 @@ export component DancerSettingsPage inherits Rectangle {
                             horizontal_scrollbar_policy: ScrollBarPolicy.always_off;
 
                             content := Vertical {
+                                width: parent.width;
                                 padding: 12px;
-                                spacing: 10px;
+                                spacing: 12px;
 
                                 MaterialText {
                                     text: Translations.dancer_title;
@@ -260,17 +261,20 @@ export component DancerSettingsPage inherits Rectangle {
                                 DropDownMenu {
                                     items: root.role_options;
                                     current_index: root.role_options.length > 0 ? root.selected_role_index : -1;
+                                    height: 60px;
                                     selected(index) => { root.select_role(index); }
                                 }
 
                                 TextField {
                                     label: Translations.dancer_name_label;
                                     text: root.dancer_name;
+                                    height: 60px;
                                     edited(value) => { root.update_dancer_name(value); }
                                 }
                                 TextField {
                                     label: Translations.dancer_shortcut_label;
                                     text: root.dancer_shortcut;
+                                    height: 60px;
                                     edited(value) => { root.update_dancer_shortcut(value); }
                                 }
 
