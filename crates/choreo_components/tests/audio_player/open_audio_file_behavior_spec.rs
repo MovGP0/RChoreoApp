@@ -1,4 +1,6 @@
+use std::fs;
 use std::rc::Rc;
+use std::time::Duration;
 
 use crate::audio_player;
 
@@ -78,6 +80,51 @@ fn open_audio_file_behavior_spec() {
             context.pump_events();
 
             assert!(context.view_model.borrow().stream_factory.is_none());
+        });
+
+        spec.it("keeps player disabled when the selected mp3 file is invalid", |_| {
+            let preferences = Rc::new(choreo_components::preferences::InMemoryPreferences::new());
+            let (sender, receiver) = unbounded::<OpenAudioFileCommand>();
+            let behavior =
+                OpenAudioFileBehavior::new(receiver, preferences.clone() as Rc<dyn Preferences>);
+            let context = audio_player::AudioPlayerTestContext::with_dependencies(
+                vec![Box::new(behavior) as Box<dyn Behavior<_>>],
+                choreo_components::global::GlobalStateActor::new(),
+                preferences.clone(),
+            );
+
+            let file_path = unique_temp_file("invalid-audio");
+            fs::write(&file_path, b"not-an-mp3").expect("invalid temp file should be written");
+
+            sender
+                .send(OpenAudioFileCommand {
+                    file_path: file_path.to_string_lossy().into_owned(),
+                    trace_context: None,
+                })
+                .expect("send should succeed");
+
+            let settled = context.wait_until(Duration::from_secs(1), || {
+                let view_model = context.view_model.borrow();
+                view_model.stream_factory.is_some() && view_model.player.is_some()
+            });
+            assert!(settled);
+
+            context.view_model.borrow_mut().toggle_play_pause();
+            let not_playing = context.wait_until(Duration::from_secs(1), || {
+                let view_model = context.view_model.borrow();
+                view_model
+                    .player
+                    .as_ref()
+                    .map(|player| !player.is_playing())
+                    .unwrap_or(true)
+            });
+            assert!(not_playing);
+
+            let stored =
+                preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_AUDIO_FILE, "");
+            assert_eq!(stored, file_path.to_string_lossy());
+
+            fs::remove_file(file_path).expect("invalid temp file should be removed");
         });
     });
 

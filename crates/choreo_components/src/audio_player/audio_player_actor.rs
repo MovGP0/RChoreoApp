@@ -253,6 +253,10 @@ mod native {
                 Self::Silent => false,
             }
         }
+
+        fn is_available(&self) -> bool {
+            matches!(self, Self::Rodio { .. })
+        }
     }
 
     struct NativeRuntime {
@@ -288,7 +292,7 @@ mod native {
         fn handle(&mut self, command: AudioCommand) {
             match command {
                 AudioCommand::Play => {
-                    if !self.is_playing {
+                    if !self.is_playing && self.engine.is_available() {
                         self.is_playing = true;
                         self.last_started_at = Some(Instant::now());
                         self.engine.play();
@@ -307,6 +311,9 @@ mod native {
                     self.rebuild_sink(0.0, false);
                 }
                 AudioCommand::Seek(position) => {
+                    if !self.engine.is_available() {
+                        return;
+                    }
                     self.sync_position();
                     self.position = clamp_position(position, self.duration);
                     self.rebuild_sink(self.position, self.is_playing);
@@ -317,6 +324,9 @@ mod native {
                     };
                 }
                 AudioCommand::SeekAndPlay(position) => {
+                    if !self.engine.is_available() {
+                        return;
+                    }
                     self.sync_position();
                     self.position = clamp_position(position, self.duration);
                     self.is_playing = true;
@@ -324,6 +334,9 @@ mod native {
                     self.last_started_at = Some(Instant::now());
                 }
                 AudioCommand::SetSpeed(speed) => {
+                    if !self.engine.is_available() {
+                        return;
+                    }
                     self.sync_position();
                     self.speed = speed.clamp(0.5, 2.0);
                     self.engine.set_speed(self.speed);
