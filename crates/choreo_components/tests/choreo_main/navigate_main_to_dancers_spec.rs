@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::{Duration, Instant};
 
 use crate::choreo_main;
 
@@ -39,11 +40,29 @@ fn create_binding() -> MainPageBinding {
             role: gentleman_role.clone(),
             name: "Alice".to_string(),
             shortcut: "A".to_string(),
-            color: Colors::transparent(),
+            color: choreo_master_mobile_json::Color {
+                r: 1,
+                g: 2,
+                b: 3,
+                a: 255,
+            },
+            icon: None,
+        });
+        let second_dancer = Rc::new(DancerModel {
+            dancer_id: DancerId(2),
+            role: lady_role.clone(),
+            name: "Betty".to_string(),
+            shortcut: "B".to_string(),
+            color: choreo_master_mobile_json::Color {
+                r: 10,
+                g: 20,
+                b: 30,
+                a: 255,
+            },
             icon: None,
         });
         state.choreography.roles = vec![gentleman_role, lady_role];
-        state.choreography.dancers = vec![dancer];
+        state.choreography.dancers = vec![dancer, second_dancer];
     });
     assert!(seeded, "failed to seed global state");
     let preferences: Rc<dyn Preferences> = Rc::new(InMemoryPreferences::new());
@@ -114,6 +133,19 @@ fn run_in_ui_thread(test: impl FnOnce() + Send + 'static) {
     }
 }
 
+fn wait_until(timeout: Duration, mut predicate: impl FnMut() -> bool) -> bool {
+    let deadline = Instant::now() + timeout;
+    while Instant::now() < deadline {
+        if predicate() {
+            return true;
+        }
+        i_slint_backend_testing::mock_elapsed_time(Duration::from_millis(20));
+        slint::platform::update_timers_and_animations();
+    }
+
+    predicate()
+}
+
 #[test]
 #[serial_test::serial]
 fn navigate_main_to_dancers_spec() {
@@ -143,6 +175,44 @@ fn navigate_main_to_dancers_spec() {
                     view.invoke_scenes_navigate_to_dancer_settings();
                     let dancer_items = view.get_dancer_settings_dancer_items();
                     assert!(dancer_items.row_count() >= 1);
+                });
+            },
+        );
+
+        spec.it(
+            "updates role and color editor bindings when selecting a different dancer",
+            |_| {
+                run_in_ui_thread(|| {
+                    i_slint_backend_testing::init_no_event_loop();
+
+                    let binding = create_binding();
+                    let view = binding.view();
+
+                    view.invoke_scenes_navigate_to_dancer_settings();
+
+                    let loaded = wait_until(Duration::from_secs(1), || {
+                        view.get_dancer_settings_dancer_items().row_count() >= 1
+                            && view.get_dancer_settings_role_options().row_count() >= 2
+                    });
+                    assert!(loaded, "dancer settings should be loaded");
+
+                    view.invoke_dancer_settings_select_dancer(0);
+                    let selected_first = wait_until(Duration::from_secs(1), || {
+                        view.get_dancer_settings_selected_role_index() == 0
+                    });
+                    assert!(selected_first);
+                    assert_eq!(view.get_dancer_settings_dancer_color().red(), 1);
+                    assert_eq!(view.get_dancer_settings_dancer_color().green(), 2);
+                    assert_eq!(view.get_dancer_settings_dancer_color().blue(), 3);
+
+                    view.invoke_dancer_settings_select_dancer(1);
+                    let selected_second = wait_until(Duration::from_secs(1), || {
+                        view.get_dancer_settings_selected_role_index() == 1
+                            && view.get_dancer_settings_dancer_color().red() == 10
+                            && view.get_dancer_settings_dancer_color().green() == 20
+                            && view.get_dancer_settings_dancer_color().blue() == 30
+                    });
+                    assert!(selected_second, "role and color should reflect selected dancer");
                 });
             },
         );

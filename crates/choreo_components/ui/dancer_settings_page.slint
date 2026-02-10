@@ -258,7 +258,7 @@ export component DancerSettingsPage inherits Rectangle {
                                     font-weight: MaterialTypography.body_small.font_weight;
                                     color: MaterialPalette.on_surface_variant;
                                 }
-                                DropDownMenu {
+                                role_drop_down := DropDownMenu {
                                     items: root.role_options;
                                     current_index: root.role_options.length > 0 ? root.selected_role_index : -1;
                                     height: 60px;
@@ -284,7 +284,7 @@ export component DancerSettingsPage inherits Rectangle {
                                     font-weight: MaterialTypography.body_small.font_weight;
                                     color: MaterialPalette.on_surface_variant;
                                 }
-                                ColorPicker {
+                                dancer_color_picker := ColorPicker {
                                     selected_color: root.dancer_color;
                                     color_changed(value) => { root.update_dancer_color(value); }
                                 }
@@ -320,6 +320,16 @@ export component DancerSettingsPage inherits Rectangle {
                 }
             }
         }
+    }
+
+    changed selected_role_index => {
+        if (role_drop_down.current_index != root.selected_role_index) {
+            role_drop_down.current_index = root.selected_role_index;
+        }
+    }
+
+    changed dancer_color => {
+        dancer_color_picker.selected_color = root.dancer_color;
     }
 
     /*

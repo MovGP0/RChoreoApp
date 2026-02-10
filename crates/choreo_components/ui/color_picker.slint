@@ -115,6 +115,7 @@ export component ColorPicker inherits Rectangle {
     in property <color> selection_stroke_color: #ffffff;
 
     callback color_changed(color);
+    callback sync_from_selected_color();
 
     property <float> hue_normalized: hue < 0 ? Math.mod(hue, 360) + 360 :Math.mod(hue, 360);
     property <float> hue_section: hue_normalized / 60.0;
@@ -320,5 +321,31 @@ export component ColorPicker inherits Rectangle {
         root.saturation = radius_px > 0 ? clamped / radius_px : 0;
         root.selected_color = root.computed_color;
         root.color_changed(root.selected_color);
+    }
+
+    sync_from_selected_color() => {
+        let red = root.selected_color.red / 255.0;
+        let green = root.selected_color.green / 255.0;
+        let blue = root.selected_color.blue / 255.0;
+
+        let max_channel = Math.max(red, Math.max(green, blue));
+        let min_channel = Math.min(red, Math.min(green, blue));
+        let delta = max_channel - min_channel;
+
+        let hue_raw = delta <= 0.000001
+            ? 0.0
+            : Math.abs(max_channel - red) <= 0.000001
+                ? 60.0 * Math.mod((green - blue) / delta, 6.0)
+                : Math.abs(max_channel - green) <= 0.000001
+                    ? 60.0 * (((blue - red) / delta) + 2.0)
+                    : 60.0 * (((red - green) / delta) + 4.0);
+
+        root.hue = hue_raw < 0.0 ? hue_raw + 360.0 : hue_raw;
+        root.saturation = max_channel <= 0.000001 ? 0.0 : delta / max_channel;
+        root.brightness = max_channel;
+    }
+
+    changed selected_color => {
+        root.sync_from_selected_color();
     }
 }
