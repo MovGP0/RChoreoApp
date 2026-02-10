@@ -84,6 +84,7 @@ impl Behavior<AudioPlayerViewModel> for OpenAudioFileBehavior {
 
             let file_path = command.file_path;
             let stream_path = file_path.clone();
+            let has_audio_file = Path::new(&file_path).is_file();
 
             {
                 let Ok(mut view_model) = view_model_handle.try_borrow_mut() else {
@@ -93,7 +94,18 @@ impl Behavior<AudioPlayerViewModel> for OpenAudioFileBehavior {
                     let file = std::fs::File::open(&stream_path)?;
                     Ok(Box::new(file) as Box<dyn io::Read + Send>)
                 }));
-                view_model.set_player(create_platform_audio_player(file_path.clone()));
+
+                if has_audio_file {
+                    view_model.set_player(create_platform_audio_player(file_path.clone()));
+                } else {
+                    view_model.player = None;
+                    view_model.can_seek = false;
+                    view_model.can_set_speed = false;
+                    view_model.duration = 0.0;
+                    view_model.position = 0.0;
+                    view_model.is_playing = false;
+                    view_model.update_duration_label();
+                }
             }
 
             preferences.set_string(SettingsPreferenceKeys::LAST_OPENED_AUDIO_FILE, file_path);

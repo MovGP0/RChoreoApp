@@ -1,6 +1,4 @@
-use std::fs;
 use std::rc::Rc;
-use std::time::Duration;
 
 use crate::audio_player;
 
@@ -26,7 +24,7 @@ fn unique_temp_file(name: &str) -> std::path::PathBuf {
 #[serial_test::serial]
 fn open_audio_file_behavior_spec() {
     let suite = rspec::describe("open audio file behavior", (), |spec| {
-/*        spec.it(
+        spec.it(
             "stores stream factory and persists last opened audio path",
             |_| {
                 let preferences =
@@ -42,27 +40,23 @@ fn open_audio_file_behavior_spec() {
                     preferences.clone(),
                 );
 
-                let file_path = unique_temp_file("open-audio");
-                fs::write(&file_path, b"audio").expect("audio temp file should be written");
+                let file_path = unique_temp_file("open-audio")
+                    .to_string_lossy()
+                    .into_owned();
                 sender
                     .send(OpenAudioFileCommand {
-                        file_path: file_path.to_string_lossy().into_owned(),
+                        file_path: file_path.clone(),
                         trace_context: None,
                     })
                     .expect("send should succeed");
-
-                let updated = context.wait_until(Duration::from_secs(1), || {
-                    context.view_model.borrow().stream_factory.is_some()
-                });
-                assert!(updated);
+                context.pump_events();
 
                 let stored =
                     preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_AUDIO_FILE, "");
-                assert_eq!(stored, file_path.to_string_lossy());
-
-                fs::remove_file(file_path).expect("audio temp file should be removed");
+                assert_eq!(stored, file_path);
+                assert!(context.view_model.borrow().stream_factory.is_some());
             },
-        );*/
+        );
 
         spec.it("ignores empty file paths", |_| {
             let preferences = Rc::new(choreo_components::preferences::InMemoryPreferences::new());

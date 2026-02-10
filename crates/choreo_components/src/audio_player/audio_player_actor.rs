@@ -201,7 +201,16 @@ mod native {
 
     impl Drop for NativeAudioPlayerActor {
         fn drop(&mut self) {
-            self.send_latest(AudioCommand::Shutdown);
+            // Ensure Shutdown is delivered even when the bounded queue is full.
+            loop {
+                match self.sender.try_send(AudioCommand::Shutdown) {
+                    Ok(()) => break,
+                    Err(TrySendError::Full(_)) => {
+                        let _ = self.receiver_probe.try_recv();
+                    }
+                    Err(TrySendError::Disconnected(_)) => break,
+                }
+            }
             if let Some(worker) = self.worker.take() {
                 let _ = worker.join();
             }
