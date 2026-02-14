@@ -113,11 +113,13 @@ use crate::scenes::{
     ScenesProvider,
 };
 use crate::settings::{
+    detect_system_theme_mode,
     MaterialSchemeHelper,
     SettingsDependencies,
     SettingsProvider,
     SettingsViewModel,
     ThemeMode,
+    supports_system_theme_toggle,
 };
 use crate::shell::ShellMaterialSchemeApplier;
 use crate::time::format_seconds;
@@ -2299,8 +2301,19 @@ fn apply_dancer_settings_view_model(view: &ShellHost, view_model: &DancerSetting
 }
 
 fn apply_settings_view_model(view: &ShellHost, view_model: &SettingsViewModel) {
-    view.set_settings_use_system_theme(view_model.use_system_theme);
-    view.set_settings_is_dark_mode(matches!(view_model.theme_mode, ThemeMode::Dark));
+    let can_use_system_theme = supports_system_theme_toggle();
+    let use_system_theme = can_use_system_theme && view_model.use_system_theme;
+    let is_dark_mode = if use_system_theme {
+        detect_system_theme_mode()
+            .unwrap_or(view_model.theme_mode)
+            == ThemeMode::Dark
+    } else {
+        view_model.theme_mode == ThemeMode::Dark
+    };
+
+    view.set_settings_can_use_system_theme(can_use_system_theme);
+    view.set_settings_use_system_theme(use_system_theme);
+    view.set_settings_is_dark_mode(is_dark_mode);
     view.set_settings_use_primary_color(view_model.use_primary_color);
     view.set_settings_use_secondary_color(view_model.use_secondary_color);
     view.set_settings_use_tertiary_color(view_model.use_tertiary_color);

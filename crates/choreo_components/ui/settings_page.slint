@@ -11,6 +11,7 @@ export component SettingsPage inherits Rectangle {
     in property <string> tertiary_color_text: Translations.settings_tertiary_color_label;
 
     in property <bool> use_system_theme;
+    in property <bool> can_use_system_theme: true;
     in property <bool> is_dark_mode;
     in property <bool> use_primary_color;
     in property <bool> use_secondary_color;
@@ -54,6 +55,7 @@ export component SettingsPage inherits Rectangle {
             }
 
             Rectangle {
+                visible: can_use_system_theme;
                 background: MaterialPalette.surface_container;
                 border-width: 1px;
                 border-color: MaterialPalette.outline_variant;
@@ -81,6 +83,19 @@ export component SettingsPage inherits Rectangle {
                         }
                     }
 
+                }
+            }
+
+            Rectangle {
+                background: MaterialPalette.surface_container;
+                border-width: 1px;
+                border-color: MaterialPalette.outline_variant;
+                border-radius: 8px;
+
+                Vertical {
+                    padding: 12px;
+                    spacing: 8px;
+
                     Horizontal {
                         spacing: 12px;
 
@@ -94,23 +109,11 @@ export component SettingsPage inherits Rectangle {
                             horizontal-stretch: 0;
                             width: 108px;
                             height: 48px;
-                            enabled: !use_system_theme;
+                            enabled: can_use_system_theme ? !use_system_theme : true;
                             checked: is_dark_mode;
                             checked_state_changed(value) => { update_is_dark_mode(value); }
                         }
                     }
-                }
-            }
-
-            Rectangle {
-                background: MaterialPalette.surface_container;
-                border-width: 1px;
-                border-color: MaterialPalette.outline_variant;
-                border-radius: 8px;
-
-                Vertical {
-                    padding: 12px;
-                    spacing: 8px;
 
                     Horizontal {
                         spacing: 12px;

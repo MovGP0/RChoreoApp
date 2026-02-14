@@ -5,6 +5,7 @@ mod messages;
 mod settings_provider;
 mod settings_view_model;
 mod switch_dark_light_mode_behavior;
+mod system_theme;
 mod types;
 
 use crate::preferences::Preferences;
@@ -18,6 +19,7 @@ pub use settings_view_model::{
     default_primary_color, default_secondary_color, default_tertiary_color,
 };
 pub use switch_dark_light_mode_behavior::SwitchDarkLightModeBehavior;
+pub use system_theme::{detect_system_theme_mode, supports_system_theme_toggle};
 pub use types::MaterialSchemeUpdater;
 
 pub struct SettingsDependencies<P: Preferences, U: MaterialSchemeUpdater> {

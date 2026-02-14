@@ -45,6 +45,7 @@ export component ShellHost inherits MaterialWindow {
     in property <string> dancer_settings_dancer_shortcut: "";
     in property <color> dancer_settings_dancer_color: MaterialPalette.primary;
     in property <bool> settings_use_system_theme: true;
+    in property <bool> settings_can_use_system_theme: true;
     in property <bool> settings_is_dark_mode: false;
     in property <bool> settings_use_primary_color: false;
     in property <bool> settings_use_secondary_color: false;
@@ -207,9 +208,8 @@ export component ShellHost inherits MaterialWindow {
     callback audio_link_scene_to_position();
     callback audio_toggle_play_pause();
 
-    private property <ColorScheme> effective_color_scheme: root.settings_use_system_theme
-        ? ColorScheme.unknown
-        : (root.settings_is_dark_mode ? ColorScheme.dark : ColorScheme.light);
+    private property <ColorScheme> effective_color_scheme:
+        root.settings_is_dark_mode ? ColorScheme.dark : ColorScheme.light;
 
     title: root.title_text;
     icon: @image-url("app_icon.svg");
@@ -388,6 +388,7 @@ export component ShellHost inherits MaterialWindow {
         }
         settings_page := SettingsPage {
             visible: root.content_index == 1;
+            can_use_system_theme: root.settings_can_use_system_theme;
             use_system_theme: root.settings_use_system_theme;
             is_dark_mode: root.settings_is_dark_mode;
             use_primary_color: root.settings_use_primary_color;
