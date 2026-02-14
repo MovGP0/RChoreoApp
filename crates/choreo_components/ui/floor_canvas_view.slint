@@ -165,13 +165,16 @@ export component FloorCanvasView inherits Rectangle {
             property <float> content_width_px: self.width / 1px;
             property <float> content_height_px: self.height / 1px;
             property <float> padding_px: root.grid_padding / 1px;
+            property <float> user_scale: root.zoom_factor > 0.0 ? root.zoom_factor : 1.0;
+            property <float> user_translate_x_px: root.pan_x;
+            property <float> user_translate_y_px: root.pan_y;
             property <float> header_height_px: (
                 root.header_padding * 2
                 + root.header_title_size
                 + root.header_spacing
                 + root.header_subtitle_size
-            ) / 1px * zoom;
-            property <float> header_floor_spacing_px: root.header_floor_spacing / 1px * zoom;
+            ) / 1px * user_scale;
+            property <float> header_floor_spacing_px: root.header_floor_spacing / 1px * user_scale;
             property <length> legend_reserved_width: root.show_legend && root.legend_entries.length > 0
                 ? root.legend_panel_width + root.legend_margin
                 : 0px;
@@ -191,23 +194,27 @@ export component FloorCanvasView inherits Rectangle {
                 ? available_height_px / root.floor_height_meters
                 : 1.0;
             property <float> base_scale: scale_x < scale_y ? scale_x : scale_y;
-            property <float> zoom: root.zoom_factor > 0.0 ? root.zoom_factor : 1.0;
-            property <float> scale: base_scale * zoom;
+            property <float> scale: base_scale * user_scale;
             property <float> text_scale: scale > 0.0 ? scale / 48.0 : 1.0;
-            property <length> floor_width: root.floor_width_meters > 0.0
-                ? root.floor_width_meters * scale * 1px
+            property <length> base_floor_width: root.floor_width_meters > 0.0
+                ? root.floor_width_meters * base_scale * 1px
                 : 0px;
-            property <length> floor_height: root.floor_height_meters > 0.0
-                ? root.floor_height_meters * scale * 1px
+            property <length> base_floor_height: root.floor_height_meters > 0.0
+                ? root.floor_height_meters * base_scale * 1px
                 : 0px;
-            property <length> floor_x: (layout_width_px * 1px - floor_width) / 2 + root.pan_x * 1px;
-            property <length> floor_y: (header_height_px + header_floor_spacing_px) * 1px
-                + (parent.height - (header_height_px + header_floor_spacing_px) * 1px - floor_height) / 2
-                + root.pan_y * 1px;
+            property <length> base_floor_x: (layout_width_px * 1px - base_floor_width) / 2;
+            property <length> base_floor_y: (header_height_px + header_floor_spacing_px) * 1px
+                + (parent.height - (header_height_px + header_floor_spacing_px) * 1px - base_floor_height) / 2;
+            property <length> floor_width: base_floor_width * user_scale;
+            property <length> floor_height: base_floor_height * user_scale;
+            property <length> floor_x: base_floor_x * user_scale + user_translate_x_px * 1px;
+            property <length> floor_y: base_floor_y * user_scale + user_translate_y_px * 1px;
             property <length> center_x: floor_x + floor_width / 2;
             property <length> center_y: floor_y + floor_height / 2;
-            property <length> origin_x: floor_x + root.floor_left * content.scale * 1px;
-            property <length> origin_y: floor_y + root.floor_front * content.scale * 1px;
+            property <length> base_origin_x: base_floor_x + root.floor_left * base_scale * 1px;
+            property <length> base_origin_y: base_floor_y + root.floor_front * base_scale * 1px;
+            property <length> origin_x: base_origin_x * user_scale + user_translate_x_px * 1px;
+            property <length> origin_y: base_origin_y * user_scale + user_translate_y_px * 1px;
             property <float> floor_width_px: floor_width / 1px;
             property <float> floor_height_px: floor_height / 1px;
 
@@ -314,8 +321,8 @@ export component FloorCanvasView inherits Rectangle {
 
                 Image {
                     source: root.svg_overlay;
-                    width: content.layout_width_px * 1px * content.zoom;
-                    height: content.content_height_px * 1px * content.zoom;
+                    width: content.layout_width_px * 1px * content.user_scale;
+                    height: content.content_height_px * 1px * content.user_scale;
                     x: content.origin_x - self.width / 2;
                     y: content.origin_y - self.height / 2;
                     image-fit: contain;
@@ -483,27 +490,27 @@ export component FloorCanvasView inherits Rectangle {
 
             legend_panel := Rectangle {
                 visible: root.show_legend && root.legend_entries.length > 0;
-                x: floor_rect.x + floor_rect.width + root.legend_margin * content.zoom;
+                x: floor_rect.x + floor_rect.width + root.legend_margin * content.user_scale;
                 y: floor_rect.y;
                 z: 5;
-                width: root.legend_panel_width * content.zoom;
-                height: legend_content.preferred-height + root.legend_padding * 2 * content.zoom;
+                width: root.legend_panel_width * content.user_scale;
+                height: legend_content.preferred-height + root.legend_padding * 2 * content.user_scale;
                 background: transparent;
                 border-width: 1px;
                 border-color: root.legend_border_color;
 
                 legend_content := Vertical {
-                    spacing: root.legend_row_spacing * content.zoom;
-                    x: root.legend_padding * content.zoom;
-                    y: root.legend_padding * content.zoom;
-                    width: parent.width - root.legend_padding * 2 * content.zoom;
+                    spacing: root.legend_row_spacing * content.user_scale;
+                    x: root.legend_padding * content.user_scale;
+                    y: root.legend_padding * content.user_scale;
+                    width: parent.width - root.legend_padding * 2 * content.user_scale;
 
                     for entry in root.legend_entries: Horizontal {
-                        spacing: root.legend_column_spacing * content.zoom;
+                        spacing: root.legend_column_spacing * content.user_scale;
 
                         Rectangle {
-                            width: root.legend_square_size * content.zoom;
-                            height: root.legend_square_size * content.zoom;
+                            width: root.legend_square_size * content.user_scale;
+                            height: root.legend_square_size * content.user_scale;
                             background: entry.color;
                         }
 
