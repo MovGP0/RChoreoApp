@@ -97,6 +97,35 @@ fn move_positions_behavior_spec() {
             assert!(moved);
         });
 
+        spec.it("snaps moved positions to grid when snap-to-grid is enabled", |_| {
+            let context = setup_context();
+            let start_first = Point::new(-1.0, 1.0);
+
+            context.update_global_state(|state| {
+                state.choreography.settings.snap_to_grid = true;
+                state.choreography.settings.resolution = 4;
+            });
+
+            select_rectangle(&context, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
+            drag_from_to(
+                &context,
+                start_first,
+                Point::new(start_first.x + 1.2, start_first.y - 1.0),
+            );
+
+            let moved = context.wait_until(Duration::from_secs(1), || {
+                let scene =
+                    context.read_global_state(|state| state.selected_scene.clone().expect("scene"));
+                let first = &scene.positions[0];
+                let second = &scene.positions[1];
+                (first.x - 0.25).abs() < 0.0001
+                    && (first.y - 0.0).abs() < 0.0001
+                    && (second.x - 2.25).abs() < 0.0001
+                    && (second.y - 0.0).abs() < 0.0001
+            });
+            assert!(moved);
+        });
+
         spec.it("clears selection when clicking outside", |_| {
             let context = setup_context();
             select_rectangle(&context, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));

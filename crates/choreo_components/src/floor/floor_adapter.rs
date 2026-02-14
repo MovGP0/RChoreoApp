@@ -1315,19 +1315,13 @@ fn format_position_value(value: f64) -> String {
 
     if fraction == 0 {
         format!("{sign}{whole}")
-    } else if fraction % 10 == 0 {
-        format!("{sign}{whole}.{}", fraction / 10)
     } else {
         format!("{sign}{whole}.{fraction:02}")
     }
 }
 
 fn format_position_text(x: f64, y: f64) -> String {
-    format!(
-        "({}, {})",
-        format_position_value(x),
-        format_position_value(y)
-    )
+    format!("({x:.2}, {y:.2})")
 }
 
 fn load_svg_overlay(path: &Option<String>) -> (Image, bool) {
@@ -1343,6 +1337,7 @@ fn load_svg_overlay(path: &Option<String>) -> (Image, bool) {
 
 #[cfg(test)]
 mod tests {
+    use super::format_position_text;
     use super::format_position_value;
 
     #[test]
@@ -1354,8 +1349,14 @@ mod tests {
 
     #[test]
     fn format_position_value_keeps_non_zero_fraction() {
-        assert_eq!(format_position_value(1.5), "1.5");
+        assert_eq!(format_position_value(1.5), "1.50");
         assert_eq!(format_position_value(-3.25), "-3.25");
-        assert_eq!(format_position_value(-0.5), "-0.5");
+        assert_eq!(format_position_value(-0.5), "-0.50");
+    }
+
+    #[test]
+    fn format_position_text_always_uses_two_fraction_digits() {
+        assert_eq!(format_position_text(1.0, -2.5), "(1.00, -2.50)");
+        assert_eq!(format_position_text(3.125, 4.0), "(3.12, 4.00)");
     }
 }

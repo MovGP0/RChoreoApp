@@ -230,8 +230,11 @@ impl MovePositionsBehavior {
         if let Some(scene) = global_state.selected_scene.as_mut() {
             for (index, start_point) in &self.drag_start_positions {
                 if let Some(position) = scene.positions.get_mut(*index) {
-                    position.x = start_point.x + delta_x;
-                    position.y = start_point.y + delta_y;
+                    let mut position_x = start_point.x + delta_x;
+                    let mut position_y = start_point.y + delta_y;
+                    Self::snap_to_grid(&global_state.choreography, &mut position_x, &mut position_y);
+                    position.x = position_x;
+                    position.y = position_y;
                 }
             }
             Self::sync_selected_positions_from_indices(
@@ -242,6 +245,25 @@ impl MovePositionsBehavior {
         }
 
         self.last_drag_floor_point = Some(floor_point);
+    }
+
+    fn snap_to_grid(
+        choreography: &choreo_models::ChoreographyModel,
+        position_x: &mut f64,
+        position_y: &mut f64,
+    ) {
+        if !choreography.settings.snap_to_grid {
+            return;
+        }
+
+        let resolution = choreography.settings.resolution;
+        if resolution <= 0 {
+            return;
+        }
+
+        let step = 1.0 / resolution as f64;
+        *position_x = (*position_x / step).round() * step;
+        *position_y = (*position_y / step).round() * step;
     }
 
     fn complete_drag(
