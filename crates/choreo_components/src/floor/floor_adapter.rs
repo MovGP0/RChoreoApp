@@ -1307,19 +1307,19 @@ fn linearize_channel(srgb: f32) -> f32 {
 }
 
 fn format_position_value(value: f64) -> String {
-    let mut text = format!("{value:.2}");
-    if let Some(dot) = text.find('.') {
-        while text.ends_with('0') {
-            text.pop();
-        }
-        if text.ends_with('.') {
-            text.pop();
-        }
-        if text.len() == dot {
-            text.push('0');
-        }
+    let scaled = (value * 100.0).round() as i64;
+    let sign = if scaled < 0 { "-" } else { "" };
+    let abs_scaled = scaled.abs();
+    let whole = abs_scaled / 100;
+    let fraction = abs_scaled % 100;
+
+    if fraction == 0 {
+        format!("{sign}{whole}")
+    } else if fraction % 10 == 0 {
+        format!("{sign}{whole}.{}", fraction / 10)
+    } else {
+        format!("{sign}{whole}.{fraction:02}")
     }
-    text
 }
 
 fn format_position_text(x: f64, y: f64) -> String {
@@ -1338,5 +1338,24 @@ fn load_svg_overlay(path: &Option<String>) -> (Image, bool) {
     match Image::load_from_path(Path::new(path)) {
         Ok(image) => (image, true),
         Err(_) => (Image::default(), false),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_position_value;
+
+    #[test]
+    fn format_position_value_omits_fraction_for_integers() {
+        assert_eq!(format_position_value(1.0), "1");
+        assert_eq!(format_position_value(-2.0), "-2");
+        assert_eq!(format_position_value(0.0), "0");
+    }
+
+    #[test]
+    fn format_position_value_keeps_non_zero_fraction() {
+        assert_eq!(format_position_value(1.5), "1.5");
+        assert_eq!(format_position_value(-3.25), "-3.25");
+        assert_eq!(format_position_value(-0.5), "-0.5");
     }
 }

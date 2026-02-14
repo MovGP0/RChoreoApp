@@ -193,6 +193,7 @@ export component FloorCanvasView inherits Rectangle {
             property <float> base_scale: scale_x < scale_y ? scale_x : scale_y;
             property <float> zoom: root.zoom_factor > 0.0 ? root.zoom_factor : 1.0;
             property <float> scale: base_scale * zoom;
+            property <float> text_scale: scale > 0.0 ? scale / 48.0 : 1.0;
             property <length> floor_width: root.floor_width_meters > 0.0
                 ? root.floor_width_meters * scale * 1px
                 : 0px;
@@ -333,7 +334,7 @@ export component FloorCanvasView inherits Rectangle {
                 for label in root.axis_labels_x: Text {
                     text: label.text;
                     color: root.subtitle_color;
-                    font-size: root.axis_label_size;
+                    font-size: root.axis_label_size * content.text_scale;
                     font-weight: root.axis_label_weight;
                     horizontal-alignment: center;
                     x: content.origin_x + label.value * content.scale * 1px - self.width / 2;
@@ -343,7 +344,7 @@ export component FloorCanvasView inherits Rectangle {
                 for label in root.axis_labels_x: Text {
                     text: label.text;
                     color: root.subtitle_color;
-                    font-size: root.axis_label_size;
+                    font-size: root.axis_label_size * content.text_scale;
                     font-weight: root.axis_label_weight;
                     horizontal-alignment: center;
                     x: content.origin_x + label.value * content.scale * 1px - self.width / 2;
@@ -353,7 +354,7 @@ export component FloorCanvasView inherits Rectangle {
                 for label in root.axis_labels_y: Text {
                     text: label.text;
                     color: root.subtitle_color;
-                    font-size: root.axis_label_size;
+                    font-size: root.axis_label_size * content.text_scale;
                     font-weight: root.axis_label_weight;
                     horizontal-alignment: right;
                     x: floor_rect.x - root.axis_label_offset - self.width;
@@ -363,7 +364,7 @@ export component FloorCanvasView inherits Rectangle {
                 for label in root.axis_labels_y: Text {
                     text: label.text;
                     color: root.subtitle_color;
-                    font-size: root.axis_label_size;
+                    font-size: root.axis_label_size * content.text_scale;
                     font-weight: root.axis_label_weight;
                     horizontal-alignment: left;
                     x: floor_rect.x + floor_rect.width + root.axis_label_offset;
@@ -509,21 +510,21 @@ export component FloorCanvasView inherits Rectangle {
                         Text {
                             text: entry.shortcut;
                             color: root.legend_text_color;
-                            font-size: root.legend_text_size * content.zoom;
+                            font-size: root.legend_text_size * content.text_scale;
                             font-weight: root.legend_text_weight;
                         }
 
                         Text {
                             text: entry.name;
                             color: root.legend_text_color;
-                            font-size: root.legend_text_size * content.zoom;
+                            font-size: root.legend_text_size * content.text_scale;
                             font-weight: root.legend_text_weight;
                         }
 
                         Text {
                             text: entry.position_text;
                             color: root.legend_text_color;
-                            font-size: root.legend_text_size * content.zoom;
+                            font-size: root.legend_text_size * content.text_scale;
                             font-weight: root.legend_text_weight;
                         }
                     }
@@ -627,27 +628,27 @@ export component FloorCanvasView inherits Rectangle {
             Text {
                 text: root.choreography_name;
                 color: root.title_color;
-                font-size: root.header_title_size * content.zoom;
+                font-size: root.header_title_size * content.text_scale;
                 font-weight: root.header_title_weight;
                 horizontal-alignment: center;
                 vertical-alignment: center;
                 width: parent.width;
-                height: root.header_title_size * content.zoom;
-                y: root.header_padding * content.zoom;
+                height: root.header_title_size * content.text_scale;
+                y: root.header_padding * content.text_scale;
             }
 
             Text {
                 text: root.scene_name;
                 color: root.subtitle_color;
-                font-size: root.header_subtitle_size * content.zoom;
+                font-size: root.header_subtitle_size * content.text_scale;
                 font-weight: root.header_subtitle_weight;
                 horizontal-alignment: center;
                 vertical-alignment: center;
                 width: parent.width;
-                height: root.header_subtitle_size * content.zoom;
-                y: root.header_padding * content.zoom
-                    + root.header_title_size * content.zoom
-                    + root.header_spacing * content.zoom;
+                height: root.header_subtitle_size * content.text_scale;
+                y: root.header_padding * content.text_scale
+                    + root.header_title_size * content.text_scale
+                    + root.header_spacing * content.text_scale;
             }
         }
     }
