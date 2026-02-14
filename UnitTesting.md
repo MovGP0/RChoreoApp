@@ -57,6 +57,26 @@ BDD style integration testing using `rspec` also do not require this.
 - Integration tests shall be done using BDD style testing using `rspec` and follow Behavior-Driven Development (BDD) principles, using descriptive names and scenarios to enhance readability and understanding of the test cases.
 - When the user requires a specific behavior from the system, it should be implemented as a scenario in `rspec` to ensure that the system meets user requirements.
 
+## UI Tests and Stack Size
+- Some Slint UI integration tests (for example those creating `ShellHost`) can overflow the default test thread stack on Windows.
+- For such tests, run the UI assertions inside a dedicated thread with a larger stack (for example `32 * 1024 * 1024` bytes).
+- Keep Slint backend initialization (`i_slint_backend_testing::init_no_event_loop()`) and UI component creation inside that larger-stack thread.
+- Always `join()` the thread and fail the spec if the thread panics.
+
+```rust
+let test_thread = std::thread::Builder::new()
+    .name("ui-spec".to_string())
+    .stack_size(32 * 1024 * 1024)
+    .spawn(|| {
+        i_slint_backend_testing::init_no_event_loop();
+        // UI test setup and assertions here
+    })
+    .expect("ui test thread should start");
+
+let result = test_thread.join();
+assert!(result.is_ok(), "ui test thread should pass");
+```
+
 ## Floor BDD Test Structure Notes
 - Existing floor integration tests use one spec file per behavior in `crates/choreo_components/tests/floor/*_spec.rs`.
 - Every spec wraps scenarios in a single `rspec::describe("<behavior>", (), |spec| { ... })` suite and executes it with `run_suite(&suite)` from `crates/choreo_components/tests/floor/mod.rs`.

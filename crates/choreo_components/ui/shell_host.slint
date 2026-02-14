@@ -11,7 +11,7 @@ import { DancerSettingsPage } from "dancer_settings_page.slint";
 import { SettingsPage } from "settings_page.slint";
 import { DancerListItem } from "dancers_pane_view.slint";
 import { SceneListItem } from "scenes_pane_view.slint";
-import { Date } from "std-widgets.slint";
+import { Date, Palette } from "std-widgets.slint";
 import { Translations } from "translations.slint";
 
 export component ShellHost inherits MaterialWindow {
@@ -207,8 +207,20 @@ export component ShellHost inherits MaterialWindow {
     callback audio_link_scene_to_position();
     callback audio_toggle_play_pause();
 
+    private property <ColorScheme> effective_color_scheme: root.settings_use_system_theme
+        ? ColorScheme.unknown
+        : (root.settings_is_dark_mode ? ColorScheme.dark : ColorScheme.light);
+
     title: root.title_text;
     icon: @image-url("app_icon.svg");
+
+    init => {
+        Palette.color-scheme = root.effective_color_scheme;
+    }
+
+    changed effective_color_scheme => {
+        Palette.color-scheme = root.effective_color_scheme;
+    }
 
     Rectangle {
         width: parent.width;
