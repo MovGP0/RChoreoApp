@@ -123,6 +123,19 @@ export component MainPage inherits Rectangle {
     out property <float> floor_bounds_bottom: floor_canvas.floor_bounds_bottom;
     out property <float> floor_canvas_width: floor_canvas.canvas_width;
     out property <float> floor_canvas_height: floor_canvas.canvas_height;
+    out property <float> floor_header_bottom: floor_canvas.header_bottom;
+    out property <float> floor_width: floor_canvas.floor_width;
+    out property <float> floor_height: floor_canvas.floor_height;
+    out property <float> floor_legend_panel_width: floor_canvas.legend_panel_measured_width;
+    out property <float> floor_legend_panel_height: floor_canvas.legend_panel_measured_height;
+    out property <float> floor_legend_content_padding_left: floor_canvas.legend_content_padding_left;
+    out property <float> floor_legend_content_padding_top: floor_canvas.legend_content_padding_top;
+    out property <float> floor_legend_content_padding_right: floor_canvas.legend_content_padding_right;
+    out property <float> floor_legend_content_padding_bottom: floor_canvas.legend_content_padding_bottom;
+    out property <float> floor_side_label_left_gap: floor_canvas.side_label_left_gap;
+    out property <float> floor_side_label_right_gap: floor_canvas.side_label_right_gap;
+    out property <float> floor_legend_text_probe_font_size: floor_canvas.legend_text_probe_font_size;
+    out property <float> floor_legend_text_probe_height: floor_canvas.legend_text_probe_height;
     property <length> top_bar_height: 80px;
     property <length> audio_player_height: root.is_audio_player_open ? 80px : 0px;
 

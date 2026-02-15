@@ -33,3 +33,6 @@ mod draw_floor_behavior_spec;
 
 #[path = "floor/audio_position_interpolation_spec.rs"]
 mod audio_position_interpolation_spec;
+
+#[path = "floor/floor_canvas_zoom_layout_spec.rs"]
+mod floor_canvas_zoom_layout_spec;
