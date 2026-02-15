@@ -91,6 +91,42 @@ fn gesture_handling_behavior_spec() {
             });
             assert!(zoomed);
         });
+
+        spec.it("resets viewport on double tap", |_| {
+            let context = floor::FloorTestContext::new();
+            context.configure_canvas();
+
+            context.send_pointer_wheel_changed(120.0, Some(Point::new(50.0, 50.0)));
+            let zoomed = context.wait_until(Duration::from_secs(1), || {
+                context.view_model.borrow().transformation_matrix.scale_x() > 1.0
+            });
+            assert!(zoomed);
+
+            context.send_pointer_pressed(Point::new(40.0, 40.0));
+            context.send_pointer_released(Point::new(40.0, 40.0));
+            context.send_pointer_pressed(Point::new(42.0, 41.0));
+            context.send_pointer_released(Point::new(42.0, 41.0));
+
+            let reset = context.wait_until(Duration::from_secs(1), || {
+                context.view_model.borrow().transformation_matrix == choreo_components::floor::Matrix::identity()
+            });
+            assert!(reset);
+        });
+
+        spec.it("keeps viewport unchanged on single tap", |_| {
+            let context = floor::FloorTestContext::new();
+            context.configure_canvas();
+
+            let original_matrix = choreo_components::floor::Matrix::translation(18.0, -12.0)
+                .concat(&choreo_components::floor::Matrix::scale(1.2, 1.2, 50.0, 50.0));
+            context.set_transformation_matrix(original_matrix);
+
+            context.send_pointer_pressed(Point::new(40.0, 40.0));
+            context.send_pointer_released(Point::new(40.0, 40.0));
+
+            context.pump_events();
+            assert_eq!(context.view_model.borrow().transformation_matrix, original_matrix);
+        });
     });
 
     let report = floor::run_suite(&suite);

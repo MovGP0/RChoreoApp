@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::behavior::TimerDisposable;
 use crate::behavior::{Behavior, CompositeDisposable};
@@ -50,6 +50,10 @@ pub struct GestureHandlingBehavior {
     active_touches: HashMap<i64, Point>,
     last_hover_position: Option<Point>,
     last_pointer_position: Option<Point>,
+    pointer_press_origin: Option<Point>,
+    pointer_moved_since_press: bool,
+    last_tap_position: Option<Point>,
+    last_tap_at: Option<Instant>,
     last_single_touch_position: Option<Point>,
     last_touch_center: Option<Point>,
     last_touch_distance: Option<f64>,
@@ -59,6 +63,9 @@ pub struct GestureHandlingBehavior {
 
 impl GestureHandlingBehavior {
     pub const TOUCH_PAN_FACTOR: f32 = 0.5;
+    const DOUBLE_TAP_WINDOW: Duration = Duration::from_millis(350);
+    const DOUBLE_TAP_MAX_DISTANCE: f64 = 24.0;
+    const TAP_MOVE_TOLERANCE: f64 = 8.0;
 
     pub fn new(
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
@@ -96,6 +103,8 @@ impl GestureHandlingBehavior {
         }
 
         self.last_pointer_position = Some(command.event_args.position);
+        self.pointer_press_origin = Some(command.event_args.position);
+        self.pointer_moved_since_press = false;
     }
 
     fn handle_pointer_moved(
@@ -114,6 +123,13 @@ impl GestureHandlingBehavior {
             return;
         };
 
+        if let Some(origin) = self.pointer_press_origin {
+            let movement = Self::distance_between(origin, command.event_args.position);
+            if movement > Self::TAP_MOVE_TOLERANCE {
+                self.pointer_moved_since_press = true;
+            }
+        }
+
         let delta_x = (command.event_args.position.x - last.x) as f32;
         let delta_y = (command.event_args.position.y - last.y) as f32;
         let _ = state_machine.try_apply(&PanStartedTrigger);
@@ -123,15 +139,19 @@ impl GestureHandlingBehavior {
 
     fn handle_pointer_released(
         &mut self,
+        view_model: &mut FloorCanvasViewModel,
         state_machine: &mut ApplicationStateMachine,
-        _command: PointerReleasedCommand,
+        command: PointerReleasedCommand,
     ) {
         if Self::is_gesture_blocked(state_machine) {
             return;
         }
 
         let _ = state_machine.try_apply(&PanCompletedTrigger);
+        self.try_handle_tap_release(view_model, command);
         self.last_pointer_position = None;
+        self.pointer_press_origin = None;
+        self.pointer_moved_since_press = false;
     }
 
     fn handle_pointer_wheel_changed(
@@ -299,6 +319,42 @@ impl GestureHandlingBehavior {
         view_model.transformation_matrix = next;
     }
 
+    fn try_handle_tap_release(
+        &mut self,
+        view_model: &mut FloorCanvasViewModel,
+        command: PointerReleasedCommand,
+    ) {
+        if command.event_args.button != PointerButton::Primary || self.pointer_moved_since_press {
+            return;
+        }
+
+        let tap_position = command.event_args.position;
+        let now = Instant::now();
+        let is_double_tap = self.last_tap_at.is_some_and(|last_tap_at| {
+            now.duration_since(last_tap_at) <= Self::DOUBLE_TAP_WINDOW
+                && self.last_tap_position.is_some_and(|last_tap_position| {
+                    Self::distance_between(last_tap_position, tap_position)
+                        <= Self::DOUBLE_TAP_MAX_DISTANCE
+                })
+        });
+
+        if is_double_tap {
+            view_model.reset_viewport();
+            self.last_tap_at = None;
+            self.last_tap_position = None;
+            return;
+        }
+
+        self.last_tap_at = Some(now);
+        self.last_tap_position = Some(tap_position);
+    }
+
+    fn distance_between(first: Point, second: Point) -> f64 {
+        let dx = first.x - second.x;
+        let dy = first.y - second.y;
+        (dx * dx + dy * dy).sqrt()
+    }
+
     fn is_gesture_blocked(state_machine: &ApplicationStateMachine) -> bool {
         matches!(
             state_machine.state().kind(),
@@ -359,8 +415,9 @@ impl Behavior<FloorCanvasViewModel> for GestureHandlingBehavior {
 
             while let Ok(command) = pointer_released_receiver.try_recv() {
                 let mut behavior = behavior.borrow_mut();
+                let mut view_model = view_model_handle.borrow_mut();
                 let mut state_machine = state_machine.borrow_mut();
-                behavior.handle_pointer_released(&mut state_machine, command);
+                behavior.handle_pointer_released(&mut view_model, &mut state_machine, command);
             }
 
             while let Ok(command) = pointer_wheel_changed_receiver.try_recv() {
