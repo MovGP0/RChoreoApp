@@ -42,8 +42,7 @@ impl Behavior<AudioPlayerViewModel> for OpenAudioFileBehavior {
         disposables: &mut CompositeDisposable,
     ) {
         BehaviorLog::behavior_activated("OpenAudioFileBehavior", "AudioPlayerViewModel");
-        let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
-        else {
+        let Some(view_model_handle) = view_model.self_handle() else {
             return;
         };
         let receiver = self.receiver.clone();
@@ -87,6 +86,9 @@ impl Behavior<AudioPlayerViewModel> for OpenAudioFileBehavior {
             let has_audio_file = Path::new(&file_path).is_file();
 
             {
+                let Some(view_model_handle) = view_model_handle.upgrade() else {
+                    return;
+                };
                 let Ok(mut view_model) = view_model_handle.try_borrow_mut() else {
                     return;
                 };
