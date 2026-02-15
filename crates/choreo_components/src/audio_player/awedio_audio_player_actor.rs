@@ -1,11 +1,80 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
 use awedio::backends::CpalBackend;
 use awedio::Sound;
+use crossbeam_channel::{Receiver, Sender, TrySendError, bounded};
 
 use super::rodio_audio_player_actor::read_duration_seconds;
 use crate::audio_player::types::AudioPlayer;
+
+const AUDIO_COMMAND_BUFFER: usize = 1;
+
+#[derive(Clone, Copy)]
+struct SharedAudioState {
+    is_playing: bool,
+    can_seek: bool,
+    can_set_speed: bool,
+    duration: f64,
+    current_position: f64,
+}
+
+impl Default for SharedAudioState {
+    fn default() -> Self {
+        Self {
+            is_playing: false,
+            can_seek: false,
+            can_set_speed: false,
+            duration: 0.0,
+            current_position: 0.0,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum AudioCommand {
+    Play,
+    Pause,
+    Stop,
+    Seek(f64),
+    SeekAndPlay(f64),
+    SetSpeed(f64),
+    SetVolume(f64),
+    SetBalance(f64),
+    SetLoop(bool),
+    Shutdown,
+}
+
+struct AudioCommandMailbox {
+    sender: Sender<AudioCommand>,
+    receiver_probe: Receiver<AudioCommand>,
+}
+
+impl AudioCommandMailbox {
+    fn new() -> (Self, Receiver<AudioCommand>) {
+        let (sender, receiver) = bounded(AUDIO_COMMAND_BUFFER);
+        let receiver_probe = receiver.clone();
+        (
+            Self {
+                sender,
+                receiver_probe,
+            },
+            receiver,
+        )
+    }
+
+    fn send_latest(&self, command: AudioCommand) {
+        match self.sender.try_send(command) {
+            Ok(()) => {}
+            Err(TrySendError::Full(command)) => {
+                let _ = self.receiver_probe.try_recv();
+                let _ = self.sender.try_send(command);
+            }
+            Err(TrySendError::Disconnected(_)) => {}
+        }
+    }
+}
 
 struct AwedioRuntime {
     manager: Option<awedio::manager::Manager>,
@@ -181,105 +250,162 @@ impl AwedioRuntime {
             manager.clear();
         }
     }
+
+    fn handle(&mut self, command: AudioCommand) {
+        match command {
+            AudioCommand::Play => self.play(),
+            AudioCommand::Pause => self.pause(),
+            AudioCommand::Stop => self.stop(),
+            AudioCommand::Seek(position) => self.seek(position, false),
+            AudioCommand::SeekAndPlay(position) => self.seek(position, true),
+            AudioCommand::SetSpeed(speed) => self.set_speed(speed),
+            AudioCommand::SetVolume(volume) => self.set_volume(volume),
+            AudioCommand::SetBalance(_balance) => {}
+            AudioCommand::SetLoop(loop_enabled) => {
+                self.loop_enabled = loop_enabled;
+            }
+            AudioCommand::Shutdown => {}
+        }
+    }
+
+    fn tick(&mut self) {
+        self.sync_position();
+    }
+
+    fn publish(&self, shared: &Arc<Mutex<SharedAudioState>>) {
+        if let Ok(mut state) = shared.lock() {
+            state.is_playing = self.is_playing;
+            state.can_seek = self.can_seek();
+            state.can_set_speed = self.can_set_speed();
+            state.duration = self.duration;
+            state.current_position = self.position;
+        }
+    }
 }
 
 pub(super) struct AwedioAudioPlayerActor {
-    runtime: Mutex<AwedioRuntime>,
+    shared: Arc<Mutex<SharedAudioState>>,
+    mailbox: AudioCommandMailbox,
+    worker: Option<JoinHandle<()>>,
 }
 
 impl AwedioAudioPlayerActor {
     pub(super) fn new(file_path: String) -> Self {
+        let shared = Arc::new(Mutex::new(SharedAudioState::default()));
+        let shared_for_worker = Arc::clone(&shared);
+        let (mailbox, receiver) = AudioCommandMailbox::new();
+        let worker = thread::Builder::new()
+            .name("audio-player-actor-awedio".to_string())
+            .spawn(move || {
+                let mut runtime = AwedioRuntime::new(file_path);
+                runtime.publish(&shared_for_worker);
+                loop {
+                    match receiver.recv_timeout(Duration::from_millis(16)) {
+                        Ok(command) => {
+                            let mut pending_commands = PendingAudioCommands::default();
+                            let mut seq: usize = 0;
+                            pending_commands.merge(seq, command);
+                            seq += 1;
+
+                            while let Ok(queued) = receiver.try_recv() {
+                                pending_commands.merge(seq, queued);
+                                seq += 1;
+                            }
+
+                            if pending_commands.has_shutdown() {
+                                break;
+                            }
+
+                            for pending_command in pending_commands.into_ordered_commands() {
+                                runtime.handle(pending_command);
+                            }
+                        }
+                        Err(crossbeam_channel::RecvTimeoutError::Timeout) => {}
+                        Err(crossbeam_channel::RecvTimeoutError::Disconnected) => break,
+                    }
+
+                    runtime.tick();
+                    runtime.publish(&shared_for_worker);
+                }
+            })
+            .ok();
+
         Self {
-            runtime: Mutex::new(AwedioRuntime::new(file_path)),
+            shared,
+            mailbox,
+            worker,
         }
+    }
+
+    fn state(&self) -> SharedAudioState {
+        self.shared.lock().map(|state| *state).unwrap_or_default()
     }
 }
 
 impl AudioPlayer for AwedioAudioPlayerActor {
     fn is_playing(&self) -> bool {
-        let Ok(mut runtime) = self.runtime.lock() else {
-            return false;
-        };
-        runtime.sync_position();
-        runtime.is_playing
+        self.state().is_playing
     }
 
     fn can_seek(&self) -> bool {
-        self.runtime
-            .lock()
-            .map(|runtime| runtime.can_seek())
-            .unwrap_or(false)
+        self.state().can_seek
     }
 
     fn can_set_speed(&self) -> bool {
-        self.runtime
-            .lock()
-            .map(|runtime| runtime.can_set_speed())
-            .unwrap_or(false)
+        self.state().can_set_speed
     }
 
     fn duration(&self) -> f64 {
-        self.runtime
-            .lock()
-            .map(|runtime| runtime.duration)
-            .unwrap_or(0.0)
+        self.state().duration
     }
 
     fn current_position(&self) -> f64 {
-        let Ok(mut runtime) = self.runtime.lock() else {
-            return 0.0;
-        };
-        runtime.sync_position();
-        runtime.position
+        self.state().current_position
     }
 
     fn play(&mut self) {
-        if let Ok(mut runtime) = self.runtime.lock() {
-            runtime.play();
-        }
+        self.mailbox.send_latest(AudioCommand::Play);
     }
 
     fn pause(&mut self) {
-        if let Ok(mut runtime) = self.runtime.lock() {
-            runtime.pause();
-        }
+        self.mailbox.send_latest(AudioCommand::Pause);
     }
 
     fn stop(&mut self) {
-        if let Ok(mut runtime) = self.runtime.lock() {
-            runtime.stop();
-        }
+        self.mailbox.send_latest(AudioCommand::Stop);
     }
 
     fn seek(&mut self, position: f64) {
-        if let Ok(mut runtime) = self.runtime.lock() {
-            runtime.seek(position, false);
-        }
+        self.mailbox.send_latest(AudioCommand::Seek(position));
     }
 
     fn seek_and_play(&mut self, position: f64) {
-        if let Ok(mut runtime) = self.runtime.lock() {
-            runtime.seek(position, true);
-        }
+        self.mailbox
+            .send_latest(AudioCommand::SeekAndPlay(position));
     }
 
     fn set_speed(&mut self, speed: f64) {
-        if let Ok(mut runtime) = self.runtime.lock() {
-            runtime.set_speed(speed);
-        }
+        self.mailbox.send_latest(AudioCommand::SetSpeed(speed));
     }
 
     fn set_volume(&mut self, volume: f64) {
-        if let Ok(mut runtime) = self.runtime.lock() {
-            runtime.set_volume(volume);
-        }
+        self.mailbox.send_latest(AudioCommand::SetVolume(volume));
     }
 
-    fn set_balance(&mut self, _balance: f64) {}
+    fn set_balance(&mut self, balance: f64) {
+        self.mailbox.send_latest(AudioCommand::SetBalance(balance));
+    }
 
     fn set_loop(&mut self, loop_enabled: bool) {
-        if let Ok(mut runtime) = self.runtime.lock() {
-            runtime.loop_enabled = loop_enabled;
+        self.mailbox.send_latest(AudioCommand::SetLoop(loop_enabled));
+    }
+}
+
+impl Drop for AwedioAudioPlayerActor {
+    fn drop(&mut self) {
+        self.mailbox.send_latest(AudioCommand::Shutdown);
+        if let Some(worker) = self.worker.take() {
+            let _ = worker.join();
         }
     }
 }
@@ -289,4 +415,112 @@ fn clamp_position(position: f64, duration: f64) -> f64 {
         return position.max(0.0);
     }
     position.clamp(0.0, duration)
+}
+
+#[derive(Default)]
+struct PendingAudioCommands {
+    latest_control: Option<(usize, AudioCommand)>,
+    latest_seek: Option<(usize, f64)>,
+    latest_seek_and_play: Option<(usize, f64)>,
+    latest_speed: Option<(usize, f64)>,
+    latest_volume: Option<(usize, f64)>,
+    latest_balance: Option<(usize, f64)>,
+    latest_loop: Option<(usize, bool)>,
+}
+
+impl PendingAudioCommands {
+    fn merge(&mut self, sequence: usize, command: AudioCommand) {
+        match command {
+            AudioCommand::Play
+            | AudioCommand::Pause
+            | AudioCommand::Stop
+            | AudioCommand::Shutdown => {
+                self.latest_control = Some((sequence, command));
+            }
+            AudioCommand::Seek(position) => {
+                self.latest_seek = Some((sequence, position));
+            }
+            AudioCommand::SeekAndPlay(position) => {
+                self.latest_seek_and_play = Some((sequence, position));
+            }
+            AudioCommand::SetSpeed(speed) => {
+                self.latest_speed = Some((sequence, speed));
+            }
+            AudioCommand::SetVolume(volume) => {
+                self.latest_volume = Some((sequence, volume));
+            }
+            AudioCommand::SetBalance(balance) => {
+                self.latest_balance = Some((sequence, balance));
+            }
+            AudioCommand::SetLoop(loop_enabled) => {
+                self.latest_loop = Some((sequence, loop_enabled));
+            }
+        }
+    }
+
+    fn has_shutdown(&self) -> bool {
+        matches!(self.latest_control, Some((_, AudioCommand::Shutdown)))
+    }
+
+    fn into_ordered_commands(self) -> Vec<AudioCommand> {
+        let mut pending: Vec<(usize, AudioCommand)> = Vec::new();
+        if let Some((order, control)) = self.latest_control {
+            pending.push((order, control));
+        }
+        if let Some((order, position)) = self.latest_seek {
+            pending.push((order, AudioCommand::Seek(position)));
+        }
+        if let Some((order, position)) = self.latest_seek_and_play {
+            pending.push((order, AudioCommand::SeekAndPlay(position)));
+        }
+        if let Some((order, speed)) = self.latest_speed {
+            pending.push((order, AudioCommand::SetSpeed(speed)));
+        }
+        if let Some((order, volume)) = self.latest_volume {
+            pending.push((order, AudioCommand::SetVolume(volume)));
+        }
+        if let Some((order, balance)) = self.latest_balance {
+            pending.push((order, AudioCommand::SetBalance(balance)));
+        }
+        if let Some((order, loop_enabled)) = self.latest_loop {
+            pending.push((order, AudioCommand::SetLoop(loop_enabled)));
+        }
+        pending.sort_by_key(|(order, _)| *order);
+        pending.into_iter().map(|(_, command)| command).collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{AudioCommand, AudioCommandMailbox, PendingAudioCommands};
+
+    #[test]
+    fn command_mailbox_keeps_latest_when_queue_is_full() {
+        let (mailbox, receiver) = AudioCommandMailbox::new();
+        mailbox.send_latest(AudioCommand::SetSpeed(1.0));
+        mailbox.send_latest(AudioCommand::SetSpeed(1.5));
+
+        let queued = receiver.try_recv().expect("latest command should be queued");
+        assert_eq!(queued, AudioCommand::SetSpeed(1.5));
+    }
+
+    #[test]
+    fn pending_commands_coalesce_by_type_and_preserve_order() {
+        let mut pending = PendingAudioCommands::default();
+        pending.merge(0, AudioCommand::SetSpeed(1.0));
+        pending.merge(1, AudioCommand::SetSpeed(1.5));
+        pending.merge(2, AudioCommand::Seek(3.0));
+        pending.merge(3, AudioCommand::Seek(4.0));
+        pending.merge(4, AudioCommand::Play);
+
+        let ordered = pending.into_ordered_commands();
+        assert_eq!(
+            ordered,
+            vec![
+                AudioCommand::SetSpeed(1.5),
+                AudioCommand::Seek(4.0),
+                AudioCommand::Play
+            ],
+        );
+    }
 }
