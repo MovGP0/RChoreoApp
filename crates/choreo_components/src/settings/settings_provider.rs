@@ -6,12 +6,14 @@ use crossbeam_channel::{Sender, unbounded};
 use crate::behavior::Behavior;
 use crate::preferences::Preferences;
 
+use super::audio_backend_preferences_behavior::AudioBackendPreferencesBehavior;
 use super::color_preferences_behavior::{ColorPreferencesBehavior, ColorPreferencesReceivers};
 use super::load_settings_preferences_behavior::LoadSettingsPreferencesBehavior;
 use super::messages::{
     ReloadSettingsCommand, SwitchThemeModeCommand, UpdatePrimaryColorHexCommand,
     UpdateSecondaryColorHexCommand, UpdateTertiaryColorHexCommand, UpdateUsePrimaryColorCommand,
     UpdateUseSecondaryColorCommand, UpdateUseSystemThemeCommand, UpdateUseTertiaryColorCommand,
+    UpdateAudioPlayerBackendCommand,
 };
 use super::settings_view_model::{SettingsViewModel, SettingsViewModelActions};
 use super::switch_dark_light_mode_behavior::SwitchDarkLightModeBehavior;
@@ -37,8 +39,11 @@ impl SettingsProvider {
         let (update_primary_color_hex_sender, update_primary_color_hex_receiver) = unbounded();
         let (update_secondary_color_hex_sender, update_secondary_color_hex_receiver) = unbounded();
         let (update_tertiary_color_hex_sender, update_tertiary_color_hex_receiver) = unbounded();
+        let (update_audio_player_backend_sender, update_audio_player_backend_receiver) =
+            unbounded();
 
         let preferences = deps.preferences;
+        let backend_preferences = preferences.clone();
         let updater = deps.scheme_updater;
 
         let behaviors: Vec<Box<dyn Behavior<SettingsViewModel>>> = vec![
@@ -65,6 +70,10 @@ impl SettingsProvider {
                     update_tertiary_color_hex_receiver,
                 ),
             )),
+            Box::new(AudioBackendPreferencesBehavior::new(
+                backend_preferences,
+                update_audio_player_backend_receiver,
+            )),
         ];
 
         let settings_view_model = Rc::new(RefCell::new(SettingsViewModel::new()));
@@ -84,6 +93,8 @@ impl SettingsProvider {
         let update_secondary_color_hex_sender_for_action =
             update_secondary_color_hex_sender.clone();
         let update_tertiary_color_hex_sender_for_action = update_tertiary_color_hex_sender.clone();
+        let update_audio_player_backend_sender_for_action =
+            update_audio_player_backend_sender.clone();
         let actions = SettingsViewModelActions {
             reload: Some(Rc::new(move |_view_model| {
                 let _ = reload_sender_for_action.send(ReloadSettingsCommand);
@@ -119,6 +130,10 @@ impl SettingsProvider {
             update_tertiary_color_hex: Some(Rc::new(move |_view_model, value| {
                 let _ = update_tertiary_color_hex_sender_for_action
                     .send(UpdateTertiaryColorHexCommand { value });
+            })),
+            update_audio_player_backend: Some(Rc::new(move |_view_model, backend| {
+                let _ = update_audio_player_backend_sender_for_action
+                    .send(UpdateAudioPlayerBackendCommand { backend });
             })),
         };
 

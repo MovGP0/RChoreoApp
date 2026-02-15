@@ -13,6 +13,9 @@ pub fn apply_translations(view: &ShellHost, locale: &str) {
     translations.set_settings_primary_color_label(t(locale, "SettingsPrimaryColorLabel"));
     translations.set_settings_secondary_color_label(t(locale, "SettingsSecondaryColorLabel"));
     translations.set_settings_tertiary_color_label(t(locale, "SettingsTertiaryColorLabel"));
+    translations.set_settings_audio_backend_label(t(locale, "SettingsAudioBackendLabel"));
+    translations.set_settings_audio_backend_rodio_label(t(locale, "SettingsAudioBackendRodioLabel"));
+    translations.set_settings_audio_backend_awedio_label(t(locale, "SettingsAudioBackendAwedioLabel"));
     translations.set_settings_color_hex_label(t(locale, "SettingsColorHexLabel"));
     translations.set_app_title(t(locale, "AppTitle"));
     translations.set_choreography_author_placeholder(t(locale, "ChoreographyAuthorPlaceholder"));

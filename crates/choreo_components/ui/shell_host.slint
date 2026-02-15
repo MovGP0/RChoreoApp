@@ -53,6 +53,7 @@ export component ShellHost inherits MaterialWindow {
     in property <color> settings_primary_color: MaterialPalette.primary;
     in property <color> settings_secondary_color: MaterialPalette.secondary;
     in property <color> settings_tertiary_color: MaterialPalette.tertiary;
+    in property <int> settings_audio_backend_index: 0;
     in property <bool> choreo_has_selected_scene: false;
     in property <string> choreo_scene_name: "";
     in property <string> choreo_scene_text: "";
@@ -176,6 +177,7 @@ export component ShellHost inherits MaterialWindow {
     callback settings_update_primary_color(color);
     callback settings_update_secondary_color(color);
     callback settings_update_tertiary_color(color);
+    callback settings_update_audio_backend(int);
     callback settings_navigate_back();
     callback dancer_settings_cancel();
     callback dancer_settings_select_dancer(int);
@@ -417,6 +419,7 @@ export component ShellHost inherits MaterialWindow {
             primary_color: root.settings_primary_color;
             secondary_color: root.settings_secondary_color;
             tertiary_color: root.settings_tertiary_color;
+            selected_audio_backend_index: root.settings_audio_backend_index;
 
             update_use_system_theme(value) => { root.settings_update_use_system_theme(value); }
             update_is_dark_mode(value) => { root.settings_update_is_dark_mode(value); }
@@ -426,6 +429,7 @@ export component ShellHost inherits MaterialWindow {
             update_primary_color(value) => { root.settings_update_primary_color(value); }
             update_secondary_color(value) => { root.settings_update_secondary_color(value); }
             update_tertiary_color(value) => { root.settings_update_tertiary_color(value); }
+            update_audio_backend(index) => { root.settings_update_audio_backend(index); }
             navigate_back => { root.settings_navigate_back(); }
         }
         dancer_settings_page := DancerSettingsPage {

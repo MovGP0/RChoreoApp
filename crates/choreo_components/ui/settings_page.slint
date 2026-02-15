@@ -1,4 +1,5 @@
-import { IconButton, MaterialPalette, MaterialText, MaterialTypography, ScrollView, Switch, Vertical, Horizontal } from "@material";
+import { DropDownMenu, IconButton, MaterialPalette, MaterialText, MaterialTypography, MenuItem, ScrollView, Switch, Vertical, Horizontal } from "@material";
+import { Palette } from "std-widgets.slint";
 import { ColorPicker } from "color_picker.slint";
 import { Translations } from "translations.slint";
 
@@ -9,6 +10,25 @@ export component SettingsPage inherits Rectangle {
     in property <string> primary_color_text: Translations.settings_primary_color_label;
     in property <string> secondary_color_text: Translations.settings_secondary_color_label;
     in property <string> tertiary_color_text: Translations.settings_tertiary_color_label;
+    in property <string> audio_backend_text: Translations.settings_audio_backend_label;
+    in property <string> audio_backend_rodio_text: Translations.settings_audio_backend_rodio_label;
+    in property <string> audio_backend_awedio_text: Translations.settings_audio_backend_awedio_label;
+    property <[MenuItem]> audio_backend_items: [
+        {
+            icon: @image-url(""),
+            text: root.audio_backend_rodio_text,
+            trailing_text: "",
+            enabled: true,
+            text_color: Palette.foreground,
+        },
+        {
+            icon: @image-url(""),
+            text: root.audio_backend_awedio_text,
+            trailing_text: "",
+            enabled: true,
+            text_color: Palette.foreground,
+        },
+    ];
 
     in property <bool> use_system_theme;
     in property <bool> can_use_system_theme: true;
@@ -20,6 +40,7 @@ export component SettingsPage inherits Rectangle {
     in property <color> primary_color;
     in property <color> secondary_color;
     in property <color> tertiary_color;
+    in property <int> selected_audio_backend_index: 0;
 
     callback update_use_system_theme(bool);
     callback update_is_dark_mode(bool);
@@ -29,6 +50,7 @@ export component SettingsPage inherits Rectangle {
     callback update_primary_color(color);
     callback update_secondary_color(color);
     callback update_tertiary_color(color);
+    callback update_audio_backend(int);
     callback navigate_back();
 
     background: MaterialPalette.surface_container_low;
@@ -83,6 +105,31 @@ export component SettingsPage inherits Rectangle {
                         }
                     }
 
+                }
+            }
+
+            Rectangle {
+                background: MaterialPalette.surface_container;
+                border-width: 1px;
+                border-color: MaterialPalette.outline_variant;
+                border-radius: 8px;
+
+                Vertical {
+                    padding: 12px;
+                    spacing: 8px;
+
+                    MaterialText {
+                        text: audio_backend_text;
+                        font-size: MaterialTypography.body_medium.font_size;
+                        font-weight: MaterialTypography.body_medium.font_weight;
+                    }
+
+                    DropDownMenu {
+                        enabled: true;
+                        items: root.audio_backend_items;
+                        current_index: root.selected_audio_backend_index;
+                        selected(index) => { root.update_audio_backend(index); }
+                    }
                 }
             }
 

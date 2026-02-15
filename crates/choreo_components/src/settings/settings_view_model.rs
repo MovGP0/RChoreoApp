@@ -4,6 +4,7 @@ use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
 use crate::behavior::{Behavior, CompositeDisposable};
+use crate::audio_player::AudioPlayerBackend;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
@@ -22,6 +23,7 @@ impl BooleanNegationConverter {
 type SettingsActionHandler = Rc<dyn Fn(&mut SettingsViewModel)>;
 type SettingsBooleanHandler = Rc<dyn Fn(&mut SettingsViewModel, bool)>;
 type SettingsStringHandler = Rc<dyn Fn(&mut SettingsViewModel, String)>;
+type SettingsAudioBackendHandler = Rc<dyn Fn(&mut SettingsViewModel, AudioPlayerBackend)>;
 
 #[derive(Clone, Default)]
 pub struct SettingsViewModelActions {
@@ -34,6 +36,7 @@ pub struct SettingsViewModelActions {
     pub update_primary_color_hex: Option<SettingsStringHandler>,
     pub update_secondary_color_hex: Option<SettingsStringHandler>,
     pub update_tertiary_color_hex: Option<SettingsStringHandler>,
+    pub update_audio_player_backend: Option<SettingsAudioBackendHandler>,
 }
 
 #[injectable]
@@ -48,6 +51,7 @@ pub struct SettingsViewModel {
     pub primary_color: Color,
     pub secondary_color: Color,
     pub tertiary_color: Color,
+    pub audio_player_backend: AudioPlayerBackend,
     disposables: CompositeDisposable,
     self_handle: Option<Weak<RefCell<SettingsViewModel>>>,
 }
@@ -64,6 +68,9 @@ impl SettingsViewModel {
             primary_color: default_primary_color(),
             secondary_color: default_secondary_color(),
             tertiary_color: default_tertiary_color(),
+            audio_player_backend: AudioPlayerBackend::from_preference(
+                AudioPlayerBackend::RODIO_KEY,
+            ),
             disposables: CompositeDisposable::new(),
             self_handle: None,
         }
@@ -146,6 +153,12 @@ impl SettingsViewModel {
     pub fn update_tertiary_color_hex(&mut self, value: String) {
         if let Some(handler) = self.actions.update_tertiary_color_hex.clone() {
             handler(self, value);
+        }
+    }
+
+    pub fn update_audio_player_backend(&mut self, backend: AudioPlayerBackend) {
+        if let Some(handler) = self.actions.update_audio_player_backend.clone() {
+            handler(self, backend);
         }
     }
 }

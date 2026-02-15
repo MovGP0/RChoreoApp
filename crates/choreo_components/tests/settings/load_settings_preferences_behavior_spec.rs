@@ -3,6 +3,7 @@ use std::time::Duration;
 use crate::settings;
 
 use choreo_components::preferences::Preferences;
+use choreo_components::audio_player::AudioPlayerBackend;
 use choreo_components::settings::ThemeMode;
 use choreo_models::SettingsPreferenceKeys;
 use settings::Report;
@@ -30,6 +31,10 @@ fn load_settings_preferences_behavior_spec() {
                     SettingsPreferenceKeys::TERTIARY_COLOR,
                     "#FF778899".to_string(),
                 );
+                preferences.set_string(
+                    SettingsPreferenceKeys::AUDIO_PLAYER_BACKEND,
+                    AudioPlayerBackend::AWEDIO_KEY.to_string(),
+                );
             });
 
             let loaded = context.wait_until(Duration::from_secs(1), || {
@@ -39,6 +44,7 @@ fn load_settings_preferences_behavior_spec() {
                     && view_model.use_primary_color
                     && view_model.use_secondary_color
                     && view_model.use_tertiary_color
+                    && view_model.audio_player_backend == AudioPlayerBackend::Awedio
             });
             assert!(loaded);
             assert!(context.updater.call_count() >= 1);

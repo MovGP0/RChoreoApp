@@ -4,6 +4,9 @@ mod settings;
 #[path = "settings/color_preferences_behavior_spec.rs"]
 mod color_preferences_behavior_spec;
 
+#[path = "settings/audio_backend_preferences_behavior_spec.rs"]
+mod audio_backend_preferences_behavior_spec;
+
 #[path = "settings/load_settings_preferences_behavior_spec.rs"]
 mod load_settings_preferences_behavior_spec;
 

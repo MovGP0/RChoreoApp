@@ -1,4 +1,5 @@
 mod audio_player_actor;
+mod audio_player_backend;
 mod audio_player_link_scene_behavior;
 mod audio_player_linking;
 mod audio_player_position_changed_behavior;
@@ -11,6 +12,7 @@ mod types;
 
 pub use crate::haptics::{HapticFeedback, NoopHapticFeedback, PlatformHapticFeedback};
 pub use audio_player_actor::create_platform_audio_player;
+pub use audio_player_backend::AudioPlayerBackend;
 pub use audio_player_link_scene_behavior::AudioPlayerLinkSceneBehavior;
 pub(crate) use audio_player_linking::build_tick_values;
 pub use audio_player_position_changed_behavior::AudioPlayerPositionChangedBehavior;

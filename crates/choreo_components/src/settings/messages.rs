@@ -40,3 +40,9 @@ pub struct UpdateSecondaryColorHexCommand {
 pub struct UpdateTertiaryColorHexCommand {
     pub value: String,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct UpdateAudioPlayerBackendCommand {
+    pub backend: AudioPlayerBackend,
+}
+use crate::audio_player::AudioPlayerBackend;

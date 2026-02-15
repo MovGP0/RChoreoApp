@@ -700,6 +700,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "awedio"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a384d41aa4dbd053f434fc401fc1a62aaa654c3669c32b2acd6da3385a72fb7"
+dependencies = [
+ "cpal",
+ "log",
+ "qoaudio",
+ "symphonia",
+ "tokio",
+]
+
+[[package]]
 name = "base-x"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -984,6 +997,7 @@ dependencies = [
 name = "choreo_components"
 version = "0.1.0"
 dependencies = [
+ "awedio",
  "choreo_i18n",
  "choreo_master_mobile_json",
  "choreo_models",
@@ -4792,6 +4806,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "qoaudio"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf46b47dc3906b2c2bc928a04398dd483e66e3d0cc56913355ba236ab9fa2441"
+
+[[package]]
 name = "qoi"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6049,6 +6069,7 @@ dependencies = [
  "symphonia-codec-pcm",
  "symphonia-codec-vorbis",
  "symphonia-core",
+ "symphonia-format-caf",
  "symphonia-format-isomp4",
  "symphonia-format-mkv",
  "symphonia-format-ogg",
@@ -6143,6 +6164,17 @@ dependencies = [
  "bytemuck",
  "lazy_static",
  "log",
+]
+
+[[package]]
+name = "symphonia-format-caf"
+version = "0.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8faf379316b6b6e6bbc274d00e7a592e0d63ff1a7e182ce8ba25e24edd3d096"
+dependencies = [
+ "log",
+ "symphonia-core",
+ "symphonia-metadata",
 ]
 
 [[package]]

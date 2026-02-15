@@ -14,6 +14,7 @@ use crate::observability::start_internal_span;
 use crate::preferences::Preferences;
 
 use super::audio_player_view_model::AudioPlayerViewModel;
+use super::AudioPlayerBackend;
 use super::create_platform_audio_player;
 use super::messages::OpenAudioFileCommand;
 
@@ -84,6 +85,13 @@ impl Behavior<AudioPlayerViewModel> for OpenAudioFileBehavior {
             let file_path = command.file_path;
             let stream_path = file_path.clone();
             let has_audio_file = Path::new(&file_path).is_file();
+            let selected_backend = AudioPlayerBackend::from_preference(
+                preferences.get_string(
+                    SettingsPreferenceKeys::AUDIO_PLAYER_BACKEND,
+                    AudioPlayerBackend::RODIO_KEY,
+                )
+                .as_str(),
+            );
 
             {
                 let Some(view_model_handle) = view_model_handle.upgrade() else {
@@ -98,7 +106,10 @@ impl Behavior<AudioPlayerViewModel> for OpenAudioFileBehavior {
                 }));
 
                 if has_audio_file {
-                    view_model.set_player(create_platform_audio_player(file_path.clone()));
+                    view_model.set_player(create_platform_audio_player(
+                        file_path.clone(),
+                        selected_backend,
+                    ));
                 } else {
                     view_model.player = None;
                     view_model.can_seek = false;

@@ -20,3 +20,15 @@ panic = "abort"
 
 [profile.dev]
 panic = "abort"
+
+[profile.dev.package.rodio]
+opt-level = 3
+
+[profile.dev.package.awedio]
+opt-level = 3
+
+[profile.dev.package.cpal]
+opt-level = 3
+
+[profile.dev.package.symphonia]
+opt-level = 3

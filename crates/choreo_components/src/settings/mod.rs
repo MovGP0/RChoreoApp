@@ -1,3 +1,4 @@
+mod audio_backend_preferences_behavior;
 mod color_preferences_behavior;
 mod load_settings_preferences_behavior;
 mod material;
@@ -10,6 +11,7 @@ mod types;
 
 use crate::preferences::Preferences;
 
+pub use audio_backend_preferences_behavior::AudioBackendPreferencesBehavior;
 pub use color_preferences_behavior::ColorPreferencesBehavior;
 pub use load_settings_preferences_behavior::LoadSettingsPreferencesBehavior;
 pub use material::{MaterialScheme, MaterialSchemeApplier, MaterialSchemeHelper, MaterialSchemes};

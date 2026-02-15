@@ -11,6 +11,7 @@ impl SettingsPreferenceKeys {
     pub const TERTIARY_COLOR: &str = "TertiaryColor";
     pub const LAST_OPENED_CHOREO_FILE: &str = "LastOpenedChoreoFile";
     pub const LAST_OPENED_AUDIO_FILE: &str = "LastOpenedAudioFile";
+    pub const AUDIO_PLAYER_BACKEND: &str = "AudioPlayerBackend";
     pub const LAST_OPENED_SVG_FILE: &str = "LastOpenedSvgFile";
     pub const DRAW_PATH_FROM: &str = "DrawPathFrom";
     pub const DRAW_PATH_TO: &str = "DrawPathTo";

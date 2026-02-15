@@ -16,6 +16,7 @@ use super::settings_view_model::{
     default_tertiary_color,
 };
 use super::types::MaterialSchemeUpdater;
+use crate::audio_player::AudioPlayerBackend;
 
 #[injectable]
 #[inject(
@@ -91,6 +92,14 @@ impl<P: Preferences + Clone + 'static, U: MaterialSchemeUpdater + Clone + 'stati
             preferences,
             choreo_models::SettingsPreferenceKeys::TERTIARY_COLOR,
             default_tertiary_color(),
+        );
+        view_model.audio_player_backend = AudioPlayerBackend::from_preference(
+            preferences
+                .get_string(
+                    choreo_models::SettingsPreferenceKeys::AUDIO_PLAYER_BACKEND,
+                    AudioPlayerBackend::RODIO_KEY,
+                )
+                .as_str(),
         );
 
         updater.update(view_model, preferences);

@@ -18,6 +18,7 @@ use slint::{
 };
 
 use crate::audio_player::{
+    AudioPlayerBackend,
     AudioPlayerPositionChangedEvent,
     AudioPlayerViewModel,
     AudioPlayerViewState,
@@ -1301,6 +1302,16 @@ impl MainPageBinding {
         }
 
         {
+            let settings_view_model = Rc::clone(&settings_view_model);
+            view.on_settings_update_audio_backend(move |index| {
+                let mut settings_view_model = settings_view_model.borrow_mut();
+                settings_view_model.update_audio_player_backend(
+                    settings_audio_backend_from_index(index),
+                );
+            });
+        }
+
+        {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
@@ -2320,6 +2331,31 @@ fn apply_settings_view_model(view: &ShellHost, view_model: &SettingsViewModel) {
     view.set_settings_primary_color(slint_color_from_choreo(&view_model.primary_color));
     view.set_settings_secondary_color(slint_color_from_choreo(&view_model.secondary_color));
     view.set_settings_tertiary_color(slint_color_from_choreo(&view_model.tertiary_color));
+    view.set_settings_audio_backend_index(settings_audio_backend_to_index(
+        view_model.audio_player_backend,
+    ));
+}
+
+fn settings_audio_backend_to_index(backend: AudioPlayerBackend) -> i32 {
+    if cfg!(target_arch = "wasm32") {
+        return 0;
+    }
+
+    match backend {
+        AudioPlayerBackend::Rodio | AudioPlayerBackend::Browser => 0,
+        AudioPlayerBackend::Awedio => 1,
+    }
+}
+
+fn settings_audio_backend_from_index(index: i32) -> AudioPlayerBackend {
+    if cfg!(target_arch = "wasm32") {
+        return AudioPlayerBackend::Browser;
+    }
+
+    match index {
+        1 => AudioPlayerBackend::Awedio,
+        _ => AudioPlayerBackend::Rodio,
+    }
 }
 
 fn apply_choreography_settings_view_model(
