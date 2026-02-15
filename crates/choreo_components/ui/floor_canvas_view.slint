@@ -146,6 +146,10 @@ export component FloorCanvasView inherits Rectangle {
         (floor_rect.x - (side_label_left_probe.x + side_label_left_probe.width)) / 1px;
     out property <float> side_label_right_gap:
         (side_label_right_probe.x - (floor_rect.x + floor_rect.width)) / 1px;
+    out property <float> top_label_vertical_gap:
+        (floor_rect.y - (top_label_probe.y + top_label_probe.height)) / 1px;
+    out property <float> bottom_label_vertical_gap:
+        (bottom_label_probe.y - (floor_rect.y + floor_rect.height)) / 1px;
     out property <float> legend_text_probe_font_size: legend_text_probe.font-size / 1px;
     out property <float> legend_text_probe_height: legend_text_probe.height / 1px;
 
@@ -376,7 +380,10 @@ export component FloorCanvasView inherits Rectangle {
                     font-weight: root.axis_label_weight;
                     horizontal-alignment: center;
                     x: content.origin_x + label.value * content.scale * 1px - self.width / 2;
-                    y: floor_rect.y - root.axis_label_offset - root.axis_label_floor_padding - self.height;
+                    y: floor_rect.y
+                        - root.axis_label_offset * content.user_scale
+                        - root.axis_label_floor_padding * content.user_scale
+                        - self.height;
                 }
 
                 for label in root.axis_labels_x: Text {
@@ -386,7 +393,10 @@ export component FloorCanvasView inherits Rectangle {
                     font-weight: root.axis_label_weight;
                     horizontal-alignment: center;
                     x: content.origin_x + label.value * content.scale * 1px - self.width / 2;
-                    y: floor_rect.y + floor_rect.height + root.axis_label_offset + root.axis_label_floor_padding;
+                    y: floor_rect.y
+                        + floor_rect.height
+                        + root.axis_label_offset * content.user_scale
+                        + root.axis_label_floor_padding * content.user_scale;
                 }
 
                 for label in root.axis_labels_y: Text {
@@ -426,6 +436,30 @@ export component FloorCanvasView inherits Rectangle {
                 font-weight: root.axis_label_weight;
                 x: floor_rect.x + floor_rect.width + root.axis_label_offset * content.user_scale;
                 y: floor_rect.y + floor_rect.height / 2 - self.height / 2;
+            }
+
+            top_label_probe := Text {
+                text: root.axis_labels_x.length > 0 ? root.axis_labels_x[0].text : "0";
+                color: transparent;
+                font-size: root.axis_label_size * content.text_scale;
+                font-weight: root.axis_label_weight;
+                x: content.origin_x - self.width / 2;
+                y: floor_rect.y
+                    - root.axis_label_offset * content.user_scale
+                    - root.axis_label_floor_padding * content.user_scale
+                    - self.height;
+            }
+
+            bottom_label_probe := Text {
+                text: root.axis_labels_x.length > 0 ? root.axis_labels_x[0].text : "0";
+                color: transparent;
+                font-size: root.axis_label_size * content.text_scale;
+                font-weight: root.axis_label_weight;
+                x: content.origin_x - self.width / 2;
+                y: floor_rect.y
+                    + floor_rect.height
+                    + root.axis_label_offset * content.user_scale
+                    + root.axis_label_floor_padding * content.user_scale;
             }
 
             curve_layer := Rectangle {

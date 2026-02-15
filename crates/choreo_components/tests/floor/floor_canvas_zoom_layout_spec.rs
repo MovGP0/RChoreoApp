@@ -19,6 +19,7 @@ thread_local! {
 
 const ZOOM_BEFORE: f32 = 1.0;
 const ZOOM_AFTER: f32 = 1.6;
+const ZOOM_OUT: f32 = 0.6;
 
 fn ensure_slint_test_backend() {
     INIT_TEST_BACKEND.with(|initialized| {
@@ -53,6 +54,10 @@ fn configure_floor_for_layout_measurement(view: &ShellHost) {
     view.set_floor_zoom_factor(ZOOM_BEFORE);
 
     view.set_floor_show_axis_labels(true);
+    view.set_floor_axis_labels_x(ModelRc::new(VecModel::from(vec![AxisLabel {
+        value: 0.0,
+        text: "0".into(),
+    }])));
     view.set_floor_axis_labels_y(ModelRc::new(VecModel::from(vec![AxisLabel {
         value: 0.0,
         text: "0".into(),
@@ -89,12 +94,30 @@ fn assert_zoom_scaled_measurement(
     measure: impl Fn(&ShellHost) -> f32,
     epsilon: f32,
 ) {
-    let before = measure_at_zoom(view, ZOOM_BEFORE, &measure);
-    let after = measure_at_zoom(view, ZOOM_AFTER, &measure);
+    assert_zoom_scaled_measurement_between(
+        view,
+        label,
+        measure,
+        ZOOM_BEFORE,
+        ZOOM_AFTER,
+        epsilon,
+    );
+}
+
+fn assert_zoom_scaled_measurement_between(
+    view: &ShellHost,
+    label: &str,
+    measure: impl Fn(&ShellHost) -> f32,
+    zoom_from: f32,
+    zoom_to: f32,
+    epsilon: f32,
+) {
+    let before = measure_at_zoom(view, zoom_from, &measure);
+    let after = measure_at_zoom(view, zoom_to, &measure);
 
     assert!(before > 0.0, "{label} baseline must be positive, got {before}");
 
-    let expected_scale = ZOOM_AFTER / ZOOM_BEFORE;
+    let expected_scale = zoom_to / zoom_from;
     let actual_scale = after / before;
     assert_close(actual_scale, expected_scale, epsilon);
 }
@@ -201,6 +224,32 @@ fn floor_canvas_zoom_layout_spec() {
                     );
                 });
 
+                spec.it("scales top label vertical gap", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_zoom_scaled_measurement(
+                        &view,
+                        "top_label_vertical_gap",
+                        |v| v.get_floor_top_label_vertical_gap(),
+                        0.01,
+                    );
+                });
+
+                spec.it("scales bottom label vertical gap", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_zoom_scaled_measurement(
+                        &view,
+                        "bottom_label_vertical_gap",
+                        |v| v.get_floor_bottom_label_vertical_gap(),
+                        0.01,
+                    );
+                });
+
                 spec.it("scales legend content left padding", |_| {
                     ensure_slint_test_backend();
                     let view = ShellHost::new().expect("shell host should be created in test backend");
@@ -225,6 +274,35 @@ fn floor_canvas_zoom_layout_spec() {
                         |v| v.get_floor_legend_content_padding_top(),
                         0.01,
                     );
+                });
+
+                spec.it("scales legend content top padding when zooming out", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_zoom_scaled_measurement_between(
+                        &view,
+                        "legend_content_padding_top_zoom_out",
+                        |v| v.get_floor_legend_content_padding_top(),
+                        ZOOM_BEFORE,
+                        ZOOM_OUT,
+                        0.01,
+                    );
+                });
+
+                spec.it("keeps legend top and bottom padding equal when zooming out", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    let top_padding = measure_at_zoom(&view, ZOOM_OUT, |v| {
+                        v.get_floor_legend_content_padding_top()
+                    });
+                    let bottom_padding = measure_at_zoom(&view, ZOOM_OUT, |v| {
+                        v.get_floor_legend_content_padding_bottom()
+                    });
+                    assert_close(top_padding, bottom_padding, 0.01);
                 });
 
                 spec.it("scales legend content right padding", |_| {
