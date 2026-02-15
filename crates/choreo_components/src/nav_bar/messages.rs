@@ -9,6 +9,9 @@ pub struct OpenAudioRequestedCommand;
 pub struct OpenImageRequestedCommand;
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct ResetFloorViewportRequestedCommand;
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct InteractionModeChangedCommand {
     pub mode: InteractionMode,
 }
@@ -17,5 +20,6 @@ pub struct InteractionModeChangedCommand {
 pub struct NavBarSenders {
     pub open_audio_requested: Sender<OpenAudioRequestedCommand>,
     pub open_image_requested: Sender<OpenImageRequestedCommand>,
+    pub reset_floor_viewport_requested: Sender<ResetFloorViewportRequestedCommand>,
     pub interaction_mode_changed: Sender<InteractionModeChangedCommand>,
 }

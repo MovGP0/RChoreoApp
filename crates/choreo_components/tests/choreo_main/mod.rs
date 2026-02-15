@@ -76,10 +76,13 @@ impl ChoreoMainTestContext {
 
         let (open_audio_requested_sender, _open_audio_requested_receiver) = unbounded();
         let (open_image_requested_sender, _open_image_requested_receiver) = unbounded();
+        let (reset_floor_viewport_requested_sender, _reset_floor_viewport_requested_receiver) =
+            unbounded();
         let (interaction_mode_changed_sender, _interaction_mode_changed_receiver) = unbounded();
         let nav_senders = NavBarSenders {
             open_audio_requested: open_audio_requested_sender,
             open_image_requested: open_image_requested_sender,
+            reset_floor_viewport_requested: reset_floor_viewport_requested_sender,
             interaction_mode_changed: interaction_mode_changed_sender,
         };
 

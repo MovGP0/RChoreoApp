@@ -158,6 +158,7 @@ export component ShellHost inherits MaterialWindow {
     callback close_settings();
     callback open_image();
     callback open_audio();
+    callback reset_floor_viewport();
     callback select_mode(int);
     callback close_dialog();
     callback scenes_select_scene(int);
@@ -344,6 +345,7 @@ export component ShellHost inherits MaterialWindow {
             close_settings => { root.close_settings(); }
             open_image => { root.open_image(); }
             open_audio => { root.open_audio(); }
+            reset_floor_viewport => { root.reset_floor_viewport(); }
             select_mode(index) => { root.select_mode(index); }
             close_dialog => { root.close_dialog(); }
             scenes_select_scene(index) => { root.scenes_select_scene(index); }

@@ -101,6 +101,7 @@ use crate::nav_bar::{
     NavBarViewModel,
     OpenAudioRequestedCommand as NavBarOpenAudioRequestedCommand,
     OpenImageRequestedCommand as NavBarOpenImageRequestedCommand,
+    ResetFloorViewportRequestedCommand as NavBarResetFloorViewportRequestedCommand,
     apply_nav_bar_view_model,
     bind_nav_bar,
 };
@@ -577,6 +578,8 @@ impl MainPageBinding {
         const NAV_BAR_EVENT_BUFFER: usize = 64;
         let (nav_bar_open_audio_sender, nav_bar_open_audio_receiver) = bounded::<NavBarOpenAudioRequestedCommand>(NAV_BAR_EVENT_BUFFER);
         let (nav_bar_open_image_sender, nav_bar_open_image_receiver) = bounded::<NavBarOpenImageRequestedCommand>(NAV_BAR_EVENT_BUFFER);
+        let (nav_bar_reset_floor_viewport_sender, nav_bar_reset_floor_viewport_receiver) =
+            bounded::<NavBarResetFloorViewportRequestedCommand>(NAV_BAR_EVENT_BUFFER);
         let (nav_bar_mode_sender, nav_bar_mode_receiver) = bounded::<InteractionModeChangedCommand>(NAV_BAR_EVENT_BUFFER);
 
         let nav_bar = Rc::new(RefCell::new(NavBarViewModel::new(
@@ -586,6 +589,7 @@ impl MainPageBinding {
             NavBarSenders {
                 open_audio_requested: nav_bar_open_audio_sender,
                 open_image_requested: nav_bar_open_image_sender,
+                reset_floor_viewport_requested: nav_bar_reset_floor_viewport_sender,
                 interaction_mode_changed: nav_bar_mode_sender,
             },
         )));
@@ -721,6 +725,9 @@ impl MainPageBinding {
             let nav_bar_open_audio_receiver = nav_bar_open_audio_receiver.clone();
             let nav_bar_open_image_receiver = nav_bar_open_image_receiver.clone();
             let nav_bar_mode_receiver = nav_bar_mode_receiver.clone();
+            let nav_bar_reset_floor_viewport_receiver =
+                nav_bar_reset_floor_viewport_receiver.clone();
+            let floor_view_model = Rc::clone(&floor_view_model);
             let timer = slint::Timer::default();
             timer.start(
                 slint::TimerMode::Repeated,
@@ -776,6 +783,10 @@ impl MainPageBinding {
 
                     while let Ok(mode_command) = nav_bar_mode_receiver.try_recv() {
                         let _ = interaction_mode_sender.try_send(mode_command.mode);
+                    }
+
+                    while nav_bar_reset_floor_viewport_receiver.try_recv().is_ok() {
+                        floor_view_model.borrow_mut().reset_viewport();
                     }
                 },
             );

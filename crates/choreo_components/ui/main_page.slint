@@ -152,6 +152,7 @@ export component MainPage inherits Rectangle {
     callback close_settings();
     callback open_image();
     callback open_audio();
+    callback reset_floor_viewport();
     callback select_mode(int);
     callback close_dialog();
     callback scenes_select_scene(int);
@@ -260,6 +261,11 @@ export component MainPage inherits Rectangle {
                         checkable: true;
                         checked <=> root.is_choreography_settings_open;
                         clicked => { root.open_settings(); }
+                    }
+
+                    IconButton {
+                        icon: @image-url("icons/Home.svg");
+                        clicked => { root.reset_floor_viewport(); }
                     }
 
                     IconButton {

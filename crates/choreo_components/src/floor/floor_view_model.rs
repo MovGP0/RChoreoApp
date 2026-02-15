@@ -147,6 +147,11 @@ impl FloorCanvasViewModel {
         self.transformation_matrix = matrix;
     }
 
+    pub fn reset_viewport(&mut self) {
+        self.transformation_matrix = Matrix::identity();
+        self.draw_floor();
+    }
+
     pub fn floor_bounds(&self) -> Rect {
         self.floor_bounds
     }
@@ -178,4 +183,57 @@ pub struct FloorPointerEventSenders {
     pub pointer_released_senders: Vec<Sender<PointerReleasedCommand>>,
     pub pointer_wheel_changed_senders: Vec<Sender<PointerWheelChangedCommand>>,
     pub touch_senders: Vec<Sender<TouchCommand>>,
+}
+
+#[cfg(test)]
+mod tests {
+    use crossbeam_channel::unbounded;
+
+    use crate::floor::FloorCanvasViewModel;
+    use crate::floor::FloorPointerEventSenders;
+    use crate::floor::Matrix;
+
+    #[test]
+    fn reset_viewport_restores_identity_transform() {
+        let (draw_sender, _draw_receiver) = unbounded();
+        let view_model = FloorCanvasViewModel::new(
+            draw_sender,
+            FloorPointerEventSenders {
+                pointer_pressed_senders: Vec::new(),
+                pointer_moved_senders: Vec::new(),
+                pointer_released_senders: Vec::new(),
+                pointer_wheel_changed_senders: Vec::new(),
+                touch_senders: Vec::new(),
+            },
+        );
+        let mut view_model = view_model;
+        view_model.set_transformation_matrix(Matrix::translation(24.0, -36.0));
+
+        view_model.reset_viewport();
+
+        assert_eq!(view_model.transformation_matrix, Matrix::identity());
+    }
+
+    #[test]
+    fn reset_viewport_requests_draw() {
+        let (draw_sender, draw_receiver) = unbounded();
+        let view_model = FloorCanvasViewModel::new(
+            draw_sender,
+            FloorPointerEventSenders {
+                pointer_pressed_senders: Vec::new(),
+                pointer_moved_senders: Vec::new(),
+                pointer_released_senders: Vec::new(),
+                pointer_wheel_changed_senders: Vec::new(),
+                touch_senders: Vec::new(),
+            },
+        );
+        let mut view_model = view_model;
+
+        view_model.reset_viewport();
+
+        assert!(
+            draw_receiver.try_recv().is_ok(),
+            "reset viewport should trigger floor redraw command",
+        );
+    }
 }

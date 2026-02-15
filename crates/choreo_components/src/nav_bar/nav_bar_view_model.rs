@@ -9,7 +9,7 @@ use crate::haptics::HapticFeedback;
 
 use super::{
     InteractionModeChangedCommand, NavBarSenders, OpenAudioRequestedCommand,
-    OpenImageRequestedCommand,
+    OpenImageRequestedCommand, ResetFloorViewportRequestedCommand,
 };
 
 const MODE_OPTIONS: [InteractionMode; 6] = [
@@ -112,6 +112,14 @@ impl NavBarViewModel {
         self.notify_changed();
     }
 
+    pub fn reset_floor_viewport(&self) {
+        self.perform_click();
+        let _ = self
+            .senders
+            .reset_floor_viewport_requested
+            .try_send(ResetFloorViewportRequestedCommand);
+    }
+
     pub fn close_choreography_settings(&mut self) {
         if !self.is_choreography_settings_open {
             return;
@@ -196,4 +204,39 @@ pub fn mode_index(mode: InteractionMode) -> i32 {
         .position(|option| *option == mode)
         .map(|index| index as i32)
         .unwrap_or(-1)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    use crossbeam_channel::unbounded;
+
+    use crate::global::GlobalStateModel;
+    use crate::nav_bar::NavBarSenders;
+    use crate::nav_bar::NavBarViewModel;
+
+    #[test]
+    fn reset_floor_viewport_sends_command() {
+        let (open_audio_sender, _open_audio_receiver) = unbounded();
+        let (open_image_sender, _open_image_receiver) = unbounded();
+        let (reset_sender, reset_receiver) = unbounded();
+        let (mode_sender, _mode_receiver) = unbounded();
+        let senders = NavBarSenders {
+            open_audio_requested: open_audio_sender,
+            open_image_requested: open_image_sender,
+            reset_floor_viewport_requested: reset_sender,
+            interaction_mode_changed: mode_sender,
+        };
+        let global_state = Rc::new(RefCell::new(GlobalStateModel::default()));
+        let view_model = NavBarViewModel::new(global_state, None, Vec::new(), senders);
+
+        view_model.reset_floor_viewport();
+
+        assert!(
+            reset_receiver.try_recv().is_ok(),
+            "reset floor viewport command should be emitted",
+        );
+    }
 }

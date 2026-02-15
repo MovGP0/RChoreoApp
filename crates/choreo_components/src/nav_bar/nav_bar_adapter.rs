@@ -52,6 +52,13 @@ pub fn bind_nav_bar(view: &ShellHost, view_model: Rc<RefCell<NavBarViewModel>>) 
 
     {
         let view_model = Rc::clone(&view_model);
+        view.on_reset_floor_viewport(move || {
+            view_model.borrow().reset_floor_viewport();
+        });
+    }
+
+    {
+        let view_model = Rc::clone(&view_model);
         view.on_open_settings(move || {
             view_model.borrow_mut().open_choreography_settings();
         });
