@@ -64,20 +64,19 @@ fn configure_floor_for_layout_measurement(view: &ShellHost) {
     }])));
 
     view.set_floor_show_legend(true);
-    view.set_floor_legend_entries(ModelRc::new(VecModel::from(vec![
-        LegendEntry {
-            color: Color::from_rgb_u8(32, 64, 96),
-            shortcut: "A".into(),
-            name: "Alice".into(),
-            position_text: "(0, 0)".into(),
-        },
-        LegendEntry {
-            color: Color::from_rgb_u8(96, 64, 32),
-            shortcut: "B".into(),
-            name: "Bob".into(),
-            position_text: "(1, 1)".into(),
-        },
-    ])));
+    let legend_entries: Vec<LegendEntry> = (0..20)
+        .map(|index| LegendEntry {
+            color: Color::from_rgb_u8(
+                (32 + (index * 7) % 160) as u8,
+                (64 + (index * 11) % 120) as u8,
+                (96 + (index * 13) % 100) as u8,
+            ),
+            shortcut: format!("D{index:02}").into(),
+            name: format!("Dancer {index:02}").into(),
+            position_text: format!("({index}, {})", index + 1).into(),
+        })
+        .collect();
+    view.set_floor_legend_entries(ModelRc::new(VecModel::from(legend_entries)));
 
     pump_ui();
 }
@@ -120,6 +119,31 @@ fn assert_zoom_scaled_measurement_between(
     let expected_scale = zoom_to / zoom_from;
     let actual_scale = after / before;
     assert_close(actual_scale, expected_scale, epsilon);
+}
+
+fn assert_measurement_scales_like_panel_dimension_between(
+    view: &ShellHost,
+    label: &str,
+    measure: impl Fn(&ShellHost) -> f32,
+    panel_measure: impl Fn(&ShellHost) -> f32,
+    zoom_from: f32,
+    zoom_to: f32,
+    epsilon: f32,
+) {
+    let before = measure_at_zoom(view, zoom_from, &measure);
+    let after = measure_at_zoom(view, zoom_to, &measure);
+    let panel_before = measure_at_zoom(view, zoom_from, &panel_measure);
+    let panel_after = measure_at_zoom(view, zoom_to, &panel_measure);
+
+    assert!(before > 0.0, "{label} baseline must be positive, got {before}");
+    assert!(
+        panel_before > 0.0,
+        "{label} panel baseline must be positive, got {panel_before}"
+    );
+
+    let measurement_scale = after / before;
+    let panel_scale = panel_after / panel_before;
+    assert_close(measurement_scale, panel_scale, epsilon);
 }
 
 #[test]
@@ -263,6 +287,38 @@ fn floor_canvas_zoom_layout_spec() {
                     );
                 });
 
+                spec.it("scales legend left padding by same factor as legend width", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_measurement_scales_like_panel_dimension_between(
+                        &view,
+                        "legend_content_padding_left_vs_width",
+                        |v| v.get_floor_legend_content_padding_left(),
+                        |v| v.get_floor_legend_panel_width(),
+                        ZOOM_BEFORE,
+                        ZOOM_AFTER,
+                        0.01,
+                    );
+                });
+
+                spec.it("scales legend left padding by same factor as legend width when zooming out", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_measurement_scales_like_panel_dimension_between(
+                        &view,
+                        "legend_content_padding_left_vs_width_zoom_out",
+                        |v| v.get_floor_legend_content_padding_left(),
+                        |v| v.get_floor_legend_panel_width(),
+                        ZOOM_BEFORE,
+                        ZOOM_OUT,
+                        0.01,
+                    );
+                });
+
                 spec.it("scales legend content top padding", |_| {
                     ensure_slint_test_backend();
                     let view = ShellHost::new().expect("shell host should be created in test backend");
@@ -272,6 +328,38 @@ fn floor_canvas_zoom_layout_spec() {
                         &view,
                         "legend_content_padding_top",
                         |v| v.get_floor_legend_content_padding_top(),
+                        0.01,
+                    );
+                });
+
+                spec.it("scales legend top padding by same factor as legend height", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_measurement_scales_like_panel_dimension_between(
+                        &view,
+                        "legend_content_padding_top_vs_height",
+                        |v| v.get_floor_legend_content_padding_top(),
+                        |v| v.get_floor_legend_panel_height(),
+                        ZOOM_BEFORE,
+                        ZOOM_AFTER,
+                        0.01,
+                    );
+                });
+
+                spec.it("scales legend top padding by same factor as legend height when zooming out", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_measurement_scales_like_panel_dimension_between(
+                        &view,
+                        "legend_content_padding_top_vs_height_zoom_out",
+                        |v| v.get_floor_legend_content_padding_top(),
+                        |v| v.get_floor_legend_panel_height(),
+                        ZOOM_BEFORE,
+                        ZOOM_OUT,
                         0.01,
                     );
                 });
@@ -318,6 +406,42 @@ fn floor_canvas_zoom_layout_spec() {
                     );
                 });
 
+                spec.it("scales legend right padding by same factor as legend width", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_measurement_scales_like_panel_dimension_between(
+                        &view,
+                        "legend_content_padding_right_vs_width",
+                        |v| v.get_floor_legend_content_padding_right(),
+                        |v| v.get_floor_legend_panel_width(),
+                        ZOOM_BEFORE,
+                        ZOOM_AFTER,
+                        0.01,
+                    );
+                });
+
+                spec.it(
+                    "scales legend right padding by same factor as legend width when zooming out",
+                    |_| {
+                        ensure_slint_test_backend();
+                        let view =
+                            ShellHost::new().expect("shell host should be created in test backend");
+                        configure_floor_for_layout_measurement(&view);
+
+                        assert_measurement_scales_like_panel_dimension_between(
+                            &view,
+                            "legend_content_padding_right_vs_width_zoom_out",
+                            |v| v.get_floor_legend_content_padding_right(),
+                            |v| v.get_floor_legend_panel_width(),
+                            ZOOM_BEFORE,
+                            ZOOM_OUT,
+                            0.01,
+                        );
+                    },
+                );
+
                 spec.it("scales legend content bottom padding", |_| {
                     ensure_slint_test_backend();
                     let view = ShellHost::new().expect("shell host should be created in test backend");
@@ -327,6 +451,103 @@ fn floor_canvas_zoom_layout_spec() {
                         &view,
                         "legend_content_padding_bottom",
                         |v| v.get_floor_legend_content_padding_bottom(),
+                        0.01,
+                    );
+                });
+
+                spec.it("scales legend bottom padding by same factor as legend height", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_measurement_scales_like_panel_dimension_between(
+                        &view,
+                        "legend_content_padding_bottom_vs_height",
+                        |v| v.get_floor_legend_content_padding_bottom(),
+                        |v| v.get_floor_legend_panel_height(),
+                        ZOOM_BEFORE,
+                        ZOOM_AFTER,
+                        0.01,
+                    );
+                });
+
+                spec.it("scales legend bottom padding by same factor as legend height when zooming out", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_measurement_scales_like_panel_dimension_between(
+                        &view,
+                        "legend_content_padding_bottom_vs_height_zoom_out",
+                        |v| v.get_floor_legend_content_padding_bottom(),
+                        |v| v.get_floor_legend_panel_height(),
+                        ZOOM_BEFORE,
+                        ZOOM_OUT,
+                        0.01,
+                    );
+                });
+
+                spec.it("scales first legend color-square X offset from legend corner", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_zoom_scaled_measurement(
+                        &view,
+                        "legend_first_square_offset_x",
+                        |v| v.get_floor_legend_first_square_offset_x(),
+                        0.01,
+                    );
+                });
+
+                spec.it("scales first legend row-rectangle X offset from legend corner", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_zoom_scaled_measurement(
+                        &view,
+                        "legend_first_row_offset_x",
+                        |v| v.get_floor_legend_first_row_offset_x(),
+                        0.01,
+                    );
+                });
+
+                spec.it("scales first legend color-square Y offset from legend corner", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_zoom_scaled_measurement(
+                        &view,
+                        "legend_first_square_offset_y",
+                        |v| v.get_floor_legend_first_square_offset_y(),
+                        0.01,
+                    );
+                });
+
+                spec.it("scales first legend row-rectangle Y offset from legend corner", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_zoom_scaled_measurement(
+                        &view,
+                        "legend_first_row_offset_y",
+                        |v| v.get_floor_legend_first_row_offset_y(),
+                        0.01,
+                    );
+                });
+
+                spec.it("scales last legend row bottom gap to legend border", |_| {
+                    ensure_slint_test_backend();
+                    let view = ShellHost::new().expect("shell host should be created in test backend");
+                    configure_floor_for_layout_measurement(&view);
+
+                    assert_zoom_scaled_measurement(
+                        &view,
+                        "legend_last_row_bottom_gap",
+                        |v| v.get_floor_legend_last_row_bottom_gap(),
                         0.01,
                     );
                 });
