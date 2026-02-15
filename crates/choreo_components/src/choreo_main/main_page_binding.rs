@@ -1905,11 +1905,14 @@ impl MainPageBinding {
 
         {
             let floor_view_model = Rc::clone(&floor_view_model);
-            view.on_floor_pointer_wheel_changed(move |delta, x, y| {
+            view.on_floor_pointer_wheel_changed(
+                move |delta_x, delta_y, x, y, control_modifier| {
                 let view_model = floor_view_model.borrow();
                 let command = PointerWheelChangedCommand {
                     canvas_view: CanvasViewHandle,
-                    delta: delta as f64,
+                    delta_x: delta_x as f64,
+                    delta_y: delta_y as f64,
+                    control_modifier,
                     position: Some(Point::new(x as f64, y as f64)),
                 };
                 view_model.pointer_wheel_changed(command);

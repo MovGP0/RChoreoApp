@@ -274,10 +274,21 @@ impl FloorTestContext {
         self.pump_events();
     }
 
-    pub fn send_pointer_wheel_changed(&self, delta: f64, position: Option<Point>) {
+    pub fn send_pointer_wheel_changed(
+        &self,
+        delta_x: f64,
+        delta_y: f64,
+        control_modifier: bool,
+        position: Option<Point>,
+    ) {
         self.view_model
             .borrow()
-            .pointer_wheel_changed(pointer_wheel_changed(delta, position));
+            .pointer_wheel_changed(pointer_wheel_changed(
+                delta_x,
+                delta_y,
+                control_modifier,
+                position,
+            ));
         self.pump_events();
     }
 
@@ -396,10 +407,17 @@ pub fn pointer_released(point: Point) -> PointerReleasedCommand {
     }
 }
 
-pub fn pointer_wheel_changed(delta: f64, position: Option<Point>) -> PointerWheelChangedCommand {
+pub fn pointer_wheel_changed(
+    delta_x: f64,
+    delta_y: f64,
+    control_modifier: bool,
+    position: Option<Point>,
+) -> PointerWheelChangedCommand {
     PointerWheelChangedCommand {
         canvas_view: CanvasViewHandle,
-        delta,
+        delta_x,
+        delta_y,
+        control_modifier,
         position,
     }
 }

@@ -25,7 +25,7 @@ fn gesture_handling_behavior_spec() {
             let context = floor::FloorTestContext::new();
             context.configure_canvas();
 
-            context.send_pointer_wheel_changed(120.0, Some(Point::new(50.0, 50.0)));
+            context.send_pointer_wheel_changed(0.0, 120.0, false, Some(Point::new(50.0, 50.0)));
 
             let zoomed = context.wait_until(Duration::from_secs(1), || {
                 context.view_model.borrow().transformation_matrix.scale_x() > 1.0
@@ -37,7 +37,7 @@ fn gesture_handling_behavior_spec() {
             let context = floor::FloorTestContext::new();
             context.configure_canvas();
 
-            context.send_pointer_wheel_changed(-120.0, Some(Point::new(50.0, 50.0)));
+            context.send_pointer_wheel_changed(0.0, -120.0, false, Some(Point::new(50.0, 50.0)));
 
             let zoomed = context.wait_until(Duration::from_secs(1), || {
                 context.view_model.borrow().transformation_matrix.scale_x() < 1.0
@@ -92,11 +92,77 @@ fn gesture_handling_behavior_spec() {
             assert!(zoomed);
         });
 
+        spec.it("pans with smooth scroll gesture deltas", |_| {
+            let context = floor::FloorTestContext::new();
+            context.configure_canvas();
+
+            context.send_pointer_wheel_changed(14.0, -10.0, false, Some(Point::new(50.0, 50.0)));
+
+            let panned = context.wait_until(Duration::from_secs(1), || {
+                let matrix = context.view_model.borrow().transformation_matrix;
+                (matrix.trans_x() - 14.0).abs() < 0.001 && (matrix.trans_y() + 10.0).abs() < 0.001
+            });
+            assert!(panned);
+        });
+
+        spec.it("pans with non-notched vertical scroll", |_| {
+            let context = floor::FloorTestContext::new();
+            context.configure_canvas();
+
+            context.send_pointer_wheel_changed(0.0, -96.0, false, Some(Point::new(50.0, 50.0)));
+
+            let panned = context.wait_until(Duration::from_secs(1), || {
+                let matrix = context.view_model.borrow().transformation_matrix;
+                matrix.scale_x() == 1.0 && (matrix.trans_y() + 96.0).abs() < 0.001
+            });
+            assert!(panned);
+        });
+
+        spec.it("ignores pointer drag while two-finger touch gesture is active", |_| {
+            let context = floor::FloorTestContext::new();
+            context.configure_canvas();
+
+            context.send_touch(
+                1,
+                choreo_components::floor::TouchAction::Pressed,
+                Point::new(40.0, 50.0),
+                true,
+            );
+            context.send_touch(
+                2,
+                choreo_components::floor::TouchAction::Pressed,
+                Point::new(60.0, 50.0),
+                true,
+            );
+            context.send_touch(
+                1,
+                choreo_components::floor::TouchAction::Moved,
+                Point::new(35.0, 50.0),
+                true,
+            );
+            context.send_touch(
+                2,
+                choreo_components::floor::TouchAction::Moved,
+                Point::new(65.0, 50.0),
+                true,
+            );
+
+            let before_pointer_drag = context.view_model.borrow().transformation_matrix;
+
+            context.send_pointer_pressed(Point::new(30.0, 30.0));
+            context.send_pointer_moved(Point::new(90.0, 90.0));
+            context.send_pointer_released(Point::new(90.0, 90.0));
+
+            context.pump_events();
+            let after_pointer_drag = context.view_model.borrow().transformation_matrix;
+            assert_eq!(after_pointer_drag, before_pointer_drag);
+        });
+
         spec.it("resets viewport on double tap", |_| {
             let context = floor::FloorTestContext::new();
             context.configure_canvas();
 
-            context.send_pointer_wheel_changed(120.0, Some(Point::new(50.0, 50.0)));
+            context.send_pointer_wheel_changed(0.0, 120.0, false, Some(Point::new(50.0, 50.0)));
             let zoomed = context.wait_until(Duration::from_secs(1), || {
                 context.view_model.borrow().transformation_matrix.scale_x() > 1.0
             });
@@ -108,7 +174,8 @@ fn gesture_handling_behavior_spec() {
             context.send_pointer_released(Point::new(42.0, 41.0));
 
             let reset = context.wait_until(Duration::from_secs(1), || {
-                context.view_model.borrow().transformation_matrix == choreo_components::floor::Matrix::identity()
+                context.view_model.borrow().transformation_matrix
+                    == choreo_components::floor::Matrix::identity()
             });
             assert!(reset);
         });

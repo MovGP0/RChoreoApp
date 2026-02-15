@@ -179,7 +179,13 @@ export component FloorCanvasView inherits Rectangle {
     callback pointer_pressed(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback pointer_moved(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback pointer_released(x: float, y: float, is_primary: bool, is_in_contact: bool);
-    callback pointer_wheel_changed(delta: float, x: float, y: float);
+    callback pointer_wheel_changed(
+        delta_x: float,
+        delta_y: float,
+        x: float,
+        y: float,
+        control_modifier: bool
+    );
 
     changed floor_bounds_left => { root.redraw(); }
     changed floor_bounds_top => { root.redraw(); }
@@ -761,9 +767,11 @@ export component FloorCanvasView inherits Rectangle {
 
                 scroll-event(event) => {
                     root.pointer_wheel_changed(
+                        event.delta-x / 1px,
                         event.delta-y / 1px,
                         self.mouse-x / 1px,
-                        self.mouse-y / 1px
+                        self.mouse-y / 1px,
+                        event.modifiers.control
                     );
                     return accept;
                 }

@@ -43,7 +43,9 @@ pub struct PointerReleasedCommand {
 #[derive(Debug, Clone, PartialEq)]
 pub struct PointerWheelChangedCommand {
     pub canvas_view: CanvasViewHandle,
-    pub delta: f64,
+    pub delta_x: f64,
+    pub delta_y: f64,
+    pub control_modifier: bool,
     pub position: Option<Point>,
 }
 

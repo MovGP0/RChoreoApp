@@ -194,7 +194,13 @@ export component MainPage inherits Rectangle {
     callback floor_pointer_pressed(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback floor_pointer_moved(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback floor_pointer_released(x: float, y: float, is_primary: bool, is_in_contact: bool);
-    callback floor_pointer_wheel_changed(delta: float, x: float, y: float);
+    callback floor_pointer_wheel_changed(
+        delta_x: float,
+        delta_y: float,
+        x: float,
+        y: float,
+        control_modifier: bool
+    );
     callback floor_redraw();
     callback audio_speed_changed(float);
     callback audio_position_changed(float);
@@ -419,8 +425,14 @@ export component MainPage inherits Rectangle {
                     pointer_released(x, y, is_primary, is_in_contact) => {
                         root.floor_pointer_released(x, y, is_primary, is_in_contact);
                     }
-                    pointer_wheel_changed(delta, x, y) => {
-                        root.floor_pointer_wheel_changed(delta, x, y);
+                    pointer_wheel_changed(delta_x, delta_y, x, y, control_modifier) => {
+                        root.floor_pointer_wheel_changed(
+                            delta_x,
+                            delta_y,
+                            x,
+                            y,
+                            control_modifier
+                        );
                     }
                     redraw => {
                         root.floor_redraw();

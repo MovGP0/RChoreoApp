@@ -21,6 +21,14 @@ use super::messages::{
 };
 use super::types::{Matrix, Point};
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+enum GestureArbitrationState {
+    #[default]
+    Idle,
+    Pointer,
+    Touch,
+}
+
 #[derive(Default, Clone)]
 #[injectable]
 #[inject(
@@ -59,13 +67,18 @@ pub struct GestureHandlingBehavior {
     last_touch_distance: Option<f64>,
     touch_pan_active: bool,
     touch_zoom_active: bool,
+    arbitration_state: GestureArbitrationState,
+    pointer_blocked_until: Option<Instant>,
 }
 
 impl GestureHandlingBehavior {
     pub const TOUCH_PAN_FACTOR: f32 = 0.5;
+    const WHEEL_NOTCH_DELTA: f64 = 120.0;
+    const WHEEL_NOTCH_EPSILON: f64 = 0.5;
     const DOUBLE_TAP_WINDOW: Duration = Duration::from_millis(350);
     const DOUBLE_TAP_MAX_DISTANCE: f64 = 24.0;
     const TAP_MOVE_TOLERANCE: f64 = 8.0;
+    const POINTER_BLOCK_AFTER_TOUCH: Duration = Duration::from_millis(180);
 
     pub fn new(
         state_machine: Rc<RefCell<ApplicationStateMachine>>,
@@ -96,12 +109,19 @@ impl GestureHandlingBehavior {
         }
 
         self.last_hover_position = Some(command.event_args.position);
+        if self.is_pointer_blocked() {
+            self.last_pointer_position = None;
+            self.pointer_press_origin = None;
+            self.pointer_moved_since_press = false;
+            return;
+        }
 
         if command.event_args.button != PointerButton::Primary {
             self.last_pointer_position = None;
             return;
         }
 
+        self.arbitration_state = GestureArbitrationState::Pointer;
         self.last_pointer_position = Some(command.event_args.position);
         self.pointer_press_origin = Some(command.event_args.position);
         self.pointer_moved_since_press = false;
@@ -118,6 +138,12 @@ impl GestureHandlingBehavior {
         }
 
         self.last_hover_position = Some(command.event_args.position);
+        if self.is_pointer_blocked() {
+            self.last_pointer_position = None;
+            self.pointer_press_origin = None;
+            self.pointer_moved_since_press = false;
+            return;
+        }
 
         let Some(last) = self.last_pointer_position else {
             return;
@@ -146,12 +172,19 @@ impl GestureHandlingBehavior {
         if Self::is_gesture_blocked(state_machine) {
             return;
         }
+        if self.is_pointer_blocked() {
+            self.last_pointer_position = None;
+            self.pointer_press_origin = None;
+            self.pointer_moved_since_press = false;
+            return;
+        }
 
         let _ = state_machine.try_apply(&PanCompletedTrigger);
         self.try_handle_tap_release(view_model, command);
         self.last_pointer_position = None;
         self.pointer_press_origin = None;
         self.pointer_moved_since_press = false;
+        self.arbitration_state = GestureArbitrationState::Idle;
     }
 
     fn handle_pointer_wheel_changed(
@@ -164,8 +197,22 @@ impl GestureHandlingBehavior {
             return;
         }
 
+        if self.is_pointer_blocked() {
+            return;
+        }
+
+        if Self::should_pan_with_wheel(&command) {
+            self.block_pointer_temporarily();
+            let _ = state_machine.try_apply(&PanStartedTrigger);
+            let delta_x = command.delta_x as f32;
+            let delta_y = command.delta_y as f32;
+            Self::apply_translation(view_model, delta_x, delta_y);
+            let _ = state_machine.try_apply(&PanCompletedTrigger);
+            return;
+        }
+
         let _ = state_machine.try_apply(&ZoomStartedTrigger);
-        let zoom_factor = if command.delta > 0.0 { 1.1 } else { 0.9 };
+        let zoom_factor = if command.delta_y > 0.0 { 1.1 } else { 0.9 };
         let zoom_center = command.position.or(self.last_hover_position);
         let Some(center) = zoom_center else {
             return;
@@ -179,6 +226,33 @@ impl GestureHandlingBehavior {
         );
         Self::apply_transformation(view_model, scale_matrix);
         let _ = state_machine.try_apply(&ZoomCompletedTrigger);
+    }
+
+    fn should_pan_with_wheel(command: &PointerWheelChangedCommand) -> bool {
+        if command.control_modifier {
+            return false;
+        }
+
+        if command.delta_x.abs() > f64::EPSILON {
+            return true;
+        }
+
+        !Self::is_notched_wheel_delta(command.delta_y)
+    }
+
+    fn is_notched_wheel_delta(delta: f64) -> bool {
+        let magnitude = delta.abs();
+        if magnitude <= f64::EPSILON {
+            return false;
+        }
+
+        let notch_count = (magnitude / Self::WHEEL_NOTCH_DELTA).round();
+        if notch_count < 1.0 {
+            return false;
+        }
+
+        let expected = notch_count * Self::WHEEL_NOTCH_DELTA;
+        (magnitude - expected).abs() <= Self::WHEEL_NOTCH_EPSILON
     }
 
     fn handle_touch(
@@ -195,6 +269,7 @@ impl GestureHandlingBehavior {
         if args.device_type != TouchDeviceType::Touch {
             return;
         }
+        self.transition_to_touch_mode();
 
         match args.action {
             TouchAction::Pressed => {
@@ -307,6 +382,8 @@ impl GestureHandlingBehavior {
         self.last_single_touch_position = None;
         self.last_touch_center = None;
         self.last_touch_distance = None;
+        self.arbitration_state = GestureArbitrationState::Idle;
+        self.block_pointer_temporarily();
     }
 
     fn apply_translation(view_model: &mut FloorCanvasViewModel, delta_x: f32, delta_y: f32) {
@@ -353,6 +430,27 @@ impl GestureHandlingBehavior {
         let dx = first.x - second.x;
         let dy = first.y - second.y;
         (dx * dx + dy * dy).sqrt()
+    }
+
+    fn transition_to_touch_mode(&mut self) {
+        self.arbitration_state = GestureArbitrationState::Touch;
+        self.block_pointer_temporarily();
+        self.last_pointer_position = None;
+        self.pointer_press_origin = None;
+        self.pointer_moved_since_press = false;
+    }
+
+    fn block_pointer_temporarily(&mut self) {
+        self.pointer_blocked_until = Some(Instant::now() + Self::POINTER_BLOCK_AFTER_TOUCH);
+    }
+
+    fn is_pointer_blocked(&self) -> bool {
+        if self.arbitration_state == GestureArbitrationState::Touch {
+            return true;
+        }
+
+        self.pointer_blocked_until
+            .is_some_and(|blocked_until| Instant::now() < blocked_until)
     }
 
     fn is_gesture_blocked(state_machine: &ApplicationStateMachine) -> bool {
