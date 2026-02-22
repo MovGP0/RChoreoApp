@@ -15,12 +15,12 @@ choreo_models = { path = "../choreo_models" }
 choreo_master_mobile_json = { path = "../choreo_master_mobile_json" }
 choreo_i18n = { path = "../choreo_i18n" }
 choreo_state_machine = { path = "../choreo_state_machine" }
-crossbeam-channel = "0.5"
-log = "0.4"
-slint = "1.15.0"
+crossbeam-channel = "0.5.15"
+log = "0.4.29"
+slint = "1.15.1"
 material-color-utilities = "1.0.0-dev.18"
 nject = "0.4.5"
-time = "0.3.46"
+time = "0.3.47"
 web-time = "1.1.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -29,7 +29,7 @@ dark-light = "2.0.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 dirs = "6.0.0"
-rodio = "0.17.3"
+rodio = "0.22.1"
 awedio = "0.6.0"
 symphonia = { version = "0.5.5", default-features = false, features = ["mp3"] }
 
@@ -39,16 +39,16 @@ web-sys = { version = "0.3", features = ["HtmlAudioElement", "HtmlMediaElement",
 web-audio-api = "1.2.0"
 
 [target.'cfg(target_os = "android")'.dependencies]
-jni = "0.21"
+jni = "0.22.1"
 ndk-context = "0.1"
 
 [target.'cfg(target_os = "ios")'.dependencies]
 objc = "0.2"
 
 [build-dependencies]
-slint-build = "1.15.0"
+slint-build = "1.15.1"
 
 [dev-dependencies]
 rspec = "1.0.0"
-i-slint-backend-testing = "1.15.0"
-serial_test = "3.2.0"
+i-slint-backend-testing = "1.15.1"
+serial_test = "3.4.0"

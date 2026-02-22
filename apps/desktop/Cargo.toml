@@ -14,8 +14,8 @@ debug-otel = [
 ]
 
 [dependencies]
-slint = "1.14.1"
-i-slint-backend-winit = "1.14.1"
+slint = "1.15.1"
+i-slint-backend-winit = "1.15.1"
 crossbeam-channel = "0.5.15"
 rfd = "0.17.2"
 opentelemetry = { version = "0.31", optional = true }

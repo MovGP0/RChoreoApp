@@ -1,11 +1,10 @@
 use std::fs::File;
-use std::io::BufReader;
 use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
 use crossbeam_channel::{Receiver, Sender, TrySendError, bounded};
-use rodio::{Decoder, OutputStream, Sink, Source};
+use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player, Source};
 use symphonia::core::formats::FormatOptions;
 use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::MetadataOptions;
@@ -199,38 +198,41 @@ impl Drop for RodioAudioPlayerActor {
 }
 
 enum Engine {
-    Rodio { _stream: OutputStream, sink: Sink },
+    Rodio {
+        _device_sink: MixerDeviceSink,
+        player: Player,
+    },
     Silent,
 }
 
 impl Engine {
     fn play(&self) {
-        if let Self::Rodio { sink, .. } = self {
-            sink.play();
+        if let Self::Rodio { player, .. } = self {
+            player.play();
         }
     }
 
     fn pause(&self) {
-        if let Self::Rodio { sink, .. } = self {
-            sink.pause();
+        if let Self::Rodio { player, .. } = self {
+            player.pause();
         }
     }
 
     fn set_speed(&self, speed: f64) {
-        if let Self::Rodio { sink, .. } = self {
-            sink.set_speed(speed as f32);
+        if let Self::Rodio { player, .. } = self {
+            player.set_speed(speed as f32);
         }
     }
 
     fn set_volume(&self, volume: f64) {
-        if let Self::Rodio { sink, .. } = self {
-            sink.set_volume(volume as f32);
+        if let Self::Rodio { player, .. } = self {
+            player.set_volume(volume as f32);
         }
     }
 
     fn is_empty(&self) -> bool {
         match self {
-            Self::Rodio { sink, .. } => sink.empty(),
+            Self::Rodio { player, .. } => player.empty(),
             Self::Silent => false,
         }
     }
@@ -388,49 +390,46 @@ impl NativeRuntime {
     }
 
     fn rebuild_sink(&mut self, start_seconds: f64, should_play: bool) {
-        let Some((stream, handle)) = OutputStream::try_default().ok() else {
+        let Some(device_sink) = DeviceSinkBuilder::open_default_sink().ok() else {
             self.engine = Engine::Silent;
             return;
         };
 
-        let Some(sink) = Sink::try_new(&handle).ok() else {
-            self.engine = Engine::Silent;
-            return;
-        };
+        let player = Player::connect_new(device_sink.mixer());
 
-        let loaded = append_source(&sink, &self.file_path, start_seconds);
+        let loaded = append_source(&player, &self.file_path, start_seconds);
         if !loaded {
             self.engine = Engine::Silent;
             return;
         }
 
-        sink.set_volume(self.volume as f32);
-        sink.set_speed(self.speed as f32);
+        player.set_volume(self.volume as f32);
+        player.set_speed(self.speed as f32);
         if should_play {
-            sink.play();
+            player.play();
         } else {
-            sink.pause();
+            player.pause();
         }
 
         self.engine = Engine::Rodio {
-            _stream: stream,
-            sink,
+            _device_sink: device_sink,
+            player,
         };
     }
 }
 
-fn append_source(sink: &Sink, file_path: &str, start_seconds: f64) -> bool {
+fn append_source(player: &Player, file_path: &str, start_seconds: f64) -> bool {
     let Some(file) = File::open(file_path).ok() else {
         return false;
     };
-    let Some(decoder) = Decoder::new(BufReader::new(file)).ok() else {
+    let Some(decoder) = Decoder::try_from(file).ok() else {
         return false;
     };
 
     if start_seconds > 0.0 {
-        sink.append(decoder.skip_duration(Duration::from_secs_f64(start_seconds)));
+        player.append(decoder.skip_duration(Duration::from_secs_f64(start_seconds)));
     } else {
-        sink.append(decoder);
+        player.append(decoder);
     }
     true
 }
@@ -439,7 +438,7 @@ pub(super) fn read_duration_seconds(file_path: &str) -> f64 {
     let Some(file) = File::open(file_path).ok() else {
         return 0.0;
     };
-    let Some(decoder) = Decoder::new(BufReader::new(file)).ok() else {
+    let Some(decoder) = Decoder::try_from(file).ok() else {
         return read_duration_seconds_with_symphonia(file_path);
     };
     let rodio_duration = decoder

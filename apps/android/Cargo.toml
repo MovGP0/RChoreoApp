@@ -7,8 +7,8 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-slint = { version = "1.14.1", features = ["backend-android-activity-06"] }
-crossbeam-channel = "0.5"
+slint = { version = "1.15.1", features = ["backend-android-activity-06"] }
+crossbeam-channel = "0.5.15"
 choreo_algorithms = { path = "../../crates/choreo_algorithms", package = "choreo_algorithms" }
 choreo_i18n = { path = "../../crates/choreo_i18n", package = "choreo_i18n" }
 choreo_master_mobile_json = { path = "../../crates/choreo_master_mobile_json", package = "choreo_master_mobile_json" }
