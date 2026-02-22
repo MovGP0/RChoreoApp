@@ -1,26 +1,8 @@
 import { Horizontal, IconButton, MaterialPalette, MaterialText, MaterialTypography, Slider } from "@material";
+import { AudioPlayerInfo } from "audio_player_info.slint";
 import { SliderWithTicks } from "slider_with_ticks.slint";
 
 export component AudioPlayerView inherits Rectangle {
-    in property <float> speed;
-    in property <float> minimum_speed;
-    in property <float> maximum_speed;
-    in property <float> position;
-    in property <float> duration;
-    in property <[float]> tick_values;
-    in property <bool> can_seek;
-    in property <bool> can_link_scene_to_position;
-    in property <bool> is_playing;
-    in property <string> speed_label;
-    in property <string> duration_label;
-
-    callback speed_changed(float);
-    callback position_changed(float);
-    callback position_drag_started();
-    callback position_drag_completed(float);
-    callback link_scene_to_position();
-    callback toggle_play_pause();
-
     background: MaterialPalette.surface_container_low;
     border-width: 1px;
     border-color: MaterialPalette.outline;
@@ -37,18 +19,23 @@ export component AudioPlayerView inherits Rectangle {
             // pointer positions; normalize speed to avoid collapsing to minimum.
             minimum: 0;
             maximum: 100;
-            value: maximum_speed == minimum_speed
+            value: AudioPlayerInfo.maximum_speed == AudioPlayerInfo.minimum_speed
                 ? 0
-                : (speed - minimum_speed) / (maximum_speed - minimum_speed) * 100;
+                : (AudioPlayerInfo.speed - AudioPlayerInfo.minimum_speed)
+                    / (AudioPlayerInfo.maximum_speed - AudioPlayerInfo.minimum_speed) * 100;
             width: 240px;
             value_changed(value) => {
-                let span = maximum_speed - minimum_speed;
-                speed_changed(span == 0 ? minimum_speed : minimum_speed + span * (value / 100));
+                let span = AudioPlayerInfo.maximum_speed - AudioPlayerInfo.minimum_speed;
+                AudioPlayerInfo.speed_changed(
+                    span == 0
+                        ? AudioPlayerInfo.minimum_speed
+                        : AudioPlayerInfo.minimum_speed + span * (value / 100)
+                );
             }
         }
 
         MaterialText {
-            text: speed_label;
+            text: AudioPlayerInfo.speed_label;
             color: MaterialPalette.on_surface_variant;
             font-size: MaterialTypography.label_large.font_size;
             font-weight: MaterialTypography.label_large.font_weight;
@@ -58,18 +45,18 @@ export component AudioPlayerView inherits Rectangle {
 
         SliderWithTicks {
             minimum: 0;
-            maximum: duration;
-            value: position;
-            enabled: can_seek;
+            maximum: AudioPlayerInfo.duration;
+            value: AudioPlayerInfo.position;
+            enabled: AudioPlayerInfo.can_seek;
             tick_color: MaterialPalette.tertiary;
-            value_changed(value) => { position_changed(value); }
-            drag_started => { position_drag_started(); }
-            drag_completed(value) => { position_drag_completed(value); }
-            tick_values: tick_values;
+            value_changed(value) => { AudioPlayerInfo.position_changed(value); }
+            drag_started => { AudioPlayerInfo.position_drag_started(); }
+            drag_completed(value) => { AudioPlayerInfo.position_drag_completed(value); }
+            tick_values: AudioPlayerInfo.tick_values;
         }
 
         MaterialText {
-            text: duration_label;
+            text: AudioPlayerInfo.duration_label;
             color: MaterialPalette.on_surface_variant;
             font-size: MaterialTypography.label_large.font_size;
             font-weight: MaterialTypography.label_large.font_weight;
@@ -78,14 +65,16 @@ export component AudioPlayerView inherits Rectangle {
         }
 
         IconButton {
-            icon: @image-url("icons/Link.svg");
-            enabled: can_link_scene_to_position;
-            clicked => { link_scene_to_position(); }
+            icon: @image-url("../../ui/icons/Link.svg");
+            enabled: AudioPlayerInfo.can_link_scene_to_position;
+            clicked => { AudioPlayerInfo.link_scene_to_position(); }
         }
 
         IconButton {
-            icon: is_playing ? @image-url("icons/Pause.svg") : @image-url("icons/Play.svg");
-            clicked => { toggle_play_pause(); }
+            icon: AudioPlayerInfo.is_playing
+                ? @image-url("../../ui/icons/Pause.svg")
+                : @image-url("../../ui/icons/Play.svg");
+            clicked => { AudioPlayerInfo.toggle_play_pause(); }
         }
     }
 }

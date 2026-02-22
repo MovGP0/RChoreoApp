@@ -1,0 +1,170 @@
+import { Horizontal, MaterialPalette, MaterialTypography } from "@material";
+import { ZoomPanInfo } from "zoom_pan_info.slint";
+
+export struct LegendEntry {
+    color: color,
+    shortcut: string,
+    name: string,
+    position_text: string,
+}
+
+export global FloorLegendEntries {
+    in-out property <[LegendEntry]> legend_entries: [];
+    in-out property <bool> show_legend: false;
+    in property <length> legend_padding: 8px;
+    in property <length> legend_row_spacing: 6px;
+    in property <length> legend_column_spacing: 10px;
+    in property <length> legend_square_size: 10px;
+    in property <length> legend_margin: 60px;
+    in property <length> legend_panel_width: 240px;
+    in property <length> legend_text_size: MaterialTypography.body_medium.font_size;
+    in property <int> legend_text_weight: MaterialTypography.body_medium.font_weight;
+    in property <float> legend_text_height_correction: 1.5;
+}
+
+export component FloorLegendPanel inherits Rectangle {
+    property <[LegendEntry]> legend_entries: FloorLegendEntries.legend_entries;
+    property <bool> show_legend: FloorLegendEntries.show_legend;
+    property <length> legend_padding: FloorLegendEntries.legend_padding;
+    property <length> legend_row_spacing: FloorLegendEntries.legend_row_spacing;
+    property <length> legend_column_spacing: FloorLegendEntries.legend_column_spacing;
+    property <length> legend_square_size: FloorLegendEntries.legend_square_size;
+    property <length> legend_panel_width: FloorLegendEntries.legend_panel_width;
+    property <length> legend_text_size: FloorLegendEntries.legend_text_size;
+    property <int> legend_text_weight: FloorLegendEntries.legend_text_weight;
+    property <float> legend_text_height_correction: FloorLegendEntries.legend_text_height_correction;
+    in property <float> text_scale: 1.0;
+
+    out property <float> panel_measured_width: self.width / 1px;
+    out property <float> panel_measured_height: self.height / 1px;
+    out property <float> content_padding_left:
+        (legend_content.x - legend_border_width_px * 1px) / 1px;
+    out property <float> content_padding_top:
+        (legend_content.y - legend_border_width_px * 1px) / 1px;
+    out property <float> content_padding_right:
+        (self.width - (legend_content.x + legend_content.width) - legend_border_width_px * 1px) / 1px;
+    out property <float> content_padding_bottom:
+        (self.height - (legend_content.y + legend_content.height) - legend_border_width_px * 1px) / 1px;
+    out property <float> first_square_offset_x:
+        (legend_first_square_probe.x - self.x) / 1px;
+    out property <float> first_square_offset_y:
+        (legend_first_square_probe.y - self.y) / 1px;
+    out property <float> first_row_offset_x:
+        (legend_first_row_probe.x - self.x) / 1px;
+    out property <float> first_row_offset_y:
+        (legend_first_row_probe.y - self.y) / 1px;
+    out property <float> last_row_bottom_gap:
+        (self.y + self.height - (legend_last_row_probe.y + legend_last_row_probe.height) - legend_border_width_px * 1px) / 1px;
+    out property <float> text_probe_font_size: corrected_legend_text_size / 1px;
+    out property <float> text_probe_height: legend_text_line_height_px;
+
+    property <length> corrected_legend_text_size:
+        ZoomPanInfo.corrected_text_size(legend_text_size, text_scale);
+    property <float> legend_text_line_height_px:
+        corrected_legend_text_size / 1px * legend_text_height_correction;
+    property <float> legend_square_size_px: legend_square_size / 1px * text_scale;
+    property <float> legend_row_inner_vertical_padding_px: 2.0 * text_scale;
+    property <float> legend_row_text_box_height_px:
+        legend_text_line_height_px + legend_row_inner_vertical_padding_px * 2.0;
+    property <float> legend_row_height_px:
+        legend_row_text_box_height_px > legend_square_size_px
+            ? legend_row_text_box_height_px
+            : legend_square_size_px;
+    property <float> legend_row_spacing_px: legend_row_spacing / 1px * text_scale;
+    property <float> legend_border_width_px: 1.0 * text_scale;
+    property <int> legend_entry_count: legend_entries.length;
+    property <float> legend_content_height_px:
+        legend_entry_count > 0
+            ? legend_entry_count * legend_row_height_px + (legend_entry_count - 1) * legend_row_spacing_px
+            : 0.0;
+
+    visible: show_legend && legend_entries.length > 0;
+    width: legend_panel_width * text_scale;
+    height: legend_content_height_px * 1px + (legend_padding * text_scale + legend_border_width_px * 1px) * 2;
+    background: transparent;
+    border-width: legend_border_width_px * 1px;
+    border-color: MaterialPalette.outline_variant;
+
+    legend_content := Rectangle {
+        x: legend_padding * text_scale + legend_border_width_px * 1px;
+        y: legend_padding * text_scale + legend_border_width_px * 1px;
+        width: parent.width - (legend_padding * text_scale + legend_border_width_px * 1px) * 2;
+        height: legend_content_height_px * 1px;
+        background: transparent;
+
+        for entry[index] in legend_entries: Rectangle {
+            x: 0px;
+            y: index * (legend_row_height_px + legend_row_spacing_px) * 1px;
+            width: parent.width;
+            height: legend_row_height_px * 1px;
+
+            Horizontal {
+                width: parent.width;
+                height: parent.height;
+                spacing: legend_column_spacing * text_scale;
+
+                Rectangle {
+                    width: legend_square_size * text_scale;
+                    height: legend_square_size * text_scale;
+                    background: entry.color;
+                    y: parent.height / 2 - self.height / 2;
+                }
+
+                Text {
+                    text: entry.shortcut;
+                    color: MaterialPalette.on_surface;
+                    font-size: corrected_legend_text_size;
+                    font-weight: legend_text_weight;
+                    y: parent.height / 2 - self.height / 2;
+                    vertical-alignment: center;
+                }
+
+                Text {
+                    text: entry.name;
+                    color: MaterialPalette.on_surface;
+                    font-size: corrected_legend_text_size;
+                    font-weight: legend_text_weight;
+                    y: parent.height / 2 - self.height / 2;
+                    vertical-alignment: center;
+                }
+
+                Text {
+                    text: entry.position_text;
+                    color: MaterialPalette.on_surface;
+                    font-size: corrected_legend_text_size;
+                    font-weight: legend_text_weight;
+                    y: parent.height / 2 - self.height / 2;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+
+    legend_first_square_probe := Rectangle {
+        visible: false;
+        width: legend_square_size * text_scale;
+        height: legend_square_size * text_scale;
+        x: parent.x + legend_content.x;
+        y: parent.y + legend_content.y + (legend_row_height_px * 1px - self.height) / 2;
+    }
+
+    legend_first_row_probe := Rectangle {
+        visible: false;
+        width: legend_content.width;
+        height: legend_row_height_px * 1px;
+        x: parent.x + legend_content.x;
+        y: parent.y + legend_content.y;
+    }
+
+    legend_last_row_probe := Rectangle {
+        visible: false;
+        width: legend_content.width;
+        height: legend_row_height_px * 1px;
+        x: parent.x + legend_content.x;
+        y: parent.y
+            + legend_content.y
+            + (legend_entry_count > 1
+                ? (legend_entry_count - 1) * (legend_row_height_px + legend_row_spacing_px)
+                : 0.0) * 1px;
+    }
+}

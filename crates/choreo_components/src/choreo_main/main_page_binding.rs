@@ -126,11 +126,18 @@ use crate::settings::{
 use crate::shell::ShellMaterialSchemeApplier;
 use crate::time::format_seconds;
 use crate::{
+    AudioPlayerInfo,
+    ChoreoInfo,
+    ChoreographySettings,
     DancerListItem,
     DancerRoleItem,
     Date,
+    FloorInfo,
     MenuItem,
+    SceneInfo,
     SceneListItem,
+    ScenesInfo,
+    SettingsInfo,
     ShellHost
 };
 use choreo_state_machine::ApplicationStateMachine;
@@ -1009,6 +1016,10 @@ impl MainPageBinding {
         floor_provider.borrow().apply_to_view(&view);
 
         bind_nav_bar(&view, Rc::clone(&nav_bar));
+        let scenes_info = view.global::<ScenesInfo<'_>>();
+        let settings_info = view.global::<SettingsInfo<'_>>();
+        let choreography_settings = view.global::<ChoreographySettings<'_>>();
+        let audio_player_info = view.global::<AudioPlayerInfo<'_>>();
 
         {
             let view_model = Rc::clone(&view_model);
@@ -1020,7 +1031,7 @@ impl MainPageBinding {
 
         {
             let scenes_view_model = Rc::clone(&scenes_view_model);
-            view.on_scenes_select_scene(move |index| {
+            scenes_info.on_select_scene(move |index| {
                 let mut view_model = scenes_view_model.borrow_mut();
                 if index >= 0 {
                     view_model.select_scene(index as usize);
@@ -1030,7 +1041,7 @@ impl MainPageBinding {
 
         {
             let scenes_view_model = Rc::clone(&scenes_view_model);
-            view.on_scenes_update_search_text(move |value| {
+            scenes_info.on_update_search_text(move |value| {
                 let mut view_model = scenes_view_model.borrow_mut();
                 view_model.update_search_text(value.to_string());
             });
@@ -1038,7 +1049,7 @@ impl MainPageBinding {
 
         {
             let scenes_view_model = Rc::clone(&scenes_view_model);
-            view.on_scenes_add_scene_before(move || {
+            scenes_info.on_add_scene_before(move || {
                 let mut view_model = scenes_view_model.borrow_mut();
                 view_model.add_scene_before();
             });
@@ -1046,7 +1057,7 @@ impl MainPageBinding {
 
         {
             let scenes_view_model = Rc::clone(&scenes_view_model);
-            view.on_scenes_add_scene_after(move || {
+            scenes_info.on_add_scene_after(move || {
                 let mut view_model = scenes_view_model.borrow_mut();
                 view_model.add_scene_after();
             });
@@ -1054,7 +1065,7 @@ impl MainPageBinding {
 
         {
             let scenes_view_model = Rc::clone(&scenes_view_model);
-            view.on_scenes_delete_scene(move || {
+            scenes_info.on_delete_scene(move || {
                 let mut view_model = scenes_view_model.borrow_mut();
                 view_model.delete_scene();
             });
@@ -1062,7 +1073,7 @@ impl MainPageBinding {
 
         {
             let scenes_view_model = Rc::clone(&scenes_view_model);
-            view.on_scenes_open_choreo(move || {
+            scenes_info.on_open_choreo(move || {
                 let mut view_model = scenes_view_model.borrow_mut();
                 view_model.open_choreo();
             });
@@ -1070,7 +1081,7 @@ impl MainPageBinding {
 
         {
             let scenes_view_model = Rc::clone(&scenes_view_model);
-            view.on_scenes_save_choreo(move || {
+            scenes_info.on_save_choreo(move || {
                 let mut view_model = scenes_view_model.borrow_mut();
                 view_model.save_choreo();
             });
@@ -1079,7 +1090,7 @@ impl MainPageBinding {
         {
             let scenes_view_model = Rc::clone(&scenes_view_model);
             let view_weak = view_weak.clone();
-            view.on_scenes_navigate_to_settings(move || {
+            scenes_info.on_navigate_to_settings(move || {
                 if let Some(view) = view_weak.upgrade() {
                     let next_index = if view.get_content_index() == 1 { 0 } else { 1 };
                     view.set_content_index(next_index);
@@ -1093,7 +1104,7 @@ impl MainPageBinding {
             let scenes_view_model = Rc::clone(&scenes_view_model);
             let view_weak = view_weak.clone();
             let dancers_provider = Rc::clone(&dancers_provider);
-            view.on_scenes_navigate_to_dancer_settings(move || {
+            scenes_info.on_navigate_to_dancer_settings(move || {
                 if let Some(view) = view_weak.upgrade() {
                     let next_index = if view.get_content_index() == 2 { 0 } else { 2 };
                     if next_index == 2 {
@@ -1108,7 +1119,7 @@ impl MainPageBinding {
 
         {
             let view_weak = view_weak.clone();
-            view.on_settings_navigate_back(move || {
+            settings_info.on_navigate_back(move || {
                 if let Some(view) = view_weak.upgrade() {
                     view.set_content_index(0);
                 }
@@ -1238,7 +1249,7 @@ impl MainPageBinding {
 
         {
             let settings_view_model = Rc::clone(&settings_view_model);
-            view.on_settings_update_use_system_theme(move |value| {
+            settings_info.on_update_use_system_theme(move |value| {
                 settings_view_model
                     .borrow_mut()
                     .update_use_system_theme(value);
@@ -1247,14 +1258,14 @@ impl MainPageBinding {
 
         {
             let settings_view_model = Rc::clone(&settings_view_model);
-            view.on_settings_update_is_dark_mode(move |value| {
+            settings_info.on_update_is_dark_mode(move |value| {
                 settings_view_model.borrow_mut().update_is_dark_mode(value);
             });
         }
 
         {
             let settings_view_model = Rc::clone(&settings_view_model);
-            view.on_settings_update_use_primary_color(move |value| {
+            settings_info.on_update_use_primary_color(move |value| {
                 settings_view_model
                     .borrow_mut()
                     .update_use_primary_color(value);
@@ -1263,7 +1274,7 @@ impl MainPageBinding {
 
         {
             let settings_view_model = Rc::clone(&settings_view_model);
-            view.on_settings_update_use_secondary_color(move |value| {
+            settings_info.on_update_use_secondary_color(move |value| {
                 settings_view_model
                     .borrow_mut()
                     .update_use_secondary_color(value);
@@ -1272,7 +1283,7 @@ impl MainPageBinding {
 
         {
             let settings_view_model = Rc::clone(&settings_view_model);
-            view.on_settings_update_use_tertiary_color(move |value| {
+            settings_info.on_update_use_tertiary_color(move |value| {
                 settings_view_model
                     .borrow_mut()
                     .update_use_tertiary_color(value);
@@ -1281,7 +1292,7 @@ impl MainPageBinding {
 
         {
             let settings_view_model = Rc::clone(&settings_view_model);
-            view.on_settings_update_primary_color(move |value| {
+            settings_info.on_update_primary_color(move |value| {
                 let color = choreo_color_from_slint(value);
                 let hex = color.to_hex();
                 let mut settings_view_model = settings_view_model.borrow_mut();
@@ -1292,7 +1303,7 @@ impl MainPageBinding {
 
         {
             let settings_view_model = Rc::clone(&settings_view_model);
-            view.on_settings_update_secondary_color(move |value| {
+            settings_info.on_update_secondary_color(move |value| {
                 let color = choreo_color_from_slint(value);
                 let hex = color.to_hex();
                 let mut settings_view_model = settings_view_model.borrow_mut();
@@ -1303,7 +1314,7 @@ impl MainPageBinding {
 
         {
             let settings_view_model = Rc::clone(&settings_view_model);
-            view.on_settings_update_tertiary_color(move |value| {
+            settings_info.on_update_tertiary_color(move |value| {
                 let color = choreo_color_from_slint(value);
                 let hex = color.to_hex();
                 let mut settings_view_model = settings_view_model.borrow_mut();
@@ -1314,7 +1325,7 @@ impl MainPageBinding {
 
         {
             let settings_view_model = Rc::clone(&settings_view_model);
-            view.on_settings_update_audio_backend(move |index| {
+            settings_info.on_update_audio_backend(move |index| {
                 let mut settings_view_model = settings_view_model.borrow_mut();
                 settings_view_model.update_audio_player_backend(
                     settings_audio_backend_from_index(index),
@@ -1326,7 +1337,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_scene_name(move |value| {
+            choreography_settings.on_update_scene_name(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_name = value.to_string();
@@ -1346,7 +1357,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_scene_text(move |value| {
+            choreography_settings.on_update_scene_text(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_text = value.to_string();
@@ -1366,7 +1377,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_scene_fixed_positions(move |value| {
+            choreography_settings.on_update_scene_fixed_positions(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_fixed_positions = value;
@@ -1385,7 +1396,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_scene_has_timestamp(move |value| {
+            choreography_settings.on_update_scene_has_timestamp(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_has_timestamp = value;
@@ -1407,7 +1418,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_scene_timestamp_parts(move |minutes, seconds, millis| {
+            choreography_settings.on_update_scene_timestamp_parts(move |minutes, seconds, millis| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model
@@ -1430,7 +1441,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_selected_scene_sender = update_selected_scene_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_scene_color(move |value| {
+            choreography_settings.on_update_scene_color(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.scene_color = choreo_color_from_slint(value);
@@ -1450,7 +1461,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_comment_sender = update_comment_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_comment(move |value| {
+            choreography_settings.on_update_comment(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.comment = value.to_string();
@@ -1470,7 +1481,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_name_sender = update_name_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_name(move |value| {
+            choreography_settings.on_update_name(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.name = value.to_string();
@@ -1490,7 +1501,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_subtitle_sender = update_subtitle_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_subtitle(move |value| {
+            choreography_settings.on_update_subtitle(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.subtitle = value.to_string();
@@ -1510,7 +1521,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_date_sender = update_date_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_date_parts(move |year, month, day| {
+            choreography_settings.on_update_date_parts(move |year, month, day| {
                 let Some(new_date) = crate::date::build_date(year, month, day) else {
                     return;
                 };
@@ -1533,7 +1544,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_variation_sender = update_variation_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_variation(move |value| {
+            choreography_settings.on_update_variation(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.variation = value.to_string();
@@ -1553,7 +1564,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_author_sender = update_author_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_author(move |value| {
+            choreography_settings.on_update_author(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.author = value.to_string();
@@ -1573,7 +1584,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_description_sender = update_description_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_description(move |value| {
+            choreography_settings.on_update_description(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.description = value.to_string();
@@ -1593,7 +1604,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_positions_at_side_sender = update_positions_at_side_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_positions_at_side(move |value| {
+            choreography_settings.on_update_positions_at_side(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.positions_at_side = value;
@@ -1612,7 +1623,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_draw_path_from_sender = update_draw_path_from_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_draw_path_from(move |value| {
+            choreography_settings.on_update_draw_path_from(move |value| {
                 let choreography_settings_view_model = choreography_settings_view_model.borrow();
                 let _ = update_draw_path_from_sender.send(UpdateDrawPathFromCommand { value });
                 if let Some(view) = view_weak.upgrade() {
@@ -1628,7 +1639,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_draw_path_to_sender = update_draw_path_to_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_draw_path_to(move |value| {
+            choreography_settings.on_update_draw_path_to(move |value| {
                 let choreography_settings_view_model = choreography_settings_view_model.borrow();
                 let _ = update_draw_path_to_sender.send(UpdateDrawPathToCommand { value });
                 if let Some(view) = view_weak.upgrade() {
@@ -1644,7 +1655,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_grid_lines_sender = update_grid_lines_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_grid_lines(move |value| {
+            choreography_settings.on_update_grid_lines(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.grid_lines = value;
@@ -1662,7 +1673,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_snap_to_grid_sender = update_snap_to_grid_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_snap_to_grid(move |value| {
+            choreography_settings.on_update_snap_to_grid(move |value| {
                 let choreography_settings_view_model = choreography_settings_view_model.borrow();
                 let _ = update_snap_to_grid_sender.send(UpdateSnapToGridCommand { value });
                 if let Some(view) = view_weak.upgrade() {
@@ -1678,7 +1689,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_show_timestamps_sender = update_show_timestamps_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_show_timestamps(move |value| {
+            choreography_settings.on_update_show_timestamps(move |value| {
                 let choreography_settings_view_model = choreography_settings_view_model.borrow();
                 let _ = update_show_timestamps_sender.send(UpdateShowTimestampsCommand { value });
                 if let Some(view) = view_weak.upgrade() {
@@ -1694,7 +1705,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_show_legend_sender = update_show_legend_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_show_legend(move |value| {
+            choreography_settings.on_update_show_legend(move |value| {
                 let choreography_settings_view_model = choreography_settings_view_model.borrow();
                 let _ = update_show_legend_sender.send(UpdateShowLegendCommand { value });
                 if let Some(view) = view_weak.upgrade() {
@@ -1710,7 +1721,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_transparency_sender = update_transparency_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_transparency(move |value| {
+            choreography_settings.on_update_transparency(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.transparency = value as f64;
@@ -1730,7 +1741,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_floor_color_sender = update_floor_color_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_floor_color(move |value| {
+            choreography_settings.on_update_floor_color(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 let floor_color = choreo_color_from_slint(value);
@@ -1750,7 +1761,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_floor_front_sender = update_floor_front_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_floor_front(move |value| {
+            choreography_settings.on_update_floor_front(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 let clamped = value.clamp(1, 100);
@@ -1769,7 +1780,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_floor_back_sender = update_floor_back_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_floor_back(move |value| {
+            choreography_settings.on_update_floor_back(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 let clamped = value.clamp(1, 100);
@@ -1788,7 +1799,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_floor_left_sender = update_floor_left_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_floor_left(move |value| {
+            choreography_settings.on_update_floor_left(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 let clamped = value.clamp(1, 100);
@@ -1807,7 +1818,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_floor_right_sender = update_floor_right_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_floor_right(move |value| {
+            choreography_settings.on_update_floor_right(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 let clamped = value.clamp(1, 100);
@@ -1826,7 +1837,7 @@ impl MainPageBinding {
             let choreography_settings_view_model = Rc::clone(&choreography_settings_view_model);
             let update_grid_resolution_sender = update_grid_resolution_sender.clone();
             let view_weak = view_weak.clone();
-            view.on_choreo_update_grid_resolution(move |value| {
+            choreography_settings.on_update_grid_resolution(move |value| {
                 let mut choreography_settings_view_model =
                     choreography_settings_view_model.borrow_mut();
                 choreography_settings_view_model.set_grid_resolution(value);
@@ -1929,7 +1940,7 @@ impl MainPageBinding {
         {
             let audio_player = Rc::clone(&audio_player);
             let view_weak = view_weak.clone();
-            view.on_audio_speed_changed(move |value| {
+            audio_player_info.on_speed_changed(move |value| {
                 let mut span = start_internal_span("audio_player.ui.speed_changed", None);
                 let mut audio_player = audio_player.borrow_mut();
                 let previous_speed = audio_player.speed;
@@ -1954,7 +1965,7 @@ impl MainPageBinding {
             let audio_player = Rc::clone(&audio_player);
             let audio_player_view_state = Rc::clone(&audio_player_view_state);
             let view_weak = view_weak.clone();
-            view.on_audio_position_changed(move |value| {
+            audio_player_info.on_position_changed(move |value| {
                 let mut audio_player = audio_player.borrow_mut();
                 let position = value as f64;
                 audio_player.position = position;
@@ -1985,7 +1996,7 @@ impl MainPageBinding {
             let view_weak = view_weak.clone();
             let slider_drag_start_position = Rc::clone(&slider_drag_start_position);
             let slider_drag_start_time = Rc::clone(&slider_drag_start_time);
-            view.on_audio_position_drag_started(move || {
+            audio_player_info.on_position_drag_started(move || {
                 let mut pointer_down_span =
                     start_internal_span("audio_player.ui.slider_pointer_down", None);
                 let mut span = start_internal_span("audio_player.ui.position_drag_started", None);
@@ -2022,7 +2033,7 @@ impl MainPageBinding {
             let view_weak = view_weak.clone();
             let slider_drag_start_position = Rc::clone(&slider_drag_start_position);
             let slider_drag_start_time = Rc::clone(&slider_drag_start_time);
-            view.on_audio_position_drag_completed(move |value| {
+            audio_player_info.on_position_drag_completed(move |value| {
                 let mut pointer_up_span =
                     start_internal_span("audio_player.ui.slider_pointer_up", None);
                 let mut span = start_internal_span("audio_player.ui.position_drag_completed", None);
@@ -2086,7 +2097,7 @@ impl MainPageBinding {
             let audio_player = Rc::clone(&audio_player);
             let global_state_store = Rc::clone(&deps.global_state_store);
             let view_weak = view_weak.clone();
-            view.on_audio_link_scene_to_position(move || {
+            audio_player_info.on_link_scene_to_position(move || {
                 let mut span = start_internal_span("audio_player.ui.link_scene_to_position", None);
                 let mut audio_player = audio_player.borrow_mut();
                 span.set_f64_attribute("choreo.audio.position_seconds", audio_player.position);
@@ -2116,7 +2127,7 @@ impl MainPageBinding {
         {
             let audio_player = Rc::clone(&audio_player);
             let view_weak = view_weak.clone();
-            view.on_audio_toggle_play_pause(move || {
+            audio_player_info.on_toggle_play_pause(move || {
                 let mut span = start_internal_span("audio_player.ui.toggle_play_pause", None);
                 let mut audio_player = audio_player.borrow_mut();
                 span.set_bool_attribute("choreo.audio.was_playing", audio_player.is_playing);
@@ -2232,13 +2243,16 @@ fn apply_view_model(view: &ShellHost, view_model: &MainViewModel) {
 }
 
 fn apply_scenes_view_model(view: &ShellHost, view_model: &ScenesPaneViewModel) {
-    view.set_scenes(build_scene_items(&view_model.scenes));
-    view.set_scenes_search_text(view_model.search_text.as_str().into());
-    view.set_scenes_show_timestamps(view_model.show_timestamps);
-    view.set_scenes_can_save_choreo(view_model.can_save_choreo);
-    view.set_scenes_can_delete_scene(view_model.can_delete_scene);
-    view.set_scenes_can_navigate_to_settings(view_model.can_navigate_to_settings);
-    view.set_scenes_can_navigate_to_dancer_settings(view_model.can_navigate_to_dancer_settings);
+    let scene_items = build_scene_items(&view_model.scenes);
+
+    let scenes_info = view.global::<ScenesInfo<'_>>();
+    scenes_info.set_scenes(scene_items);
+    scenes_info.set_search_text(view_model.search_text.as_str().into());
+    scenes_info.set_show_timestamps(view_model.show_timestamps);
+    scenes_info.set_can_save_choreo(view_model.can_save_choreo);
+    scenes_info.set_can_delete_scene(view_model.can_delete_scene);
+    scenes_info.set_can_navigate_to_settings(view_model.can_navigate_to_settings);
+    scenes_info.set_can_navigate_to_dancer_settings(view_model.can_navigate_to_dancer_settings);
 }
 
 fn apply_dancer_settings_view_model(view: &ShellHost, view_model: &DancerSettingsViewModel) {
@@ -2336,16 +2350,17 @@ fn apply_settings_view_model(view: &ShellHost, view_model: &SettingsViewModel) {
         view_model.theme_mode == ThemeMode::Dark
     };
 
-    view.set_settings_can_use_system_theme(can_use_system_theme);
-    view.set_settings_use_system_theme(use_system_theme);
-    view.set_settings_is_dark_mode(is_dark_mode);
-    view.set_settings_use_primary_color(view_model.use_primary_color);
-    view.set_settings_use_secondary_color(view_model.use_secondary_color);
-    view.set_settings_use_tertiary_color(view_model.use_tertiary_color);
-    view.set_settings_primary_color(slint_color_from_choreo(&view_model.primary_color));
-    view.set_settings_secondary_color(slint_color_from_choreo(&view_model.secondary_color));
-    view.set_settings_tertiary_color(slint_color_from_choreo(&view_model.tertiary_color));
-    view.set_settings_audio_backend_index(settings_audio_backend_to_index(
+    let settings_info = view.global::<SettingsInfo<'_>>();
+    settings_info.set_can_use_system_theme(can_use_system_theme);
+    settings_info.set_use_system_theme(use_system_theme);
+    settings_info.set_is_dark_mode(is_dark_mode);
+    settings_info.set_use_primary_color(view_model.use_primary_color);
+    settings_info.set_use_secondary_color(view_model.use_secondary_color);
+    settings_info.set_use_tertiary_color(view_model.use_tertiary_color);
+    settings_info.set_primary_color(slint_color_from_choreo(&view_model.primary_color));
+    settings_info.set_secondary_color(slint_color_from_choreo(&view_model.secondary_color));
+    settings_info.set_tertiary_color(slint_color_from_choreo(&view_model.tertiary_color));
+    settings_info.set_selected_audio_backend_index(settings_audio_backend_to_index(
         view_model.audio_player_backend,
     ));
 }
@@ -2376,47 +2391,51 @@ fn apply_choreography_settings_view_model(
     view: &ShellHost,
     view_model: &ChoreographySettingsViewModel,
 ) {
-    view.set_choreo_has_selected_scene(view_model.has_selected_scene);
-    view.set_choreo_scene_name(view_model.scene_name.as_str().into());
-    view.set_choreo_scene_text(view_model.scene_text.as_str().into());
-    view.set_choreo_scene_fixed_positions(view_model.scene_fixed_positions);
-    view.set_choreo_scene_has_timestamp(view_model.scene_has_timestamp);
-    view.set_choreo_scene_timestamp_minutes(view_model.scene_timestamp_minutes);
-    view.set_choreo_scene_timestamp_seconds(view_model.scene_timestamp_seconds_part);
-    view.set_choreo_scene_timestamp_millis(view_model.scene_timestamp_millis);
-    view.set_choreo_scene_color(slint_color_from_choreo(&view_model.scene_color));
+    let grid_resolution_index = view_model.grid_resolution().saturating_sub(1);
 
-    view.set_choreo_comment(view_model.comment.as_str().into());
-    view.set_choreo_name(view_model.name.as_str().into());
-    view.set_choreo_subtitle(view_model.subtitle.as_str().into());
-    view.set_choreo_date(slint_date_from_time(view_model.date));
-    view.set_choreo_variation(view_model.variation.as_str().into());
-    view.set_choreo_author(view_model.author.as_str().into());
-    view.set_choreo_description(view_model.description.as_str().into());
+    let scene_info = view.global::<SceneInfo<'_>>();
+    scene_info.set_has_selected_scene(view_model.has_selected_scene);
+    scene_info.set_scene_name(view_model.scene_name.as_str().into());
+    scene_info.set_scene_text(view_model.scene_text.as_str().into());
+    scene_info.set_scene_fixed_positions(view_model.scene_fixed_positions);
+    scene_info.set_scene_has_timestamp(view_model.scene_has_timestamp);
+    scene_info.set_scene_timestamp_minutes(view_model.scene_timestamp_minutes);
+    scene_info.set_scene_timestamp_seconds(view_model.scene_timestamp_seconds_part);
+    scene_info.set_scene_timestamp_millis(view_model.scene_timestamp_millis);
+    scene_info.set_choreo_scene_color(slint_color_from_choreo(&view_model.scene_color));
 
-    view.set_choreo_positions_at_side(view_model.positions_at_side);
-    view.set_choreo_draw_path_from(view_model.draw_path_from);
-    view.set_choreo_draw_path_to(view_model.draw_path_to);
-    view.set_choreo_grid_lines(view_model.grid_lines);
-    view.set_choreo_snap_to_grid(view_model.snap_to_grid);
-    view.set_choreo_show_timestamps(view_model.show_timestamps);
-    view.set_choreo_show_legend(view_model.show_legend);
-    view.set_choreo_transparency(view_model.transparency as f32);
-    view.set_choreo_floor_color(slint_color_from_choreo(&view_model.floor_color));
+    let choreo_info = view.global::<ChoreoInfo<'_>>();
+    choreo_info.set_choreo_comment(view_model.comment.as_str().into());
+    choreo_info.set_choreo_name(view_model.name.as_str().into());
+    choreo_info.set_choreo_subtitle(view_model.subtitle.as_str().into());
+    choreo_info.set_choreo_date(slint_date_from_time(view_model.date));
+    choreo_info.set_choreo_variation(view_model.variation.as_str().into());
+    choreo_info.set_choreo_author(view_model.author.as_str().into());
+    choreo_info.set_choreo_description(view_model.description.as_str().into());
+    choreo_info.set_choreo_transparency(view_model.transparency as f32);
 
-    view.set_choreo_floor_size_options(ModelRc::new(VecModel::from(
+    let choreography_settings = view.global::<ChoreographySettings<'_>>();
+    choreography_settings.set_positions_at_side(view_model.positions_at_side);
+    choreography_settings.set_draw_path_from(view_model.draw_path_from);
+    choreography_settings.set_draw_path_to(view_model.draw_path_to);
+    choreography_settings.set_snap_to_grid(view_model.snap_to_grid);
+    choreography_settings.set_show_timestamps(view_model.show_timestamps);
+    choreography_settings.set_show_legend(view_model.show_legend);
+    choreography_settings.set_grid_size_options(ModelRc::new(VecModel::from(
+        build_grid_menu_items(&view_model.grid_size_options),
+    )));
+    choreography_settings.set_grid_resolution_index(grid_resolution_index);
+
+    let floor_info = view.global::<FloorInfo<'_>>();
+    floor_info.set_floor_show_grid_lines(view_model.grid_lines);
+    floor_info.set_floor_color(slint_color_from_choreo(&view_model.floor_color));
+    floor_info.set_floor_size_options(ModelRc::new(VecModel::from(
         view_model.floor_size_options.clone(),
     )));
-    view.set_choreo_floor_front(view_model.floor_front);
-    view.set_choreo_floor_back(view_model.floor_back);
-    view.set_choreo_floor_left(view_model.floor_left);
-    view.set_choreo_floor_right(view_model.floor_right);
-
-    let grid_resolution_index = view_model.grid_resolution().saturating_sub(1);
-    view.set_choreo_grid_resolution_index(grid_resolution_index);
-    view.set_choreo_grid_size_options(ModelRc::new(VecModel::from(build_grid_menu_items(
-        &view_model.grid_size_options,
-    ))));
+    floor_info.set_floor_front(view_model.floor_front);
+    floor_info.set_floor_back(view_model.floor_back);
+    floor_info.set_floor_left(view_model.floor_left);
+    floor_info.set_floor_right(view_model.floor_right);
 }
 
 fn apply_audio_player_view_model(view: &ShellHost, view_model: &AudioPlayerViewModel) {
@@ -2431,23 +2450,24 @@ fn apply_audio_player_view_model(view: &ShellHost, view_model: &AudioPlayerViewM
         .max(view_model.position)
         .max(1.0);
 
-    view.set_audio_speed(view_model.speed as f32);
-    view.set_audio_minimum_speed(view_model.minimum_speed as f32);
-    view.set_audio_maximum_speed(view_model.maximum_speed as f32);
-    view.set_audio_position(view_model.position as f32);
-    view.set_audio_duration(slider_duration as f32);
-    view.set_audio_tick_values(ModelRc::new(VecModel::from(
+    let audio_player_info = view.global::<AudioPlayerInfo<'_>>();
+    audio_player_info.set_speed(view_model.speed as f32);
+    audio_player_info.set_minimum_speed(view_model.minimum_speed as f32);
+    audio_player_info.set_maximum_speed(view_model.maximum_speed as f32);
+    audio_player_info.set_position(view_model.position as f32);
+    audio_player_info.set_duration(slider_duration as f32);
+    audio_player_info.set_tick_values(ModelRc::new(VecModel::from(
         view_model
             .tick_values
             .iter()
             .map(|value| *value as f32)
             .collect::<Vec<_>>(),
     )));
-    view.set_audio_can_seek(view_model.can_seek);
-    view.set_audio_can_link_scene_to_position(view_model.can_link_scene_to_position);
-    view.set_audio_is_playing(view_model.is_playing);
-    view.set_audio_speed_label(view_model.speed_label.as_str().into());
-    view.set_audio_duration_label(view_model.duration_label.as_str().into());
+    audio_player_info.set_can_seek(view_model.can_seek);
+    audio_player_info.set_can_link_scene_to_position(view_model.can_link_scene_to_position);
+    audio_player_info.set_is_playing(view_model.is_playing);
+    audio_player_info.set_speed_label(view_model.speed_label.as_str().into());
+    audio_player_info.set_duration_label(view_model.duration_label.as_str().into());
 }
 
 fn link_selected_scene_to_audio_position(

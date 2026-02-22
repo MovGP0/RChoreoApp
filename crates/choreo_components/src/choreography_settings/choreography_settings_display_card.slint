@@ -1,19 +1,8 @@
 import { CheckBoxTile, CheckState, MaterialPalette, MaterialText, MaterialTypography, Vertical } from "@material";
-import { Translations } from "translations.slint";
+import { ChoreographySettings } from "choreography_settings.slint";
+import { Translations } from "../../ui/translations.slint";
 
 export component ChoreographySettingsDisplayCard inherits Rectangle {
-    in property <bool> draw_path_from;
-    in property <bool> draw_path_to;
-    in property <bool> show_timestamps;
-    in property <bool> positions_at_side;
-    in property <bool> show_legend;
-
-    callback update_draw_path_from(bool);
-    callback update_draw_path_to(bool);
-    callback update_show_timestamps(bool);
-    callback update_positions_at_side(bool);
-    callback update_show_legend(bool);
-
     background: MaterialPalette.surface_container;
     border-width: 1px;
     border-color: MaterialPalette.outline_variant;
@@ -31,41 +20,41 @@ export component ChoreographySettingsDisplayCard inherits Rectangle {
 
         CheckBoxTile {
             text: Translations.choreography_draw_path_from_label;
-            check_state: root.draw_path_from ? CheckState.checked : CheckState.unchecked;
+            check_state: ChoreographySettings.draw_path_from ? CheckState.checked : CheckState.unchecked;
             checked_state_changed(state) => {
-                root.update_draw_path_from(state == CheckState.checked);
+                ChoreographySettings.update_draw_path_from(state == CheckState.checked);
             }
         }
 
         CheckBoxTile {
             text: Translations.choreography_draw_path_to_label;
-            check_state: root.draw_path_to ? CheckState.checked : CheckState.unchecked;
+            check_state: ChoreographySettings.draw_path_to ? CheckState.checked : CheckState.unchecked;
             checked_state_changed(state) => {
-                root.update_draw_path_to(state == CheckState.checked);
+                ChoreographySettings.update_draw_path_to(state == CheckState.checked);
             }
         }
 
         CheckBoxTile {
             text: Translations.choreography_show_timestamps_label;
-            check_state: root.show_timestamps ? CheckState.checked : CheckState.unchecked;
+            check_state: ChoreographySettings.show_timestamps ? CheckState.checked : CheckState.unchecked;
             checked_state_changed(state) => {
-                root.update_show_timestamps(state == CheckState.checked);
+                ChoreographySettings.update_show_timestamps(state == CheckState.checked);
             }
         }
 
         CheckBoxTile {
             text: Translations.choreography_positions_at_side_label;
-            check_state: root.positions_at_side ? CheckState.checked : CheckState.unchecked;
+            check_state: ChoreographySettings.positions_at_side ? CheckState.checked : CheckState.unchecked;
             checked_state_changed(state) => {
-                root.update_positions_at_side(state == CheckState.checked);
+                ChoreographySettings.update_positions_at_side(state == CheckState.checked);
             }
         }
 
         CheckBoxTile {
             text: Translations.choreography_show_legend_label;
-            check_state: root.show_legend ? CheckState.checked : CheckState.unchecked;
+            check_state: ChoreographySettings.show_legend ? CheckState.checked : CheckState.unchecked;
             checked_state_changed(state) => {
-                root.update_show_legend(state == CheckState.checked);
+                ChoreographySettings.update_show_legend(state == CheckState.checked);
             }
         }
     }

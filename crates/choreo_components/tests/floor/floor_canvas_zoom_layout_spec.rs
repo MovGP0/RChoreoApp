@@ -4,8 +4,12 @@ use std::time::Duration;
 use crate::floor;
 
 use choreo_components::AxisLabel;
+use choreo_components::FloorInfo;
+use choreo_components::FloorMetricsInfo;
+use choreo_components::FloorLegendEntries;
 use choreo_components::LegendEntry;
 use choreo_components::ShellHost;
+use choreo_components::ZoomPanInfo;
 use floor::Report;
 use slint::Color;
 use slint::ComponentHandle;
@@ -45,25 +49,29 @@ fn assert_close(actual: f32, expected: f32, epsilon: f32) {
 
 fn configure_floor_for_layout_measurement(view: &ShellHost) {
     view.window().set_size(LogicalSize::new(1800.0, 1200.0));
-    view.set_floor_front(6);
-    view.set_floor_back(6);
-    view.set_floor_left(6);
-    view.set_floor_right(6);
-    view.set_floor_pan_x(0.0);
-    view.set_floor_pan_y(0.0);
-    view.set_floor_zoom_factor(ZOOM_BEFORE);
+    let floor_info = view.global::<FloorInfo<'_>>();
+    floor_info.set_floor_front(6);
+    floor_info.set_floor_back(6);
+    floor_info.set_floor_left(6);
+    floor_info.set_floor_right(6);
+    let zoom_pan_info = view.global::<ZoomPanInfo<'_>>();
+    zoom_pan_info.set_pan_x(0.0);
+    zoom_pan_info.set_pan_y(0.0);
+    zoom_pan_info.set_zoom_factor(ZOOM_BEFORE);
 
-    view.set_floor_show_axis_labels(true);
-    view.set_floor_axis_labels_x(ModelRc::new(VecModel::from(vec![AxisLabel {
+    floor_info.set_floor_show_axis_labels(true);
+    floor_info.set_floor_axis_labels_x(ModelRc::new(VecModel::from(vec![AxisLabel {
         value: 0.0,
         text: "0".into(),
     }])));
-    view.set_floor_axis_labels_y(ModelRc::new(VecModel::from(vec![AxisLabel {
+    floor_info.set_floor_axis_labels_y(ModelRc::new(VecModel::from(vec![AxisLabel {
         value: 0.0,
         text: "0".into(),
     }])));
 
-    view.set_floor_show_legend(true);
+    let floor_legend_entries = view.global::<FloorLegendEntries<'_>>();
+    floor_legend_entries.set_show_legend(true);
+
     let legend_entries: Vec<LegendEntry> = (0..20)
         .map(|index| LegendEntry {
             color: Color::from_rgb_u8(
@@ -76,15 +84,21 @@ fn configure_floor_for_layout_measurement(view: &ShellHost) {
             position_text: format!("({index}, {})", index + 1).into(),
         })
         .collect();
-    view.set_floor_legend_entries(ModelRc::new(VecModel::from(legend_entries)));
+    floor_legend_entries.set_legend_entries(ModelRc::new(VecModel::from(legend_entries)));
 
     pump_ui();
 }
 
 fn measure_at_zoom(view: &ShellHost, zoom: f32, measure: impl Fn(&ShellHost) -> f32) -> f32 {
-    view.set_floor_zoom_factor(zoom);
+    let zoom_pan_info = view.global::<ZoomPanInfo<'_>>();
+    zoom_pan_info.set_zoom_factor(zoom);
     pump_ui();
     measure(view)
+}
+
+fn measure_metric(view: &ShellHost, measure: impl Fn(&FloorMetricsInfo<'_>) -> f32) -> f32 {
+    let floor_metrics_info = view.global::<FloorMetricsInfo<'_>>();
+    measure(&floor_metrics_info)
 }
 
 fn assert_zoom_scaled_measurement(
@@ -162,7 +176,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "header_bottom",
-                        |v| v.get_floor_header_bottom(),
+                        |v| measure_metric(v, |m| m.get_floor_header_bottom()),
                         0.01,
                     );
                 });
@@ -175,7 +189,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "floor_top",
-                        |v| v.get_floor_bounds_top(),
+                        |v| measure_metric(v, |m| m.get_floor_bounds_top()),
                         0.01,
                     );
                 });
@@ -185,7 +199,7 @@ fn floor_canvas_zoom_layout_spec() {
                     let view = ShellHost::new().expect("shell host should be created in test backend");
                     configure_floor_for_layout_measurement(&view);
 
-                    assert_zoom_scaled_measurement(&view, "floor_width", |v| v.get_floor_width(), 0.01);
+                    assert_zoom_scaled_measurement(&view, "floor_width", |v| measure_metric(v, |m| m.get_floor_width()), 0.01);
                 });
 
                 spec.it("scales floor height", |_| {
@@ -193,7 +207,7 @@ fn floor_canvas_zoom_layout_spec() {
                     let view = ShellHost::new().expect("shell host should be created in test backend");
                     configure_floor_for_layout_measurement(&view);
 
-                    assert_zoom_scaled_measurement(&view, "floor_height", |v| v.get_floor_height(), 0.01);
+                    assert_zoom_scaled_measurement(&view, "floor_height", |v| measure_metric(v, |m| m.get_floor_height()), 0.01);
                 });
 
                 spec.it("scales legend panel width", |_| {
@@ -204,7 +218,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "legend_panel_width",
-                        |v| v.get_floor_legend_panel_width(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_panel_width()),
                         0.01,
                     );
                 });
@@ -217,7 +231,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "legend_panel_height",
-                        |v| v.get_floor_legend_panel_height(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_panel_height()),
                         0.02,
                     );
                 });
@@ -230,7 +244,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "side_label_left_gap",
-                        |v| v.get_floor_side_label_left_gap(),
+                        |v| measure_metric(v, |m| m.get_floor_side_label_left_gap()),
                         0.01,
                     );
                 });
@@ -243,7 +257,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "side_label_right_gap",
-                        |v| v.get_floor_side_label_right_gap(),
+                        |v| measure_metric(v, |m| m.get_floor_side_label_right_gap()),
                         0.01,
                     );
                 });
@@ -256,7 +270,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "top_label_vertical_gap",
-                        |v| v.get_floor_top_label_vertical_gap(),
+                        |v| measure_metric(v, |m| m.get_floor_top_label_vertical_gap()),
                         0.01,
                     );
                 });
@@ -269,7 +283,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "bottom_label_vertical_gap",
-                        |v| v.get_floor_bottom_label_vertical_gap(),
+                        |v| measure_metric(v, |m| m.get_floor_bottom_label_vertical_gap()),
                         0.01,
                     );
                 });
@@ -282,7 +296,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "legend_content_padding_left",
-                        |v| v.get_floor_legend_content_padding_left(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_content_padding_left()),
                         0.01,
                     );
                 });
@@ -295,8 +309,8 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_measurement_scales_like_panel_dimension_between(
                         &view,
                         "legend_content_padding_left_vs_width",
-                        |v| v.get_floor_legend_content_padding_left(),
-                        |v| v.get_floor_legend_panel_width(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_content_padding_left()),
+                        |v| measure_metric(v, |m| m.get_floor_legend_panel_width()),
                         ZOOM_BEFORE,
                         ZOOM_AFTER,
                         0.01,
@@ -311,8 +325,8 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_measurement_scales_like_panel_dimension_between(
                         &view,
                         "legend_content_padding_left_vs_width_zoom_out",
-                        |v| v.get_floor_legend_content_padding_left(),
-                        |v| v.get_floor_legend_panel_width(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_content_padding_left()),
+                        |v| measure_metric(v, |m| m.get_floor_legend_panel_width()),
                         ZOOM_BEFORE,
                         ZOOM_OUT,
                         0.01,
@@ -327,7 +341,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "legend_content_padding_top",
-                        |v| v.get_floor_legend_content_padding_top(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_content_padding_top()),
                         0.01,
                     );
                 });
@@ -340,8 +354,8 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_measurement_scales_like_panel_dimension_between(
                         &view,
                         "legend_content_padding_top_vs_height",
-                        |v| v.get_floor_legend_content_padding_top(),
-                        |v| v.get_floor_legend_panel_height(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_content_padding_top()),
+                        |v| measure_metric(v, |m| m.get_floor_legend_panel_height()),
                         ZOOM_BEFORE,
                         ZOOM_AFTER,
                         0.02,
@@ -356,8 +370,8 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_measurement_scales_like_panel_dimension_between(
                         &view,
                         "legend_content_padding_top_vs_height_zoom_out",
-                        |v| v.get_floor_legend_content_padding_top(),
-                        |v| v.get_floor_legend_panel_height(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_content_padding_top()),
+                        |v| measure_metric(v, |m| m.get_floor_legend_panel_height()),
                         ZOOM_BEFORE,
                         ZOOM_OUT,
                         0.01,
@@ -372,7 +386,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement_between(
                         &view,
                         "legend_content_padding_top_zoom_out",
-                        |v| v.get_floor_legend_content_padding_top(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_content_padding_top()),
                         ZOOM_BEFORE,
                         ZOOM_OUT,
                         0.01,
@@ -385,10 +399,10 @@ fn floor_canvas_zoom_layout_spec() {
                     configure_floor_for_layout_measurement(&view);
 
                     let top_padding = measure_at_zoom(&view, ZOOM_OUT, |v| {
-                        v.get_floor_legend_content_padding_top()
+                        measure_metric(v, |m| m.get_floor_legend_content_padding_top())
                     });
                     let bottom_padding = measure_at_zoom(&view, ZOOM_OUT, |v| {
-                        v.get_floor_legend_content_padding_bottom()
+                        measure_metric(v, |m| m.get_floor_legend_content_padding_bottom())
                     });
                     assert_close(top_padding, bottom_padding, 0.01);
                 });
@@ -401,7 +415,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "legend_content_padding_right",
-                        |v| v.get_floor_legend_content_padding_right(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_content_padding_right()),
                         0.01,
                     );
                 });
@@ -414,8 +428,8 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_measurement_scales_like_panel_dimension_between(
                         &view,
                         "legend_content_padding_right_vs_width",
-                        |v| v.get_floor_legend_content_padding_right(),
-                        |v| v.get_floor_legend_panel_width(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_content_padding_right()),
+                        |v| measure_metric(v, |m| m.get_floor_legend_panel_width()),
                         ZOOM_BEFORE,
                         ZOOM_AFTER,
                         0.01,
@@ -433,8 +447,8 @@ fn floor_canvas_zoom_layout_spec() {
                         assert_measurement_scales_like_panel_dimension_between(
                             &view,
                             "legend_content_padding_right_vs_width_zoom_out",
-                            |v| v.get_floor_legend_content_padding_right(),
-                            |v| v.get_floor_legend_panel_width(),
+                            |v| measure_metric(v, |m| m.get_floor_legend_content_padding_right()),
+                            |v| measure_metric(v, |m| m.get_floor_legend_panel_width()),
                             ZOOM_BEFORE,
                             ZOOM_OUT,
                             0.01,
@@ -450,7 +464,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "legend_content_padding_bottom",
-                        |v| v.get_floor_legend_content_padding_bottom(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_content_padding_bottom()),
                         0.01,
                     );
                 });
@@ -463,8 +477,8 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_measurement_scales_like_panel_dimension_between(
                         &view,
                         "legend_content_padding_bottom_vs_height",
-                        |v| v.get_floor_legend_content_padding_bottom(),
-                        |v| v.get_floor_legend_panel_height(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_content_padding_bottom()),
+                        |v| measure_metric(v, |m| m.get_floor_legend_panel_height()),
                         ZOOM_BEFORE,
                         ZOOM_AFTER,
                         0.02,
@@ -479,8 +493,8 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_measurement_scales_like_panel_dimension_between(
                         &view,
                         "legend_content_padding_bottom_vs_height_zoom_out",
-                        |v| v.get_floor_legend_content_padding_bottom(),
-                        |v| v.get_floor_legend_panel_height(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_content_padding_bottom()),
+                        |v| measure_metric(v, |m| m.get_floor_legend_panel_height()),
                         ZOOM_BEFORE,
                         ZOOM_OUT,
                         0.01,
@@ -495,7 +509,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "legend_first_square_offset_x",
-                        |v| v.get_floor_legend_first_square_offset_x(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_first_square_offset_x()),
                         0.01,
                     );
                 });
@@ -508,7 +522,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "legend_first_row_offset_x",
-                        |v| v.get_floor_legend_first_row_offset_x(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_first_row_offset_x()),
                         0.01,
                     );
                 });
@@ -521,7 +535,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "legend_first_square_offset_y",
-                        |v| v.get_floor_legend_first_square_offset_y(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_first_square_offset_y()),
                         0.02,
                     );
                 });
@@ -534,7 +548,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "legend_first_row_offset_y",
-                        |v| v.get_floor_legend_first_row_offset_y(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_first_row_offset_y()),
                         0.01,
                     );
                 });
@@ -547,7 +561,7 @@ fn floor_canvas_zoom_layout_spec() {
                     assert_zoom_scaled_measurement(
                         &view,
                         "legend_last_row_bottom_gap",
-                        |v| v.get_floor_legend_last_row_bottom_gap(),
+                        |v| measure_metric(v, |m| m.get_floor_legend_last_row_bottom_gap()),
                         0.01,
                     );
                 });
@@ -558,14 +572,14 @@ fn floor_canvas_zoom_layout_spec() {
                     configure_floor_for_layout_measurement(&view);
 
                     let font_size_before =
-                        measure_at_zoom(&view, ZOOM_BEFORE, |v| v.get_floor_legend_text_probe_font_size());
+                        measure_at_zoom(&view, ZOOM_BEFORE, |v| measure_metric(v, |m| m.get_floor_legend_text_probe_font_size()));
                     let text_height_before =
-                        measure_at_zoom(&view, ZOOM_BEFORE, |v| v.get_floor_legend_text_probe_height());
+                        measure_at_zoom(&view, ZOOM_BEFORE, |v| measure_metric(v, |m| m.get_floor_legend_text_probe_height()));
 
                     let font_size_after =
-                        measure_at_zoom(&view, ZOOM_AFTER, |v| v.get_floor_legend_text_probe_font_size());
+                        measure_at_zoom(&view, ZOOM_AFTER, |v| measure_metric(v, |m| m.get_floor_legend_text_probe_font_size()));
                     let text_height_after =
-                        measure_at_zoom(&view, ZOOM_AFTER, |v| v.get_floor_legend_text_probe_height());
+                        measure_at_zoom(&view, ZOOM_AFTER, |v| measure_metric(v, |m| m.get_floor_legend_text_probe_height()));
 
                     assert!(font_size_before > 0.0, "font size baseline must be positive");
                     assert!(text_height_before > 0.0, "text height baseline must be positive");

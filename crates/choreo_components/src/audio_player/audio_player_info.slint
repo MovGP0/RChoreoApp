@@ -1,0 +1,20 @@
+export global AudioPlayerInfo {
+    in property <float> speed: 1.0;
+    in property <float> minimum_speed: 0.8;
+    in property <float> maximum_speed: 1.1;
+    in property <float> position: 0.0;
+    in property <float> duration: 0.0;
+    in property <[float]> tick_values: [];
+    in property <bool> can_seek: false;
+    in property <bool> can_link_scene_to_position: false;
+    in property <bool> is_playing: false;
+    in property <string> speed_label: "";
+    in property <string> duration_label: "";
+
+    callback speed_changed(float);
+    callback position_changed(float);
+    callback position_drag_started();
+    callback position_drag_completed(float);
+    callback link_scene_to_position();
+    callback toggle_play_pause();
+}

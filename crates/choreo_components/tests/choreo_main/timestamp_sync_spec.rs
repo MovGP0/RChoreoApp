@@ -9,14 +9,19 @@ use choreo_components::audio_player::{
     CloseAudioFileCommand, LinkSceneToPositionCommand, build_audio_player_behaviors,
 };
 use choreo_components::choreo_main::{MainPageActionHandlers, MainPageBinding, MainPageDependencies};
+use choreo_components::AudioPlayerInfo;
+use choreo_components::FloorInfo;
 use choreo_components::global::GlobalProvider;
 use choreo_components::preferences::{InMemoryPreferences, Preferences};
 use choreo_components::shell;
+use choreo_components::SceneInfo;
+use choreo_components::ScenesInfo;
 use choreo_master_mobile_json::SceneId;
 use choreo_models::{
     ChoreographyModel, Colors, DancerModel, FloorModel, PositionModel, RoleModel, SceneModel,
 };
 use crossbeam_channel::{bounded, unbounded};
+use slint::ComponentHandle;
 use slint::Model;
 
 use choreo_main::Report;
@@ -35,6 +40,14 @@ fn wait_until(timeout: Duration, mut predicate: impl FnMut() -> bool) -> bool {
         pump_ui(20);
     }
     predicate()
+}
+
+fn audio_position(view: &choreo_components::ShellHost) -> f32 {
+    view.global::<AudioPlayerInfo<'_>>().get_position()
+}
+
+fn scene_count(view: &choreo_components::ShellHost) -> usize {
+    view.global::<ScenesInfo<'_>>().get_scenes().row_count()
 }
 
 fn build_scene(scene_id: i32, name: &str, timestamp: &str) -> SceneModel {
@@ -186,14 +199,14 @@ fn timestamp_sync_spec() {
 
                     let view = binding.view();
                     let selected = wait_until(Duration::from_secs(1), || {
-                        view.get_scenes().row_count() >= 2
+                        scene_count(view) >= 2
                     });
                     assert!(selected);
 
-                    view.invoke_scenes_select_scene(1);
+                    view.global::<ScenesInfo<'_>>().invoke_select_scene(1);
                     let synced = wait_until(Duration::from_secs(1), || {
-                        (view.get_audio_position() - 10.0).abs() < 0.01
-                            && view.get_floor_scene_name() == "Scene 2"
+                        (audio_position(view) - 10.0).abs() < 0.01
+                            && view.global::<SceneInfo<'_>>().get_scene_name() == "Scene 2"
                     });
                     assert!(synced);
                 });
@@ -276,13 +289,13 @@ fn timestamp_sync_spec() {
 
                     let view = binding.view();
                     let ready = wait_until(Duration::from_secs(1), || {
-                        view.get_scenes().row_count() >= 3
+                        scene_count(view) >= 3
                     });
                     assert!(ready);
 
-                    view.invoke_audio_position_changed(12.0);
+                    view.global::<AudioPlayerInfo<'_>>().invoke_position_changed(12.0);
                     let synced = wait_until(Duration::from_secs(1), || {
-                        view.get_floor_scene_name() == "Scene 2"
+                        view.global::<SceneInfo<'_>>().get_scene_name() == "Scene 2"
                     });
                     assert!(synced);
                 });
@@ -375,23 +388,23 @@ fn timestamp_sync_spec() {
 
                     let view = binding.view();
                     assert!(wait_until(Duration::from_secs(1), || {
-                        view.get_scenes().row_count() >= 2
+                        scene_count(view) >= 2
                     }));
 
                     assert!(wait_until(Duration::from_secs(1), || {
-                        (view.get_audio_position() - 5.0).abs() < 0.01
+                        (audio_position(view) - 5.0).abs() < 0.01
                     }));
 
-                    view.invoke_scenes_select_scene(1);
+                    view.global::<ScenesInfo<'_>>().invoke_select_scene(1);
                     let synced = wait_until(Duration::from_secs(1), || {
-                        (view.get_audio_position() - 5.0).abs() < 0.01
-                            && view.get_floor_scene_name() == "Scene 2"
+                        (audio_position(view) - 5.0).abs() < 0.01
+                            && view.global::<SceneInfo<'_>>().get_scene_name() == "Scene 2"
                     });
                     assert!(
                         synced,
                         "audio_position={}, floor_scene_name={}",
-                        view.get_audio_position(),
-                        view.get_floor_scene_name()
+                        audio_position(view),
+                        view.global::<SceneInfo<'_>>().get_scene_name()
                     );
                 });
             },
@@ -493,12 +506,12 @@ fn timestamp_sync_spec() {
 
                     let view = binding.view();
                     assert!(wait_until(Duration::from_secs(1), || {
-                        view.get_scenes().row_count() >= 2
+                        scene_count(view) >= 2
                     }));
 
-                    view.invoke_audio_position_changed(5.0);
+                    view.global::<AudioPlayerInfo<'_>>().invoke_position_changed(5.0);
                     let synced = wait_until(Duration::from_secs(1), || {
-                        let positions = view.get_floor_positions();
+                        let positions = view.global::<FloorInfo<'_>>().get_floor_positions();
                         if positions.row_count() == 0 {
                             return false;
                         }
@@ -516,3 +529,4 @@ fn timestamp_sync_spec() {
     let report = choreo_main::run_suite(&suite);
     assert!(report.is_success());
 }
+

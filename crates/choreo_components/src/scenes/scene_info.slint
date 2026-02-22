@@ -1,0 +1,14 @@
+import { MaterialPalette } from "@material";
+
+// information about a scene
+export global SceneInfo {
+    in-out property <bool> has_selected_scene: false;
+    in-out property <string> scene_name: "Lorem ipsum";
+    in-out property <string> scene_text: "";
+    in-out property <bool> scene_fixed_positions: false;
+    in-out property <bool> scene_has_timestamp: false;
+    in-out property <int> scene_timestamp_minutes: 0;
+    in-out property <int> scene_timestamp_seconds: 0;
+    in-out property <int> scene_timestamp_millis: 0;
+    in-out property <color> choreo_scene_color: MaterialPalette.primary;
+}

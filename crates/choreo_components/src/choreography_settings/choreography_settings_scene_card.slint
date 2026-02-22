@@ -1,0 +1,115 @@
+import { CheckBoxTile, CheckState, MaterialPalette, MaterialText, MaterialTypography, TextField, Vertical } from "@material";
+import { ChoreographySettings } from "choreography_settings.slint";
+import { SceneInfo } from "../scenes/scene_info.slint";
+import { ColorPicker } from "../color_picker/color_picker.slint";
+import { NumberPicker } from "../../ui/number_picker.slint";
+import { Translations } from "../../ui/translations.slint";
+
+export component ChoreographySettingsSceneCard inherits Rectangle {
+    background: MaterialPalette.surface_container;
+    border-width: 1px;
+    border-color: MaterialPalette.outline_variant;
+    border-radius: 8px;
+
+    Vertical {
+        padding: 12px;
+        spacing: 8px;
+
+        MaterialText {
+            text: Translations.scene_section_title;
+            font-size: MaterialTypography.title_large.font_size;
+            font-weight: MaterialTypography.title_large.font_weight;
+        }
+
+        TextField {
+            label: Translations.scene_name_label;
+            text: SceneInfo.scene_name;
+            enabled: SceneInfo.has_selected_scene;
+            edited(new_value) => { ChoreographySettings.update_scene_name(new_value); }
+        }
+
+        TextField {
+            label: Translations.scene_text_label;
+            text: SceneInfo.scene_text;
+            enabled: SceneInfo.has_selected_scene;
+            edited(new_value) => { ChoreographySettings.update_scene_text(new_value); }
+        }
+
+        CheckBoxTile {
+            text: Translations.scene_fixed_positions_label;
+            check_state: SceneInfo.scene_fixed_positions ? CheckState.checked : CheckState.unchecked;
+            enabled: SceneInfo.has_selected_scene;
+            checked_state_changed(state) => {
+                ChoreographySettings.update_scene_fixed_positions(state == CheckState.checked);
+            }
+        }
+
+        CheckBoxTile {
+            text: Translations.scene_timestamp_label;
+            check_state: SceneInfo.scene_has_timestamp ? CheckState.checked : CheckState.unchecked;
+            enabled: SceneInfo.has_selected_scene;
+            checked_state_changed(state) => {
+                ChoreographySettings.update_scene_has_timestamp(state == CheckState.checked);
+            }
+        }
+
+        NumberPicker {
+            label: Translations.scene_timestamp_minutes_label;
+            value: SceneInfo.scene_timestamp_minutes;
+            minimum: 0;
+            maximum: 1440;
+            step: 1;
+            enabled: SceneInfo.has_selected_scene && SceneInfo.scene_has_timestamp;
+            value_changed(value) => {
+                ChoreographySettings.update_scene_timestamp_parts(
+                    value,
+                    SceneInfo.scene_timestamp_seconds,
+                    SceneInfo.scene_timestamp_millis
+                );
+            }
+        }
+
+        NumberPicker {
+            label: Translations.scene_timestamp_seconds_label;
+            value: SceneInfo.scene_timestamp_seconds;
+            minimum: 0;
+            maximum: 59;
+            step: 1;
+            enabled: SceneInfo.has_selected_scene && SceneInfo.scene_has_timestamp;
+            value_changed(value) => {
+                ChoreographySettings.update_scene_timestamp_parts(
+                    SceneInfo.scene_timestamp_minutes,
+                    value,
+                    SceneInfo.scene_timestamp_millis
+                );
+            }
+        }
+
+        NumberPicker {
+            label: Translations.scene_timestamp_milliseconds_label;
+            value: SceneInfo.scene_timestamp_millis;
+            minimum: 0;
+            maximum: 999;
+            step: 10;
+            enabled: SceneInfo.has_selected_scene && SceneInfo.scene_has_timestamp;
+            value_changed(value) => {
+                ChoreographySettings.update_scene_timestamp_parts(
+                    SceneInfo.scene_timestamp_minutes,
+                    SceneInfo.scene_timestamp_seconds,
+                    value
+                );
+            }
+        }
+
+        MaterialText {
+            text: Translations.scene_color_label;
+            color: MaterialPalette.on_surface_variant;
+            font-size: MaterialTypography.body_medium.font_size;
+            font-weight: MaterialTypography.body_medium.font_weight;
+        }
+        ColorPicker {
+            selected_color: SceneInfo.choreo_scene_color;
+            color_changed(color) => { ChoreographySettings.update_scene_color(color); }
+        }
+    }
+}

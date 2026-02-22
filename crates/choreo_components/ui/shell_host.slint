@@ -1,17 +1,10 @@
 import { MaterialPalette, MaterialWindow, MenuItem } from "@material";
-import {
-    AxisLabel,
-    FloorCurve,
-    FloorPosition,
-    LegendEntry,
-    LineSegment
-} from "floor_canvas_view.slint";
 import { MainPage } from "main_page.slint";
 import { DancerSettingsPage } from "dancer_settings_page.slint";
-import { SettingsPage } from "settings_page.slint";
+import { SettingsPage } from "../src/settings/settings_page.slint";
+import { SettingsInfo } from "../src/settings/settings_info.slint";
 import { DancerListItem } from "dancers_pane_view.slint";
-import { SceneListItem } from "scenes_pane_view.slint";
-import { Date, Palette } from "std-widgets.slint";
+import { Palette } from "std-widgets.slint";
 import { Translations } from "translations.slint";
 
 export component ShellHost inherits MaterialWindow {
@@ -25,13 +18,6 @@ export component ShellHost inherits MaterialWindow {
     in-out property <bool> is_audio_player_open: false;
     in-out property <bool> is_dialog_open: false;
     in property <string> dialog_content;
-    in property <[SceneListItem]> scenes;
-    in property <string> scenes_search_text;
-    in property <bool> scenes_show_timestamps;
-    in property <bool> scenes_can_save_choreo;
-    in property <bool> scenes_can_delete_scene;
-    in property <bool> scenes_can_navigate_to_settings;
-    in property <bool> scenes_can_navigate_to_dancer_settings;
     in property <[DancerListItem]> dancer_settings_dancer_items: [];
     in property <int> dancer_settings_selected_dancer_index: -1;
     in property <bool> dancer_settings_can_delete_dancer: false;
@@ -44,113 +30,6 @@ export component ShellHost inherits MaterialWindow {
     in property <string> dancer_settings_dancer_name: "";
     in property <string> dancer_settings_dancer_shortcut: "";
     in property <color> dancer_settings_dancer_color: MaterialPalette.primary;
-    in property <bool> settings_use_system_theme: true;
-    in property <bool> settings_can_use_system_theme: true;
-    in property <bool> settings_is_dark_mode: false;
-    in property <bool> settings_use_primary_color: false;
-    in property <bool> settings_use_secondary_color: false;
-    in property <bool> settings_use_tertiary_color: false;
-    in property <color> settings_primary_color: MaterialPalette.primary;
-    in property <color> settings_secondary_color: MaterialPalette.secondary;
-    in property <color> settings_tertiary_color: MaterialPalette.tertiary;
-    in property <int> settings_audio_backend_index: 0;
-    in property <bool> choreo_has_selected_scene: false;
-    in property <string> choreo_scene_name: "";
-    in property <string> choreo_scene_text: "";
-    in property <bool> choreo_scene_fixed_positions: false;
-    in property <bool> choreo_scene_has_timestamp: false;
-    in property <int> choreo_scene_timestamp_minutes: 0;
-    in property <int> choreo_scene_timestamp_seconds: 0;
-    in property <int> choreo_scene_timestamp_millis: 0;
-    in property <color> choreo_scene_color: MaterialPalette.primary;
-    in property <string> choreo_comment: "";
-    in property <string> choreo_name: "";
-    in property <string> choreo_subtitle: "";
-    in property <Date> choreo_date;
-    in property <string> choreo_date_label: Translations.choreography_date_label;
-    in property <string> choreo_date_picker_title: Translations.choreography_date_picker_title;
-    in property <string> choreo_variation: "";
-    in property <string> choreo_author: "";
-    in property <string> choreo_description: "";
-    in property <bool> choreo_positions_at_side: false;
-    in property <bool> choreo_draw_path_from: false;
-    in property <bool> choreo_draw_path_to: false;
-    in property <bool> choreo_grid_lines: false;
-    in property <bool> choreo_snap_to_grid: false;
-    in property <bool> choreo_show_timestamps: false;
-    in property <bool> choreo_show_legend: false;
-    in property <float> choreo_transparency: 0.0;
-    in property <color> choreo_floor_color: MaterialPalette.surface_variant;
-    in property <[int]> choreo_floor_size_options: [];
-    in property <int> choreo_floor_front: 0;
-    in property <int> choreo_floor_back: 0;
-    in property <int> choreo_floor_left: 0;
-    in property <int> choreo_floor_right: 0;
-    in property <[MenuItem]> choreo_grid_size_options: [];
-    in property <int> choreo_grid_resolution_index: 0;
-    in property <string> floor_choreography_name: "";
-    in property <string> floor_scene_name: "";
-    in property <int> floor_front: 6;
-    in property <int> floor_back: 6;
-    in property <int> floor_left: 6;
-    in property <int> floor_right: 6;
-    in property <bool> floor_show_grid_lines: true;
-    in property <color> floor_color: MaterialPalette.surface_variant;
-    in property <color> floor_subtitle_color: MaterialPalette.on_surface_variant;
-    in property <float> floor_pan_x: 0.0;
-    in property <float> floor_pan_y: 0.0;
-    in property <float> floor_zoom_factor: 1.0;
-    in property <float> floor_dancer_size: 1.0;
-    in property <[FloorPosition]> floor_positions: [];
-    in property <[FloorCurve]> floor_curves: [];
-    in property <[LineSegment]> floor_dashed_curve_segments: [];
-    in property <[LineSegment]> floor_selection_segments: [];
-    in property <[AxisLabel]> floor_axis_labels_x: [];
-    in property <[AxisLabel]> floor_axis_labels_y: [];
-    in property <bool> floor_show_axis_labels: false;
-    in property <[LegendEntry]> floor_legend_entries: [];
-    in property <bool> floor_show_legend: false;
-    in property <image> floor_svg_overlay;
-    in property <bool> floor_has_svg_overlay: false;
-    in property <bool> floor_show_placement_overlay: false;
-    in property <int> floor_remaining_positions: 0;
-    in property <float> audio_speed: 1.0;
-    in property <float> audio_minimum_speed: 0.8;
-    in property <float> audio_maximum_speed: 1.1;
-    in property <float> audio_position: 0.0;
-    in property <float> audio_duration: 0.0;
-    in property <[float]> audio_tick_values: [];
-    in property <bool> audio_can_seek: false;
-    in property <bool> audio_can_link_scene_to_position: false;
-    in property <bool> audio_is_playing: false;
-    in property <string> audio_speed_label: "";
-    in property <string> audio_duration_label: "";
-    out property <float> floor_bounds_left: main_page.floor_bounds_left;
-    out property <float> floor_bounds_top: main_page.floor_bounds_top;
-    out property <float> floor_bounds_right: main_page.floor_bounds_right;
-    out property <float> floor_bounds_bottom: main_page.floor_bounds_bottom;
-    out property <float> floor_canvas_width: main_page.floor_canvas_width;
-    out property <float> floor_canvas_height: main_page.floor_canvas_height;
-    out property <float> floor_header_bottom: main_page.floor_header_bottom;
-    out property <float> floor_width: main_page.floor_width;
-    out property <float> floor_height: main_page.floor_height;
-    out property <float> floor_legend_panel_width: main_page.floor_legend_panel_width;
-    out property <float> floor_legend_panel_height: main_page.floor_legend_panel_height;
-    out property <float> floor_legend_content_padding_left: main_page.floor_legend_content_padding_left;
-    out property <float> floor_legend_content_padding_top: main_page.floor_legend_content_padding_top;
-    out property <float> floor_legend_content_padding_right: main_page.floor_legend_content_padding_right;
-    out property <float> floor_legend_content_padding_bottom: main_page.floor_legend_content_padding_bottom;
-    out property <float> floor_legend_first_square_offset_x: main_page.floor_legend_first_square_offset_x;
-    out property <float> floor_legend_first_square_offset_y: main_page.floor_legend_first_square_offset_y;
-    out property <float> floor_legend_first_row_offset_x: main_page.floor_legend_first_row_offset_x;
-    out property <float> floor_legend_first_row_offset_y: main_page.floor_legend_first_row_offset_y;
-    out property <float> floor_legend_last_row_bottom_gap: main_page.floor_legend_last_row_bottom_gap;
-    out property <float> floor_side_label_left_gap: main_page.floor_side_label_left_gap;
-    out property <float> floor_side_label_right_gap: main_page.floor_side_label_right_gap;
-    out property <float> floor_top_label_vertical_gap: main_page.floor_top_label_vertical_gap;
-    out property <float> floor_bottom_label_vertical_gap: main_page.floor_bottom_label_vertical_gap;
-    out property <float> floor_legend_text_probe_font_size: main_page.floor_legend_text_probe_font_size;
-    out property <float> floor_legend_text_probe_height: main_page.floor_legend_text_probe_height;
 
     callback toggle_nav();
     callback close_nav();
@@ -161,25 +40,6 @@ export component ShellHost inherits MaterialWindow {
     callback reset_floor_viewport();
     callback select_mode(int);
     callback close_dialog();
-    callback scenes_select_scene(int);
-    callback scenes_update_search_text(string);
-    callback scenes_add_scene_before();
-    callback scenes_add_scene_after();
-    callback scenes_delete_scene();
-    callback scenes_open_choreo();
-    callback scenes_save_choreo();
-    callback scenes_navigate_to_settings();
-    callback scenes_navigate_to_dancer_settings();
-    callback settings_update_use_system_theme(bool);
-    callback settings_update_is_dark_mode(bool);
-    callback settings_update_use_primary_color(bool);
-    callback settings_update_use_secondary_color(bool);
-    callback settings_update_use_tertiary_color(bool);
-    callback settings_update_primary_color(color);
-    callback settings_update_secondary_color(color);
-    callback settings_update_tertiary_color(color);
-    callback settings_update_audio_backend(int);
-    callback settings_navigate_back();
     callback dancer_settings_cancel();
     callback dancer_settings_select_dancer(int);
     callback dancer_settings_add_dancer();
@@ -192,33 +52,6 @@ export component ShellHost inherits MaterialWindow {
     callback dancer_settings_update_swap_to(int);
     callback dancer_settings_swap();
     callback dancer_settings_save();
-    callback choreo_update_scene_name(string);
-    callback choreo_update_scene_text(string);
-    callback choreo_update_scene_fixed_positions(bool);
-    callback choreo_update_scene_has_timestamp(bool);
-    callback choreo_update_scene_timestamp_parts(int, int, int);
-    callback choreo_update_scene_color(color);
-    callback choreo_update_comment(string);
-    callback choreo_update_name(string);
-    callback choreo_update_subtitle(string);
-    callback choreo_update_date_parts(int, int, int);
-    callback choreo_update_variation(string);
-    callback choreo_update_author(string);
-    callback choreo_update_description(string);
-    callback choreo_update_positions_at_side(bool);
-    callback choreo_update_draw_path_from(bool);
-    callback choreo_update_draw_path_to(bool);
-    callback choreo_update_grid_lines(bool);
-    callback choreo_update_snap_to_grid(bool);
-    callback choreo_update_show_timestamps(bool);
-    callback choreo_update_show_legend(bool);
-    callback choreo_update_transparency(float);
-    callback choreo_update_floor_color(color);
-    callback choreo_update_floor_front(int);
-    callback choreo_update_floor_back(int);
-    callback choreo_update_floor_left(int);
-    callback choreo_update_floor_right(int);
-    callback choreo_update_grid_resolution(int);
     callback floor_pointer_pressed(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback floor_pointer_moved(x: float, y: float, is_primary: bool, is_in_contact: bool);
     callback floor_pointer_released(x: float, y: float, is_primary: bool, is_in_contact: bool);
@@ -230,15 +63,9 @@ export component ShellHost inherits MaterialWindow {
         control_modifier: bool
     );
     callback floor_redraw();
-    callback audio_speed_changed(float);
-    callback audio_position_changed(float);
-    callback audio_position_drag_started();
-    callback audio_position_drag_completed(float);
-    callback audio_link_scene_to_position();
-    callback audio_toggle_play_pause();
 
     private property <ColorScheme> effective_color_scheme:
-        root.settings_is_dark_mode ? ColorScheme.dark : ColorScheme.light;
+        SettingsInfo.is_dark_mode ? ColorScheme.dark : ColorScheme.light;
 
     title: root.title_text;
     icon: @image-url("app_icon.svg");
@@ -260,90 +87,11 @@ export component ShellHost inherits MaterialWindow {
             visible: root.content_index == 0;
             selected_mode_index <=> root.selected_mode_index;
             is_mode_selection_enabled: root.is_mode_selection_enabled;
-            nav_width <=> root.nav_width;
             is_nav_open <=> root.is_nav_open;
             is_choreography_settings_open <=> root.is_choreography_settings_open;
             is_audio_player_open <=> root.is_audio_player_open;
             is_dialog_open <=> root.is_dialog_open;
             dialog_content: root.dialog_content;
-            scenes: root.scenes;
-            scenes_search_text: root.scenes_search_text;
-            scenes_show_timestamps: root.scenes_show_timestamps;
-            scenes_can_save_choreo: root.scenes_can_save_choreo;
-            scenes_can_delete_scene: root.scenes_can_delete_scene;
-            scenes_can_navigate_to_settings: root.scenes_can_navigate_to_settings;
-            scenes_can_navigate_to_dancer_settings: root.scenes_can_navigate_to_dancer_settings;
-            choreo_has_selected_scene: root.choreo_has_selected_scene;
-            choreo_scene_name: root.choreo_scene_name;
-            choreo_scene_text: root.choreo_scene_text;
-            choreo_scene_fixed_positions: root.choreo_scene_fixed_positions;
-            choreo_scene_has_timestamp: root.choreo_scene_has_timestamp;
-            choreo_scene_timestamp_minutes: root.choreo_scene_timestamp_minutes;
-            choreo_scene_timestamp_seconds: root.choreo_scene_timestamp_seconds;
-            choreo_scene_timestamp_millis: root.choreo_scene_timestamp_millis;
-            choreo_scene_color: root.choreo_scene_color;
-            choreo_comment: root.choreo_comment;
-            choreo_name: root.choreo_name;
-            choreo_subtitle: root.choreo_subtitle;
-            choreo_date: root.choreo_date;
-            choreo_date_label: root.choreo_date_label;
-            choreo_date_picker_title: root.choreo_date_picker_title;
-            choreo_variation: root.choreo_variation;
-            choreo_author: root.choreo_author;
-            choreo_description: root.choreo_description;
-            choreo_positions_at_side: root.choreo_positions_at_side;
-            choreo_draw_path_from: root.choreo_draw_path_from;
-            choreo_draw_path_to: root.choreo_draw_path_to;
-            choreo_grid_lines: root.choreo_grid_lines;
-            choreo_snap_to_grid: root.choreo_snap_to_grid;
-            choreo_show_timestamps: root.choreo_show_timestamps;
-            choreo_show_legend: root.choreo_show_legend;
-            choreo_transparency: root.choreo_transparency;
-            choreo_floor_color: root.choreo_floor_color;
-            choreo_floor_size_options: root.choreo_floor_size_options;
-            choreo_floor_front: root.choreo_floor_front;
-            choreo_floor_back: root.choreo_floor_back;
-            choreo_floor_left: root.choreo_floor_left;
-            choreo_floor_right: root.choreo_floor_right;
-            choreo_grid_size_options: root.choreo_grid_size_options;
-            choreo_grid_resolution_index: root.choreo_grid_resolution_index;
-            floor_choreography_name: root.floor_choreography_name;
-            floor_scene_name: root.floor_scene_name;
-            floor_front: root.floor_front;
-            floor_back: root.floor_back;
-            floor_left: root.floor_left;
-            floor_right: root.floor_right;
-            floor_show_grid_lines: root.floor_show_grid_lines;
-            floor_color: root.floor_color;
-            floor_subtitle_color: root.floor_subtitle_color;
-            floor_pan_x: root.floor_pan_x;
-            floor_pan_y: root.floor_pan_y;
-            floor_zoom_factor: root.floor_zoom_factor;
-            floor_dancer_size: root.floor_dancer_size;
-            floor_positions: root.floor_positions;
-            floor_curves: root.floor_curves;
-            floor_dashed_curve_segments: root.floor_dashed_curve_segments;
-            floor_selection_segments: root.floor_selection_segments;
-            floor_axis_labels_x: root.floor_axis_labels_x;
-            floor_axis_labels_y: root.floor_axis_labels_y;
-            floor_show_axis_labels: root.floor_show_axis_labels;
-            floor_legend_entries: root.floor_legend_entries;
-            floor_show_legend: root.floor_show_legend;
-            floor_svg_overlay: root.floor_svg_overlay;
-            floor_has_svg_overlay: root.floor_has_svg_overlay;
-            floor_show_placement_overlay: root.floor_show_placement_overlay;
-            floor_remaining_positions: root.floor_remaining_positions;
-            audio_speed: root.audio_speed;
-            audio_minimum_speed: root.audio_minimum_speed;
-            audio_maximum_speed: root.audio_maximum_speed;
-            audio_position: root.audio_position;
-            audio_duration: root.audio_duration;
-            audio_tick_values: root.audio_tick_values;
-            audio_can_seek: root.audio_can_seek;
-            audio_can_link_scene_to_position: root.audio_can_link_scene_to_position;
-            audio_is_playing: root.audio_is_playing;
-            audio_speed_label: root.audio_speed_label;
-            audio_duration_label: root.audio_duration_label;
 
             toggle_nav => { root.toggle_nav(); }
             close_nav => { root.close_nav(); }
@@ -354,46 +102,6 @@ export component ShellHost inherits MaterialWindow {
             reset_floor_viewport => { root.reset_floor_viewport(); }
             select_mode(index) => { root.select_mode(index); }
             close_dialog => { root.close_dialog(); }
-            scenes_select_scene(index) => { root.scenes_select_scene(index); }
-            scenes_update_search_text(value) => { root.scenes_update_search_text(value); }
-            scenes_add_scene_before => { root.scenes_add_scene_before(); }
-            scenes_add_scene_after => { root.scenes_add_scene_after(); }
-            scenes_delete_scene => { root.scenes_delete_scene(); }
-            scenes_open_choreo => { root.scenes_open_choreo(); }
-            scenes_save_choreo => { root.scenes_save_choreo(); }
-            scenes_navigate_to_settings => { root.scenes_navigate_to_settings(); }
-            scenes_navigate_to_dancer_settings => { root.scenes_navigate_to_dancer_settings(); }
-            choreo_update_scene_name(value) => { root.choreo_update_scene_name(value); }
-            choreo_update_scene_text(value) => { root.choreo_update_scene_text(value); }
-            choreo_update_scene_fixed_positions(value) => { root.choreo_update_scene_fixed_positions(value); }
-            choreo_update_scene_has_timestamp(value) => { root.choreo_update_scene_has_timestamp(value); }
-            choreo_update_scene_timestamp_parts(minutes, seconds, millis) => {
-                root.choreo_update_scene_timestamp_parts(minutes, seconds, millis);
-            }
-            choreo_update_scene_color(color) => { root.choreo_update_scene_color(color); }
-            choreo_update_comment(value) => { root.choreo_update_comment(value); }
-            choreo_update_name(value) => { root.choreo_update_name(value); }
-            choreo_update_subtitle(value) => { root.choreo_update_subtitle(value); }
-            choreo_update_date_parts(year, month, day) => {
-                root.choreo_update_date_parts(year, month, day);
-            }
-            choreo_update_variation(value) => { root.choreo_update_variation(value); }
-            choreo_update_author(value) => { root.choreo_update_author(value); }
-            choreo_update_description(value) => { root.choreo_update_description(value); }
-            choreo_update_positions_at_side(value) => { root.choreo_update_positions_at_side(value); }
-            choreo_update_draw_path_from(value) => { root.choreo_update_draw_path_from(value); }
-            choreo_update_draw_path_to(value) => { root.choreo_update_draw_path_to(value); }
-            choreo_update_grid_lines(value) => { root.choreo_update_grid_lines(value); }
-            choreo_update_snap_to_grid(value) => { root.choreo_update_snap_to_grid(value); }
-            choreo_update_show_timestamps(value) => { root.choreo_update_show_timestamps(value); }
-            choreo_update_show_legend(value) => { root.choreo_update_show_legend(value); }
-            choreo_update_transparency(value) => { root.choreo_update_transparency(value); }
-            choreo_update_floor_color(color) => { root.choreo_update_floor_color(color); }
-            choreo_update_floor_front(value) => { root.choreo_update_floor_front(value); }
-            choreo_update_floor_back(value) => { root.choreo_update_floor_back(value); }
-            choreo_update_floor_left(value) => { root.choreo_update_floor_left(value); }
-            choreo_update_floor_right(value) => { root.choreo_update_floor_right(value); }
-            choreo_update_grid_resolution(value) => { root.choreo_update_grid_resolution(value); }
             floor_pointer_pressed(x, y, is_primary, is_in_contact) => {
                 root.floor_pointer_pressed(x, y, is_primary, is_in_contact);
             }
@@ -415,36 +123,30 @@ export component ShellHost inherits MaterialWindow {
             floor_redraw => {
                 root.floor_redraw();
             }
-            audio_speed_changed(value) => { root.audio_speed_changed(value); }
-            audio_position_changed(value) => { root.audio_position_changed(value); }
-            audio_position_drag_started => { root.audio_position_drag_started(); }
-            audio_position_drag_completed(value) => { root.audio_position_drag_completed(value); }
-            audio_link_scene_to_position => { root.audio_link_scene_to_position(); }
-            audio_toggle_play_pause => { root.audio_toggle_play_pause(); }
         }
         settings_page := SettingsPage {
             visible: root.content_index == 1;
-            can_use_system_theme: root.settings_can_use_system_theme;
-            use_system_theme: root.settings_use_system_theme;
-            is_dark_mode: root.settings_is_dark_mode;
-            use_primary_color: root.settings_use_primary_color;
-            use_secondary_color: root.settings_use_secondary_color;
-            use_tertiary_color: root.settings_use_tertiary_color;
-            primary_color: root.settings_primary_color;
-            secondary_color: root.settings_secondary_color;
-            tertiary_color: root.settings_tertiary_color;
-            selected_audio_backend_index: root.settings_audio_backend_index;
+            can_use_system_theme: SettingsInfo.can_use_system_theme;
+            use_system_theme: SettingsInfo.use_system_theme;
+            is_dark_mode: SettingsInfo.is_dark_mode;
+            use_primary_color: SettingsInfo.use_primary_color;
+            use_secondary_color: SettingsInfo.use_secondary_color;
+            use_tertiary_color: SettingsInfo.use_tertiary_color;
+            primary_color: SettingsInfo.primary_color;
+            secondary_color: SettingsInfo.secondary_color;
+            tertiary_color: SettingsInfo.tertiary_color;
+            selected_audio_backend_index: SettingsInfo.selected_audio_backend_index;
 
-            update_use_system_theme(value) => { root.settings_update_use_system_theme(value); }
-            update_is_dark_mode(value) => { root.settings_update_is_dark_mode(value); }
-            update_use_primary_color(value) => { root.settings_update_use_primary_color(value); }
-            update_use_secondary_color(value) => { root.settings_update_use_secondary_color(value); }
-            update_use_tertiary_color(value) => { root.settings_update_use_tertiary_color(value); }
-            update_primary_color(value) => { root.settings_update_primary_color(value); }
-            update_secondary_color(value) => { root.settings_update_secondary_color(value); }
-            update_tertiary_color(value) => { root.settings_update_tertiary_color(value); }
-            update_audio_backend(index) => { root.settings_update_audio_backend(index); }
-            navigate_back => { root.settings_navigate_back(); }
+            update_use_system_theme(value) => { SettingsInfo.update_use_system_theme(value); }
+            update_is_dark_mode(value) => { SettingsInfo.update_is_dark_mode(value); }
+            update_use_primary_color(value) => { SettingsInfo.update_use_primary_color(value); }
+            update_use_secondary_color(value) => { SettingsInfo.update_use_secondary_color(value); }
+            update_use_tertiary_color(value) => { SettingsInfo.update_use_tertiary_color(value); }
+            update_primary_color(value) => { SettingsInfo.update_primary_color(value); }
+            update_secondary_color(value) => { SettingsInfo.update_secondary_color(value); }
+            update_tertiary_color(value) => { SettingsInfo.update_tertiary_color(value); }
+            update_audio_backend(index) => { SettingsInfo.update_audio_backend(index); }
+            navigate_back => { SettingsInfo.navigate_back(); }
         }
         dancer_settings_page := DancerSettingsPage {
             visible: root.content_index == 2;

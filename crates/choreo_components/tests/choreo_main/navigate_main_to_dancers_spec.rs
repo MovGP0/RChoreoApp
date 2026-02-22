@@ -13,10 +13,12 @@ use choreo_components::global::GlobalProvider;
 use choreo_components::preferences::{InMemoryPreferences, Preferences};
 use choreo_components::scenes::SceneViewModel;
 use choreo_components::shell;
+use choreo_components::ScenesInfo;
 use choreo_master_mobile_json::{DancerId, SceneId};
 use choreo_models::{Colors, DancerModel, PositionModel, RoleModel, SceneModel};
 use crossbeam_channel::{bounded, unbounded};
 use choreo_main::Report;
+use slint::ComponentHandle;
 use slint::Model;
 
 fn create_binding() -> (MainPageBinding, Rc<choreo_components::global::GlobalStateActor>) {
@@ -200,9 +202,10 @@ fn navigate_main_to_dancers_spec() {
 
                 let (binding, _global_state_store) = create_binding();
                 let view = binding.view();
+                let scenes_info = view.global::<ScenesInfo<'_>>();
 
                 assert_eq!(view.get_content_index(), 0);
-                view.invoke_scenes_navigate_to_dancer_settings();
+                scenes_info.invoke_navigate_to_dancer_settings();
                 assert_eq!(view.get_content_index(), 2);
             });
         });
@@ -215,8 +218,9 @@ fn navigate_main_to_dancers_spec() {
 
                     let (binding, _global_state_store) = create_binding();
                     let view = binding.view();
+                    let scenes_info = view.global::<ScenesInfo<'_>>();
 
-                    view.invoke_scenes_navigate_to_dancer_settings();
+                    scenes_info.invoke_navigate_to_dancer_settings();
                     let dancer_items = view.get_dancer_settings_dancer_items();
                     assert!(dancer_items.row_count() >= 1);
                 });
@@ -231,8 +235,9 @@ fn navigate_main_to_dancers_spec() {
 
                     let (binding, _global_state_store) = create_binding();
                     let view = binding.view();
+                    let scenes_info = view.global::<ScenesInfo<'_>>();
 
-                    view.invoke_scenes_navigate_to_dancer_settings();
+                    scenes_info.invoke_navigate_to_dancer_settings();
 
                     let loaded = wait_until(Duration::from_secs(1), || {
                         view.get_dancer_settings_dancer_items().row_count() >= 1

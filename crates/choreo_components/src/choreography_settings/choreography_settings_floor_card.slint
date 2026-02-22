@@ -1,0 +1,129 @@
+import {
+    CheckBoxTile,
+    CheckState,
+    DropDownMenu,
+    MaterialPalette,
+    MaterialText,
+    MaterialTypography,
+    Slider,
+    Vertical
+} from "@material";
+import { ChoreoInfo } from "../../ui/choreo_info.slint";
+import { ChoreographySettings } from "choreography_settings.slint";
+import { FloorInfo } from "../floor/floor_info.slint";
+import { ColorPicker } from "../color_picker/color_picker.slint";
+import { NumberPicker } from "../../ui/number_picker.slint";
+import { Translations } from "../../ui/translations.slint";
+
+export component ChoreographySettingsFloorCard inherits Rectangle {
+    background: MaterialPalette.surface_container;
+    border-width: 1px;
+    border-color: MaterialPalette.outline_variant;
+    border-radius: 8px;
+
+    Vertical {
+        padding: 12px;
+        spacing: 8px;
+
+        MaterialText {
+            text: Translations.choreography_floor_title;
+            font-size: MaterialTypography.title_large.font_size;
+            font-weight: MaterialTypography.title_large.font_weight;
+        }
+
+        NumberPicker {
+            label: Translations.choreography_floor_front_label;
+            value: FloorInfo.floor_front;
+            minimum: 1;
+            maximum: FloorInfo.floor_size_options.length > 0
+                ? FloorInfo.floor_size_options[FloorInfo.floor_size_options.length - 1]
+                : 100;
+            step: 1;
+            value_changed(value) => { ChoreographySettings.update_floor_front(value); }
+        }
+
+        NumberPicker {
+            label: Translations.choreography_floor_back_label;
+            value: FloorInfo.floor_back;
+            minimum: 1;
+            maximum: FloorInfo.floor_size_options.length > 0
+                ? FloorInfo.floor_size_options[FloorInfo.floor_size_options.length - 1]
+                : 100;
+            step: 1;
+            value_changed(value) => { ChoreographySettings.update_floor_back(value); }
+        }
+
+        NumberPicker {
+            label: Translations.choreography_floor_left_label;
+            value: FloorInfo.floor_left;
+            minimum: 1;
+            maximum: FloorInfo.floor_size_options.length > 0
+                ? FloorInfo.floor_size_options[FloorInfo.floor_size_options.length - 1]
+                : 100;
+            step: 1;
+            value_changed(value) => { ChoreographySettings.update_floor_left(value); }
+        }
+
+        NumberPicker {
+            label: Translations.choreography_floor_right_label;
+            value: FloorInfo.floor_right;
+            minimum: 1;
+            maximum: FloorInfo.floor_size_options.length > 0
+                ? FloorInfo.floor_size_options[FloorInfo.floor_size_options.length - 1]
+                : 100;
+            step: 1;
+            value_changed(value) => { ChoreographySettings.update_floor_right(value); }
+        }
+
+        DropDownMenu {
+            label: Translations.choreography_grid_size_label;
+            items: ChoreographySettings.grid_size_options;
+            current_index: ChoreographySettings.grid_resolution_index;
+            enabled: ChoreographySettings.grid_size_options.length > 0;
+            selected(index) => {
+                ChoreographySettings.update_grid_resolution(index + 1);
+            }
+        }
+
+        CheckBoxTile {
+            text: Translations.choreography_grid_lines_label;
+            check_state: FloorInfo.floor_show_grid_lines ? CheckState.checked : CheckState.unchecked;
+            checked_state_changed(state) => {
+                ChoreographySettings.update_grid_lines(state == CheckState.checked);
+            }
+        }
+
+        CheckBoxTile {
+            text: Translations.choreography_snap_to_grid_label;
+            check_state: ChoreographySettings.snap_to_grid ? CheckState.checked : CheckState.unchecked;
+            checked_state_changed(state) => {
+                ChoreographySettings.update_snap_to_grid(state == CheckState.checked);
+            }
+        }
+
+        MaterialText {
+            text: Translations.choreography_transparency_label + ": "
+                + Math.round(ChoreoInfo.choreo_transparency * 100.0) + "%";
+            color: MaterialPalette.on_surface_variant;
+            font-size: MaterialTypography.body_medium.font_size;
+            font-weight: MaterialTypography.body_medium.font_weight;
+        }
+        Slider {
+            minimum: 0;
+            maximum: 1;
+            value: ChoreoInfo.choreo_transparency;
+            value_changed(value) => { ChoreographySettings.update_transparency(value); }
+        }
+
+        MaterialText {
+            text: Translations.choreography_floor_color_label;
+            color: MaterialPalette.on_surface_variant;
+            font-size: MaterialTypography.body_medium.font_size;
+            font-weight: MaterialTypography.body_medium.font_weight;
+        }
+        ColorPicker {
+            selected_color: FloorInfo.floor_color;
+            color_changed(color) => { ChoreographySettings.update_floor_color(color); }
+        }
+    }
+}

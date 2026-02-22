@@ -1,0 +1,77 @@
+import { MaterialPalette, MaterialTypography } from "@material";
+import { ZoomPanInfo } from "zoom_pan_info.slint";
+import { ChoreoInfo } from "../../ui/choreo_info.slint";
+import { SceneInfo } from "../scenes/scene_info.slint";
+
+export component FloorHeaderOverlay inherits Rectangle {
+    in property <float> scale: 1.0;
+    property <string> choreo_name: ChoreoInfo.choreo_name;
+    property <float> text_scale: ZoomPanInfo.text_scale(scale);
+    property <color> title_color: MaterialPalette.on_surface;
+    property <color> subtitle_color: MaterialPalette.on_surface_variant;
+    property <length> header_padding: 16px;
+    property <length> header_spacing: 4px;
+    property <length> header_title_size: MaterialTypography.title_large.font_size;
+    property <int> header_title_weight: MaterialTypography.title_large.font_weight;
+    property <length> header_subtitle_size: MaterialTypography.body_medium.font_size;
+    property <int> header_subtitle_weight: MaterialTypography.body_medium.font_weight;
+
+    out property <float> base_header_height_px: (
+        root.header_padding * 2
+        + root.header_title_size
+        + root.header_spacing
+        + root.header_subtitle_size
+    ) / 1px;
+    out property <float> header_height_px: root.base_header_height_px * root.text_scale;
+
+    background: transparent;
+
+    header_box := Rectangle {
+        x: 0px;
+        y: 0px;
+        width: root.width;
+        height: root.header_height_px * 1px;
+        background: transparent;
+
+        Text {
+            text: root.choreo_name;
+            color: root.title_color;
+            font-size: ZoomPanInfo.corrected_text_size(
+                root.header_title_size,
+                root.text_scale
+            );
+            font-weight: root.header_title_weight;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            width: parent.width;
+            height: ZoomPanInfo.corrected_text_size(
+                root.header_title_size,
+                root.text_scale
+            );
+            y: root.header_padding * root.text_scale;
+        }
+
+        Text {
+            text: SceneInfo.scene_name;
+            color: root.subtitle_color;
+            font-size: ZoomPanInfo.corrected_text_size(
+                root.header_subtitle_size,
+                root.text_scale
+            );
+            font-weight: root.header_subtitle_weight;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            width: parent.width;
+            height: ZoomPanInfo.corrected_text_size(
+                root.header_subtitle_size,
+                root.text_scale
+            );
+            y: root.header_padding * root.text_scale
+                + ZoomPanInfo.corrected_text_size(
+                    root.header_title_size,
+                    root.text_scale
+                )
+                + root.header_spacing * root.text_scale;
+        }
+    }
+}

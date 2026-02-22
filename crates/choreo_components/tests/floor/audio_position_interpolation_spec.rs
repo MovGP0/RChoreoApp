@@ -4,6 +4,7 @@ use std::rc::Rc;
 use crate::floor;
 
 use choreo_components::audio_player::AudioPlayerPositionChangedEvent;
+use choreo_components::FloorInfo;
 use choreo_components::floor::FloorAdapter;
 use choreo_components::global::GlobalStateModel;
 use choreo_components::preferences::InMemoryPreferences;
@@ -17,6 +18,7 @@ use choreo_models::PositionModel;
 use choreo_models::RoleModel;
 use choreo_models::SceneModel;
 use crossbeam_channel::unbounded;
+use slint::ComponentHandle;
 use slint::Model;
 use floor::Report;
 
@@ -139,7 +141,7 @@ fn audio_position_interpolation_spec() {
 
                         adapter.apply(&view, &mut context.view_model.borrow_mut());
 
-                        let floor_positions = view.get_floor_positions();
+                        let floor_positions = view.global::<FloorInfo<'_>>().get_floor_positions();
                         assert_eq!(floor_positions.row_count(), 1);
                         let interpolated = floor_positions
                             .row_data(0)

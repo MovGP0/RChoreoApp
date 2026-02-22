@@ -1,0 +1,24 @@
+import { MaterialPalette } from "@material";
+
+export global SettingsInfo {
+    in-out property <bool> use_system_theme: true;
+    in-out property <bool> can_use_system_theme: true;
+    in-out property <bool> is_dark_mode: false;
+    in-out property <bool> use_primary_color: false;
+    in-out property <bool> use_secondary_color: false;
+    in-out property <bool> use_tertiary_color: false;
+    in-out property <color> primary_color: MaterialPalette.primary;
+    in-out property <color> secondary_color: MaterialPalette.secondary;
+    in-out property <color> tertiary_color: MaterialPalette.tertiary;
+    in-out property <int> selected_audio_backend_index: 0;
+    callback update_use_system_theme(bool);
+    callback update_is_dark_mode(bool);
+    callback update_use_primary_color(bool);
+    callback update_use_secondary_color(bool);
+    callback update_use_tertiary_color(bool);
+    callback update_primary_color(color);
+    callback update_secondary_color(color);
+    callback update_tertiary_color(color);
+    callback update_audio_backend(int);
+    callback navigate_back();
+}

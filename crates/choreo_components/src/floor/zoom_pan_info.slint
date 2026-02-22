@@ -1,15 +1,7 @@
 export global ZoomPanInfo {
-    pure public function zoom_factor(raw_zoom_factor: float) -> float {
-        return raw_zoom_factor;
-    }
-
-    pure public function pan_x(raw_pan_x: float) -> float {
-        return raw_pan_x;
-    }
-
-    pure public function pan_y(raw_pan_y: float) -> float {
-        return raw_pan_y;
-    }
+    in-out property <float> zoom_factor: 1.0;
+    in-out property <float> pan_x: 0.0;
+    in-out property <float> pan_y: 0.0;
 
     pure public function user_scale(zoom_factor: float) -> float {
         return zoom_factor > 0.0 ? zoom_factor : 1.0;

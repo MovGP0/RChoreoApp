@@ -7,14 +7,27 @@ use choreo_master_mobile_json::Color as ChoreoColor;
 use choreo_models::{PositionModel, SettingsPreferenceKeys};
 use choreo_state_machine::{ApplicationStateMachine, StateKind};
 use crossbeam_channel::Receiver;
-use slint::{Color, Image, ModelRc, VecModel};
+use slint::{Color, ComponentHandle, Image, ModelRc, VecModel};
 
 use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::floor::{FloorCanvasViewModel, Point, Rect, Size};
 use crate::global::GlobalStateModel;
 use crate::observability::start_internal_span;
 use crate::preferences::Preferences;
-use crate::{AxisLabel, FloorCurve, FloorPosition, LegendEntry, LineSegment, ShellHost};
+use crate::{
+    AxisLabel,
+    ChoreoInfo,
+    FloorInfo,
+    FloorMetricsInfo,
+    FloorCurve,
+    FloorLegendEntries,
+    FloorPosition,
+    LegendEntry,
+    LineSegment,
+    SceneInfo,
+    ShellHost,
+    ZoomPanInfo,
+};
 
 pub struct FloorAdapter {
     global_state: Rc<RefCell<GlobalStateModel>>,
@@ -110,15 +123,18 @@ impl FloorAdapter {
             )
         };
 
-        view.set_floor_choreography_name(choreography_name.as_str().into());
-        view.set_floor_scene_name(scene_name.as_str().into());
-        view.set_floor_front(floor_front);
-        view.set_floor_back(floor_back);
-        view.set_floor_left(floor_left);
-        view.set_floor_right(floor_right);
-        view.set_floor_show_grid_lines(show_grid_lines);
-        view.set_floor_color(floor_color);
-        view.set_floor_dancer_size(dancer_size);
+        let choreo_info = view.global::<ChoreoInfo<'_>>();
+        choreo_info.set_choreo_name(choreography_name.as_str().into());
+        let scene_info = view.global::<SceneInfo<'_>>();
+        scene_info.set_scene_name(scene_name.as_str().into());
+        let floor_info = view.global::<FloorInfo<'_>>();
+        floor_info.set_floor_front(floor_front);
+        floor_info.set_floor_back(floor_back);
+        floor_info.set_floor_left(floor_left);
+        floor_info.set_floor_right(floor_right);
+        floor_info.set_floor_show_grid_lines(show_grid_lines);
+        floor_info.set_floor_color(floor_color);
+        floor_info.set_floor_dancer_size(dancer_size);
 
         let current_scene = current_scene.as_ref();
         let scene_positions = current_scene.map(|scene| scene.positions.as_slice());
@@ -132,24 +148,25 @@ impl FloorAdapter {
                 transparency,
             );
 
-        view.set_floor_positions(ModelRc::new(VecModel::from(positions)));
+        floor_info.set_floor_positions(ModelRc::new(VecModel::from(positions)));
 
         let (axis_labels_x, axis_labels_y, show_axis_labels) =
             build_axis_labels(scene_positions, positions_at_side);
-        view.set_floor_axis_labels_x(ModelRc::new(VecModel::from(axis_labels_x)));
-        view.set_floor_axis_labels_y(ModelRc::new(VecModel::from(axis_labels_y)));
-        view.set_floor_show_axis_labels(show_axis_labels);
+        floor_info.set_floor_axis_labels_x(ModelRc::new(VecModel::from(axis_labels_x)));
+        floor_info.set_floor_axis_labels_y(ModelRc::new(VecModel::from(axis_labels_y)));
+        floor_info.set_floor_show_axis_labels(show_axis_labels);
 
         let show_legend = self
             .preferences
             .get_bool(SettingsPreferenceKeys::SHOW_LEGEND, false)
             && !legend_entries.is_empty();
-        view.set_floor_legend_entries(ModelRc::new(VecModel::from(legend_entries)));
-        view.set_floor_show_legend(show_legend);
+        let floor_legend_entries = view.global::<FloorLegendEntries<'_>>();
+        floor_legend_entries.set_legend_entries(ModelRc::new(VecModel::from(legend_entries)));
+        floor_legend_entries.set_show_legend(show_legend);
 
         let (svg_overlay, has_svg_overlay) = load_svg_overlay(&svg_file_path);
-        view.set_floor_svg_overlay(svg_overlay);
-        view.set_floor_has_svg_overlay(has_svg_overlay);
+        floor_info.set_floor_svg_overlay(svg_overlay);
+        floor_info.set_floor_has_svg_overlay(has_svg_overlay);
 
         self.update_bounds(view, view_model);
 
@@ -170,16 +187,16 @@ impl FloorAdapter {
             transparency,
             render_transform.as_ref(),
         );
-        view.set_floor_curves(ModelRc::new(VecModel::from(curves)));
-        view.set_floor_dashed_curve_segments(ModelRc::new(VecModel::from(dashed_segments)));
+        floor_info.set_floor_curves(ModelRc::new(VecModel::from(curves)));
+        floor_info.set_floor_dashed_curve_segments(ModelRc::new(VecModel::from(dashed_segments)));
 
         let selection_segments = build_selection_segments(
             &selection_rectangle,
             state_kind,
-            view.get_floor_subtitle_color(),
+            floor_info.get_floor_subtitle_color(),
             render_transform.as_ref(),
         );
-        view.set_floor_selection_segments(ModelRc::new(VecModel::from(selection_segments)));
+        floor_info.set_floor_selection_segments(ModelRc::new(VecModel::from(selection_segments)));
 
         let remaining_positions = remaining_positions(
             dancer_count,
@@ -190,8 +207,8 @@ impl FloorAdapter {
             is_place_mode,
         );
 
-        view.set_floor_remaining_positions(remaining_positions as i32);
-        view.set_floor_show_placement_overlay(remaining_positions > 0);
+        floor_info.set_floor_remaining_positions(remaining_positions as i32);
+        floor_info.set_floor_show_placement_overlay(remaining_positions > 0);
 
         self.trace_interpolation_refresh(
             current_scene,
@@ -215,39 +232,43 @@ impl FloorAdapter {
     }
 
     fn update_bounds(&self, view: &ShellHost, view_model: &mut FloorCanvasViewModel) {
-        let left = view.get_floor_bounds_left();
-        let top = view.get_floor_bounds_top();
-        let right = view.get_floor_bounds_right();
-        let bottom = view.get_floor_bounds_bottom();
+        let floor_metrics_info = view.global::<FloorMetricsInfo<'_>>();
+        let left = floor_metrics_info.get_floor_bounds_left();
+        let top = floor_metrics_info.get_floor_bounds_top();
+        let right = floor_metrics_info.get_floor_bounds_right();
+        let bottom = floor_metrics_info.get_floor_bounds_bottom();
         view_model.set_floor_bounds(Rect::new(left, top, right, bottom));
         view_model.set_canvas_size(Size::new(
-            view.get_floor_canvas_width(),
-            view.get_floor_canvas_height(),
+            floor_metrics_info.get_floor_canvas_width(),
+            floor_metrics_info.get_floor_canvas_height(),
         ));
     }
 
     fn apply_transform(&self, view: &ShellHost, view_model: &FloorCanvasViewModel) {
         let matrix = view_model.transformation_matrix;
-        view.set_floor_pan_x(matrix.trans_x());
-        view.set_floor_pan_y(matrix.trans_y());
-        view.set_floor_zoom_factor(matrix.scale_x());
+        let zoom_pan_info = view.global::<ZoomPanInfo<'_>>();
+        zoom_pan_info.set_pan_x(matrix.trans_x());
+        zoom_pan_info.set_pan_y(matrix.trans_y());
+        zoom_pan_info.set_zoom_factor(matrix.scale_x());
     }
 
     fn clear_floor(&self, view: &ShellHost) {
-        view.set_floor_positions(ModelRc::new(VecModel::from(Vec::<FloorPosition>::new())));
-        view.set_floor_curves(ModelRc::new(VecModel::from(Vec::<FloorCurve>::new())));
-        view.set_floor_dashed_curve_segments(ModelRc::new(VecModel::from(
+        let floor_info = view.global::<FloorInfo<'_>>();
+        floor_info.set_floor_positions(ModelRc::new(VecModel::from(Vec::<FloorPosition>::new())));
+        floor_info.set_floor_curves(ModelRc::new(VecModel::from(Vec::<FloorCurve>::new())));
+        floor_info.set_floor_dashed_curve_segments(ModelRc::new(VecModel::from(
             Vec::<LineSegment>::new(),
         )));
-        view.set_floor_selection_segments(ModelRc::new(VecModel::from(Vec::<LineSegment>::new())));
-        view.set_floor_axis_labels_x(ModelRc::new(VecModel::from(Vec::<AxisLabel>::new())));
-        view.set_floor_axis_labels_y(ModelRc::new(VecModel::from(Vec::<AxisLabel>::new())));
-        view.set_floor_legend_entries(ModelRc::new(VecModel::from(Vec::<LegendEntry>::new())));
-        view.set_floor_show_axis_labels(false);
-        view.set_floor_show_legend(false);
-        view.set_floor_has_svg_overlay(false);
-        view.set_floor_show_placement_overlay(false);
-        view.set_floor_remaining_positions(0);
+        floor_info.set_floor_selection_segments(ModelRc::new(VecModel::from(Vec::<LineSegment>::new())));
+        floor_info.set_floor_axis_labels_x(ModelRc::new(VecModel::from(Vec::<AxisLabel>::new())));
+        floor_info.set_floor_axis_labels_y(ModelRc::new(VecModel::from(Vec::<AxisLabel>::new())));
+        let floor_legend_entries = view.global::<FloorLegendEntries<'_>>();
+        floor_legend_entries.set_legend_entries(ModelRc::new(VecModel::from(Vec::<LegendEntry>::new())));
+        floor_info.set_floor_show_axis_labels(false);
+        floor_legend_entries.set_show_legend(false);
+        floor_info.set_floor_has_svg_overlay(false);
+        floor_info.set_floor_show_placement_overlay(false);
+        floor_info.set_floor_remaining_positions(0);
     }
 
     fn build_positions_and_legend(

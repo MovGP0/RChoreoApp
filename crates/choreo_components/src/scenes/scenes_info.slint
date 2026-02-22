@@ -1,0 +1,26 @@
+export struct SceneListItem {
+    name: string,
+    timestamp_text: string,
+    color: color,
+    is_selected: bool,
+}
+
+export global ScenesInfo {
+    in-out property <[SceneListItem]> scenes: [];
+    in-out property <string> search_text: "";
+    in-out property <bool> show_timestamps: false;
+    in-out property <bool> can_save_choreo: false;
+    in-out property <bool> can_delete_scene: false;
+    in-out property <bool> can_navigate_to_settings: false;
+    in-out property <bool> can_navigate_to_dancer_settings: false;
+
+    callback select_scene(int);
+    callback update_search_text(string);
+    callback add_scene_before();
+    callback add_scene_after();
+    callback delete_scene();
+    callback open_choreo();
+    callback save_choreo();
+    callback navigate_to_settings();
+    callback navigate_to_dancer_settings();
+}

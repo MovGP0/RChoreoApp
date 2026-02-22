@@ -1,7 +1,7 @@
 import { DropDownMenu, IconButton, MaterialPalette, MaterialText, MaterialTypography, MenuItem, ScrollView, Switch, Vertical, Horizontal } from "@material";
 import { Palette } from "std-widgets.slint";
-import { ColorPicker } from "color_picker.slint";
-import { Translations } from "translations.slint";
+import { ColorPicker } from "../color_picker/color_picker.slint";
+import { Translations } from "../../ui/translations.slint";
 
 export component SettingsPage inherits Rectangle {
     in property <string> title_text: Translations.settings_title;
@@ -64,7 +64,7 @@ export component SettingsPage inherits Rectangle {
                 spacing: 8px;
 
                 IconButton {
-                    icon: @image-url("icons/ArrowLeft.svg");
+                    icon: @image-url("../../ui/icons/ArrowLeft.svg");
                     tooltip: title_text;
                     clicked => { navigate_back(); }
                 }

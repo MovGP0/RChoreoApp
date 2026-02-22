@@ -3,11 +3,12 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use crossbeam_channel::{Receiver, Sender, bounded};
-use slint::{Timer, TimerMode};
+use slint::{ComponentHandle, Timer, TimerMode};
 
 use choreo_state_machine::ApplicationStateMachine;
 
 use crate::ShellHost;
+use crate::FloorMetricsInfo;
 use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::behavior::Behavior;
 use crate::global::{GlobalStateActor, GlobalStateModel};
@@ -329,13 +330,14 @@ impl FloorLayoutSnapshot {
     }
 
     fn from_view(view: &ShellHost) -> Self {
+        let floor_metrics_info = view.global::<FloorMetricsInfo<'_>>();
         Self {
-            floor_bounds_left: view.get_floor_bounds_left(),
-            floor_bounds_top: view.get_floor_bounds_top(),
-            floor_bounds_right: view.get_floor_bounds_right(),
-            floor_bounds_bottom: view.get_floor_bounds_bottom(),
-            floor_canvas_width: view.get_floor_canvas_width(),
-            floor_canvas_height: view.get_floor_canvas_height(),
+            floor_bounds_left: floor_metrics_info.get_floor_bounds_left(),
+            floor_bounds_top: floor_metrics_info.get_floor_bounds_top(),
+            floor_bounds_right: floor_metrics_info.get_floor_bounds_right(),
+            floor_bounds_bottom: floor_metrics_info.get_floor_bounds_bottom(),
+            floor_canvas_width: floor_metrics_info.get_floor_canvas_width(),
+            floor_canvas_height: floor_metrics_info.get_floor_canvas_height(),
         }
     }
 }

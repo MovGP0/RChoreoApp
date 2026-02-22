@@ -1,0 +1,66 @@
+import { MaterialPalette } from "@material";
+
+export struct FloorPosition {
+    x: float,
+    y: float,
+    fill_color: color,
+    border_color: color,
+    text_color: color,
+    shortcut: string,
+    is_selected: bool,
+    has_dancer: bool,
+}
+
+export struct FloorCurve {
+    start_x: float,
+    start_y: float,
+    end_x: float,
+    end_y: float,
+    control1_x: float,
+    control1_y: float,
+    control2_x: float,
+    control2_y: float,
+    has_control1: bool,
+    has_control2: bool,
+    color: color,
+    commands: string,
+}
+
+export struct LineSegment {
+    start_x: float,
+    start_y: float,
+    end_x: float,
+    end_y: float,
+    color: color,
+    thickness: float,
+    commands: string,
+}
+
+export struct AxisLabel {
+    value: float,
+    text: string,
+}
+
+// information about the floor rendering state
+export global FloorInfo {
+    in-out property <[int]> floor_size_options: [];
+    in-out property <int> floor_front: 6;
+    in-out property <int> floor_back: 6;
+    in-out property <int> floor_left: 6;
+    in-out property <int> floor_right: 6;
+    in-out property <bool> floor_show_grid_lines: true;
+    in-out property <color> floor_color: MaterialPalette.surface_variant;
+    in-out property <float> floor_dancer_size: 1.0;
+    in-out property <[FloorPosition]> floor_positions: [];
+    in-out property <[FloorCurve]> floor_curves: [];
+    in-out property <[LineSegment]> floor_dashed_curve_segments: [];
+    in-out property <[LineSegment]> floor_selection_segments: [];
+    in-out property <[AxisLabel]> floor_axis_labels_x: [];
+    in-out property <[AxisLabel]> floor_axis_labels_y: [];
+    in-out property <bool> floor_show_axis_labels: false;
+    in-out property <image> floor_svg_overlay;
+    in-out property <bool> floor_has_svg_overlay: false;
+    in-out property <bool> floor_show_placement_overlay: false;
+    in-out property <int> floor_remaining_positions: 0;
+    in-out property <color> floor_subtitle_color: MaterialPalette.on_surface_variant;
+}

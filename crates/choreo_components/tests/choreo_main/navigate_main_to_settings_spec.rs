@@ -11,8 +11,10 @@ use choreo_components::choreo_main::{MainPageActionHandlers, MainPageBinding, Ma
 use choreo_components::global::GlobalProvider;
 use choreo_components::preferences::{InMemoryPreferences, Preferences};
 use choreo_components::shell;
+use choreo_components::ScenesInfo;
 use crossbeam_channel::{bounded, unbounded};
 use choreo_main::Report;
+use slint::ComponentHandle;
 
 fn create_binding() -> MainPageBinding {
     let ui = shell::create_shell_host().expect("shell should be created");
@@ -98,9 +100,10 @@ fn navigate_main_to_settings_spec() {
 
                 let binding = create_binding();
                 let view = binding.view();
+                let scenes_info = view.global::<ScenesInfo<'_>>();
 
                 assert_eq!(view.get_content_index(), 0);
-                view.invoke_scenes_navigate_to_settings();
+                scenes_info.invoke_navigate_to_settings();
                 assert_eq!(view.get_content_index(), 1);
             });
         });

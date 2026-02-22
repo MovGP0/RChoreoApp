@@ -1,5 +1,5 @@
 import { IconButton, MaterialPalette, MaterialTypography } from "@material";
-import { Translations } from "translations.slint";
+import { Translations } from "../../ui/translations.slint";
 
 export component SceneSearchBar inherits Rectangle {
     in-out property <string> text <=> search_input.text;
@@ -16,7 +16,7 @@ export component SceneSearchBar inherits Rectangle {
     Image {
         x: 10px;
         y: parent.height / 2 - self.height / 2;
-        source: @image-url("icons/Magnify.svg");
+        source: @image-url("../../ui/icons/Magnify.svg");
         width: 18px;
         height: 18px;
         colorize: MaterialPalette.on_surface_variant;
@@ -57,7 +57,7 @@ export component SceneSearchBar inherits Rectangle {
         enabled: search_input.text != "";
         x: parent.width - self.width - 4px;
         y: parent.height / 2 - self.height / 2;
-        icon: @image-url("icons/Close.svg");
+        icon: @image-url("../../ui/icons/Close.svg");
         tooltip: Translations.common_cancel;
         clicked => {
             search_input.text = "";

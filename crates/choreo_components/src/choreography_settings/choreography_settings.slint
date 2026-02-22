@@ -1,0 +1,43 @@
+import { MenuItem } from "@material";
+
+export global ChoreographySettings {
+    in-out property <bool> positions_at_side: false;
+    in-out property <bool> draw_path_from: false;
+    in-out property <bool> draw_path_to: false;
+    in-out property <bool> snap_to_grid: false;
+    in-out property <bool> show_timestamps: false;
+    in-out property <bool> show_legend: false;
+    in-out property <[MenuItem]> grid_size_options: [];
+    in-out property <int> grid_resolution_index: 0;
+
+    callback update_scene_name(string);
+    callback update_scene_text(string);
+    callback update_scene_fixed_positions(bool);
+    callback update_scene_has_timestamp(bool);
+    callback update_scene_timestamp_parts(int, int, int);
+    callback update_scene_color(color);
+
+    callback update_comment(string);
+    callback update_name(string);
+    callback update_subtitle(string);
+    callback update_date_parts(int, int, int);
+    callback update_variation(string);
+    callback update_author(string);
+    callback update_description(string);
+
+    callback update_positions_at_side(bool);
+    callback update_draw_path_from(bool);
+    callback update_draw_path_to(bool);
+    callback update_grid_lines(bool);
+    callback update_snap_to_grid(bool);
+    callback update_show_timestamps(bool);
+    callback update_show_legend(bool);
+    callback update_transparency(float);
+    callback update_floor_color(color);
+
+    callback update_floor_front(int);
+    callback update_floor_back(int);
+    callback update_floor_left(int);
+    callback update_floor_right(int);
+    callback update_grid_resolution(int);
+}

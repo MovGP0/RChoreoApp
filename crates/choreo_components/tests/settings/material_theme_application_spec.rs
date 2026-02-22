@@ -7,6 +7,7 @@ use choreo_components::preferences::InMemoryPreferences;
 use choreo_components::settings::{MaterialSchemeHelper, MaterialSchemeUpdater, SettingsViewModel, ThemeMode};
 use choreo_components::shell::ShellMaterialSchemeApplier;
 use choreo_components::MaterialPalette;
+use choreo_components::SettingsInfo;
 use choreo_components::ShellHost;
 use slint::Color;
 use slint::ComponentHandle;
@@ -43,8 +44,9 @@ fn material_theme_application_spec() {
                     let mut view_model = SettingsViewModel::new();
                     view_model.use_system_theme = false;
 
-                    view.set_settings_use_system_theme(false);
-                    view.set_settings_is_dark_mode(true);
+                    let settings_info = view.global::<SettingsInfo<'_>>();
+                    settings_info.set_use_system_theme(false);
+                    settings_info.set_is_dark_mode(true);
 
                     view_model.theme_mode = ThemeMode::Dark;
                     let dark_expected =
@@ -66,7 +68,7 @@ fn material_theme_application_spec() {
                         )
                     );
 
-                    view.set_settings_is_dark_mode(false);
+                    settings_info.set_is_dark_mode(false);
                     view_model.theme_mode = ThemeMode::Light;
                     let light_expected =
                         MaterialSchemeHelper::<ShellMaterialSchemeApplier>::build_schemes(&view_model)
