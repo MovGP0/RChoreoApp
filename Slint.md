@@ -206,6 +206,7 @@ fn main() -> Result<(), slint::PlatformError> {
 
 * Bind properties in `.slint`, not in Rust
 * Use `global` or root component as ViewModel façade
+* Prefer `export global` singleton objects for shared state/events instead of threading the same properties/callbacks through parent components
 * Never store references to conditional UI elements in Rust
 * Prefer many small properties over one large state blob
 * Use `Model` for collections
