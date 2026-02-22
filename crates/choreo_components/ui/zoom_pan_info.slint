@@ -1,0 +1,52 @@
+export global ZoomPanInfo {
+    pure public function zoom_factor(raw_zoom_factor: float) -> float {
+        return raw_zoom_factor;
+    }
+
+    pure public function pan_x(raw_pan_x: float) -> float {
+        return raw_pan_x;
+    }
+
+    pure public function pan_y(raw_pan_y: float) -> float {
+        return raw_pan_y;
+    }
+
+    pure public function user_scale(zoom_factor: float) -> float {
+        return zoom_factor > 0.0 ? zoom_factor : 1.0;
+    }
+
+    pure public function base_scale(scale_x: float, scale_y: float) -> float {
+        return scale_x < scale_y ? scale_x : scale_y;
+    }
+
+    pure public function scale(base_scale: float, user_scale: float) -> float {
+        return base_scale * user_scale;
+    }
+
+    pure public function text_scale(scale: float) -> float {
+        return scale > 0.0 ? scale / 48.0 : 1.0;
+    }
+
+    pure public function base_text_scale(base_scale: float) -> float {
+        return base_scale > 0.0 ? base_scale / 48.0 : 1.0;
+    }
+
+    pure public function apply_zoom_and_pan(
+        base_value: length,
+        user_scale: float,
+        user_translate_px: float
+    ) -> length {
+        return base_value * user_scale + user_translate_px * 1px;
+    }
+
+    pure public function corrected_text_size(target_text_size: length, zoom_factor: float) -> length {
+        let target_size_px = target_text_size / 1px * zoom_factor;
+        if (target_size_px <= 0.0) {
+            return 0px;
+        }
+
+        let correction_factor = 0.9472333 + (-0.0006916667) * (target_size_px - 64.0);
+        let clamped_factor = correction_factor < 0.70 ? 0.70 : correction_factor;
+        return target_size_px / clamped_factor * 1px;
+    }
+}

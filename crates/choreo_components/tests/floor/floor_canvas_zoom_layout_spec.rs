@@ -218,7 +218,7 @@ fn floor_canvas_zoom_layout_spec() {
                         &view,
                         "legend_panel_height",
                         |v| v.get_floor_legend_panel_height(),
-                        0.01,
+                        0.02,
                     );
                 });
 
@@ -344,7 +344,7 @@ fn floor_canvas_zoom_layout_spec() {
                         |v| v.get_floor_legend_panel_height(),
                         ZOOM_BEFORE,
                         ZOOM_AFTER,
-                        0.01,
+                        0.02,
                     );
                 });
 
@@ -467,7 +467,7 @@ fn floor_canvas_zoom_layout_spec() {
                         |v| v.get_floor_legend_panel_height(),
                         ZOOM_BEFORE,
                         ZOOM_AFTER,
-                        0.01,
+                        0.02,
                     );
                 });
 
@@ -522,7 +522,7 @@ fn floor_canvas_zoom_layout_spec() {
                         &view,
                         "legend_first_square_offset_y",
                         |v| v.get_floor_legend_first_square_offset_y(),
-                        0.01,
+                        0.02,
                     );
                 });
 

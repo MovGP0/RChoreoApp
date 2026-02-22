@@ -10,6 +10,7 @@ mod redraw_floor_behavior;
 mod rotate_around_center_behavior;
 mod scale_around_dancer_behavior;
 mod scale_positions_behavior;
+mod text_scale_correction;
 mod types;
 
 pub use draw_floor_behavior::DrawFloorBehavior;
@@ -28,6 +29,7 @@ pub use rotate_around_center_behavior::RotateAroundCenterBehavior;
 pub use scale_around_dancer_behavior::ScaleAroundDancerBehavior;
 pub use scale_around_dancer_behavior::{SystemTimeProvider, TimeProvider};
 pub use scale_positions_behavior::ScalePositionsBehavior;
+pub use text_scale_correction::corrected_font_size_for_zoom;
 
 pub use types::{
     CanvasViewHandle, FloorRenderGate, FloorRenderGateImpl, Matrix, Point, Rect, RgbaColor, Size,
