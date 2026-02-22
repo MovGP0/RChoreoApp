@@ -150,6 +150,11 @@ If the user finds any issues, fix them and repeat the checks above until the use
 
 Only when the changes are verified, you can close the bd ticket.
 
+**Example:** Build and run with Open Telemetry (OTEL) support:
+```sh
+cargo run -p rchoreo_desktop --bin rchoreo_desktop --features debug-otel
+```
+
 ## Rust Common Mistakes to Avoid
 
 - Avoid `&String` when `&str` is sufficient; prefer slices in APIs.

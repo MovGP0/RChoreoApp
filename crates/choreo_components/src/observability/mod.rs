@@ -1,3 +1,8 @@
+#[cfg(feature = "otel")]
+use std::sync::atomic::AtomicBool;
+#[cfg(feature = "otel")]
+use std::sync::atomic::Ordering;
+
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct TraceContext {
     pub trace_id_hex: Option<String>,
@@ -8,6 +13,9 @@ pub struct SpanGuard {
     #[cfg(feature = "otel")]
     span: Option<opentelemetry::global::BoxedSpan>,
 }
+
+#[cfg(feature = "otel")]
+static S_TRACING_ENABLED: AtomicBool = AtomicBool::new(false);
 
 impl SpanGuard {
     pub fn set_string_attribute(&mut self, _key: &'static str, _value: String) {
@@ -53,9 +61,31 @@ impl Drop for SpanGuard {
 }
 
 #[cfg(feature = "otel")]
+pub fn set_tracing_enabled(enabled: bool) {
+    S_TRACING_ENABLED.store(enabled, Ordering::Relaxed);
+}
+
+#[cfg(not(feature = "otel"))]
+pub fn set_tracing_enabled(_enabled: bool) {}
+
+#[cfg(feature = "otel")]
+pub fn is_tracing_enabled() -> bool {
+    S_TRACING_ENABLED.load(Ordering::Relaxed)
+}
+
+#[cfg(not(feature = "otel"))]
+pub fn is_tracing_enabled() -> bool {
+    false
+}
+
+#[cfg(feature = "otel")]
 pub fn start_internal_span(name: &'static str, trace_context: Option<&TraceContext>) -> SpanGuard {
     use opentelemetry::global;
     use opentelemetry::trace::{SpanKind, Tracer};
+
+    if !is_tracing_enabled() {
+        return SpanGuard { span: None };
+    }
 
     let tracer = global::tracer("choreo_components");
     let span = if let Some(parent) = build_parent_context(trace_context) {
