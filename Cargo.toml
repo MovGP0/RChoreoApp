@@ -5,13 +5,18 @@ members = [
     "crates/choreo_algorithms",
     "crates/choreo_models",
     "crates/choreo_components",
+    "crates/choreo_components_egui",
     "crates/choreo_i18n",
     "apps/desktop",
+    "apps/desktop_egui",
     "apps/android",
+    "apps/android_egui",
     "apps/wasm",
+    "apps/wasm_egui",
 ]
 default-members = [
     "apps/desktop",
+    "apps/desktop_egui",
 ]
 resolver = "2"
 

@@ -1,0 +1,10 @@
+[package]
+name = "rchoreo_desktop_egui"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+eframe = "0.32.3"
+egui = "0.32.3"
+egui-material3 = "0.0.7"
+choreo_components_egui = { path = "../../crates/choreo_components_egui" }

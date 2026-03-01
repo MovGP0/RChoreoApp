@@ -1,0 +1,52 @@
+name: Build Windows egui
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Windows egui (${{ matrix.arch }})
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            target: x86_64-pc-windows-msvc
+          - arch: arm64
+            target: aarch64-pc-windows-msvc
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Build
+        shell: pwsh
+        run: |
+          cargo build -p rchoreo_desktop_egui --release --target ${{ matrix.target }}
+      - name: Package
+        shell: pwsh
+        run: |
+          $output = "rchoreo_desktop_egui-windows-${{ matrix.arch }}.zip"
+          $binary = "target/${{ matrix.target }}/release/rchoreo_desktop_egui.exe"
+          if (Test-Path $output) { Remove-Item $output -Force }
+          Compress-Archive -Path $binary -DestinationPath $output
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rchoreo_desktop_egui-windows-${{ matrix.arch }}
+          path: rchoreo_desktop_egui-windows-${{ matrix.arch }}.zip
+      - name: Upload Release Asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ChoreoApp egui ${{ github.ref_name }}
+          files: rchoreo_desktop_egui-windows-${{ matrix.arch }}.zip

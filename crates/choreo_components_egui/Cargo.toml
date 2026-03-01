@@ -1,0 +1,19 @@
+[package]
+name = "choreo_components_egui"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+egui = "0.32.3"
+egui-material3 = "0.0.7"
+choreo_models = { path = "../choreo_models" }
+choreo_master_mobile_json = { path = "../choreo_master_mobile_json" }
+choreo_i18n = { path = "../choreo_i18n" }
+choreo_state_machine = { path = "../choreo_state_machine" }
+log = "0.4.29"
+material-color-utilities = "1.0.0-dev.18"
+nject = "0.4.5"
+
+[dev-dependencies]
+rspec = "1.0.0"

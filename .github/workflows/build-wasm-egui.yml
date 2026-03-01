@@ -1,0 +1,62 @@
+name: Build WASM egui
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages-egui"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build WASM egui
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install wasm-pack
+        run: |
+          cargo install wasm-pack
+      - name: Build
+        run: |
+          wasm-pack build --release --target web apps/wasm_egui
+      - name: Prepare Pages
+        run: |
+          rm -rf dist-egui
+          mkdir -p dist-egui
+          cp apps/wasm_egui/index.html dist-egui/index.html
+          cp apps/wasm_egui/app_icon.svg dist-egui/app_icon.svg
+          cp -R apps/wasm_egui/pkg dist-egui/pkg
+      - name: Upload Artifact (ZIP)
+        run: |
+          zip -r rchoreo_wasm_egui-web.zip dist-egui
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rchoreo_wasm_egui-web
+          path: rchoreo_wasm_egui-web.zip
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-egui
+
+  deploy:
+    name: Deploy Pages egui
+    runs-on: ubuntu-24.04
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

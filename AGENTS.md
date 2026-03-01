@@ -7,7 +7,8 @@
 
 ## Crates
 
-- use [Slint](https://slint.dev/) as UI layer
+- use [egui](https://github.com/emilk/egui) as UI layer
+- use [egui-material3](https://github.com/nikescar/egui-material3/) for Material 3 components
 - use [rspec](https://github.com/rust-rspec/rspec) for BDD testing
 - use [material-color-utilities](https://github.com/deminearchiver/material-color-utilities-rust) for material colors
 - use [nject](https://github.com/nicolascotton/nject) for dependency injection
@@ -50,17 +51,15 @@ Key rules:
 
 ## UI Translations
 
-- Use `crates/choreo_components/ui/translations.slint` for all UI strings.
-- Bind in Slint with `Translations.*` (example: `in property <string> title_text: Translations.dialog_title;`).
+- Use a dedicated translation module in the egui layer for all UI strings.
+- Bind labels/text in egui from centralized translation lookups.
 - ViewModels must not contain UI strings or translation keys.
 
 ## UI Colors and Styling
 
-- Bind colors directly in Slint using `MaterialScheme` or `MaterialPalette`.
-- Use these style files:
-  - `crates/choreo_components/material-1.0/ui/styling/material_palette.slint`
-  - `crates/choreo_components/material-1.0/ui/styling/material_schemes.slint`
-- Do not add `style_behavior.rs` classes for styling. Behaviors are reserved for business logic.
+- Apply colors and typography through egui/egui-material3 theming.
+- Keep styling in dedicated egui theme modules; behaviors are reserved for business logic.
+- Do not add behavior classes for styling-only concerns.
 
 ## UI Layout Grid
 
@@ -74,24 +73,13 @@ Key rules:
   - Third-party control internals that are not configurable
 - For exceptions, add a short code comment explaining why a non-grid value is required.
 
-## MaterialDesignThemes to Slint (Material) replacement list
+## Material 3 Component Mapping (egui)
 
-- App root: `material_window.slint` (MaterialWindow).
-- Buttons: `filled_button.slint`, `elevated_button.slint`, `outline_button.slint`, `tonal_button.slint`, `text_button.slint`, `floating_action_button.slint`, `segmented_button.slint`, `icon_button.slint`, `outline_icon_button.slint`, `tonal_icon_button.slint`.
-- Cards: `card.slint` (filled/outlined/elevated variants).
-- Text input: `text_field.slint`, `drop_down_menu.slint`.
-- Selection: `check_box.slint`, `radio_button.slint`, `switch.slint`.
-- Chips: `chip.slint` (action/input/filter).
-- Navigation & app bars: `app_bar.slint`, `bottom_app_bar.slint`, `navigation_bar.slint`, `navigation_rail.slint`, `navigation_drawer.slint`, `drawer.slint`, `search_bar.slint`.
-- Dialogs/sheets: `dialog.slint`, `bottom_sheet.slint`, `modal.slint`.
-- Progress: `progress_indicator.slint` (linear/circular).
-- Feedback: `snack_bar.slint`, `tooltip.slint`, `divider.slint`.
-- Other available: `date_picker.slint`, `time_picker.slint`, `menu.slint`, `tab_bar.slint`, `slider.slint`, `scroll_view.slint`, `badge.slint`, `list.slint`, `list_view.slint`, `icon.slint`.
-- Still custom (no direct material.slint component): `AutoSuggestBox`, `ColorPicker/ColorZone`, `DataGrid`, `Expander`, `Flipper`, `HamburgerToggleButton`, `PopupBox`, `RatingBar`, `Ripple`, `SliderWithTicks`, `SplitButton`, `TreeView/TreeListView`, `Underline`.
-
-Tips:
-- Clone https://github.com/slint-ui/slint.git to .temp/ to inspect the source code.
-- The material themed controls are located in `D:\RChoreoApp\.temp\slint\ui-libraries\material\src\`.
+- Use egui-material3 widgets/themes as first choice for Material 3 UI.
+- Map previous window/root views to egui app/root panels.
+- Map button/card/input/selection/navigation/dialog/progress/feedback controls to egui-material3 equivalents.
+- Keep unsupported controls as explicit custom egui widgets.
+- Prefer shared widget modules so behavior parity is implemented once and reused across targets.
 
 ## Code style
 
@@ -178,7 +166,7 @@ cargo run -p rchoreo_desktop --bin rchoreo_desktop --features debug-otel
 - place behaviors into dedicated NAME_behavior.rs files (e.g. `draw_floor_behavior.rs`)
 - place View-ViewModel adapters into dedicated NAME_adapter.rs files (e.g. `floor_adapter.rs`)
 - place message (Event, Command, Query, Response) types into `messages.rs`
-- place the slint views into the shared `ui` folder
+- place egui views/widgets into shared `ui` or `widgets` modules
 
 ### Floor Component
 
@@ -245,19 +233,14 @@ If you encounter a compile error after a code change you did, keep a note here h
 - `rspec::describe` requires an explicit environment argument (use `()` when none), and the suite type is `rspec::block::Suite<T>` with `Report` imported for `is_success()`.
 - When using `rspec` in tests, set `exit_on_failure(false)` in `ConfigurationBuilder` to avoid aborting the whole test process and to surface failures in `SuiteReport`.
 - Clippy denies range loops used only for indexing; prefer iterators with `enumerate()` and direct `contains()` for sentinel checks.
-- In Slint, callbacks can be declared as `callback name(type);` or `callback name(arg: type);` (named args are ok); `callback name(type arg);` is invalid.
-- For Material components, wire a `material` library alias in `build.rs` and import from `@material` (e.g., `import { FilledButton } from "@material";`).
-- If Material widgets like `Slider` are missing, ensure the import is from `@material` and that the `material` library path points to `material.slint`.
-- Material `CheckBox` has no `text`/`checked`/`toggled`; use `CheckBoxTile` with `check_state` and `checked_state_changed`.
-- Material `Slider` emits `value_changed(value)` (not `changed`).
-- If `material-1.0` mismatches the Slint version (e.g., `radio-button` accessibility role errors), sync to the template’s `material-1.0` or patch the role to `checkbox`.
-- Keep `material-1.0` synced with the Slint tag in use (`v1.14.1` from `.temp/slint`); do not edit `material-1.0` directly.
-- In Slint functions returning `length`, use units (e.g., `0px`) and avoid binding `width` to parent/root inside layouts; prefer `horizontal-stretch` to prevent layout loops.
+- For egui event/callback flow, route UI events into typed actions and reduce state in one place.
+- Keep egui-material3 theme wiring centralized; avoid duplicating palette logic across widgets.
+- For responsive layout in egui, prefer panels/layout APIs and avoid hard-coded pixel constants unless required.
 - For platform-independent current time, do not call `OffsetDateTime::now_utc()` directly in app/model code; route through a shared clock abstraction (for example `SystemClock::now_utc()`), and on `wasm32` compute time via `web-sys` (`window.performance().time_origin() + now()`) before converting to `OffsetDateTime`.
 
-# Slint
+# egui
 
-See `Slint.md` for additional instructions.
+See `egui.md` for additional instructions.
 
 # Open Telemetry
 
