@@ -4,9 +4,7 @@ use super::state::SplashScreenState;
 pub fn reduce(state: &mut SplashScreenState, action: SplashScreenAction) {
     match action {
         SplashScreenAction::Initialize => {}
-        SplashScreenAction::ToggleFlag { key } => {
-            let previous = state.flags.get(&key).copied().unwrap_or(false);
-            state.flags.insert(key, !previous);
-        }
+        SplashScreenAction::SetBackgroundColor { color } => state.background_color = color,
+        SplashScreenAction::SetSplashImagePath { path } => state.splash_image_path = path,
     }
 }

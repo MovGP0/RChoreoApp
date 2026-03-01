@@ -1,14 +1,29 @@
-use std::collections::BTreeMap;
-
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct SliderWithTicksState {
-    pub flags: BTreeMap<String, bool>,
+    pub minimum: f64,
+    pub maximum: f64,
+    pub value: f64,
+    pub tick_values: Vec<f64>,
+    pub tick_color: Option<egui::Color32>,
+    pub is_enabled: bool,
 }
 
 impl SliderWithTicksState {
     #[must_use]
-    pub fn with_flag(mut self, key: impl Into<String>, value: bool) -> Self {
-        self.flags.insert(key.into(), value);
-        self
+    pub fn new() -> Self {
+        Self {
+            minimum: 0.0,
+            maximum: 1.0,
+            value: 0.0,
+            tick_values: Vec::new(),
+            tick_color: None,
+            is_enabled: true,
+        }
+    }
+}
+
+impl Default for SliderWithTicksState {
+    fn default() -> Self {
+        Self::new()
     }
 }

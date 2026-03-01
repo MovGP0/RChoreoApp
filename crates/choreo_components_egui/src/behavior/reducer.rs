@@ -3,10 +3,8 @@ use super::state::BehaviorState;
 
 pub fn reduce(state: &mut BehaviorState, action: BehaviorAction) {
     match action {
-        BehaviorAction::Initialize => {}
-        BehaviorAction::ToggleFlag { key } => {
-            let previous = state.flags.get(&key).copied().unwrap_or(false);
-            state.flags.insert(key, !previous);
-        }
+        BehaviorAction::Initialize => state.dispose_all(),
+        BehaviorAction::AddDisposable { disposable } => state.add_disposable(disposable),
+        BehaviorAction::DisposeAll => state.dispose_all(),
     }
 }

@@ -1,14 +1,67 @@
-use std::collections::BTreeMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TimeState {
-    pub flags: BTreeMap<String, bool>,
+    pub timestamp_input: String,
+    pub parsed_seconds: Option<f64>,
+    pub formatted_seconds: String,
+    pub last_now_unix_nanos: i128,
 }
 
-impl TimeState {
-    #[must_use]
-    pub fn with_flag(mut self, key: impl Into<String>, value: bool) -> Self {
-        self.flags.insert(key.into(), value);
-        self
+impl Default for TimeState {
+    fn default() -> Self {
+        Self {
+            timestamp_input: String::new(),
+            parsed_seconds: None,
+            formatted_seconds: "0".to_string(),
+            last_now_unix_nanos: 0,
+        }
     }
+}
+
+#[must_use]
+pub fn system_now_unix_nanos() -> i128 {
+    match SystemTime::now().duration_since(UNIX_EPOCH) {
+        Ok(duration) => duration.as_nanos() as i128,
+        Err(_) => 0,
+    }
+}
+
+pub fn parse_timestamp_seconds(value: &str) -> Option<f64> {
+    let value = value.trim();
+    if value.is_empty() {
+        return None;
+    }
+
+    let mut parts = value.split(':').collect::<Vec<_>>();
+    if parts.len() > 3 {
+        return None;
+    }
+
+    let seconds_part = parts.pop()?;
+    let minutes_part = parts.pop().unwrap_or("0");
+    let hours_part = parts.pop().unwrap_or("0");
+
+    let seconds = seconds_part.parse::<f64>().ok()?;
+    let minutes = minutes_part.parse::<f64>().ok()?;
+    let hours = hours_part.parse::<f64>().ok()?;
+
+    Some(hours * 3600.0 + minutes * 60.0 + seconds)
+}
+
+#[must_use]
+pub fn format_seconds(value: f64) -> String {
+    let mut text = format!("{value:.3}");
+    if text.find('.').is_some() {
+        while text.ends_with('0') {
+            text.pop();
+        }
+        if text.ends_with('.') {
+            text.pop();
+        }
+        if text.is_empty() {
+            text.push('0');
+        }
+    }
+    text
 }

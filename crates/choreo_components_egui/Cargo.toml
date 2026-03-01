@@ -4,6 +4,12 @@ version = "0.1.0"
 edition = "2024"
 publish = false
 
+[features]
+default = []
+otel = [
+  "dep:opentelemetry",
+]
+
 [dependencies]
 egui = "0.32.3"
 egui-material3 = "0.0.7"
@@ -14,6 +20,9 @@ choreo_state_machine = { path = "../choreo_state_machine" }
 log = "0.4.29"
 material-color-utilities = "1.0.0-dev.18"
 nject = "0.4.5"
+time = { version = "0.3", features = ["formatting", "parsing"] }
+opentelemetry = { version = "0.31", optional = true }
 
 [dev-dependencies]
 rspec = "1.0.0"
+serial_test = "3.4.0"

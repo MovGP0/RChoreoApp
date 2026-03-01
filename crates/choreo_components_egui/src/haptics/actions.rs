@@ -1,5 +1,14 @@
+use super::state::HapticBackend;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HapticsAction {
     Initialize,
-    ToggleFlag { key: String },
+    SetBackend {
+        backend: HapticBackend,
+    },
+    SetSupported {
+        supported: bool,
+    },
+    TriggerClick,
+    ConsumePendingEffect,
 }

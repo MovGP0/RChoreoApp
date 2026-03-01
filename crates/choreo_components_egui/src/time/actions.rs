@@ -1,5 +1,7 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TimeAction {
-    Initialize,
-    ToggleFlag { key: String },
+    InitializeCurrentTime,
+    SetTimestampInput { value: String },
+    ParseTimestampInput,
+    SetSeconds { value: f64 },
 }

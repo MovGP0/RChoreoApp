@@ -1,5 +1,7 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BehaviorAction {
     Initialize,
-    ToggleFlag { key: String },
+    AddDisposable {
+        disposable: Box<dyn super::state::Disposable>,
+    },
+    DisposeAll,
 }

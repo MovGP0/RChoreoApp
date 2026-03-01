@@ -7,5 +7,8 @@
 #![deny(clippy::all)]
 
 pub mod app_shell;
+pub mod observability;
+pub mod shell;
+pub mod time;
 
 pub use app_shell::AppShellViewModel;

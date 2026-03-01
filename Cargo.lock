@@ -1254,7 +1254,10 @@ dependencies = [
  "log",
  "material-color-utilities",
  "nject",
+ "opentelemetry",
  "rspec",
+ "serial_test",
+ "time 0.3.47",
 ]
 
 [[package]]

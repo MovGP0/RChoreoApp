@@ -1,7 +1,18 @@
-#![allow(clippy::bool_assert_comparison)]
+use super::actions::ChoreographySettingsAction;
+use super::create_state;
+use super::reducer::reduce;
 
 #[test]
-fn update_positions_at_side_behavior_spec_scaffold_exists() {
-    let current_dir = std::env::current_dir().expect("cwd");
-    assert!(current_dir.exists());
+fn update_positions_at_side_initializes_and_updates_global_value() {
+    let mut state = create_state();
+
+    reduce(&mut state, ChoreographySettingsAction::InitializePositionsAtSide(false));
+    assert!(!state.positions_at_side);
+
+    reduce(&mut state, ChoreographySettingsAction::UpdatePositionsAtSide(true));
+
+    assert!(state.positions_at_side);
+    assert!(state.preferences.positions_at_side);
+    assert!(state.choreography.settings.positions_at_side);
+    assert!(state.redraw_requested);
 }
