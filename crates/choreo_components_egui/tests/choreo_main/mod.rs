@@ -1,0 +1,11 @@
+pub mod apply_interaction_mode_behavior_spec;
+pub mod hide_dialog_behavior_spec;
+pub mod navigate_dancers_to_main_spec;
+pub mod navigate_main_to_dancers_spec;
+pub mod navigate_main_to_settings_spec;
+pub mod navigate_settings_to_main_spec;
+pub mod open_audio_behavior_spec;
+pub mod open_image_behavior_spec;
+pub mod open_svg_file_behavior_spec;
+pub mod show_dialog_behavior_spec;
+pub mod timestamp_sync_spec;

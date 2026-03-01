@@ -1,0 +1,9 @@
+pub mod apply_placement_mode_behavior_spec;
+pub mod filter_scenes_behavior_spec;
+pub mod insert_scene_behavior_spec;
+pub mod load_scenes_behavior_spec;
+pub mod open_choreo_behavior_spec;
+pub mod save_choreo_behavior_spec;
+pub mod select_scene_behavior_spec;
+pub mod select_scene_from_audio_position_behavior_spec;
+pub mod show_scene_timestamps_behavior_spec;

@@ -1,0 +1,14 @@
+pub mod add_dancer_behavior_spec;
+pub mod cancel_dancer_settings_behavior_spec;
+pub mod delete_dancer_behavior_spec;
+pub mod hide_dancer_dialog_behavior_spec;
+pub mod load_dancer_settings_behavior_spec;
+pub mod reload_dancer_settings_behavior_spec;
+pub mod save_dancer_settings_behavior_spec;
+pub mod selected_dancer_state_behavior_spec;
+pub mod selected_icon_behavior_spec;
+pub mod selected_role_behavior_spec;
+pub mod show_dancer_dialog_behavior_spec;
+pub mod swap_dancer_selection_behavior_spec;
+pub mod swap_dancers_behavior_spec;
+pub mod update_dancer_details_behavior_spec;

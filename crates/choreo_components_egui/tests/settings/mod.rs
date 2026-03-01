@@ -1,0 +1,5 @@
+pub mod audio_backend_preferences_behavior_spec;
+pub mod color_preferences_behavior_spec;
+pub mod load_settings_preferences_behavior_spec;
+pub mod material_theme_application_spec;
+pub mod switch_dark_light_mode_behavior_spec;
