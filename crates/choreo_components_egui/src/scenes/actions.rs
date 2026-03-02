@@ -19,6 +19,9 @@ pub enum ScenesAction {
     ApplyPlacementModeForSelected,
     SyncShowTimestampsFromChoreography,
     UpdateShowTimestamps(bool),
+    OpenDeleteSceneDialog,
+    CancelDeleteSceneDialog,
+    ConfirmDeleteSceneDialog,
     OpenChoreography {
         choreography: Box<ChoreographyModel>,
         file_path: Option<String>,

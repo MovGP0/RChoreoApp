@@ -11,7 +11,10 @@ fn update_description_trims_and_sets_optional_description() {
         ChoreographySettingsAction::UpdateDescription("  description text  ".to_string()),
     );
 
-    assert_eq!(state.choreography.description.as_deref(), Some("description text"));
+    assert_eq!(
+        state.choreography.description.as_deref(),
+        Some("description text")
+    );
     assert_eq!(state.description, "description text");
     assert!(state.redraw_requested);
 }

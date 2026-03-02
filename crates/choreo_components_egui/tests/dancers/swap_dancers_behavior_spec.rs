@@ -9,8 +9,7 @@ fn swap_dancers_behavior_spec() {
             |_| {
                 let gentleman = dancers::role("Gentleman");
                 let lady = dancers::role("Lady");
-                let mut first =
-                    dancers::dancer(1, gentleman.clone(), "Alex", "AL", Some("IconA"));
+                let mut first = dancers::dancer(1, gentleman.clone(), "Alex", "AL", Some("IconA"));
                 first.color = dancers::color(10, 20, 30);
                 let mut second = dancers::dancer(2, lady.clone(), "Bella", "BE", Some("IconB"));
                 second.color = dancers::color(40, 50, 60);
@@ -53,10 +52,7 @@ fn swap_dancers_behavior_spec() {
                 },
             );
 
-            dancers::reducer::reduce(
-                &mut state,
-                dancers::actions::DancersAction::LoadFromGlobal,
-            );
+            dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::LoadFromGlobal);
             dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::SwapDancers);
 
             assert!(!state.can_swap_dancers);

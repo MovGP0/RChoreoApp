@@ -53,7 +53,8 @@ fn save_dancer_settings_behavior_spec() {
             );
             assert_eq!(state.global.scene_views[0].positions.len(), 1);
             assert_eq!(
-                state.global
+                state
+                    .global
                     .selected_scene
                     .as_ref()
                     .map(|scene| scene.positions.len()),

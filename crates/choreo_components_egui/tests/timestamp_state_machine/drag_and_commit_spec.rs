@@ -51,33 +51,37 @@ fn drag_and_commit_spec() {
             assert!(state.resume_playback_requested);
         });
 
-        spec.it("does not request resume when drag started while paused", |_| {
-            let mut state = timestamp_state_machine::state::TimestampStateMachineState::default();
+        spec.it(
+            "does not request resume when drag started while paused",
+            |_| {
+                let mut state =
+                    timestamp_state_machine::state::TimestampStateMachineState::default();
 
-            timestamp_state_machine::reducer::reduce(
-                &mut state,
-                timestamp_state_machine::actions::TimestampStateMachineAction::DragStarted {
-                    is_playing: false,
-                },
-            );
-            timestamp_state_machine::reducer::reduce(
-                &mut state,
-                timestamp_state_machine::actions::TimestampStateMachineAction::SeekCommitted {
-                    position: 4.0,
-                    now_seconds: 1.0,
-                },
-            );
-            timestamp_state_machine::reducer::reduce(
+                timestamp_state_machine::reducer::reduce(
+                    &mut state,
+                    timestamp_state_machine::actions::TimestampStateMachineAction::DragStarted {
+                        is_playing: false,
+                    },
+                );
+                timestamp_state_machine::reducer::reduce(
+                    &mut state,
+                    timestamp_state_machine::actions::TimestampStateMachineAction::SeekCommitted {
+                        position: 4.0,
+                        now_seconds: 1.0,
+                    },
+                );
+                timestamp_state_machine::reducer::reduce(
                 &mut state,
                 timestamp_state_machine::actions::TimestampStateMachineAction::CompleteSeekCommit,
             );
 
-            assert!(!state.resume_playback_requested);
-            assert_eq!(
-                state.ownership_phase,
-                timestamp_state_machine::state::OwnershipPhase::ActorDriven
-            );
-        });
+                assert!(!state.resume_playback_requested);
+                assert_eq!(
+                    state.ownership_phase,
+                    timestamp_state_machine::state::OwnershipPhase::ActorDriven
+                );
+            },
+        );
     });
     let report = timestamp_state_machine::run_suite(&suite);
     assert!(report.is_success());

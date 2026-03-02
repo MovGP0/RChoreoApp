@@ -10,12 +10,12 @@ fn navigate_main_to_settings_spec() {
         spec.it(
             "shows settings content when settings navigation is requested",
             |_| {
-            let mut state = ChoreoMainState::default();
-            assert_eq!(state.content, MainContent::Main);
+                let mut state = ChoreoMainState::default();
+                assert_eq!(state.content, MainContent::Main);
 
-            reduce(&mut state, ChoreoMainAction::NavigateToSettings);
+                reduce(&mut state, ChoreoMainAction::NavigateToSettings);
 
-            assert_eq!(state.content, MainContent::Settings);
+                assert_eq!(state.content, MainContent::Settings);
             },
         );
     });

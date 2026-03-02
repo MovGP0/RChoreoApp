@@ -47,26 +47,29 @@ fn load_settings_preferences_behavior_spec() {
             assert_eq!(state.audio_player_backend, AudioPlayerBackend::Awedio);
         });
 
-        spec.it("reload enforces hierarchy and falls back on invalid color", |_| {
-            let mut state = SettingsState::default();
-            let mut preferences = BTreeMap::new();
-            preferences.insert(THEME_KEY.to_string(), "Dark".to_string());
-            preferences.insert(USE_PRIMARY_COLOR_KEY.to_string(), "false".to_string());
-            preferences.insert(USE_SECONDARY_COLOR_KEY.to_string(), "true".to_string());
-            preferences.insert(PRIMARY_COLOR_KEY.to_string(), "invalid".to_string());
-            reduce(
-                &mut state,
-                SettingsAction::LoadFromPreferences {
-                    entries: preferences,
-                },
-            );
-            reduce(&mut state, SettingsAction::Reload);
+        spec.it(
+            "reload enforces hierarchy and falls back on invalid color",
+            |_| {
+                let mut state = SettingsState::default();
+                let mut preferences = BTreeMap::new();
+                preferences.insert(THEME_KEY.to_string(), "Dark".to_string());
+                preferences.insert(USE_PRIMARY_COLOR_KEY.to_string(), "false".to_string());
+                preferences.insert(USE_SECONDARY_COLOR_KEY.to_string(), "true".to_string());
+                preferences.insert(PRIMARY_COLOR_KEY.to_string(), "invalid".to_string());
+                reduce(
+                    &mut state,
+                    SettingsAction::LoadFromPreferences {
+                        entries: preferences,
+                    },
+                );
+                reduce(&mut state, SettingsAction::Reload);
 
-            assert_eq!(state.theme_mode, ThemeMode::Dark);
-            assert!(!state.use_primary_color);
-            assert!(!state.use_secondary_color);
-            assert_eq!(state.primary_color_hex, "#FF1976D2");
-        });
+                assert_eq!(state.theme_mode, ThemeMode::Dark);
+                assert!(!state.use_primary_color);
+                assert!(!state.use_secondary_color);
+                assert_eq!(state.primary_color_hex, "#FF1976D2");
+            },
+        );
     });
 
     let report = crate::settings::run_suite(&suite);

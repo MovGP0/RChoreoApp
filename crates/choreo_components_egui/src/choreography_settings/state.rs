@@ -176,7 +176,11 @@ impl ChoreographySettingsState {
     }
 
     pub fn set_grid_resolution(&mut self, value: i32) {
-        if let Some(option) = self.grid_size_options.iter().find(|option| option.value == value) {
+        if let Some(option) = self
+            .grid_size_options
+            .iter()
+            .find(|option| option.value == value)
+        {
             self.selected_grid_size_option = option.clone();
         } else if let Some(first) = self.grid_size_options.first().cloned() {
             self.selected_grid_size_option = first;

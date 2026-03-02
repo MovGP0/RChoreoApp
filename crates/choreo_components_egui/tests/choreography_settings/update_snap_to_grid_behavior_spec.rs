@@ -6,10 +6,16 @@ use super::reducer::reduce;
 fn update_snap_to_grid_initializes_and_updates_state() {
     let mut state = create_state();
 
-    reduce(&mut state, ChoreographySettingsAction::InitializeSnapToGrid(false));
+    reduce(
+        &mut state,
+        ChoreographySettingsAction::InitializeSnapToGrid(false),
+    );
     assert!(!state.snap_to_grid);
 
-    reduce(&mut state, ChoreographySettingsAction::UpdateSnapToGrid(true));
+    reduce(
+        &mut state,
+        ChoreographySettingsAction::UpdateSnapToGrid(true),
+    );
 
     assert!(state.snap_to_grid);
     assert!(state.preferences.snap_to_grid);

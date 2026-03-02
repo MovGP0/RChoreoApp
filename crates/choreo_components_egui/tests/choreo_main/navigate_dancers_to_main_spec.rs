@@ -18,13 +18,16 @@ fn navigate_dancers_to_main_spec() {
             },
         );
 
-        spec.it("returns to main page when dancer settings save is requested", |_| {
-            let mut state = ChoreoMainState::default();
-            reduce(&mut state, ChoreoMainAction::NavigateToDancers);
-            reduce(&mut state, ChoreoMainAction::NavigateToMain);
+        spec.it(
+            "returns to main page when dancer settings save is requested",
+            |_| {
+                let mut state = ChoreoMainState::default();
+                reduce(&mut state, ChoreoMainAction::NavigateToDancers);
+                reduce(&mut state, ChoreoMainAction::NavigateToMain);
 
-            assert_eq!(state.content, MainContent::Main);
-        });
+                assert_eq!(state.content, MainContent::Main);
+            },
+        );
     });
 
     let report = crate::choreo_main::run_suite(&suite);

@@ -24,9 +24,15 @@ fn settings_and_audio_state_changes_are_applied() {
     reduce(&mut state, NavBarAction::CloseChoreographySettings);
     assert!(!state.is_choreography_settings_open);
 
-    reduce(&mut state, NavBarAction::SetAudioPlayerOpened { is_open: true });
+    reduce(
+        &mut state,
+        NavBarAction::SetAudioPlayerOpened { is_open: true },
+    );
     assert!(state.is_audio_player_open);
-    reduce(&mut state, NavBarAction::SetAudioPlayerOpened { is_open: false });
+    reduce(
+        &mut state,
+        NavBarAction::SetAudioPlayerOpened { is_open: false },
+    );
     assert!(!state.is_audio_player_open);
 
     reduce(

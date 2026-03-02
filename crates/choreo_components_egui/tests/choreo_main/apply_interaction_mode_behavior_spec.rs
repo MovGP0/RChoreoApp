@@ -26,45 +26,48 @@ fn apply_interaction_mode_behavior_spec() {
             );
         });
 
-        spec.it("maps rotate and scale modes with and without selection", |_| {
-            let mut state = ChoreoMainState::default();
+        spec.it(
+            "maps rotate and scale modes with and without selection",
+            |_| {
+                let mut state = ChoreoMainState::default();
 
-            reduce(
-                &mut state,
-                ChoreoMainAction::ApplyInteractionMode {
-                    mode: InteractionMode::RotateAroundCenter,
-                    selected_positions_count: 0,
-                },
-            );
-            assert_eq!(
-                state.interaction_state_machine,
-                InteractionStateMachineState::RotateAroundCenter
-            );
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::ApplyInteractionMode {
+                        mode: InteractionMode::RotateAroundCenter,
+                        selected_positions_count: 0,
+                    },
+                );
+                assert_eq!(
+                    state.interaction_state_machine,
+                    InteractionStateMachineState::RotateAroundCenter
+                );
 
-            reduce(
-                &mut state,
-                ChoreoMainAction::ApplyInteractionMode {
-                    mode: InteractionMode::RotateAroundDancer,
-                    selected_positions_count: 1,
-                },
-            );
-            assert_eq!(
-                state.interaction_state_machine,
-                InteractionStateMachineState::ScaleAroundDancerSelection
-            );
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::ApplyInteractionMode {
+                        mode: InteractionMode::RotateAroundDancer,
+                        selected_positions_count: 1,
+                    },
+                );
+                assert_eq!(
+                    state.interaction_state_machine,
+                    InteractionStateMachineState::ScaleAroundDancerSelection
+                );
 
-            reduce(
-                &mut state,
-                ChoreoMainAction::ApplyInteractionMode {
-                    mode: InteractionMode::Scale,
-                    selected_positions_count: 0,
-                },
-            );
-            assert_eq!(
-                state.interaction_state_machine,
-                InteractionStateMachineState::ScalePositions
-            );
-        });
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::ApplyInteractionMode {
+                        mode: InteractionMode::Scale,
+                        selected_positions_count: 0,
+                    },
+                );
+                assert_eq!(
+                    state.interaction_state_machine,
+                    InteractionStateMachineState::ScalePositions
+                );
+            },
+        );
     });
 
     let report = crate::choreo_main::run_suite(&suite);

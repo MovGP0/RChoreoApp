@@ -14,5 +14,8 @@ fn initialize_sets_app_name_and_scoped_keys() {
     );
 
     assert_eq!(state.app_name, "rchoreo");
-    assert_eq!(state.scoped_key("show_timestamps"), "rchoreo.show_timestamps");
+    assert_eq!(
+        state.scoped_key("show_timestamps"),
+        "rchoreo.show_timestamps"
+    );
 }

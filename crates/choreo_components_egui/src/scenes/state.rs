@@ -47,9 +47,11 @@ pub struct ScenesState {
     pub show_timestamps: bool,
     pub is_place_mode: bool,
     pub can_save_choreo: bool,
+    pub show_delete_scene_dialog: bool,
     pub last_opened_choreo_file: Option<String>,
     pub pending_open_audio: Option<String>,
     pub close_audio_requested: bool,
+    pub delete_scene_requested: bool,
     pub reload_requested: bool,
     pub redraw_floor_requested: bool,
     pub selected_scene_changed: bool,
@@ -59,6 +61,7 @@ impl ScenesState {
     pub fn clear_ephemeral_outputs(&mut self) {
         self.pending_open_audio = None;
         self.close_audio_requested = false;
+        self.delete_scene_requested = false;
         self.reload_requested = false;
         self.redraw_floor_requested = false;
         self.selected_scene_changed = false;

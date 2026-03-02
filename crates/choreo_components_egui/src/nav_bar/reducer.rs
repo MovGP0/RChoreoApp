@@ -7,9 +7,7 @@ pub enum NavBarEffect {
     OpenAudioRequested,
     OpenImageRequested,
     ResetFloorViewportRequested,
-    InteractionModeChanged {
-        mode: InteractionMode,
-    },
+    InteractionModeChanged { mode: InteractionMode },
 }
 
 pub fn reduce(state: &mut NavBarState, action: NavBarAction) -> Vec<NavBarEffect> {

@@ -24,14 +24,27 @@ fn load_scenes_maps_models_and_selects_first_scene() {
     );
 
     assert_eq!(state.scenes.len(), 2);
-    assert_eq!(state.selected_scene.as_ref().map(|scene| scene.name.as_str()), Some("Intro"));
-    assert_eq!(state.selected_scene.as_ref().and_then(|scene| scene.timestamp), Some(5.0));
+    assert_eq!(
+        state
+            .selected_scene
+            .as_ref()
+            .map(|scene| scene.name.as_str()),
+        Some("Intro")
+    );
+    assert_eq!(
+        state
+            .selected_scene
+            .as_ref()
+            .and_then(|scene| scene.timestamp),
+        Some(5.0)
+    );
 }
 
 #[test]
 fn reload_scenes_reloads_from_choreography() {
     let mut state = create_state();
-    let choreography = choreography_with_scenes("Test", vec![scene_model(1, "First", None, vec![])]);
+    let choreography =
+        choreography_with_scenes("Test", vec![scene_model(1, "First", None, vec![])]);
 
     reduce(
         &mut state,
@@ -40,7 +53,10 @@ fn reload_scenes_reloads_from_choreography() {
         },
     );
 
-    state.choreography.scenes.push(scene_model(2, "Second", Some("00:09"), vec![]));
+    state
+        .choreography
+        .scenes
+        .push(scene_model(2, "Second", Some("00:09"), vec![]));
     reduce(&mut state, ScenesAction::ReloadScenes);
 
     assert_eq!(state.scenes.len(), 2);

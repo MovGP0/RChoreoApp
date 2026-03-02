@@ -85,7 +85,10 @@ fn reducer_parses_input_and_formats_value() {
 #[test]
 fn reducer_initializes_now_timestamp() {
     let mut state = super::state::TimeState::default();
-    super::reducer::reduce(&mut state, super::actions::TimeAction::InitializeCurrentTime);
+    super::reducer::reduce(
+        &mut state,
+        super::actions::TimeAction::InitializeCurrentTime,
+    );
     assert!(state.last_now_unix_nanos > 0);
 }
 

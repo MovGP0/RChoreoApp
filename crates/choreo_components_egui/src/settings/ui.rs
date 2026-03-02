@@ -46,7 +46,11 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
             .selected_text(audio_backend_label(selected_backend))
             .show_ui(ui, |ui| {
                 for backend in [AudioPlayerBackend::Rodio, AudioPlayerBackend::Awedio] {
-                    ui.selectable_value(&mut selected_backend, backend, audio_backend_label(backend));
+                    ui.selectable_value(
+                        &mut selected_backend,
+                        backend,
+                        audio_backend_label(backend),
+                    );
                 }
             });
 

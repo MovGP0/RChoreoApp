@@ -12,8 +12,8 @@ pub mod state;
 #[path = "../../src/logging/types.rs"]
 pub mod types;
 
-pub mod behavior_log_spec;
 pub mod behavior_log_api_spec;
+pub mod behavior_log_spec;
 pub mod bounded_log_spec;
 
 pub use rspec::report::Report;

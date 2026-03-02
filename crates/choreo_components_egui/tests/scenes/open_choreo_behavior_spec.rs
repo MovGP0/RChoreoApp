@@ -7,7 +7,8 @@ use super::scene_model;
 #[test]
 fn open_choreo_updates_state_and_audio_request() {
     let mut state = create_state();
-    let choreography = choreography_with_scenes("FromFile", vec![scene_model(1, "Intro", None, vec![])]);
+    let choreography =
+        choreography_with_scenes("FromFile", vec![scene_model(1, "Intro", None, vec![])]);
 
     reduce(
         &mut state,
@@ -21,7 +22,10 @@ fn open_choreo_updates_state_and_audio_request() {
 
     assert_eq!(state.choreography.name, "FromFile");
     assert!(state.reload_requested);
-    assert_eq!(state.last_opened_choreo_file.as_deref(), Some("C:/tmp/test.choreo"));
+    assert_eq!(
+        state.last_opened_choreo_file.as_deref(),
+        Some("C:/tmp/test.choreo")
+    );
     assert_eq!(state.pending_open_audio.as_deref(), Some("C:/tmp/test.mp3"));
     assert!(!state.close_audio_requested);
 }
@@ -41,7 +45,10 @@ fn open_choreo_without_audio_requests_close_audio() {
         },
     );
 
-    assert_eq!(state.last_opened_choreo_file.as_deref(), Some("browser-import.choreo"));
+    assert_eq!(
+        state.last_opened_choreo_file.as_deref(),
+        Some("browser-import.choreo")
+    );
     assert!(state.close_audio_requested);
 
     reduce(&mut state, ScenesAction::ClearEphemeralOutputs);

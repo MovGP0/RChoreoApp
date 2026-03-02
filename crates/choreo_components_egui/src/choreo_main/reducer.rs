@@ -8,6 +8,36 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
     match action {
         ChoreoMainAction::Initialize => {
             state.content = MainContent::Main;
+            state.is_nav_open = false;
+            state.is_choreography_settings_open = false;
+            state.is_audio_player_open = false;
+        }
+        ChoreoMainAction::ToggleNav => {
+            state.is_nav_open = !state.is_nav_open;
+        }
+        ChoreoMainAction::CloseNav => {
+            state.is_nav_open = false;
+        }
+        ChoreoMainAction::OpenSettings => {
+            state.is_choreography_settings_open = true;
+        }
+        ChoreoMainAction::CloseSettings => {
+            state.is_choreography_settings_open = false;
+        }
+        ChoreoMainAction::OpenAudioPanel => {
+            state.is_audio_player_open = true;
+        }
+        ChoreoMainAction::CloseAudioPanel => {
+            state.is_audio_player_open = false;
+        }
+        ChoreoMainAction::SelectMode { index } => {
+            state.selected_mode_index = index;
+            if let Some(mode) = interaction_mode_from_index(index) {
+                state.interaction_mode = mode;
+            }
+        }
+        ChoreoMainAction::ResetFloorViewport => {
+            state.draw_floor_request_count += 1;
         }
         ChoreoMainAction::NavigateToSettings => {
             state.content = MainContent::Settings;
@@ -71,6 +101,7 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             selected_positions_count,
         } => {
             state.interaction_mode = mode;
+            state.selected_mode_index = interaction_mode_index(mode);
             state.selected_positions_count = selected_positions_count;
             state.interaction_state_machine = map_interaction_state(mode, selected_positions_count);
         }
@@ -105,6 +136,27 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             state.outgoing_audio_requests.clear();
             state.outgoing_open_svg_commands.clear();
         }
+    }
+}
+
+fn interaction_mode_from_index(index: i32) -> Option<InteractionMode> {
+    match index {
+        0 => Some(InteractionMode::None),
+        1 => Some(InteractionMode::Move),
+        2 => Some(InteractionMode::RotateAroundCenter),
+        3 => Some(InteractionMode::RotateAroundDancer),
+        4 => Some(InteractionMode::Scale),
+        _ => None,
+    }
+}
+
+fn interaction_mode_index(mode: InteractionMode) -> i32 {
+    match mode {
+        InteractionMode::None => 0,
+        InteractionMode::Move => 1,
+        InteractionMode::RotateAroundCenter => 2,
+        InteractionMode::RotateAroundDancer => 3,
+        InteractionMode::Scale => 4,
     }
 }
 

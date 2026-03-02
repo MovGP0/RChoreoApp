@@ -4,7 +4,10 @@ pub mod actions;
 pub mod reducer;
 #[path = "../../src/choreography_settings/state.rs"]
 pub mod state;
+#[path = "../../src/choreography_settings/ui.rs"]
+pub mod ui;
 
+pub mod choreo_info_ui_spec;
 pub mod load_choreography_settings_behavior_spec;
 pub mod load_settings_preferences_behavior_spec;
 pub mod update_author_behavior_spec;
@@ -52,7 +55,12 @@ pub fn selected_scene(scene_id: i32, name: &str) -> state::SelectedSceneState {
     }
 }
 
-pub fn scene_model(scene_id: i32, name: &str, text: Option<&str>, timestamp: Option<&str>) -> SceneModel {
+pub fn scene_model(
+    scene_id: i32,
+    name: &str,
+    text: Option<&str>,
+    timestamp: Option<&str>,
+) -> SceneModel {
     SceneModel {
         scene_id: SceneId(scene_id),
         positions: Vec::new(),

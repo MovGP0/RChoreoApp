@@ -133,6 +133,18 @@ pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
             state.show_timestamps = value;
             state.choreography.settings.show_timestamps = value;
         }
+        ScenesAction::OpenDeleteSceneDialog => {
+            if state.selected_scene.is_some() {
+                state.show_delete_scene_dialog = true;
+            }
+        }
+        ScenesAction::CancelDeleteSceneDialog => {
+            state.show_delete_scene_dialog = false;
+        }
+        ScenesAction::ConfirmDeleteSceneDialog => {
+            state.show_delete_scene_dialog = false;
+            state.delete_scene_requested = true;
+        }
         ScenesAction::OpenChoreography {
             choreography,
             file_path,
@@ -203,7 +215,11 @@ fn set_selected_scene_by_id(state: &mut ScenesState, scene_id: choreo_master_mob
     for scene in &mut state.visible_scenes {
         scene.is_selected = scene.scene_id == scene_id;
     }
-    state.selected_scene = state.scenes.iter().find(|scene| scene.scene_id == scene_id).cloned();
+    state.selected_scene = state
+        .scenes
+        .iter()
+        .find(|scene| scene.scene_id == scene_id)
+        .cloned();
 }
 
 fn update_can_save(state: &mut ScenesState) {
@@ -216,7 +232,8 @@ fn update_can_save(state: &mut ScenesState) {
 }
 
 fn map_model_to_scene_item(source: &SceneModel) -> SceneItemState {
-    let mut target = SceneItemState::new(source.scene_id, source.name.clone(), source.color.clone());
+    let mut target =
+        SceneItemState::new(source.scene_id, source.name.clone(), source.color.clone());
     target.text = source.text.clone().unwrap_or_default();
     target.fixed_positions = source.fixed_positions;
     target.timestamp = source

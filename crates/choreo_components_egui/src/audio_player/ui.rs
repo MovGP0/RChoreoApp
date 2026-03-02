@@ -2,8 +2,8 @@ use egui::Ui;
 
 use super::actions::AudioPlayerAction;
 use super::state::AudioPlayerState;
-use super::state::play_pause_glyph;
 use super::state::PlayPauseGlyph;
+use super::state::play_pause_glyph;
 
 pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
     let mut actions: Vec<AudioPlayerAction> = Vec::new();
@@ -25,7 +25,10 @@ pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
         actions.push(AudioPlayerAction::Stop);
     }
     if ui
-        .add_enabled(state.can_link_scene_to_position, egui::Button::new("Link Scene"))
+        .add_enabled(
+            state.can_link_scene_to_position,
+            egui::Button::new("Link Scene"),
+        )
         .clicked()
     {
         actions.push(AudioPlayerAction::LinkSceneToPosition);

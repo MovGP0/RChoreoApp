@@ -25,7 +25,10 @@ fn delete_dancer_behavior_spec() {
             assert_eq!(state.dancers.len(), 1);
             assert_eq!(state.dancers[0].dancer_id, 2);
             assert_eq!(
-                state.selected_dancer.as_ref().map(|dancer| dancer.dancer_id),
+                state
+                    .selected_dancer
+                    .as_ref()
+                    .map(|dancer| dancer.dancer_id),
                 Some(2)
             );
 

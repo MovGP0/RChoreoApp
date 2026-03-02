@@ -84,7 +84,11 @@ impl Hsb {
         let t = normalized.brightness * (1.0 - normalized.saturation * (1.0 - section_fraction));
 
         let (red, green, blue) = if normalized.saturation <= f64::EPSILON {
-            (normalized.brightness, normalized.brightness, normalized.brightness)
+            (
+                normalized.brightness,
+                normalized.brightness,
+                normalized.brightness,
+            )
         } else if section_index < 1.0 {
             (normalized.brightness, t, p)
         } else if section_index < 2.0 {

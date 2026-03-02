@@ -38,7 +38,8 @@ pub fn reduce(state: &mut TimestampStateMachineState, action: TimestampStateMach
             position,
             now_seconds,
         } => {
-            state.last_actor_sample_accepted = should_accept_actor_position(state, position, now_seconds);
+            state.last_actor_sample_accepted =
+                should_accept_actor_position(state, position, now_seconds);
             state.pause_playback_requested = false;
             state.resume_playback_requested = false;
         }
@@ -84,7 +85,8 @@ fn should_accept_actor_position(
         return true;
     };
 
-    let has_reached_target = (player_position - target_position).abs() <= POSITION_SYNC_TOLERANCE_SECONDS;
+    let has_reached_target =
+        (player_position - target_position).abs() <= POSITION_SYNC_TOLERANCE_SECONDS;
     let timed_out = state
         .pending_seek_started_at_seconds
         .map(|started_at| now_seconds - started_at >= POSITION_SYNC_TIMEOUT_SECONDS)

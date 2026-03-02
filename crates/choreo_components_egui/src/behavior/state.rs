@@ -28,6 +28,11 @@ impl CompositeDisposable {
     pub fn len(&self) -> usize {
         self.items.len()
     }
+
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
 }
 
 #[derive(Default)]

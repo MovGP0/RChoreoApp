@@ -1,26 +1,28 @@
-#[path = "../../src/slider_with_ticks/actions.rs"]
-mod actions;
-#[path = "../../src/slider_with_ticks/reducer.rs"]
-mod reducer;
-#[path = "../../src/slider_with_ticks/state.rs"]
-mod state;
-
 use egui::Color32;
 
-use actions::SliderWithTicksAction;
-use reducer::reduce;
-use state::SliderWithTicksState;
+use crate::slider_with_ticks;
+use slider_with_ticks::Report;
+use slider_with_ticks::actions::SliderWithTicksAction;
+use slider_with_ticks::reducer::reduce;
+use slider_with_ticks::state::SliderWithTicksState;
 
 #[test]
-fn slider_with_ticks_defaults_match_source_component() {
-    let state = SliderWithTicksState::new();
+fn slider_with_ticks_behavior_spec() {
+    let suite = rspec::describe("slider with ticks behavior", (), |spec| {
+        spec.it("activates without mutating default slider state", |_| {
+            let state = SliderWithTicksState::new();
 
-    assert_eq!(state.minimum, 0.0);
-    assert_eq!(state.maximum, 1.0);
-    assert_eq!(state.value, 0.0);
-    assert!(state.tick_values.is_empty());
-    assert!(state.tick_color.is_none());
-    assert!(state.is_enabled);
+            assert_eq!(state.minimum, 0.0);
+            assert_eq!(state.maximum, 1.0);
+            assert_eq!(state.value, 0.0);
+            assert!(state.tick_values.is_empty());
+            assert!(state.tick_color.is_none());
+            assert!(state.is_enabled);
+        });
+    });
+
+    let report = slider_with_ticks::run_suite(&suite);
+    assert!(report.is_success());
 }
 
 #[test]

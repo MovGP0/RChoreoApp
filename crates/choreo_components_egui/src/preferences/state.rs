@@ -2,17 +2,9 @@ use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PreferenceWriteIntent {
-    SetString {
-        key: String,
-        value: String,
-    },
-    SetBool {
-        key: String,
-        value: bool,
-    },
-    Remove {
-        key: String,
-    },
+    SetString { key: String, value: String },
+    SetBool { key: String, value: bool },
+    Remove { key: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

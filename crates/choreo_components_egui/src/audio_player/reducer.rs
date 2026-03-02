@@ -6,9 +6,7 @@ use super::state::speed_to_percent_text;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AudioPlayerEffect {
-    PositionChangedPublished {
-        position_seconds: f64,
-    },
+    PositionChangedPublished { position_seconds: f64 },
 }
 
 pub fn reduce(state: &mut AudioPlayerState, action: AudioPlayerAction) -> Vec<AudioPlayerEffect> {
@@ -225,13 +223,21 @@ fn build_tick_values(duration: f64, scenes: &[AudioPlayerScene]) -> Vec<f64> {
     ticks
 }
 
-fn can_link_scene(position: f64, selected_scene_id: Option<i32>, scenes: &[AudioPlayerScene]) -> bool {
+fn can_link_scene(
+    position: f64,
+    selected_scene_id: Option<i32>,
+    scenes: &[AudioPlayerScene],
+) -> bool {
     selected_scene_id
         .and_then(|scene_id| try_get_linked_timestamp(position, scene_id, scenes))
         .is_some()
 }
 
-fn try_get_linked_timestamp(position: f64, selected_scene_id: i32, scenes: &[AudioPlayerScene]) -> Option<f64> {
+fn try_get_linked_timestamp(
+    position: f64,
+    selected_scene_id: i32,
+    scenes: &[AudioPlayerScene],
+) -> Option<f64> {
     let selected_index = scenes
         .iter()
         .position(|scene| scene.scene_id == selected_scene_id)?;
@@ -267,7 +273,11 @@ fn round_to_100_millis(seconds: f64) -> f64 {
 }
 
 fn format_seconds(seconds: f64) -> String {
-    let normalized = if seconds.abs() < 0.000_05 { 0.0 } else { seconds };
+    let normalized = if seconds.abs() < 0.000_05 {
+        0.0
+    } else {
+        seconds
+    };
     let mut text = format!("{normalized:.1}");
     if text == "-0.0" {
         text = "0.0".to_string();

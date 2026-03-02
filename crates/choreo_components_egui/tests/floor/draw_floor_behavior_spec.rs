@@ -13,3 +13,12 @@ fn draw_floor_marks_render_gate_only_once_while_counting_draws() {
     assert!(state.render_marked);
     assert_eq!(state.render_mark_count, 1);
 }
+
+#[test]
+fn draw_floor_without_action_keeps_render_gate_unmarked() {
+    let state = FloorState::default();
+
+    assert_eq!(state.draw_count, 0);
+    assert!(!state.render_marked);
+    assert_eq!(state.render_mark_count, 0);
+}

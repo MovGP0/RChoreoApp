@@ -41,6 +41,11 @@ pub struct SceneState {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ChoreoMainState {
     pub content: MainContent,
+    pub selected_mode_index: i32,
+    pub is_mode_selection_enabled: bool,
+    pub is_nav_open: bool,
+    pub is_choreography_settings_open: bool,
+    pub is_audio_player_open: bool,
     pub is_dialog_open: bool,
     pub dialog_content: Option<String>,
     pub interaction_mode: InteractionMode,
@@ -61,6 +66,11 @@ impl Default for ChoreoMainState {
     fn default() -> Self {
         Self {
             content: MainContent::Main,
+            selected_mode_index: -1,
+            is_mode_selection_enabled: true,
+            is_nav_open: false,
+            is_choreography_settings_open: false,
+            is_audio_player_open: false,
             is_dialog_open: false,
             dialog_content: None,
             interaction_mode: InteractionMode::None,

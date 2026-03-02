@@ -1,10 +1,10 @@
-use crate::floor::floor_component::state::Point;
-use crate::floor::floor_component::state::PointerButton;
-use crate::floor::floor_component::state::PointerEventArgs;
 use crate::floor::floor_component::actions::FloorAction;
 use crate::floor::floor_component::reducer::reduce;
 use crate::floor::floor_component::state::FloorState;
 use crate::floor::floor_component::state::InteractionMode;
+use crate::floor::floor_component::state::Point;
+use crate::floor::floor_component::state::PointerButton;
+use crate::floor::floor_component::state::PointerEventArgs;
 use crate::floor::floor_component::state::TouchAction;
 
 #[test]

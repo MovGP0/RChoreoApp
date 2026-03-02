@@ -28,10 +28,16 @@ fn switch_dark_light_mode_behavior_spec() {
 
         spec.it("switches theme mode and stores preference", |_| {
             let mut state = SettingsState::default();
-            reduce(&mut state, SettingsAction::UpdateIsDarkMode { enabled: true });
+            reduce(
+                &mut state,
+                SettingsAction::UpdateIsDarkMode { enabled: true },
+            );
 
             assert_eq!(state.theme_mode, ThemeMode::Dark);
-            assert_eq!(state.preferences.get(THEME_KEY).map(String::as_str), Some("Dark"));
+            assert_eq!(
+                state.preferences.get(THEME_KEY).map(String::as_str),
+                Some("Dark")
+            );
         });
     });
 

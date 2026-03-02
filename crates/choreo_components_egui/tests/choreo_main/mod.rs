@@ -11,6 +11,8 @@ pub mod actions;
 pub mod reducer;
 #[path = "../../src/choreo_main/state.rs"]
 pub mod state;
+#[path = "../../src/choreo_main/ui.rs"]
+pub mod ui;
 
 pub use rspec::report::Report;
 
@@ -29,6 +31,7 @@ where
 }
 
 pub mod apply_interaction_mode_behavior_spec;
+pub mod dialog_host_ui_spec;
 pub mod hide_dialog_behavior_spec;
 pub mod navigate_dancers_to_main_spec;
 pub mod navigate_main_to_dancers_spec;
@@ -39,3 +42,4 @@ pub mod open_image_behavior_spec;
 pub mod open_svg_file_behavior_spec;
 pub mod show_dialog_behavior_spec;
 pub mod timestamp_sync_spec;
+pub mod ui_main_page_spec;

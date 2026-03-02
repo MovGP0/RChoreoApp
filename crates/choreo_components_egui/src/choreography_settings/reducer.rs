@@ -3,8 +3,8 @@ use choreo_models::SceneModel;
 use super::actions::ChoreographySettingsAction;
 use super::actions::UpdateSelectedSceneAction;
 use super::state::ChoreographySettingsState;
-use super::state::current_date_parts;
 use super::state::DateParts;
+use super::state::current_date_parts;
 use time::Date;
 use time::Month;
 
@@ -155,9 +155,8 @@ pub fn reduce(state: &mut ChoreographySettingsState, action: ChoreographySetting
             state.preferences.show_timestamps = value;
             state.choreography.settings.show_timestamps = value;
             state.redraw_requested = true;
-            state.last_show_timestamps_event = Some(super::state::ShowTimestampsChangedEvent {
-                is_enabled: value,
-            });
+            state.last_show_timestamps_event =
+                Some(super::state::ShowTimestampsChangedEvent { is_enabled: value });
         }
         ChoreographySettingsAction::UpdateShowLegend(value) => {
             state.show_legend = value;
@@ -198,7 +197,8 @@ fn reduce_selected_scene(state: &mut ChoreographySettingsState, action: UpdateSe
             if let Some(selected_scene) = state.selected_scene.as_mut() {
                 let scene_id = selected_scene.scene_id;
                 selected_scene.name = value.clone();
-                if let Some(model_scene) = find_scene_mut(&mut state.choreography.scenes, scene_id) {
+                if let Some(model_scene) = find_scene_mut(&mut state.choreography.scenes, scene_id)
+                {
                     model_scene.name = value.clone();
                 }
                 state.scene_name = value;
@@ -208,7 +208,8 @@ fn reduce_selected_scene(state: &mut ChoreographySettingsState, action: UpdateSe
             if let Some(selected_scene) = state.selected_scene.as_mut() {
                 let scene_id = selected_scene.scene_id;
                 selected_scene.text = value.clone();
-                if let Some(model_scene) = find_scene_mut(&mut state.choreography.scenes, scene_id) {
+                if let Some(model_scene) = find_scene_mut(&mut state.choreography.scenes, scene_id)
+                {
                     model_scene.text = normalize_text(&value);
                 }
                 state.scene_text = value;
@@ -218,7 +219,8 @@ fn reduce_selected_scene(state: &mut ChoreographySettingsState, action: UpdateSe
             if let Some(selected_scene) = state.selected_scene.as_mut() {
                 let scene_id = selected_scene.scene_id;
                 selected_scene.fixed_positions = value;
-                if let Some(model_scene) = find_scene_mut(&mut state.choreography.scenes, scene_id) {
+                if let Some(model_scene) = find_scene_mut(&mut state.choreography.scenes, scene_id)
+                {
                     model_scene.fixed_positions = value;
                 }
                 state.scene_fixed_positions = value;
@@ -228,7 +230,8 @@ fn reduce_selected_scene(state: &mut ChoreographySettingsState, action: UpdateSe
             if let Some(selected_scene) = state.selected_scene.as_mut() {
                 let scene_id = selected_scene.scene_id;
                 selected_scene.color = value.clone();
-                if let Some(model_scene) = find_scene_mut(&mut state.choreography.scenes, scene_id) {
+                if let Some(model_scene) = find_scene_mut(&mut state.choreography.scenes, scene_id)
+                {
                     model_scene.color = value.clone();
                 }
                 state.scene_color = value;
@@ -241,7 +244,8 @@ fn reduce_selected_scene(state: &mut ChoreographySettingsState, action: UpdateSe
             if let Some(selected_scene) = state.selected_scene.as_mut() {
                 let scene_id = selected_scene.scene_id;
                 selected_scene.timestamp = if has_timestamp { Some(seconds) } else { None };
-                if let Some(model_scene) = find_scene_mut(&mut state.choreography.scenes, scene_id) {
+                if let Some(model_scene) = find_scene_mut(&mut state.choreography.scenes, scene_id)
+                {
                     model_scene.timestamp = if has_timestamp {
                         Some(format_seconds(seconds))
                     } else {

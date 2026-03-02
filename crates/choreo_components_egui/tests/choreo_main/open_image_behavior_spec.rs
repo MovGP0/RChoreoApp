@@ -16,7 +16,10 @@ fn open_image_behavior_spec() {
             );
 
             assert_eq!(state.outgoing_open_svg_commands.len(), 1);
-            assert_eq!(state.outgoing_open_svg_commands[0].file_path, "C:/image.svg");
+            assert_eq!(
+                state.outgoing_open_svg_commands[0].file_path,
+                "C:/image.svg"
+            );
         });
     });
 

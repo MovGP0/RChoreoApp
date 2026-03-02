@@ -83,7 +83,10 @@ fn audio_player_reducer_and_ui_cover_core_action_paths() {
     reduce(&mut state, AudioPlayerAction::Initialize);
     reduce(&mut state, AudioPlayerAction::TogglePlayPause);
     reduce(&mut state, AudioPlayerAction::Stop);
-    reduce(&mut state, AudioPlayerAction::SeekToPosition { position: 1.5 });
+    reduce(
+        &mut state,
+        AudioPlayerAction::SeekToPosition { position: 1.5 },
+    );
     reduce(
         &mut state,
         AudioPlayerAction::PositionPreviewChanged { position: 2.0 },

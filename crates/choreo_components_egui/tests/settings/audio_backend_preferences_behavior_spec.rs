@@ -20,7 +20,10 @@ fn audio_backend_preferences_behavior_spec() {
 
             assert_eq!(state.audio_player_backend, AudioPlayerBackend::Awedio);
             assert_eq!(
-                state.preferences.get(AUDIO_PLAYER_BACKEND_KEY).map(String::as_str),
+                state
+                    .preferences
+                    .get(AUDIO_PLAYER_BACKEND_KEY)
+                    .map(String::as_str),
                 Some("awedio")
             );
         });

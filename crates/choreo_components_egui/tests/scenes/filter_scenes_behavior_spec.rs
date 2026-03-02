@@ -22,7 +22,10 @@ fn filter_scenes_by_search_text() {
             choreography: Box::new(choreography),
         },
     );
-    reduce(&mut state, ScenesAction::UpdateSearchText("clo".to_string()));
+    reduce(
+        &mut state,
+        ScenesAction::UpdateSearchText("clo".to_string()),
+    );
 
     assert_eq!(state.visible_scenes.len(), 1);
     assert_eq!(state.visible_scenes[0].name, "Closing");
@@ -33,7 +36,10 @@ fn filter_scenes_clears_and_restores_all() {
     let mut state = create_state();
     let choreography = choreography_with_scenes(
         "Test",
-        vec![scene_model(1, "Opening", None, vec![]), scene_model(2, "Chorus", None, vec![])],
+        vec![
+            scene_model(1, "Opening", None, vec![]),
+            scene_model(2, "Chorus", None, vec![]),
+        ],
     );
 
     reduce(
@@ -42,7 +48,10 @@ fn filter_scenes_clears_and_restores_all() {
             choreography: Box::new(choreography),
         },
     );
-    reduce(&mut state, ScenesAction::UpdateSearchText("open".to_string()));
+    reduce(
+        &mut state,
+        ScenesAction::UpdateSearchText("open".to_string()),
+    );
     assert_eq!(state.visible_scenes.len(), 1);
 
     reduce(&mut state, ScenesAction::UpdateSearchText(String::new()));

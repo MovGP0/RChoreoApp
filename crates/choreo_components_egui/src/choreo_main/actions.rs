@@ -15,13 +15,27 @@ pub struct OpenSvgFileCommand {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ChoreoMainAction {
     Initialize,
+    ToggleNav,
+    CloseNav,
+    OpenSettings,
+    CloseSettings,
+    OpenAudioPanel,
+    CloseAudioPanel,
+    SelectMode {
+        index: i32,
+    },
+    ResetFloorViewport,
     NavigateToSettings,
     NavigateToMain,
     NavigateToDancers,
-    ShowDialog { content: Option<String> },
+    ShowDialog {
+        content: Option<String>,
+    },
     HideDialog,
     RequestOpenAudio(OpenAudioRequested),
-    RequestOpenImage { file_path: String },
+    RequestOpenImage {
+        file_path: String,
+    },
     ApplyOpenSvgFile(OpenSvgFileCommand),
     RestoreLastOpenedSvg {
         file_path: Option<String>,

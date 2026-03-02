@@ -113,7 +113,12 @@ fn ensure_default_roles(roles: &mut Vec<RoleState>) {
 }
 
 fn next_dancer_id(dancers: &[DancerState]) -> i32 {
-    dancers.iter().map(|dancer| dancer.dancer_id).max().unwrap_or(0) + 1
+    dancers
+        .iter()
+        .map(|dancer| dancer.dancer_id)
+        .max()
+        .unwrap_or(0)
+        + 1
 }
 
 fn add_dancer(state: &mut DancersState) {
@@ -136,7 +141,11 @@ fn add_dancer(state: &mut DancersState) {
 }
 
 fn delete_selected_dancer(state: &mut DancersState) {
-    let Some(selected_id) = state.selected_dancer.as_ref().map(|dancer| dancer.dancer_id) else {
+    let Some(selected_id) = state
+        .selected_dancer
+        .as_ref()
+        .map(|dancer| dancer.dancer_id)
+    else {
         return;
     };
 

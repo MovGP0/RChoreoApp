@@ -4,8 +4,12 @@ pub mod actions;
 pub mod reducer;
 #[path = "../../src/scenes/state.rs"]
 pub mod state;
+#[path = "../../src/scenes/ui.rs"]
+pub mod ui;
 
 pub mod apply_placement_mode_behavior_spec;
+pub mod delete_scene_dialog_behavior_spec;
+pub mod delete_scene_dialog_ui_spec;
 pub mod filter_scenes_behavior_spec;
 pub mod insert_scene_behavior_spec;
 pub mod load_scenes_behavior_spec;
@@ -24,7 +28,12 @@ pub fn create_state() -> state::ScenesState {
     state::ScenesState::default()
 }
 
-pub fn scene_model(scene_id: i32, name: &str, timestamp: Option<&str>, positions: Vec<PositionModel>) -> SceneModel {
+pub fn scene_model(
+    scene_id: i32,
+    name: &str,
+    timestamp: Option<&str>,
+    positions: Vec<PositionModel>,
+) -> SceneModel {
     SceneModel {
         scene_id: SceneId(scene_id),
         positions,

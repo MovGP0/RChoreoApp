@@ -1,5 +1,4 @@
 use super::actions::SettingsAction;
-use super::state::SettingsState;
 use super::state::AUDIO_PLAYER_BACKEND_KEY;
 use super::state::AudioPlayerBackend;
 use super::state::DEFAULT_PRIMARY_COLOR_HEX;
@@ -7,6 +6,7 @@ use super::state::DEFAULT_SECONDARY_COLOR_HEX;
 use super::state::DEFAULT_TERTIARY_COLOR_HEX;
 use super::state::PRIMARY_COLOR_KEY;
 use super::state::SECONDARY_COLOR_KEY;
+use super::state::SettingsState;
 use super::state::TERTIARY_COLOR_KEY;
 use super::state::THEME_KEY;
 use super::state::ThemeMode;
@@ -93,9 +93,10 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
             }
             state.primary_color_hex = value.trim().to_ascii_uppercase();
             if state.use_primary_color {
-                state
-                    .preferences
-                    .insert(PRIMARY_COLOR_KEY.to_string(), state.primary_color_hex.clone());
+                state.preferences.insert(
+                    PRIMARY_COLOR_KEY.to_string(),
+                    state.primary_color_hex.clone(),
+                );
                 bump_material_update(state);
             }
         }
@@ -136,17 +137,21 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
 }
 
 fn apply_preferences(state: &mut SettingsState) {
-    state.theme_mode = if state.preferences.get(THEME_KEY).is_some_and(|value| value == "Dark") {
+    state.theme_mode = if state
+        .preferences
+        .get(THEME_KEY)
+        .is_some_and(|value| value == "Dark")
+    {
         ThemeMode::Dark
     } else {
         ThemeMode::Light
     };
     state.use_system_theme = bool_pref(&state.preferences, USE_SYSTEM_THEME_KEY, true);
     state.use_primary_color = bool_pref(&state.preferences, USE_PRIMARY_COLOR_KEY, false);
-    state.use_secondary_color = bool_pref(&state.preferences, USE_SECONDARY_COLOR_KEY, false)
-        && state.use_primary_color;
-    state.use_tertiary_color = bool_pref(&state.preferences, USE_TERTIARY_COLOR_KEY, false)
-        && state.use_secondary_color;
+    state.use_secondary_color =
+        bool_pref(&state.preferences, USE_SECONDARY_COLOR_KEY, false) && state.use_primary_color;
+    state.use_tertiary_color =
+        bool_pref(&state.preferences, USE_TERTIARY_COLOR_KEY, false) && state.use_secondary_color;
     state.primary_color_hex = state
         .preferences
         .get(PRIMARY_COLOR_KEY)

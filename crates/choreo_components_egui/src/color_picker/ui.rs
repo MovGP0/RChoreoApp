@@ -34,7 +34,11 @@ pub fn draw(ui: &mut Ui, state: &ColorPickerState) -> Vec<ColorPickerAction> {
         state.value_slider_position,
         ColorPickerDock::Left | ColorPickerDock::Right
     ) {
-        ui.add(egui::Slider::new(&mut brightness, 0.0..=1.0).text("Brightness").vertical())
+        ui.add(
+            egui::Slider::new(&mut brightness, 0.0..=1.0)
+                .text("Brightness")
+                .vertical(),
+        )
     } else {
         ui.add(egui::Slider::new(&mut brightness, 0.0..=1.0).text("Brightness"))
     };

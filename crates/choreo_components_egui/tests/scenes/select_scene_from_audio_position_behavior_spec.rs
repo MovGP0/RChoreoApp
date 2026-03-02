@@ -31,7 +31,13 @@ fn select_scene_from_audio_position_selects_matching_range() {
         },
     );
 
-    assert_eq!(state.selected_scene.as_ref().map(|scene| scene.name.as_str()), Some("Second"));
+    assert_eq!(
+        state
+            .selected_scene
+            .as_ref()
+            .map(|scene| scene.name.as_str()),
+        Some("Second")
+    );
     assert!(state.selected_scene_changed);
     assert!(state.redraw_floor_requested);
 }
@@ -41,7 +47,10 @@ fn select_scene_from_audio_position_does_not_select_before_first_timestamp() {
     let mut state = create_state();
     let choreography = choreography_with_scenes(
         "Test",
-        vec![scene_model(1, "First", Some("00:05"), vec![]), scene_model(2, "Second", Some("00:10"), vec![])],
+        vec![
+            scene_model(1, "First", Some("00:05"), vec![]),
+            scene_model(2, "Second", Some("00:10"), vec![]),
+        ],
     );
 
     reduce(
@@ -91,7 +100,13 @@ fn select_scene_from_audio_position_does_not_emit_when_scene_does_not_change() {
         },
     );
 
-    assert_eq!(state.selected_scene.as_ref().map(|scene| scene.name.as_str()), Some("First"));
+    assert_eq!(
+        state
+            .selected_scene
+            .as_ref()
+            .map(|scene| scene.name.as_str()),
+        Some("First")
+    );
     assert!(!state.selected_scene_changed);
     assert!(!state.redraw_floor_requested);
 }
@@ -122,7 +137,13 @@ fn select_scene_from_audio_position_ignores_non_increasing_next_timestamp() {
         },
     );
 
-    assert_eq!(state.selected_scene.as_ref().map(|scene| scene.name.as_str()), Some("First"));
+    assert_eq!(
+        state
+            .selected_scene
+            .as_ref()
+            .map(|scene| scene.name.as_str()),
+        Some("First")
+    );
     assert!(!state.selected_scene_changed);
     assert!(!state.redraw_floor_requested);
 }

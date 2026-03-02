@@ -22,7 +22,9 @@ fn update_selected_scene_syncs_and_updates_name() {
 
     reduce(
         &mut state,
-        ChoreographySettingsAction::UpdateSelectedScene(UpdateSelectedSceneAction::SyncFromSelected),
+        ChoreographySettingsAction::UpdateSelectedScene(
+            UpdateSelectedSceneAction::SyncFromSelected,
+        ),
     );
 
     assert_eq!(state.scene_name, "Original");
@@ -62,12 +64,17 @@ fn update_selected_scene_updates_text_timestamp_and_color() {
 
     reduce(
         &mut state,
-        ChoreographySettingsAction::UpdateSelectedScene(UpdateSelectedSceneAction::SceneTimestamp {
-            has_timestamp: true,
-            seconds: 12.5,
-        }),
+        ChoreographySettingsAction::UpdateSelectedScene(
+            UpdateSelectedSceneAction::SceneTimestamp {
+                has_timestamp: true,
+                seconds: 12.5,
+            },
+        ),
     );
-    assert_eq!(state.choreography.scenes[0].timestamp.as_deref(), Some("12.5"));
+    assert_eq!(
+        state.choreography.scenes[0].timestamp.as_deref(),
+        Some("12.5")
+    );
 
     reduce(
         &mut state,

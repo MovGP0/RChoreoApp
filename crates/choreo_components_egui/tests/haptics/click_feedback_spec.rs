@@ -8,15 +8,9 @@ fn click_feedback_spec() {
             "queues click effect only when supported and clears it after consume",
             |_| {
                 let mut state = haptics::state::HapticsState::default();
-                haptics::reducer::reduce(
-                    &mut state,
-                    haptics::actions::HapticsAction::Initialize,
-                );
+                haptics::reducer::reduce(&mut state, haptics::actions::HapticsAction::Initialize);
 
-                haptics::reducer::reduce(
-                    &mut state,
-                    haptics::actions::HapticsAction::TriggerClick,
-                );
+                haptics::reducer::reduce(&mut state, haptics::actions::HapticsAction::TriggerClick);
                 assert_eq!(state.trigger_count, 1);
                 assert_eq!(state.delivered_count, 0);
                 assert!(state.pending_effect.is_none());
@@ -25,10 +19,7 @@ fn click_feedback_spec() {
                     &mut state,
                     haptics::actions::HapticsAction::SetSupported { supported: true },
                 );
-                haptics::reducer::reduce(
-                    &mut state,
-                    haptics::actions::HapticsAction::TriggerClick,
-                );
+                haptics::reducer::reduce(&mut state, haptics::actions::HapticsAction::TriggerClick);
 
                 assert_eq!(state.trigger_count, 2);
                 assert_eq!(state.delivered_count, 1);

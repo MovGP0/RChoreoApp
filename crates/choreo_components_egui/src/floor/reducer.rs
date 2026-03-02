@@ -138,7 +138,9 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
 
             let current = state.transformation_matrix.scale_x;
             let factor = if delta_y > 0.0 { 1.1 } else { 0.9 };
-            state.transformation_matrix.set_uniform_scale(current * factor);
+            state
+                .transformation_matrix
+                .set_uniform_scale(current * factor);
         }
         FloorAction::Touch {
             id,
@@ -159,7 +161,9 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                     {
                         let factor = pinch / previous_distance;
                         let current = state.transformation_matrix.scale_x;
-                        state.transformation_matrix.set_uniform_scale(current * factor);
+                        state
+                            .transformation_matrix
+                            .set_uniform_scale(current * factor);
                     }
                 }
             }

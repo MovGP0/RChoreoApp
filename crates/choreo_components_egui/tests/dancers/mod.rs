@@ -10,9 +10,13 @@ pub mod actions;
 pub mod reducer;
 #[path = "../../src/dancers/state.rs"]
 pub mod state;
+#[path = "../../src/dancers/ui.rs"]
+pub mod ui;
 
 pub mod add_dancer_behavior_spec;
 pub mod cancel_dancer_settings_behavior_spec;
+pub mod dancer_list_item_view_spec;
+pub mod dancers_pane_view_ui_spec;
 pub mod delete_dancer_behavior_spec;
 pub mod hide_dancer_dialog_behavior_spec;
 pub mod load_dancer_settings_behavior_spec;
@@ -24,6 +28,7 @@ pub mod selected_role_behavior_spec;
 pub mod show_dancer_dialog_behavior_spec;
 pub mod swap_dancer_selection_behavior_spec;
 pub mod swap_dancers_behavior_spec;
+pub mod ui_dancer_settings_page_spec;
 pub mod update_dancer_details_behavior_spec;
 
 pub use rspec::report::Report;

@@ -1,6 +1,8 @@
 use egui::Ui;
+use egui::vec2;
 
 use super::actions::NavBarAction;
+use super::hamburger_toggle_button;
 use super::state::InteractionMode;
 use super::state::NavBarState;
 use super::state::all_modes;
@@ -39,8 +41,15 @@ pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
     let mut actions: Vec<NavBarAction> = Vec::new();
     ui.horizontal(|ui| {
         ui.heading("Navigation");
-        let (nav_label, nav_action) = nav_button(state);
-        if ui.button(nav_label).clicked() {
+        let nav_response = hamburger_toggle_button::draw(
+            ui,
+            state.is_nav_open,
+            true,
+            "Toggle navigation",
+            Some(vec2(48.0, 48.0)),
+        );
+        if nav_response.clicked() {
+            let (_, nav_action) = nav_button(state);
             actions.push(nav_action);
         }
         let (settings_label, settings_action) = settings_button(state);

@@ -4,7 +4,10 @@ use super::state::ColorPickerState;
 use super::state::Hsb;
 
 #[must_use]
-pub fn reduce(state: &mut ColorPickerState, action: ColorPickerAction) -> Option<ColorChangedEvent> {
+pub fn reduce(
+    state: &mut ColorPickerState,
+    action: ColorPickerAction,
+) -> Option<ColorChangedEvent> {
     match action {
         ColorPickerAction::Initialize => None,
         ColorPickerAction::SetColor { color } => set_color(state, color),

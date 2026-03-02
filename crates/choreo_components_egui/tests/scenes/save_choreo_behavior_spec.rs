@@ -7,7 +7,10 @@ use super::scene_model;
 #[test]
 fn save_choreo_maps_scene_view_state_back_to_model() {
     let mut state = create_state();
-    let choreography = choreography_with_scenes("My Choreo", vec![scene_model(1, "Intro", Some("00:12"), vec![])]);
+    let choreography = choreography_with_scenes(
+        "My Choreo",
+        vec![scene_model(1, "Intro", Some("00:12"), vec![])],
+    );
 
     reduce(
         &mut state,
@@ -23,8 +26,14 @@ fn save_choreo_maps_scene_view_state_back_to_model() {
     reduce(&mut state, ScenesAction::SaveChoreography);
 
     assert_eq!(state.choreography.scenes[0].name, "Intro");
-    assert_eq!(state.choreography.scenes[0].timestamp.as_deref(), Some("12"));
-    assert_eq!(state.choreography.scenes[0].text.as_deref(), Some("details"));
+    assert_eq!(
+        state.choreography.scenes[0].timestamp.as_deref(),
+        Some("12")
+    );
+    assert_eq!(
+        state.choreography.scenes[0].text.as_deref(),
+        Some("details")
+    );
     assert!(state.can_save_choreo);
 }
 

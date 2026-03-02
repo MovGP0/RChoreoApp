@@ -6,10 +6,16 @@ use super::reducer::reduce;
 fn update_draw_path_to_initializes_and_updates_flag() {
     let mut state = create_state();
 
-    reduce(&mut state, ChoreographySettingsAction::InitializeDrawPathTo(true));
+    reduce(
+        &mut state,
+        ChoreographySettingsAction::InitializeDrawPathTo(true),
+    );
     assert!(state.draw_path_to);
 
-    reduce(&mut state, ChoreographySettingsAction::UpdateDrawPathTo(false));
+    reduce(
+        &mut state,
+        ChoreographySettingsAction::UpdateDrawPathTo(false),
+    );
 
     assert!(!state.draw_path_to);
     assert!(!state.preferences.draw_path_to);
