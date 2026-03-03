@@ -36,9 +36,24 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
                     ui.vertical(|ui| {
                         ui.set_min_width(324.0);
                         ui.heading("Scenes");
-                        ui.label("Main page drawer host (left)");
                         if ui.add(MaterialButton::new("Close Navigation")).clicked() {
                             actions.push(ChoreoMainAction::CloseNav);
+                        }
+                        ui.separator();
+                        if state.scenes.is_empty() {
+                            ui.label("No scenes loaded.");
+                        } else {
+                            for (index, scene) in state.scenes.iter().enumerate() {
+                                let is_selected = state.selected_scene_index == Some(index);
+                                let label = if let Some(timestamp) = scene.timestamp_seconds {
+                                    format!("{} ({timestamp:.1}s)", scene.name)
+                                } else {
+                                    scene.name.clone()
+                                };
+                                if ui.selectable_label(is_selected, label).clicked() {
+                                    actions.push(ChoreoMainAction::SelectScene { index });
+                                }
+                            }
                         }
                     });
                     ui.separator();
@@ -48,21 +63,21 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
                     ui.heading("Floor");
                     match state.content {
                         MainContent::Main => {
-                            ui.label("Main page content");
-                            ui.label(format!(
-                                "selected scene: {}",
-                                state.floor_scene_name.as_deref().unwrap_or("none")
-                            ));
-                            ui.label(format!("audio position: {:.2}s", state.audio_position_seconds));
-                            ui.label(format!("draw requests: {}", state.draw_floor_request_count));
-                            ui.label("content: main");
+                            ui.group(|ui| {
+                                ui.set_min_height(360.0);
+                                ui.label(format!(
+                                    "Scene: {}",
+                                    state.floor_scene_name.as_deref().unwrap_or("none")
+                                ));
+                                ui.label(format!("Audio position: {:.2}s", state.audio_position_seconds));
+                                ui.label(format!("Redraw requests: {}", state.draw_floor_request_count));
+                            });
                         }
                         MainContent::Settings => {
                             ui.heading("Settings");
-                            ui.label("content: settings");
                         }
                         MainContent::Dancers => {
-                            ui.label("content: dancers");
+                            ui.heading("Dancers");
                             ui.separator();
                             let dancer_actions = dancers::ui::draw(ui, &state.dancers_state);
                             for action in dancer_actions {
@@ -77,7 +92,6 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
                     ui.vertical(|ui| {
                         ui.set_min_width(480.0);
                         ui.heading("Choreography Settings");
-                        ui.label("Main page drawer host (right)");
                         if ui.add(MaterialButton::new("Close Settings")).clicked() {
                             actions.push(ChoreoMainAction::CloseSettings);
                         }
@@ -94,11 +108,6 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
                         actions.push(ChoreoMainAction::CloseAudioPanel);
                     }
                 });
-            }
-
-            ui.separator();
-            if ui.add(MaterialButton::new("Initialize")).clicked() {
-                actions.push(ChoreoMainAction::Initialize);
             }
         },
     );

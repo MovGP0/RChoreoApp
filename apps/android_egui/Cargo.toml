@@ -10,3 +10,7 @@ crate-type = ["cdylib"]
 egui = "0.32.3"
 egui-material3 = "0.0.7"
 choreo_components_egui = { path = "../../crates/choreo_components_egui" }
+
+[target.'cfg(target_os = "android")'.dependencies]
+eframe = "0.32.3"
+winit = "0.30.12"

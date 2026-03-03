@@ -8,3 +8,5 @@ eframe = "0.32.3"
 egui = "0.32.3"
 egui-material3 = "0.0.7"
 choreo_components_egui = { path = "../../crates/choreo_components_egui" }
+env_logger = "0.11"
+log = "0.4"

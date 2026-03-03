@@ -7,6 +7,11 @@
 #![deny(clippy::all)]
 
 use choreo_components_egui::AppShellViewModel;
+use choreo_components_egui::shell;
+use std::sync::Once;
+
+const APP_ID: &str = "rchoreo_desktop_egui";
+const APP_TITLE: &str = "ChoreoApp";
 
 #[derive(Default)]
 struct DesktopEguiApp {
@@ -15,8 +20,9 @@ struct DesktopEguiApp {
 
 impl DesktopEguiApp {
     fn new(_creation_context: &eframe::CreationContext<'_>) -> Self {
+        apply_desktop_theme(&_creation_context.egui_ctx);
         Self {
-            shell: AppShellViewModel::new("ChoreoApp egui"),
+            shell: shell::create_shell_host(),
         }
     }
 }
@@ -28,10 +34,31 @@ impl eframe::App for DesktopEguiApp {
 }
 
 fn main() -> eframe::Result<()> {
-    let native_options = eframe::NativeOptions::default();
+    init_logging();
+    log::info!("starting {APP_ID}");
+
+    let native_options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_app_id(APP_ID)
+            .with_title(APP_TITLE),
+        ..Default::default()
+    };
+
     eframe::run_native(
-        "ChoreoApp egui",
+        APP_TITLE,
         native_options,
         Box::new(|creation_context| Ok(Box::new(DesktopEguiApp::new(creation_context)))),
     )
+}
+
+fn apply_desktop_theme(context: &egui::Context) {
+    context.set_visuals(egui::Visuals::light());
+}
+
+fn init_logging() {
+    static INIT: Once = Once::new();
+    INIT.call_once(|| {
+        let _ = env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+            .try_init();
+    });
 }
