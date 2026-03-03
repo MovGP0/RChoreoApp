@@ -10,9 +10,15 @@ use super::state::AudioPlayerState;
 use super::state::PlayPauseGlyph;
 use super::state::play_pause_glyph;
 
+const GRID_12_PX: f32 = 12.0;
+const SPEED_LABEL_WIDTH_PX: f32 = 48.0;
+const DURATION_LABEL_WIDTH_PX: f32 = 72.0;
+
 pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
     let mut actions: Vec<AudioPlayerAction> = Vec::new();
     ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = GRID_12_PX;
+
         let mut normalized_speed =
             normalize_speed_to_slider_value(state.speed, state.minimum_speed, state.maximum_speed)
                 as f32;
@@ -31,7 +37,10 @@ pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
                 ),
             });
         }
-        ui.label(&state.speed_label);
+        ui.add_sized(
+            [SPEED_LABEL_WIDTH_PX, 0.0],
+            egui::Label::new(&state.speed_label).truncate(),
+        );
 
         let position = state.pending_seek_position.unwrap_or(state.position);
         let interactions = crate::slider_with_ticks::ui::draw(
@@ -65,7 +74,10 @@ pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
             }
         }
 
-        ui.label(&state.duration_label);
+        ui.add_sized(
+            [DURATION_LABEL_WIDTH_PX, 0.0],
+            egui::Label::new(&state.duration_label).truncate(),
+        );
 
         if ui
             .add(

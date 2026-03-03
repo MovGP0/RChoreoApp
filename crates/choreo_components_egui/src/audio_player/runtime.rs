@@ -24,6 +24,14 @@ impl AudioPlayerRuntime {
         self.player = Some(create_platform_audio_player(file_path, self.backend));
     }
 
+    pub fn set_backend(&mut self, backend: AudioPlayerBackend) {
+        if self.backend == backend {
+            return;
+        }
+        self.backend = backend;
+        self.player = None;
+    }
+
     pub fn close(&mut self) {
         self.player = None;
     }
