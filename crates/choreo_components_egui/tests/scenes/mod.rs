@@ -6,6 +6,8 @@ pub mod provider;
 pub mod reducer;
 #[path = "../../src/scenes/state.rs"]
 pub mod state;
+#[path = "../../src/scenes/translations.rs"]
+pub mod translations;
 #[path = "../../src/scenes/ui.rs"]
 pub mod ui;
 
@@ -24,6 +26,7 @@ pub mod select_scene_behavior_spec;
 pub mod select_scene_from_audio_position_behavior_spec;
 pub mod selected_scene_detail_projection_spec;
 pub mod show_scene_timestamps_behavior_spec;
+pub mod ui_action_flow_parity_spec;
 
 use std::rc::Rc;
 

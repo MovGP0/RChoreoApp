@@ -81,10 +81,7 @@ fn draw_emits_pointer_wheel_and_touch_actions_for_canvas_events() {
     assert!(
         actions
             .iter()
-            .any(|action| matches!(
-                action,
-                FloorAction::PointerWheelChanged { ctrl: true, .. }
-            ))
+            .any(|action| matches!(action, FloorAction::PointerWheelChanged { ctrl: true, .. }))
     );
     assert!(
         actions

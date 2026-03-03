@@ -132,7 +132,11 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
             )),
             egui::vec2(legend_width, legend_height),
         );
-        painter.rect_filled(legend_rect, 6.0, ui.visuals().widgets.noninteractive.bg_fill);
+        painter.rect_filled(
+            legend_rect,
+            6.0,
+            ui.visuals().widgets.noninteractive.bg_fill,
+        );
         for (index, entry) in state.legend_entries.iter().enumerate() {
             let y = legend_rect.top() + 12.0 + index as f32 * 24.0;
             let color = egui::Color32::from_rgba_unmultiplied(
@@ -227,9 +231,7 @@ fn collect_interactions(ui: &Ui, rect: Rect, is_hovered: bool, actions: &mut Vec
                         });
                     }
                 }
-                Event::Touch {
-                    id, phase, pos, ..
-                } if rect.contains(*pos) => {
+                Event::Touch { id, phase, pos, .. } if rect.contains(*pos) => {
                     let point = to_canvas_point(rect, *pos);
                     last_canvas_point = Some(point);
                     actions.push(FloorAction::Touch {

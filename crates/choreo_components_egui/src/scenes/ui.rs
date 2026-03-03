@@ -1,10 +1,19 @@
+use egui::CornerRadius;
+use egui::Frame;
+use egui::Margin;
+use egui::ScrollArea;
+use egui::Sense;
+use egui::Stroke;
 use egui::Ui;
-
-use choreo_i18n::translation_with_fallback;
+use egui::pos2;
+use egui::vec2;
+use egui_material3::MaterialButton;
 
 use super::actions::ScenesAction;
 use super::state::SceneItemState;
 use super::state::ScenesState;
+use super::state::format_seconds;
+use super::translations::scenes_translations;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DeleteSceneDialogViewModel {
@@ -16,23 +25,100 @@ pub struct DeleteSceneDialogViewModel {
     pub scene_color: egui::Color32,
 }
 
+#[must_use]
+pub fn scene_pane_action_flow(state: &ScenesState) -> Vec<ScenesAction> {
+    let mut actions = vec![
+        ScenesAction::InsertScene {
+            insert_after: false,
+        },
+        ScenesAction::InsertScene { insert_after: true },
+    ];
+    if state.can_delete_scene {
+        actions.push(ScenesAction::OpenDeleteSceneDialog);
+    }
+    actions.push(ScenesAction::RequestOpenChoreography);
+    if state.can_save_choreo {
+        actions.push(ScenesAction::RequestSaveChoreography);
+    }
+    if state.can_navigate_to_settings {
+        actions.push(ScenesAction::NavigateToSettings);
+    }
+    if state.can_navigate_to_dancer_settings {
+        actions.push(ScenesAction::NavigateToDancerSettings);
+    }
+    actions
+}
+
 pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
     let mut actions: Vec<ScenesAction> = Vec::new();
+    const GRID: f32 = 12.0;
+    let strings = scenes_translations("en");
+
+    ui.spacing_mut().item_spacing = vec2(GRID, GRID);
+
+    Frame::new()
+        .fill(ui.visuals().faint_bg_color)
+        .stroke(Stroke::new(
+            1.0,
+            ui.visuals().widgets.noninteractive.bg_stroke.color,
+        ))
+        .corner_radius(CornerRadius::same(12))
+        .inner_margin(Margin::same(12))
+        .show(ui, |ui| {
+            ScrollArea::vertical()
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    for (index, scene) in state.visible_scenes.iter().enumerate() {
+                        if draw_scene_list_item(ui, scene, state.show_timestamps).clicked() {
+                            actions.push(ScenesAction::SelectScene { index });
+                        }
+                    }
+                });
+        });
+
+    let mut search = state.search_text.clone();
+    let search_box = egui::TextEdit::singleline(&mut search)
+        .desired_width(ui.available_width())
+        .hint_text(strings.search_placeholder.as_str());
+    if ui.add(search_box).changed() {
+        actions.push(ScenesAction::UpdateSearchText(search));
+    }
+
     ui.horizontal(|ui| {
-        ui.heading("Scenes");
-        ui.label(format!(
-            "{} / {}",
-            state.visible_scenes.len(),
-            state.scenes.len()
-        ));
+        if ui
+            .add(MaterialButton::new(strings.add_before.as_str()))
+            .clicked()
+        {
+            actions.push(ScenesAction::InsertScene {
+                insert_after: false,
+            });
+        }
+        if ui
+            .add(MaterialButton::new(strings.add_after.as_str()))
+            .clicked()
+        {
+            actions.push(ScenesAction::InsertScene { insert_after: true });
+        }
+        if ui
+            .add_enabled(
+                state.can_delete_scene,
+                MaterialButton::new(strings.delete_scene_title.as_str()),
+            )
+            .clicked()
+        {
+            actions.push(ScenesAction::OpenDeleteSceneDialog);
+        }
     });
 
     ui.horizontal(|ui| {
-        if ui.button("📂").clicked() {
+        if ui.add(MaterialButton::new(strings.open.as_str())).clicked() {
             actions.push(ScenesAction::RequestOpenChoreography);
         }
         if ui
-            .add_enabled(state.can_save_choreo, egui::Button::new("💾"))
+            .add_enabled(
+                state.can_save_choreo,
+                MaterialButton::new(strings.save.as_str()),
+            )
             .clicked()
         {
             actions.push(ScenesAction::RequestSaveChoreography);
@@ -40,7 +126,7 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
         if ui
             .add_enabled(
                 state.can_navigate_to_settings,
-                egui::Button::new("⚙ Settings"),
+                MaterialButton::new(strings.settings.as_str()),
             )
             .clicked()
         {
@@ -49,109 +135,13 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
         if ui
             .add_enabled(
                 state.can_navigate_to_dancer_settings,
-                egui::Button::new("🕺 Dancers"),
+                MaterialButton::new(strings.dancers.as_str()),
             )
             .clicked()
         {
             actions.push(ScenesAction::NavigateToDancerSettings);
         }
     });
-
-    let mut search = state.search_text.clone();
-    if ui.text_edit_singleline(&mut search).changed() {
-        actions.push(ScenesAction::UpdateSearchText(search));
-    }
-
-    if ui.button("Insert Before").clicked() {
-        actions.push(ScenesAction::InsertScene {
-            insert_after: false,
-        });
-    }
-    if ui.button("Insert After").clicked() {
-        actions.push(ScenesAction::InsertScene { insert_after: true });
-    }
-    ui.horizontal(|ui| {
-        if ui
-            .add_enabled(state.can_delete_scene, egui::Button::new("Delete"))
-            .clicked()
-        {
-            actions.push(ScenesAction::OpenDeleteSceneDialog);
-        }
-        if ui
-            .add_enabled(state.can_delete_scene, egui::Button::new("Copy Positions"))
-            .clicked()
-        {
-            actions.push(ScenesAction::OpenCopyScenePositionsDialog);
-        }
-    });
-
-    let mut show_timestamps = state.show_timestamps;
-    if ui
-        .checkbox(&mut show_timestamps, "Show scene timestamps")
-        .changed()
-    {
-        actions.push(ScenesAction::UpdateShowTimestamps(show_timestamps));
-    }
-
-    egui::Frame::group(ui.style()).show(ui, |ui| {
-        for (index, scene) in state.visible_scenes.iter().enumerate() {
-            let fill = egui::Color32::from_rgba_unmultiplied(
-                scene.color.r,
-                scene.color.g,
-                scene.color.b,
-                scene.color.a,
-            );
-            let label = if scene.is_selected {
-                format!(
-                    "● {}{}",
-                    scene.name,
-                    scene
-                        .timestamp
-                        .map(|v| format!(" ({v:.1})"))
-                        .unwrap_or_default()
-                )
-            } else {
-                format!(
-                    "{}{}",
-                    scene.name,
-                    scene
-                        .timestamp
-                        .map(|v| format!(" ({v:.1})"))
-                        .unwrap_or_default()
-                )
-            };
-            ui.horizontal(|ui| {
-                let (rect, _) =
-                    ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
-                ui.painter().circle_filled(rect.center(), 5.0, fill);
-                if ui.selectable_label(scene.is_selected, label).clicked() {
-                    actions.push(ScenesAction::SelectScene { index });
-                }
-            });
-        }
-    });
-
-    if state.has_selected_scene {
-        ui.separator();
-        ui.label(format!("Selected: {}", state.selected_scene_name));
-        if !state.selected_scene_text.is_empty() {
-            ui.label(state.selected_scene_text.clone());
-        }
-        if !state.selected_scene_timestamp_text.is_empty() {
-            ui.label(format!(
-                "Timestamp: {}",
-                state.selected_scene_timestamp_text
-            ));
-        }
-        ui.label(format!(
-            "Fixed positions: {}",
-            if state.selected_scene_fixed_positions {
-                "Yes"
-            } else {
-                "No"
-            }
-        ));
-    }
 
     if state.show_delete_scene_dialog {
         if let Some(selected_scene) = state.selected_scene.as_ref() {
@@ -168,22 +158,40 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
             actions.push(ScenesAction::CancelDeleteSceneDialog);
         }
     }
+
     if state.show_copy_scene_positions_dialog {
         ui.separator();
-        egui::Frame::group(ui.style()).show(ui, |ui| {
-            ui.label("Copy scene positions?");
+        Frame::group(ui.style()).show(ui, |ui| {
+            ui.heading(strings.copy_scene_positions_dialog_title.as_str());
+            let scene_name = state
+                .selected_scene
+                .as_ref()
+                .map(|scene| scene.name.as_str())
+                .filter(|name| !name.trim().is_empty())
+                .unwrap_or("this scene");
+            ui.label(
+                strings
+                    .copy_scene_positions_dialog_message
+                    .replace("{0}", scene_name),
+            );
             ui.horizontal(|ui| {
-                if ui.button("Copy").clicked() {
+                if ui
+                    .button(strings.copy_scene_positions_dialog_confirm.as_str())
+                    .clicked()
+                {
                     actions.push(ScenesAction::ConfirmCopyScenePositionsDialog {
                         copy_positions: true,
                     });
                 }
-                if ui.button("Keep Empty").clicked() {
+                if ui
+                    .button(strings.copy_scene_positions_dialog_cancel.as_str())
+                    .clicked()
+                {
                     actions.push(ScenesAction::ConfirmCopyScenePositionsDialog {
                         copy_positions: false,
                     });
                 }
-                if ui.button("Cancel").clicked() {
+                if ui.button(strings.common_cancel.as_str()).clicked() {
                     actions.push(ScenesAction::CancelCopyScenePositionsDialog);
                 }
             });
@@ -203,23 +211,22 @@ pub fn build_delete_scene_dialog_view_model(
     selected_scene: &SceneItemState,
     locale: &str,
 ) -> DeleteSceneDialogViewModel {
-    let title_text = t(locale, "DeleteSceneDialogTitle");
-    let default_name = t(locale, "DeleteSceneDialogDefaultName");
+    let strings = scenes_translations(locale);
     let scene_name = if selected_scene.name.trim().is_empty() {
-        default_name
+        strings.delete_scene_dialog_default_name
     } else {
         selected_scene.name.clone()
     };
-    let message_text = t(locale, "DeleteSceneDialogMessage").replace("{0}", &scene_name);
-    let confirm_text = t(locale, "DeleteSceneDialogYes");
-    let cancel_text = t(locale, "DeleteSceneDialogNo");
+    let message_text = strings
+        .delete_scene_dialog_message
+        .replace("{0}", &scene_name);
 
     DeleteSceneDialogViewModel {
-        title_text,
+        title_text: strings.delete_scene_dialog_title,
         scene_name,
         message_text,
-        confirm_text,
-        cancel_text,
+        confirm_text: strings.delete_scene_dialog_yes,
+        cancel_text: strings.delete_scene_dialog_no,
         scene_color: egui::Color32::from_rgba_unmultiplied(
             selected_scene.color.r,
             selected_scene.color.g,
@@ -238,11 +245,11 @@ pub fn draw_delete_scene_dialog(
     let mut action = None;
 
     ui.separator();
-    egui::Frame::group(ui.style()).show(ui, |ui| {
+    Frame::group(ui.style()).show(ui, |ui| {
         ui.heading(view_model.title_text);
         ui.horizontal(|ui| {
-            let swatch_size = egui::vec2(12.0, 12.0);
-            let (rect, _) = ui.allocate_exact_size(swatch_size, egui::Sense::hover());
+            let swatch_size = vec2(12.0, 12.0);
+            let (rect, _) = ui.allocate_exact_size(swatch_size, Sense::hover());
             ui.painter()
                 .circle_filled(rect.center(), 6.0, view_model.scene_color);
             ui.label(view_model.scene_name);
@@ -261,8 +268,88 @@ pub fn draw_delete_scene_dialog(
     action
 }
 
-fn t(locale: &str, key: &str) -> String {
-    translation_with_fallback(locale, key)
-        .unwrap_or(key)
-        .to_string()
+fn draw_scene_list_item(
+    ui: &mut Ui,
+    scene: &SceneItemState,
+    show_timestamps: bool,
+) -> egui::Response {
+    // Source scene list rows use 50px/62px; keep these dimensions for parity.
+    let row_height = if show_timestamps { 62.0 } else { 50.0 };
+    let (row_rect, response) =
+        ui.allocate_exact_size(vec2(ui.available_width(), row_height), Sense::click());
+    if !ui.is_rect_visible(row_rect) {
+        return response;
+    }
+
+    let visuals = ui.style().visuals.clone();
+    let fill_color = if scene.is_selected {
+        visuals.selection.bg_fill
+    } else {
+        visuals.extreme_bg_color
+    };
+    let stroke_color = if scene.is_selected {
+        visuals.selection.stroke.color
+    } else {
+        visuals.widgets.noninteractive.bg_stroke.color
+    };
+    let stroke_width = if scene.is_selected { 2.0 } else { 1.0 };
+
+    let card_rect = row_rect.shrink2(vec2(0.0, 4.0));
+    ui.painter().rect(
+        card_rect,
+        CornerRadius::same(6),
+        fill_color,
+        Stroke::new(stroke_width, stroke_color),
+        egui::StrokeKind::Middle,
+    );
+
+    if scene.is_selected {
+        let accent = egui::Rect::from_min_size(card_rect.min, vec2(4.0, card_rect.height()));
+        ui.painter().rect_filled(
+            accent,
+            CornerRadius::same(6),
+            visuals.selection.stroke.color,
+        );
+    }
+
+    let color_rect = egui::Rect::from_min_size(
+        pos2(card_rect.left() + 8.0, card_rect.top() + 8.0),
+        vec2(12.0, 12.0),
+    );
+    ui.painter().rect_filled(
+        color_rect,
+        CornerRadius::same(3),
+        egui::Color32::from_rgba_unmultiplied(
+            scene.color.r,
+            scene.color.g,
+            scene.color.b,
+            scene.color.a,
+        ),
+    );
+
+    let title_color = if scene.is_selected {
+        visuals.strong_text_color()
+    } else {
+        visuals.text_color()
+    };
+    ui.painter().text(
+        pos2(card_rect.left() + 26.0, card_rect.top() + 8.0),
+        egui::Align2::LEFT_TOP,
+        scene.name.as_str(),
+        egui::FontId::proportional(14.0),
+        title_color,
+    );
+
+    if show_timestamps {
+        let timestamp_text = scene.timestamp.map(format_seconds).unwrap_or_default();
+        ui.painter().text(
+            pos2(card_rect.left() + 8.0, card_rect.top() + 30.0),
+            egui::Align2::LEFT_TOP,
+            timestamp_text,
+            egui::FontId::proportional(12.0),
+            visuals.weak_text_color(),
+        );
+    }
+
+    response
 }

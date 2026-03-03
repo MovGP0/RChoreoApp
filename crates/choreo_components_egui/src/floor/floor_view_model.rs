@@ -1,8 +1,8 @@
 use std::cell::RefCell;
+use std::rc::Rc;
 use std::rc::Weak;
 use std::sync::mpsc::SyncSender;
 use std::sync::mpsc::TrySendError;
-use std::rc::Rc;
 
 use crate::behavior::Behavior;
 use crate::behavior::CompositeDisposable;

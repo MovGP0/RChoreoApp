@@ -37,7 +37,10 @@ fn adapter_maps_scene_overlay_and_audio_interpolation_into_state() {
             placement_remaining: Some(3),
             interpolation: Some(AudioInterpolationInput {
                 from: vec![FloorPosition::new(0.0, 0.0), FloorPosition::new(24.0, 36.0)],
-                to: vec![FloorPosition::new(12.0, 0.0), FloorPosition::new(24.0, 48.0)],
+                to: vec![
+                    FloorPosition::new(12.0, 0.0),
+                    FloorPosition::new(24.0, 48.0),
+                ],
                 progress: 0.5,
             }),
             layout_size: Some((1200.0, 720.0)),
@@ -60,21 +63,19 @@ fn adapter_maps_scene_overlay_and_audio_interpolation_into_state() {
 #[test]
 fn provider_orchestrates_draw_and_redraw_with_render_gate() {
     let render_gate = Arc::new(FloorRenderGateImpl::new());
-    let mut provider = FloorProvider::new(
-        FloorProviderDependencies {
-            state: FloorState::default(),
-            floor_adapter: FloorAdapter::new(),
-            floor_render_gate: render_gate,
-            view_model_behaviors: Vec::new(),
-            floor_event_senders: FloorPointerEventSenders {
-                pointer_pressed_senders: Vec::new(),
-                pointer_moved_senders: Vec::new(),
-                pointer_released_senders: Vec::new(),
-                pointer_wheel_changed_senders: Vec::new(),
-                touch_senders: Vec::new(),
-            },
+    let mut provider = FloorProvider::new(FloorProviderDependencies {
+        state: FloorState::default(),
+        floor_adapter: FloorAdapter::new(),
+        floor_render_gate: render_gate,
+        view_model_behaviors: Vec::new(),
+        floor_event_senders: FloorPointerEventSenders {
+            pointer_pressed_senders: Vec::new(),
+            pointer_moved_senders: Vec::new(),
+            pointer_released_senders: Vec::new(),
+            pointer_wheel_changed_senders: Vec::new(),
+            touch_senders: Vec::new(),
         },
-    );
+    });
 
     provider.activate();
     provider.floor_view_model().borrow_mut().draw_floor();

@@ -260,38 +260,39 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                 return;
             }
             match action {
-            TouchAction::Pressed | TouchAction::Moved => {
-                if is_in_contact {
-                    state.active_touches.insert(id, point);
-                }
-                if state.active_touches.len() == 2 {
-                    let touch_points: Vec<Point> = state.active_touches.values().copied().collect();
-                    let pinch = distance(touch_points[0], touch_points[1]);
-                    let previous = state.pinch_distance.replace(pinch);
-                    if let Some(previous_distance) = previous
-                        && previous_distance > 0.0001
-                    {
-                        let factor = pinch / previous_distance;
-                        let current = state.transformation_matrix.scale_x;
-                        state
-                            .transformation_matrix
-                            .set_uniform_scale(current * factor);
-                        recompute_layout(state);
-                        recompute_geometry(state);
+                TouchAction::Pressed | TouchAction::Moved => {
+                    if is_in_contact {
+                        state.active_touches.insert(id, point);
+                    }
+                    if state.active_touches.len() == 2 {
+                        let touch_points: Vec<Point> =
+                            state.active_touches.values().copied().collect();
+                        let pinch = distance(touch_points[0], touch_points[1]);
+                        let previous = state.pinch_distance.replace(pinch);
+                        if let Some(previous_distance) = previous
+                            && previous_distance > 0.0001
+                        {
+                            let factor = pinch / previous_distance;
+                            let current = state.transformation_matrix.scale_x;
+                            state
+                                .transformation_matrix
+                                .set_uniform_scale(current * factor);
+                            recompute_layout(state);
+                            recompute_geometry(state);
+                        }
                     }
                 }
-            }
-            TouchAction::Released => {
-                state.active_touches.remove(&id);
-                if state.active_touches.len() < 2 {
-                    state.pinch_distance = None;
+                TouchAction::Released => {
+                    state.active_touches.remove(&id);
+                    if state.active_touches.len() < 2 {
+                        state.pinch_distance = None;
+                    }
                 }
-            }
-            TouchAction::Cancelled => {
-                state.active_touches.clear();
-                state.pinch_distance = None;
-                state.pointer_anchor = None;
-            }
+                TouchAction::Cancelled => {
+                    state.active_touches.clear();
+                    state.pinch_distance = None;
+                    state.pointer_anchor = None;
+                }
             }
         }
         FloorAction::TouchWithContext {
@@ -573,8 +574,7 @@ fn recompute_geometry(state: &mut FloorState) {
     state.selection_segments.clear();
     if let Some((start, end)) = state.selection_rectangle {
         let top_left = transform_point(state, Point::new(start.x.min(end.x), start.y.min(end.y)));
-        let top_right =
-            transform_point(state, Point::new(start.x.max(end.x), start.y.min(end.y)));
+        let top_right = transform_point(state, Point::new(start.x.max(end.x), start.y.min(end.y)));
         let bottom_left =
             transform_point(state, Point::new(start.x.min(end.x), start.y.max(end.y)));
         let bottom_right =
