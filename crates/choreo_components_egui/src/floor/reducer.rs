@@ -7,8 +7,10 @@ use super::state::FloorState;
 use super::state::LabeledPoint;
 use super::state::LineSegment;
 use super::state::Point;
+use super::state::PointerButton;
 use super::state::RectPrimitive;
 use super::state::TouchAction;
+use super::state::TouchDeviceType;
 
 pub fn reduce(state: &mut FloorState, action: FloorAction) {
     match action {
@@ -130,6 +132,10 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
         } => {
             state.last_canvas_view = Some(canvas_view);
             state.last_pointer_pressed = Some(event_args);
+            if event_args.button != PointerButton::Primary {
+                state.pointer_anchor = None;
+                return;
+            }
             reduce(
                 state,
                 FloorAction::PointerPressed {
@@ -194,7 +200,7 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
             ctrl,
             cursor,
         } => {
-            if !ctrl {
+            if should_pan_with_wheel(delta_x, delta_y, ctrl) {
                 state.transformation_matrix.translate(delta_x, delta_y);
                 recompute_layout(state);
                 recompute_geometry(state);
@@ -243,9 +249,18 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
             point,
             is_in_contact,
             device,
-        } => match action {
+        } => {
+            state.last_touch_device = Some(device);
+            if device != TouchDeviceType::Touch {
+                if action == TouchAction::Cancelled {
+                    state.active_touches.clear();
+                    state.pinch_distance = None;
+                    state.pointer_anchor = None;
+                }
+                return;
+            }
+            match action {
             TouchAction::Pressed | TouchAction::Moved => {
-                state.last_touch_device = Some(device);
                 if is_in_contact {
                     state.active_touches.insert(id, point);
                 }
@@ -277,7 +292,8 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                 state.pinch_distance = None;
                 state.pointer_anchor = None;
             }
-        },
+            }
+        }
         FloorAction::TouchWithContext {
             canvas_view,
             event_args,
@@ -423,6 +439,36 @@ fn distance(left: Point, right: Point) -> f64 {
 
 fn distance_squared(left: Point, right: Point) -> f64 {
     (right.x - left.x).powi(2) + (right.y - left.y).powi(2)
+}
+
+fn should_pan_with_wheel(delta_x: f64, delta_y: f64, control_modifier: bool) -> bool {
+    if control_modifier {
+        return false;
+    }
+
+    if delta_x.abs() > f64::EPSILON {
+        return true;
+    }
+
+    !is_notched_wheel_delta(delta_y)
+}
+
+fn is_notched_wheel_delta(delta: f64) -> bool {
+    const WHEEL_NOTCH_DELTA: f64 = 120.0;
+    const WHEEL_NOTCH_EPSILON: f64 = 0.5;
+
+    let magnitude = delta.abs();
+    if magnitude <= f64::EPSILON {
+        return false;
+    }
+
+    let notch_count = (magnitude / WHEEL_NOTCH_DELTA).round();
+    if notch_count < 1.0 {
+        return false;
+    }
+
+    let expected = notch_count * WHEEL_NOTCH_DELTA;
+    (magnitude - expected).abs() <= WHEEL_NOTCH_EPSILON
 }
 
 fn recompute_layout(state: &mut FloorState) {

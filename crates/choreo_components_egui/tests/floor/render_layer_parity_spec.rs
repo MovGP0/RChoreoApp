@@ -160,4 +160,6 @@ fn touch_device_variants_are_covered_for_contract_parity() {
     );
 
     assert_eq!(state.last_touch_device, Some(TouchDeviceType::Pen));
+    assert!(state.active_touches.is_empty());
+    assert!(state.pinch_distance.is_none());
 }

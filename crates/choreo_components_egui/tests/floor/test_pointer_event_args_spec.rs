@@ -171,6 +171,39 @@ fn pointer_pressed_with_secondary_button_preserves_event_contract() {
 }
 
 #[test]
+fn secondary_pointer_does_not_start_pan_anchor() {
+    let mut state = FloorState::default();
+    let canvas = CanvasViewHandle { id: 10 };
+
+    reduce(
+        &mut state,
+        FloorAction::PointerPressedWithContext {
+            canvas_view: canvas,
+            event_args: PointerEventArgs {
+                position: Point::new(24.0, 24.0),
+                button: PointerButton::Secondary,
+                is_in_contact: true,
+            },
+        },
+    );
+    reduce(
+        &mut state,
+        FloorAction::PointerMovedWithContext {
+            canvas_view: canvas,
+            event_args: PointerEventArgs {
+                position: Point::new(120.0, 180.0),
+                button: PointerButton::Secondary,
+                is_in_contact: true,
+            },
+        },
+    );
+
+    assert!(state.pointer_anchor.is_none());
+    assert_eq!(state.transformation_matrix.trans_x, 0.0);
+    assert_eq!(state.transformation_matrix.trans_y, 0.0);
+}
+
+#[test]
 fn pointer_wheel_context_stores_metadata_and_applies_pan() {
     let mut state = FloorState::default();
     let canvas = CanvasViewHandle { id: 11 };
@@ -248,4 +281,33 @@ fn cancelled_touch_clears_active_touch_state_and_keeps_context() {
     assert!(state.active_touches.is_empty());
     assert!(state.pinch_distance.is_none());
     assert!(state.pointer_anchor.is_none());
+}
+
+#[test]
+fn non_touch_device_touch_events_do_not_mutate_active_gesture_state() {
+    let mut state = FloorState::default();
+    reduce(
+        &mut state,
+        FloorAction::Touch {
+            id: 1,
+            action: TouchAction::Pressed,
+            point: Point::new(10.0, 10.0),
+            is_in_contact: true,
+            device: TouchDeviceType::Mouse,
+        },
+    );
+    reduce(
+        &mut state,
+        FloorAction::Touch {
+            id: 2,
+            action: TouchAction::Pressed,
+            point: Point::new(20.0, 20.0),
+            is_in_contact: true,
+            device: TouchDeviceType::Pen,
+        },
+    );
+
+    assert_eq!(state.last_touch_device, Some(TouchDeviceType::Pen));
+    assert!(state.active_touches.is_empty());
+    assert!(state.pinch_distance.is_none());
 }

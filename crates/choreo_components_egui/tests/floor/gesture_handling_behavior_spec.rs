@@ -29,7 +29,7 @@ fn gesture_handling_applies_pan_zoom_and_reset_semantics() {
         FloorAction::PointerWheelChanged {
             delta_x: 0.0,
             delta_y: 120.0,
-            ctrl: true,
+            ctrl: false,
             cursor: Some(Point::new(100.0, 100.0)),
         },
     );
