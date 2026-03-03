@@ -1,6 +1,5 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum ColorPickerAction {
-    Initialize,
     SetColor {
         color: egui::Color32,
     },
@@ -13,6 +12,13 @@ pub enum ColorPickerAction {
     UpdateFromWheel {
         hue: f64,
         saturation: f64,
+    },
+    UpdateFromWheelPoint {
+        x: f32,
+        y: f32,
+        center_x: f32,
+        center_y: f32,
+        radius_px: f32,
     },
     SetValueSliderPosition {
         position: super::state::ColorPickerDock,

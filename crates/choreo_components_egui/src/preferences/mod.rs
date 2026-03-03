@@ -1,4 +1,19 @@
-pub mod actions;
-pub mod reducer;
-pub mod state;
-pub mod ui;
+#[cfg(not(target_arch = "wasm32"))]
+mod file;
+mod in_memory;
+mod shared;
+mod types;
+#[cfg(target_arch = "wasm32")]
+mod wasm;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub use file::FilePreferences;
+pub use in_memory::InMemoryPreferences;
+#[cfg(not(target_arch = "wasm32"))]
+pub type PlatformPreferences = FilePreferences;
+pub use shared::SharedPreferences;
+pub use types::Preferences;
+#[cfg(target_arch = "wasm32")]
+pub type PlatformPreferences = WasmPreferences;
+#[cfg(target_arch = "wasm32")]
+pub use wasm::WasmPreferences;

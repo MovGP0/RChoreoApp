@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+pub use crate::audio_player::AudioPlayerBackend;
+
 pub const THEME_KEY: &str = "theme";
 pub const USE_SYSTEM_THEME_KEY: &str = "use_system_theme";
 pub const USE_PRIMARY_COLOR_KEY: &str = "use_primary_color";
@@ -21,31 +23,6 @@ pub enum ThemeMode {
     Dark,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum AudioPlayerBackend {
-    #[default]
-    Rodio,
-    Awedio,
-}
-
-impl AudioPlayerBackend {
-    #[must_use]
-    pub fn as_preference(self) -> &'static str {
-        match self {
-            Self::Rodio => "rodio",
-            Self::Awedio => "awedio",
-        }
-    }
-
-    #[must_use]
-    pub fn from_preference(value: &str) -> Self {
-        if value.eq_ignore_ascii_case("awedio") {
-            return Self::Awedio;
-        }
-        Self::Rodio
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MaterialSchemeState {
     pub light_background_hex: String,
@@ -63,6 +40,7 @@ impl Default for MaterialSchemeState {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SettingsState {
+    pub can_use_system_theme: bool,
     pub theme_mode: ThemeMode,
     pub use_system_theme: bool,
     pub use_primary_color: bool,
@@ -80,6 +58,7 @@ pub struct SettingsState {
 impl Default for SettingsState {
     fn default() -> Self {
         Self {
+            can_use_system_theme: true,
             theme_mode: ThemeMode::Light,
             use_system_theme: true,
             use_primary_color: false,
@@ -88,7 +67,7 @@ impl Default for SettingsState {
             primary_color_hex: DEFAULT_PRIMARY_COLOR_HEX.to_string(),
             secondary_color_hex: DEFAULT_SECONDARY_COLOR_HEX.to_string(),
             tertiary_color_hex: DEFAULT_TERTIARY_COLOR_HEX.to_string(),
-            audio_player_backend: AudioPlayerBackend::Rodio,
+            audio_player_backend: AudioPlayerBackend::from_preference(AudioPlayerBackend::RODIO_KEY),
             preferences: BTreeMap::new(),
             material_scheme: MaterialSchemeState::default(),
             material_update_count: 0,

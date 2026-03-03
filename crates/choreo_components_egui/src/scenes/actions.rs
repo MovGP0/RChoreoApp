@@ -2,6 +2,10 @@ use choreo_models::ChoreographyModel;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ScenesAction {
+    RequestOpenChoreography,
+    RequestSaveChoreography,
+    NavigateToSettings,
+    NavigateToDancerSettings,
     LoadScenes {
         choreography: Box<ChoreographyModel>,
     },
@@ -22,6 +26,11 @@ pub enum ScenesAction {
     OpenDeleteSceneDialog,
     CancelDeleteSceneDialog,
     ConfirmDeleteSceneDialog,
+    OpenCopyScenePositionsDialog,
+    CancelCopyScenePositionsDialog,
+    ConfirmCopyScenePositionsDialog {
+        copy_positions: bool,
+    },
     OpenChoreography {
         choreography: Box<ChoreographyModel>,
         file_path: Option<String>,

@@ -11,12 +11,25 @@ use super::state::parse_timestamp_seconds;
 
 pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
     match action {
+        ScenesAction::RequestOpenChoreography => {
+            state.request_open_choreo_dialog = true;
+        }
+        ScenesAction::RequestSaveChoreography => {
+            state.request_save_choreo = state.can_save_choreo;
+        }
+        ScenesAction::NavigateToSettings => {
+            state.navigate_to_settings_requested = state.can_navigate_to_settings;
+        }
+        ScenesAction::NavigateToDancerSettings => {
+            state.navigate_to_dancer_settings_requested = state.can_navigate_to_dancer_settings;
+        }
         ScenesAction::LoadScenes { choreography } => {
             state.choreography = *choreography;
             map_scenes_from_choreography(state);
             select_first_scene(state);
             state.show_timestamps = state.choreography.settings.show_timestamps;
             state.selected_scene_changed = state.selected_scene.is_some();
+            update_caps_and_projection(state);
         }
         ScenesAction::ReloadScenes => {
             map_scenes_from_choreography(state);
@@ -26,6 +39,7 @@ pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
                 select_first_scene(state);
             }
             state.reload_requested = true;
+            update_caps_and_projection(state);
         }
         ScenesAction::UpdateSearchText(value) => {
             state.search_text = value;
@@ -68,6 +82,7 @@ pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
             set_selected_scene_by_id(state, new_scene.scene_id);
             refresh_visible_scenes(state);
             update_can_save(state);
+            update_caps_and_projection(state);
         }
         ScenesAction::SelectScene { index } => {
             let Some(scene_id) = state.visible_scenes.get(index).map(|scene| scene.scene_id) else {
@@ -76,6 +91,8 @@ pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
             set_selected_scene_by_id(state, scene_id);
             state.selected_scene_changed = true;
             state.redraw_floor_requested = true;
+            reduce(state, ScenesAction::ApplyPlacementModeForSelected);
+            update_caps_and_projection(state);
         }
         ScenesAction::SelectSceneFromAudioPosition { position_seconds } => {
             let previous_id = state.selected_scene.as_ref().map(|scene| scene.scene_id);
@@ -106,6 +123,8 @@ pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
                     if changed {
                         state.selected_scene_changed = true;
                         state.redraw_floor_requested = true;
+                        reduce(state, ScenesAction::ApplyPlacementModeForSelected);
+                        update_caps_and_projection(state);
                     }
                     return;
                 }
@@ -145,6 +164,19 @@ pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
             state.show_delete_scene_dialog = false;
             state.delete_scene_requested = true;
         }
+        ScenesAction::OpenCopyScenePositionsDialog => {
+            if state.selected_scene.is_some() {
+                state.show_copy_scene_positions_dialog = true;
+            }
+        }
+        ScenesAction::CancelCopyScenePositionsDialog => {
+            state.show_copy_scene_positions_dialog = false;
+            state.copy_scene_positions_decision = None;
+        }
+        ScenesAction::ConfirmCopyScenePositionsDialog { copy_positions } => {
+            state.show_copy_scene_positions_dialog = false;
+            state.copy_scene_positions_decision = Some(copy_positions);
+        }
         ScenesAction::OpenChoreography {
             choreography,
             file_path,
@@ -160,6 +192,7 @@ pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
             state.pending_open_audio = audio_path;
             state.close_audio_requested = state.pending_open_audio.is_none();
             update_can_save(state);
+            update_caps_and_projection(state);
         }
         ScenesAction::SaveChoreography => {
             state.choreography.scenes = state
@@ -168,6 +201,7 @@ pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
                 .map(map_scene_item_to_model)
                 .collect::<Vec<_>>();
             update_can_save(state);
+            update_caps_and_projection(state);
         }
         ScenesAction::ClearEphemeralOutputs => {
             state.clear_ephemeral_outputs();
@@ -220,6 +254,7 @@ fn set_selected_scene_by_id(state: &mut ScenesState, scene_id: choreo_master_mob
         .iter()
         .find(|scene| scene.scene_id == scene_id)
         .cloned();
+    update_selected_scene_projection(state);
 }
 
 fn update_can_save(state: &mut ScenesState) {
@@ -229,6 +264,36 @@ fn update_can_save(state: &mut ScenesState) {
         .is_some_and(|path| !path.trim().is_empty());
     let has_choreo = !state.choreography.name.is_empty() || !state.choreography.scenes.is_empty();
     state.can_save_choreo = has_file && has_choreo;
+}
+
+fn update_caps_and_projection(state: &mut ScenesState) {
+    state.can_delete_scene = state.selected_scene.is_some();
+    state.can_navigate_to_settings = true;
+    state.can_navigate_to_dancer_settings = true;
+    update_can_save(state);
+    update_selected_scene_projection(state);
+}
+
+fn update_selected_scene_projection(state: &mut ScenesState) {
+    let Some(selected) = state.selected_scene.as_ref() else {
+        state.has_selected_scene = false;
+        state.selected_scene_name.clear();
+        state.selected_scene_text.clear();
+        state.selected_scene_fixed_positions = false;
+        state.selected_scene_timestamp_text.clear();
+        state.selected_scene_color = choreo_master_mobile_json::Color::transparent();
+        return;
+    };
+
+    state.has_selected_scene = true;
+    state.selected_scene_name = selected.name.clone();
+    state.selected_scene_text = selected.text.clone();
+    state.selected_scene_fixed_positions = selected.fixed_positions;
+    state.selected_scene_timestamp_text = selected
+        .timestamp
+        .map(format_seconds)
+        .unwrap_or_default();
+    state.selected_scene_color = selected.color.clone();
 }
 
 fn map_model_to_scene_item(source: &SceneModel) -> SceneItemState {

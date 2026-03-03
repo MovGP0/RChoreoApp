@@ -4,14 +4,10 @@ use std::sync::Arc;
 use choreo_master_mobile_json::Color;
 use rspec::{ConfigurationBuilder, Logger, Runner};
 
-#[path = "../../src/dancers/actions.rs"]
-pub mod actions;
-#[path = "../../src/dancers/reducer.rs"]
-pub mod reducer;
-#[path = "../../src/dancers/state.rs"]
-pub mod state;
-#[path = "../../src/dancers/ui.rs"]
-pub mod ui;
+pub use choreo_components_egui::dancers::actions;
+pub use choreo_components_egui::dancers::reducer;
+pub use choreo_components_egui::dancers::state;
+pub use choreo_components_egui::dancers::ui;
 
 pub mod add_dancer_behavior_spec;
 pub mod cancel_dancer_settings_behavior_spec;
@@ -20,6 +16,7 @@ pub mod dancers_pane_view_ui_spec;
 pub mod delete_dancer_behavior_spec;
 pub mod hide_dancer_dialog_behavior_spec;
 pub mod load_dancer_settings_behavior_spec;
+pub mod provider_lifecycle_spec;
 pub mod reload_dancer_settings_behavior_spec;
 pub mod save_dancer_settings_behavior_spec;
 pub mod selected_dancer_state_behavior_spec;

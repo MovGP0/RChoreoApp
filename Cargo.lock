@@ -1249,6 +1249,8 @@ dependencies = [
  "choreo_master_mobile_json",
  "choreo_models",
  "choreo_state_machine",
+ "dark-light",
+ "dirs",
  "egui",
  "egui-material3",
  "log",
@@ -1256,8 +1258,11 @@ dependencies = [
  "nject",
  "opentelemetry",
  "rspec",
+ "serde",
+ "serde_json",
  "serial_test",
  "time 0.3.47",
+ "web-sys",
 ]
 
 [[package]]

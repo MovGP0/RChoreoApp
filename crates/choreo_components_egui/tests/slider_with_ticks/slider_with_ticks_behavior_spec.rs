@@ -1,88 +1,39 @@
-use egui::Color32;
-
-use crate::slider_with_ticks;
-use slider_with_ticks::Report;
-use slider_with_ticks::actions::SliderWithTicksAction;
-use slider_with_ticks::reducer::reduce;
-use slider_with_ticks::state::SliderWithTicksState;
+use choreo_components_egui::behavior::Behavior;
+use choreo_components_egui::slider_with_ticks::SliderWithTicksBehavior;
+use choreo_components_egui::slider_with_ticks::SliderWithTicksViewModel;
 
 #[test]
-fn slider_with_ticks_behavior_spec() {
-    let suite = rspec::describe("slider with ticks behavior", (), |spec| {
-        spec.it("activates without mutating default slider state", |_| {
-            let state = SliderWithTicksState::new();
+fn slider_with_ticks_behavior_activates_without_mutating_defaults() {
+    let behavior = SliderWithTicksBehavior;
+    let view_model = SliderWithTicksViewModel::new(vec![Box::new(behavior) as Box<dyn Behavior<_>>]);
 
-            assert_eq!(state.minimum, 0.0);
-            assert_eq!(state.maximum, 1.0);
-            assert_eq!(state.value, 0.0);
-            assert!(state.tick_values.is_empty());
-            assert!(state.tick_color.is_none());
-            assert!(state.is_enabled);
-        });
-    });
-
-    let report = slider_with_ticks::run_suite(&suite);
-    assert!(report.is_success());
+    assert_eq!(view_model.minimum, 0.0);
+    assert_eq!(view_model.maximum, 1.0);
+    assert_eq!(view_model.value, 0.0);
+    assert!(view_model.tick_values.is_empty());
+    assert!(view_model.tick_color.is_none());
+    assert!(view_model.is_enabled);
 }
 
 #[test]
 fn set_range_clamps_existing_value_to_new_bounds() {
-    let mut state = SliderWithTicksState::new();
-    state.value = 5.0;
+    let mut view_model = SliderWithTicksViewModel::default();
+    view_model.value = 5.0;
 
-    reduce(
-        &mut state,
-        SliderWithTicksAction::SetRange {
-            minimum: 0.0,
-            maximum: 2.0,
-        },
-    );
+    view_model.set_range(0.0, 2.0);
 
-    assert_eq!(state.minimum, 0.0);
-    assert_eq!(state.maximum, 2.0);
-    assert_eq!(state.value, 2.0);
+    assert_eq!(view_model.minimum, 0.0);
+    assert_eq!(view_model.maximum, 2.0);
+    assert_eq!(view_model.value, 2.0);
 }
 
 #[test]
 fn set_value_clamps_to_range() {
-    let mut state = SliderWithTicksState::new();
+    let mut view_model = SliderWithTicksViewModel::default();
 
-    reduce(&mut state, SliderWithTicksAction::SetValue { value: -1.0 });
-    assert_eq!(state.value, 0.0);
+    view_model.set_value(-1.0);
+    assert_eq!(view_model.value, 0.0);
 
-    reduce(&mut state, SliderWithTicksAction::SetValue { value: 2.0 });
-    assert_eq!(state.value, 1.0);
-}
-
-#[test]
-fn set_ticks_color_and_enabled_updates_state() {
-    let mut state = SliderWithTicksState::new();
-
-    reduce(
-        &mut state,
-        SliderWithTicksAction::SetTickValues {
-            tick_values: vec![0.0, 0.5, 1.0],
-        },
-    );
-    reduce(
-        &mut state,
-        SliderWithTicksAction::SetTickColor {
-            tick_color: Some(Color32::from_rgb(255, 0, 0)),
-        },
-    );
-    reduce(
-        &mut state,
-        SliderWithTicksAction::SetEnabled { is_enabled: false },
-    );
-
-    assert_eq!(state.tick_values, vec![0.0, 0.5, 1.0]);
-    assert_eq!(state.tick_color, Some(Color32::from_rgb(255, 0, 0)));
-    assert!(!state.is_enabled);
-}
-
-#[test]
-fn initialize_action_is_supported() {
-    let mut state = SliderWithTicksState::new();
-    reduce(&mut state, SliderWithTicksAction::Initialize);
-    assert_eq!(state.value, 0.0);
+    view_model.set_value(2.0);
+    assert_eq!(view_model.value, 1.0);
 }

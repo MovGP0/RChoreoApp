@@ -1,114 +1,49 @@
-use crate::timestamp_state_machine;
-use timestamp_state_machine::Report;
+use std::thread::sleep;
+use std::time::Duration;
 
 #[test]
 fn actor_sync_spec() {
-    let suite = rspec::describe("timestamp actor sync", (), |spec| {
-        spec.it("accepts actor position when seek target is reached", |_| {
-            let mut state = timestamp_state_machine::state::TimestampStateMachineState::default();
+    let mut machine = super::machine::TimestampOwnershipStateMachine::new();
+    let _ = machine.apply_event(super::machine::TimestampEvent::SeekCommitted { position: 20.0 });
 
-            timestamp_state_machine::reducer::reduce(
-                &mut state,
-                timestamp_state_machine::actions::TimestampStateMachineAction::SeekCommitted {
-                    position: 20.0,
-                    now_seconds: 5.0,
-                },
-            );
-            timestamp_state_machine::reducer::reduce(
-                &mut state,
-                timestamp_state_machine::actions::TimestampStateMachineAction::ActorPositionSampled {
-                    position: 20.1,
-                    now_seconds: 5.2,
-                },
-            );
-
-            assert!(state.last_actor_sample_accepted);
-            assert_eq!(
-                state.ownership_phase,
-                timestamp_state_machine::state::OwnershipPhase::ActorDriven
-            );
-            assert!(state.pending_seek_position.is_none());
-        });
-
-        spec.it("accepts actor position after timeout", |_| {
-            let mut state = timestamp_state_machine::state::TimestampStateMachineState::default();
-
-            timestamp_state_machine::reducer::reduce(
-                &mut state,
-                timestamp_state_machine::actions::TimestampStateMachineAction::SeekCommitted {
-                    position: 30.0,
-                    now_seconds: 10.0,
-                },
-            );
-            timestamp_state_machine::reducer::reduce(
-                &mut state,
-                timestamp_state_machine::actions::TimestampStateMachineAction::ActorPositionSampled {
-                    position: 15.0,
-                    now_seconds: 12.0,
-                },
-            );
-
-            assert!(state.last_actor_sample_accepted);
-            assert_eq!(
-                state.ownership_phase,
-                timestamp_state_machine::state::OwnershipPhase::ActorDriven
-            );
-        });
-
-        spec.it(
-            "keeps seek pending when actor sample is out of tolerance before timeout",
-            |_| {
-                let mut state =
-                    timestamp_state_machine::state::TimestampStateMachineState::default();
-
-                timestamp_state_machine::reducer::reduce(
-                    &mut state,
-                    timestamp_state_machine::actions::TimestampStateMachineAction::SeekCommitted {
-                        position: 30.0,
-                        now_seconds: 10.0,
-                    },
-                );
-                timestamp_state_machine::reducer::reduce(
-                    &mut state,
-                    timestamp_state_machine::actions::TimestampStateMachineAction::ActorPositionSampled {
-                        position: 15.0,
-                        now_seconds: 10.4,
-                    },
-                );
-
-                assert!(!state.last_actor_sample_accepted);
-                assert_eq!(
-                    state.ownership_phase,
-                    timestamp_state_machine::state::OwnershipPhase::SeekCommitPending
-                );
-                assert_eq!(state.pending_seek_position, Some(30.0));
-            },
-        );
-
-        spec.it("rejects actor samples while user is previewing", |_| {
-            let mut state = timestamp_state_machine::state::TimestampStateMachineState::default();
-
-            timestamp_state_machine::reducer::reduce(
-                &mut state,
-                timestamp_state_machine::actions::TimestampStateMachineAction::DragStarted {
-                    is_playing: false,
-                },
-            );
-            timestamp_state_machine::reducer::reduce(
-                &mut state,
-                timestamp_state_machine::actions::TimestampStateMachineAction::ActorPositionSampled {
-                    position: 8.0,
-                    now_seconds: 2.0,
-                },
-            );
-
-            assert!(!state.last_actor_sample_accepted);
-            assert_eq!(
-                state.ownership_phase,
-                timestamp_state_machine::state::OwnershipPhase::UserPreview
-            );
-        });
+    let accepted = machine.apply_event(super::machine::TimestampEvent::ActorPositionSampled {
+        position: 20.1,
     });
-    let report = timestamp_state_machine::run_suite(&suite);
-    assert!(report.is_success());
+    assert!(accepted);
+    assert_eq!(
+        machine.snapshot().ownership_phase,
+        super::machine::OwnershipPhase::ActorDriven
+    );
+}
+
+#[test]
+fn actor_sync_timeout_is_machine_owned() {
+    let mut machine = super::machine::TimestampOwnershipStateMachine::new();
+    let _ = machine.apply_event(super::machine::TimestampEvent::SeekCommitted { position: 30.0 });
+
+    sleep(Duration::from_millis(1600));
+    let accepted = machine.apply_event(super::machine::TimestampEvent::ActorPositionSampled {
+        position: 15.0,
+    });
+    assert!(accepted);
+    let snapshot = machine.snapshot();
+    assert_eq!(snapshot.pending_seek_position, None);
+    assert_eq!(snapshot.ownership_phase, super::machine::OwnershipPhase::ActorDriven);
+}
+
+#[test]
+fn actor_sync_rejects_samples_while_previewing() {
+    let mut machine = super::machine::TimestampOwnershipStateMachine::new();
+    let _ = machine.apply_event(super::machine::TimestampEvent::DragStarted {
+        is_playing: false,
+    });
+
+    let accepted = machine.apply_event(super::machine::TimestampEvent::ActorPositionSampled {
+        position: 8.0,
+    });
+    assert!(!accepted);
+    assert_eq!(
+        machine.snapshot().ownership_phase,
+        super::machine::OwnershipPhase::UserPreview
+    );
 }

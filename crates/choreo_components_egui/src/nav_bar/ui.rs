@@ -1,5 +1,8 @@
 use egui::Ui;
 use egui::vec2;
+use egui_material3::MaterialButton;
+
+use crate::i18n::t;
 
 use super::actions::NavBarAction;
 use super::hamburger_toggle_button;
@@ -10,18 +13,18 @@ use super::state::all_modes;
 #[must_use]
 pub fn nav_button(state: &NavBarState) -> (&'static str, NavBarAction) {
     if state.is_nav_open {
-        ("Close Nav", NavBarAction::CloseNavigation)
+        ("close_navigation", NavBarAction::CloseNavigation)
     } else {
-        ("Open Nav", NavBarAction::ToggleNavigation)
+        ("open_navigation", NavBarAction::ToggleNavigation)
     }
 }
 
 #[must_use]
 pub fn settings_button(state: &NavBarState) -> (&'static str, NavBarAction) {
     if state.is_choreography_settings_open {
-        ("Close Settings", NavBarAction::CloseChoreographySettings)
+        ("close_settings", NavBarAction::CloseChoreographySettings)
     } else {
-        ("Open Settings", NavBarAction::ToggleChoreographySettings)
+        ("open_settings", NavBarAction::ToggleChoreographySettings)
     }
 }
 
@@ -38,45 +41,62 @@ pub fn mode_label(mode: InteractionMode) -> &'static str {
 }
 
 pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
+    let locale = "en";
     let mut actions: Vec<NavBarAction> = Vec::new();
     ui.horizontal(|ui| {
-        ui.heading("Navigation");
+        ui.heading(t(locale, "ModeLabel", "Mode"));
         let nav_response = hamburger_toggle_button::draw(
             ui,
             state.is_nav_open,
             true,
-            "Toggle navigation",
+            &t(locale, "MainToggleNavTooltip", "Toggle navigation"),
             Some(vec2(48.0, 48.0)),
         );
         if nav_response.clicked() {
             let (_, nav_action) = nav_button(state);
             actions.push(nav_action);
         }
-        let (settings_label, settings_action) = settings_button(state);
-        if ui.button(settings_label).clicked() {
+        let (_, settings_action) = settings_button(state);
+        if ui
+            .add(MaterialButton::new("S"))
+            .on_hover_text(t(locale, "MainOpenSettingsTooltip", "Open settings"))
+            .clicked()
+        {
             actions.push(settings_action);
         }
     });
 
     ui.horizontal_wrapped(|ui| {
-        if ui.button("Open Audio").clicked() {
+        if ui
+            .add(MaterialButton::new("A"))
+            .on_hover_text(t(locale, "MainOpenAudioTooltip", "Open audio"))
+            .clicked()
+        {
             actions.push(NavBarAction::OpenAudio);
         }
-        if ui.button("Open Image").clicked() {
+        if ui
+            .add(MaterialButton::new("I"))
+            .on_hover_text(t(locale, "MainOpenImageTooltip", "Open floor SVG"))
+            .clicked()
+        {
             actions.push(NavBarAction::OpenImage);
         }
-        if ui.button("Reset Viewport").clicked() {
+        if ui
+            .add(MaterialButton::new("R"))
+            .on_hover_text(t(locale, "MainHomeTooltip", "Reset viewport"))
+            .clicked()
+        {
             actions.push(NavBarAction::ResetFloorViewport);
         }
     });
 
     let mut selected_mode = state.selected_mode;
     ui.add_enabled_ui(state.is_mode_selection_enabled, |ui| {
-        egui::ComboBox::from_label("Mode")
-            .selected_text(mode_label(selected_mode))
+        egui::ComboBox::from_label(t(locale, "ModeLabel", "Mode"))
+            .selected_text(mode_text(selected_mode, locale))
             .show_ui(ui, |ui| {
                 for mode in all_modes() {
-                    ui.selectable_value(&mut selected_mode, *mode, mode_label(*mode));
+                    ui.selectable_value(&mut selected_mode, *mode, mode_text(*mode, locale));
                 }
             });
     });
@@ -88,4 +108,19 @@ pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
     }
 
     actions
+}
+
+fn mode_text(mode: InteractionMode, locale: &str) -> String {
+    match mode {
+        InteractionMode::View => t(locale, "ModeView", mode_label(mode)),
+        InteractionMode::Move => t(locale, "ModeMove", mode_label(mode)),
+        InteractionMode::RotateAroundCenter => {
+            t(locale, "ModeRotateAroundCenter", mode_label(mode))
+        }
+        InteractionMode::RotateAroundDancer => {
+            t(locale, "ModeRotateAroundDancer", mode_label(mode))
+        }
+        InteractionMode::Scale => t(locale, "ModeScale", mode_label(mode)),
+        InteractionMode::LineOfSight => t(locale, "ModeLineOfSight", mode_label(mode)),
+    }
 }

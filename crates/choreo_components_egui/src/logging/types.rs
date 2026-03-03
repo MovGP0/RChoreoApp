@@ -6,7 +6,6 @@ impl BehaviorLog {
     }
 }
 
-#[must_use]
-pub fn activation_message(name: &str, view_model: &str) -> String {
+fn activation_message(name: &str, view_model: &str) -> String {
     format!("behavior activated: {name} -> {view_model}")
 }

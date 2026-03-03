@@ -1,49 +1,19 @@
-use crate::timestamp_state_machine;
-use timestamp_state_machine::Report;
-
 #[test]
 fn playback_phase_spec() {
-    let suite = rspec::describe("timestamp playback phase", (), |spec| {
-        spec.it("maps player state into playback phase and tracks speed adjustment", |_| {
-            let mut state = timestamp_state_machine::state::TimestampStateMachineState::default();
-            timestamp_state_machine::reducer::reduce(
-                &mut state,
-                timestamp_state_machine::actions::TimestampStateMachineAction::Initialize,
-            );
+    let mut machine = super::machine::TimestampOwnershipStateMachine::new();
 
-            timestamp_state_machine::reducer::reduce(
-                &mut state,
-                timestamp_state_machine::actions::TimestampStateMachineAction::SetPlaybackFromPlayer {
-                    has_player: false,
-                    is_playing: false,
-                },
-            );
-            assert_eq!(
-                state.playback_phase,
-                timestamp_state_machine::state::PlaybackPhase::NoMedia
-            );
+    machine.set_playback_from_player(false, false);
+    assert_eq!(
+        machine.snapshot().playback_phase,
+        super::machine::PlaybackPhase::NoMedia
+    );
 
-            timestamp_state_machine::reducer::reduce(
-                &mut state,
-                timestamp_state_machine::actions::TimestampStateMachineAction::SetPlaybackFromPlayer {
-                    has_player: true,
-                    is_playing: true,
-                },
-            );
-            assert_eq!(
-                state.playback_phase,
-                timestamp_state_machine::state::PlaybackPhase::ReadyPlaying
-            );
+    machine.set_playback_from_player(true, true);
+    assert_eq!(
+        machine.snapshot().playback_phase,
+        super::machine::PlaybackPhase::ReadyPlaying
+    );
 
-            timestamp_state_machine::reducer::reduce(
-                &mut state,
-                timestamp_state_machine::actions::TimestampStateMachineAction::SetIsAdjustingSpeed {
-                    value: true,
-                },
-            );
-            assert!(state.is_adjusting_speed);
-        });
-    });
-    let report = timestamp_state_machine::run_suite(&suite);
-    assert!(report.is_success());
+    machine.set_is_adjusting_speed(true);
+    assert!(machine.is_adjusting_speed());
 }

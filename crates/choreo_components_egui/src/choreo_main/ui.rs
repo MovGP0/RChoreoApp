@@ -1,7 +1,9 @@
 use egui::Ui;
+use egui_material3::MaterialButton;
 
 use crate::dialog_host::ui::DialogHostProps;
 use crate::dialog_host::ui::draw_dialog_host;
+use crate::dancers;
 
 use super::actions::ChoreoMainAction;
 use super::state::ChoreoMainState;
@@ -35,7 +37,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
                         ui.set_min_width(324.0);
                         ui.heading("Scenes");
                         ui.label("Main page drawer host (left)");
-                        if ui.button("Close Navigation").clicked() {
+                        if ui.add(MaterialButton::new("Close Navigation")).clicked() {
                             actions.push(ChoreoMainAction::CloseNav);
                         }
                     });
@@ -44,20 +46,30 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
 
                 ui.vertical(|ui| {
                     ui.heading("Floor");
-                    ui.label("Main page content");
-                    ui.label(format!(
-                        "selected scene: {}",
-                        state.floor_scene_name.as_deref().unwrap_or("none")
-                    ));
-                    ui.label(format!("audio position: {:.2}s", state.audio_position_seconds));
-                    ui.label(format!("draw requests: {}", state.draw_floor_request_count));
-
-                    let content_label = match state.content {
-                        MainContent::Main => "main",
-                        MainContent::Settings => "settings",
-                        MainContent::Dancers => "dancers",
-                    };
-                    ui.label(format!("content: {content_label}"));
+                    match state.content {
+                        MainContent::Main => {
+                            ui.label("Main page content");
+                            ui.label(format!(
+                                "selected scene: {}",
+                                state.floor_scene_name.as_deref().unwrap_or("none")
+                            ));
+                            ui.label(format!("audio position: {:.2}s", state.audio_position_seconds));
+                            ui.label(format!("draw requests: {}", state.draw_floor_request_count));
+                            ui.label("content: main");
+                        }
+                        MainContent::Settings => {
+                            ui.heading("Settings");
+                            ui.label("content: settings");
+                        }
+                        MainContent::Dancers => {
+                            ui.label("content: dancers");
+                            ui.separator();
+                            let dancer_actions = dancers::ui::draw(ui, &state.dancers_state);
+                            for action in dancer_actions {
+                                actions.push(ChoreoMainAction::DancersAction(action));
+                            }
+                        }
+                    }
                 });
 
                 if state.is_choreography_settings_open {
@@ -66,7 +78,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
                         ui.set_min_width(480.0);
                         ui.heading("Choreography Settings");
                         ui.label("Main page drawer host (right)");
-                        if ui.button("Close Settings").clicked() {
+                        if ui.add(MaterialButton::new("Close Settings")).clicked() {
                             actions.push(ChoreoMainAction::CloseSettings);
                         }
                     });
@@ -78,14 +90,14 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
                 ui.group(|ui| {
                     ui.set_min_height(84.0);
                     ui.heading("Audio Player");
-                    if ui.button("Close Audio").clicked() {
+                    if ui.add(MaterialButton::new("Close Audio")).clicked() {
                         actions.push(ChoreoMainAction::CloseAudioPanel);
                     }
                 });
             }
 
             ui.separator();
-            if ui.button("Initialize").clicked() {
+            if ui.add(MaterialButton::new("Initialize")).clicked() {
                 actions.push(ChoreoMainAction::Initialize);
             }
         },
@@ -108,7 +120,7 @@ fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMa
             } else {
                 "Open Nav"
             };
-            if ui.button(nav_label).clicked() {
+            if ui.add(MaterialButton::new(nav_label)).clicked() {
                 actions.push(ChoreoMainAction::ToggleNav);
             }
 
@@ -140,18 +152,18 @@ fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMa
             } else {
                 "Open Settings"
             };
-            if ui.button(settings_label).clicked() {
+            if ui.add(MaterialButton::new(settings_label)).clicked() {
                 actions.push(ChoreoMainAction::OpenSettings);
             }
-            if ui.button("Home").clicked() {
+            if ui.add(MaterialButton::new("Home")).clicked() {
                 actions.push(ChoreoMainAction::ResetFloorViewport);
             }
-            if ui.button("Open Image").clicked() {
+            if ui.add(MaterialButton::new("Open Image")).clicked() {
                 actions.push(ChoreoMainAction::RequestOpenImage {
                     file_path: String::new(),
                 });
             }
-            if ui.button("Open Audio").clicked() {
+            if ui.add(MaterialButton::new("Open Audio")).clicked() {
                 actions.push(ChoreoMainAction::OpenAudioPanel);
             }
         },
@@ -181,10 +193,11 @@ fn effective_mode_index(state: &ChoreoMainState) -> i32 {
         return state.selected_mode_index;
     }
     match state.interaction_mode {
-        InteractionMode::None => 0,
+        InteractionMode::View => 0,
         InteractionMode::Move => 1,
         InteractionMode::RotateAroundCenter => 2,
         InteractionMode::RotateAroundDancer => 3,
         InteractionMode::Scale => 4,
+        InteractionMode::LineOfSight => 5,
     }
 }

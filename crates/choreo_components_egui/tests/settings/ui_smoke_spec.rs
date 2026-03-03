@@ -1,5 +1,6 @@
 use crate::settings::state::AudioPlayerBackend;
 use crate::settings::state::SettingsState;
+use crate::settings::translations::settings_translations;
 use crate::settings::ui::audio_backend_label;
 use crate::settings::ui::parse_argb_hex;
 
@@ -16,8 +17,15 @@ fn settings_ui_draw_executes_without_panicking() {
 
 #[test]
 fn audio_backend_labels_match_expected_values() {
-    assert_eq!(audio_backend_label(AudioPlayerBackend::Rodio), "Rodio");
-    assert_eq!(audio_backend_label(AudioPlayerBackend::Awedio), "Awedio");
+    let strings = settings_translations("en");
+    assert_eq!(
+        audio_backend_label(AudioPlayerBackend::Rodio, &strings),
+        "Rodio"
+    );
+    assert_eq!(
+        audio_backend_label(AudioPlayerBackend::Awedio, &strings),
+        "Awedio"
+    );
 }
 
 #[test]

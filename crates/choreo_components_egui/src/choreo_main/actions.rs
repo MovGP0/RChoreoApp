@@ -1,10 +1,12 @@
 use super::state::InteractionMode;
 use super::state::SceneState;
+use crate::dancers::actions::DancersAction;
+use crate::observability::TraceContext;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct OpenAudioRequested {
     pub file_path: String,
-    pub trace_context: Option<String>,
+    pub trace_context: Option<TraceContext>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -54,5 +56,6 @@ pub enum ChoreoMainAction {
     UpdateAudioPosition {
         seconds: f64,
     },
+    DancersAction(DancersAction),
     ClearOutgoingCommands,
 }

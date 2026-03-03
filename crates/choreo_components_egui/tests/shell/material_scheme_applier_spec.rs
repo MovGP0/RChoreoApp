@@ -1,30 +1,39 @@
-use crate::shell::Report;
-use crate::shell::actions::ShellAction;
-use crate::shell::reducer::reduce;
-use crate::shell::state::ShellState;
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use choreo_components_egui::shell::MaterialScheme;
+use choreo_components_egui::shell::MaterialSchemes;
+use choreo_components_egui::shell::ShellMaterialSchemeApplier;
+use choreo_components_egui::shell::ShellMaterialSchemeHost;
+
+#[derive(Clone)]
+struct StubShellHost {
+    schemes: Rc<RefCell<Option<MaterialSchemes>>>,
+}
+
+impl ShellMaterialSchemeHost for StubShellHost {
+    fn apply_material_schemes(&self, schemes: &MaterialSchemes) {
+        self.schemes.replace(Some(schemes.clone()));
+    }
+}
 
 #[test]
 fn material_scheme_applier_spec() {
-    let suite = rspec::describe("shell material scheme application", (), |spec| {
-        spec.it(
-            "applies dark and light scheme backgrounds based on theme",
-            |_| {
-                let mut state = ShellState::default();
-                reduce(
-                    &mut state,
-                    ShellAction::ApplyMaterialSchemes {
-                        light_background_hex: "#FFEEEEEE".to_string(),
-                        dark_background_hex: "#FF222222".to_string(),
-                    },
-                );
-                assert_eq!(state.active_background_hex, "#FFEEEEEE");
-
-                reduce(&mut state, ShellAction::SetThemeMode { is_dark: true });
-                assert_eq!(state.active_background_hex, "#FF222222");
-            },
-        );
+    let sink = Rc::new(RefCell::new(None));
+    let host = StubShellHost {
+        schemes: Rc::clone(&sink),
+    };
+    let applier = ShellMaterialSchemeApplier::new(host);
+    applier.apply(MaterialSchemes {
+        light: MaterialScheme {
+            background_hex: "#FFEEEEEE".to_string(),
+        },
+        dark: MaterialScheme {
+            background_hex: "#FF222222".to_string(),
+        },
     });
 
-    let report = crate::shell::run_suite(&suite);
-    assert!(report.is_success());
+    let applied = sink.borrow().clone().expect("schemes should be applied");
+    assert_eq!(applied.light.background_hex, "#FFEEEEEE");
+    assert_eq!(applied.dark.background_hex, "#FF222222");
 }

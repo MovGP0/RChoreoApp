@@ -2,6 +2,7 @@ use crate::dancers::state::DancerState;
 use crate::dancers::state::DancersState;
 use crate::dancers::state::RoleState;
 use crate::dancers::state::transparent_color;
+use choreo_i18n::icon_names;
 use crate::dancers::ui::selected_dancer_index;
 use crate::dancers::ui::selected_icon_index;
 use crate::dancers::ui::selected_role_index;
@@ -30,6 +31,13 @@ fn selected_dancer_index_returns_none_when_missing() {
     let mut state = sample_state();
     state.selected_dancer = None;
     assert_eq!(selected_dancer_index(&state), None);
+}
+
+#[test]
+fn icon_options_are_loaded_from_i18n_catalog() {
+    let state = DancersState::default();
+    assert_eq!(state.icon_options.len(), icon_names().len());
+    assert!(state.icon_options.len() > 3);
 }
 
 fn sample_state() -> DancersState {

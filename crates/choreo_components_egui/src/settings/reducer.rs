@@ -1,4 +1,6 @@
 use super::actions::SettingsAction;
+use super::system_theme::detect_system_theme_mode;
+use super::system_theme::supports_system_theme_toggle;
 use super::state::AUDIO_PLAYER_BACKEND_KEY;
 use super::state::AudioPlayerBackend;
 use super::state::DEFAULT_PRIMARY_COLOR_HEX;
@@ -17,7 +19,16 @@ use super::state::USE_TERTIARY_COLOR_KEY;
 
 pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
     match action {
-        SettingsAction::Initialize => {}
+        SettingsAction::Initialize => {
+            state.can_use_system_theme = supports_system_theme_toggle();
+            if state.can_use_system_theme
+                && state.use_system_theme
+                && let Some(system_mode) = detect_system_theme_mode()
+            {
+                state.theme_mode = system_mode;
+            }
+        }
+        SettingsAction::NavigateBack => {}
         SettingsAction::LoadFromPreferences { entries } => {
             state.preferences = entries;
             apply_preferences(state);
@@ -28,6 +39,12 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
         SettingsAction::UpdateUseSystemTheme { enabled } => {
             state.use_system_theme = enabled;
             set_bool_pref(state, USE_SYSTEM_THEME_KEY, enabled);
+            if state.can_use_system_theme
+                && enabled
+                && let Some(system_mode) = detect_system_theme_mode()
+            {
+                state.theme_mode = system_mode;
+            }
             bump_material_update(state);
         }
         SettingsAction::UpdateIsDarkMode { enabled } => {
@@ -130,7 +147,7 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
             state.audio_player_backend = backend;
             state.preferences.insert(
                 AUDIO_PLAYER_BACKEND_KEY.to_string(),
-                backend.as_preference().to_string(),
+                backend.as_preference().to_ascii_lowercase(),
             );
         }
     }
@@ -175,8 +192,15 @@ fn apply_preferences(state: &mut SettingsState) {
             .preferences
             .get(AUDIO_PLAYER_BACKEND_KEY)
             .map(String::as_str)
-            .unwrap_or("rodio"),
+            .unwrap_or(AudioPlayerBackend::RODIO_KEY),
     );
+    state.can_use_system_theme = supports_system_theme_toggle();
+    if state.can_use_system_theme
+        && state.use_system_theme
+        && let Some(system_mode) = detect_system_theme_mode()
+    {
+        state.theme_mode = system_mode;
+    }
     bump_material_update(state);
 }
 

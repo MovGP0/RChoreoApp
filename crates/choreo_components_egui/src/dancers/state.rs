@@ -1,4 +1,5 @@
 use choreo_master_mobile_json::Color;
+use choreo_i18n::icon_names;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct IconOption {
@@ -121,21 +122,12 @@ pub fn default_role(name: &str) -> RoleState {
 
 #[must_use]
 pub fn default_icon_options() -> Vec<IconOption> {
-    vec![
-        IconOption {
-            key: "IconCircle".to_string(),
-            display_name: "Circle".to_string(),
-            icon_name: "IconCircle".to_string(),
-        },
-        IconOption {
-            key: "IconSquare".to_string(),
-            display_name: "Square".to_string(),
-            icon_name: "IconSquare".to_string(),
-        },
-        IconOption {
-            key: "IconTriangle".to_string(),
-            display_name: "Triangle".to_string(),
-            icon_name: "IconTriangle".to_string(),
-        },
-    ]
+    icon_names()
+        .iter()
+        .map(|name| IconOption {
+            key: (*name).to_string(),
+            display_name: (*name).to_string(),
+            icon_name: (*name).to_string(),
+        })
+        .collect()
 }

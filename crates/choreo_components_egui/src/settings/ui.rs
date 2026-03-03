@@ -1,35 +1,56 @@
 use egui::Color32;
 use egui::Ui;
+use egui_material3::MaterialButton;
 
 use super::actions::SettingsAction;
 use super::state::AudioPlayerBackend;
 use super::state::SettingsState;
 use super::state::ThemeMode;
+use super::translations::settings_translations;
 
 #[must_use]
 pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
     let mut actions: Vec<SettingsAction> = Vec::new();
+    let strings = settings_translations("en");
 
     ui.spacing_mut().item_spacing = egui::vec2(12.0, 12.0);
-    ui.heading("Settings");
+    ui.horizontal(|ui| {
+        if ui
+            .add(MaterialButton::new(strings.navigate_back.as_str()))
+            .clicked()
+        {
+            actions.push(SettingsAction::NavigateBack);
+        }
+        ui.heading(strings.title.as_str());
+    });
 
     ui.group(|ui| {
         ui.set_min_width(300.0);
-        ui.label("Theme");
+        ui.label(strings.theme.as_str());
 
         let mut use_system_theme = state.use_system_theme;
-        if ui
-            .checkbox(&mut use_system_theme, "Use system theme")
-            .changed()
-        {
-            actions.push(SettingsAction::UpdateUseSystemTheme {
-                enabled: use_system_theme,
-            });
-        }
+        ui.add_enabled_ui(state.can_use_system_theme, |ui| {
+            if ui
+                .checkbox(&mut use_system_theme, strings.use_system_theme.as_str())
+                .changed()
+            {
+                actions.push(SettingsAction::UpdateUseSystemTheme {
+                    enabled: use_system_theme,
+                });
+            }
+        });
 
         let mut is_dark_mode = matches!(state.theme_mode, ThemeMode::Dark);
-        ui.add_enabled_ui(!use_system_theme, |ui| {
-            if ui.checkbox(&mut is_dark_mode, "Dark mode").changed() {
+        let can_toggle_dark_mode = if state.can_use_system_theme {
+            !use_system_theme
+        } else {
+            true
+        };
+        ui.add_enabled_ui(can_toggle_dark_mode, |ui| {
+            if ui
+                .checkbox(&mut is_dark_mode, strings.dark_mode.as_str())
+                .changed()
+            {
                 actions.push(SettingsAction::UpdateIsDarkMode {
                     enabled: is_dark_mode,
                 });
@@ -39,17 +60,21 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
 
     ui.group(|ui| {
         ui.set_min_width(300.0);
-        ui.label("Audio backend");
+        ui.label(strings.audio_backend.as_str());
 
         let mut selected_backend = state.audio_player_backend;
-        egui::ComboBox::from_label("Backend")
-            .selected_text(audio_backend_label(selected_backend))
+        egui::ComboBox::from_label(strings.audio_backend.as_str())
+            .selected_text(audio_backend_label(selected_backend, &strings))
             .show_ui(ui, |ui| {
-                for backend in [AudioPlayerBackend::Rodio, AudioPlayerBackend::Awedio] {
+                for backend in [
+                    AudioPlayerBackend::Rodio,
+                    AudioPlayerBackend::Awedio,
+                    AudioPlayerBackend::Browser,
+                ] {
                     ui.selectable_value(
                         &mut selected_backend,
                         backend,
-                        audio_backend_label(backend),
+                        audio_backend_label(backend, &strings),
                     );
                 }
             });
@@ -63,17 +88,18 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
 
     ui.group(|ui| {
         ui.set_min_width(300.0);
-        ui.label("Colors");
+        ui.label(strings.colors.as_str());
 
         draw_color_controls(
             ui,
             ColorControlSpec {
-                label: "Primary color",
+                label: strings.primary_color.as_str(),
                 enabled: state.use_primary_color,
                 can_enable: true,
                 color_hex: &state.primary_color_hex,
                 toggle_action: update_use_primary_color_action,
                 color_action: update_primary_color_hex_action,
+                argb_hint: strings.argb_hint.as_str(),
             },
             &mut actions,
         );
@@ -81,12 +107,13 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
         draw_color_controls(
             ui,
             ColorControlSpec {
-                label: "Secondary color",
+                label: strings.secondary_color.as_str(),
                 enabled: state.use_secondary_color,
                 can_enable: state.use_primary_color,
                 color_hex: &state.secondary_color_hex,
                 toggle_action: update_use_secondary_color_action,
                 color_action: update_secondary_color_hex_action,
+                argb_hint: strings.argb_hint.as_str(),
             },
             &mut actions,
         );
@@ -94,12 +121,13 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
         draw_color_controls(
             ui,
             ColorControlSpec {
-                label: "Tertiary color",
+                label: strings.tertiary_color.as_str(),
                 enabled: state.use_tertiary_color,
                 can_enable: state.use_secondary_color,
                 color_hex: &state.tertiary_color_hex,
                 toggle_action: update_use_tertiary_color_action,
                 color_action: update_tertiary_color_hex_action,
+                argb_hint: strings.argb_hint.as_str(),
             },
             &mut actions,
         );
@@ -113,6 +141,7 @@ struct ColorControlSpec<'a> {
     enabled: bool,
     can_enable: bool,
     color_hex: &'a str,
+    argb_hint: &'a str,
     toggle_action: fn(bool) -> SettingsAction,
     color_action: fn(String) -> SettingsAction,
 }
@@ -160,7 +189,7 @@ fn draw_color_controls(ui: &mut Ui, spec: ColorControlSpec<'_>, actions: &mut Ve
         let response = ui.add_enabled(
             spec.enabled,
             egui::TextEdit::singleline(&mut edit_value)
-                .hint_text("#AARRGGBB")
+                .hint_text(spec.argb_hint)
                 .desired_width(156.0),
         );
         if response.changed() {
@@ -170,10 +199,14 @@ fn draw_color_controls(ui: &mut Ui, spec: ColorControlSpec<'_>, actions: &mut Ve
 }
 
 #[must_use]
-pub fn audio_backend_label(backend: AudioPlayerBackend) -> &'static str {
+pub fn audio_backend_label(
+    backend: AudioPlayerBackend,
+    strings: &super::translations::SettingsTranslations,
+) -> &str {
     match backend {
-        AudioPlayerBackend::Rodio => "Rodio",
-        AudioPlayerBackend::Awedio => "Awedio",
+        AudioPlayerBackend::Rodio => strings.backend_rodio.as_str(),
+        AudioPlayerBackend::Awedio => strings.backend_awedio.as_str(),
+        AudioPlayerBackend::Browser => strings.backend_browser.as_str(),
     }
 }
 

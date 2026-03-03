@@ -26,7 +26,15 @@ fn swap_dancers_behavior_spec() {
                     &mut state,
                     dancers::actions::DancersAction::LoadFromGlobal,
                 );
-                dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::SwapDancers);
+                dancers::reducer::reduce(
+                    &mut state,
+                    dancers::actions::DancersAction::RequestSwapDancers,
+                );
+                assert!(state.is_dialog_open);
+                dancers::reducer::reduce(
+                    &mut state,
+                    dancers::actions::DancersAction::ConfirmSwapDancers,
+                );
 
                 assert_eq!(state.dancers[0].dancer_id, 1);
                 assert_eq!(state.dancers[1].dancer_id, 2);
@@ -53,11 +61,15 @@ fn swap_dancers_behavior_spec() {
             );
 
             dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::LoadFromGlobal);
-            dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::SwapDancers);
+            dancers::reducer::reduce(
+                &mut state,
+                dancers::actions::DancersAction::RequestSwapDancers,
+            );
 
             assert!(!state.can_swap_dancers);
             assert_eq!(state.dancers.len(), 1);
             assert_eq!(state.dancers[0].name, "A");
+            assert!(!state.is_dialog_open);
         });
     });
     let report = dancers::run_suite(&suite);

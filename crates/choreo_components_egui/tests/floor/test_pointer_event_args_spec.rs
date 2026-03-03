@@ -5,6 +5,7 @@ use crate::floor::floor_component::state::InteractionMode;
 use crate::floor::floor_component::state::Point;
 use crate::floor::floor_component::state::PointerButton;
 use crate::floor::floor_component::state::PointerEventArgs;
+use crate::floor::floor_component::state::TouchDeviceType;
 use crate::floor::floor_component::state::TouchAction;
 
 #[test]
@@ -61,6 +62,7 @@ fn floor_variants_and_ui_are_exercised_for_reducer_coverage() {
             action: TouchAction::Released,
             point: Point::new(0.0, 0.0),
             is_in_contact: false,
+            device: TouchDeviceType::Touch,
         },
     );
     let secondary_args = PointerEventArgs {

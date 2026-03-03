@@ -132,6 +132,9 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
                 select_scene_internal(state, index, true);
             }
         }
+        ChoreoMainAction::DancersAction(action) => {
+            crate::dancers::reducer::reduce(&mut state.dancers_state, action);
+        }
         ChoreoMainAction::ClearOutgoingCommands => {
             state.outgoing_audio_requests.clear();
             state.outgoing_open_svg_commands.clear();
@@ -141,22 +144,24 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
 
 fn interaction_mode_from_index(index: i32) -> Option<InteractionMode> {
     match index {
-        0 => Some(InteractionMode::None),
+        0 => Some(InteractionMode::View),
         1 => Some(InteractionMode::Move),
         2 => Some(InteractionMode::RotateAroundCenter),
         3 => Some(InteractionMode::RotateAroundDancer),
         4 => Some(InteractionMode::Scale),
+        5 => Some(InteractionMode::LineOfSight),
         _ => None,
     }
 }
 
 fn interaction_mode_index(mode: InteractionMode) -> i32 {
     match mode {
-        InteractionMode::None => 0,
+        InteractionMode::View => 0,
         InteractionMode::Move => 1,
         InteractionMode::RotateAroundCenter => 2,
         InteractionMode::RotateAroundDancer => 3,
         InteractionMode::Scale => 4,
+        InteractionMode::LineOfSight => 5,
     }
 }
 
@@ -182,7 +187,7 @@ fn map_interaction_state(
             InteractionStateMachineState::ScalePositions
         }
         InteractionMode::Scale => InteractionStateMachineState::ScalePositionsSelection,
-        InteractionMode::None => InteractionStateMachineState::Idle,
+        InteractionMode::View | InteractionMode::LineOfSight => InteractionStateMachineState::Idle,
     }
 }
 

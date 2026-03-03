@@ -3,9 +3,23 @@
 use std::cell::Cell;
 use std::rc::Rc;
 
-use crate::behavior_component::actions::BehaviorAction;
-use crate::behavior_component::reducer::reduce;
-use crate::behavior_component::state::{BehaviorState, Disposable};
+use choreo_components_egui::behavior::Behavior;
+use choreo_components_egui::behavior::CompositeDisposable;
+use choreo_components_egui::behavior::Disposable;
+use choreo_components_egui::behavior::TimerDisposable;
+
+#[derive(Default)]
+struct StubViewModel {
+    activated: bool,
+}
+
+struct StubBehavior;
+
+impl Behavior<StubViewModel> for StubBehavior {
+    fn activate(&self, view_model: &mut StubViewModel, _disposables: &mut CompositeDisposable) {
+        view_model.activated = true;
+    }
+}
 
 struct CountingDisposable {
     dispose_count: Rc<Cell<usize>>,
@@ -28,44 +42,40 @@ fn dispose_all_disposes_every_registered_item_once() {
     let first_count = Rc::new(Cell::new(0));
     let second_count = Rc::new(Cell::new(0));
 
-    let mut state = BehaviorState::default();
+    let mut disposables = CompositeDisposable::new();
 
-    reduce(
-        &mut state,
-        BehaviorAction::AddDisposable {
-            disposable: Box::new(CountingDisposable::new(Rc::clone(&first_count))),
-        },
-    );
-    reduce(
-        &mut state,
-        BehaviorAction::AddDisposable {
-            disposable: Box::new(CountingDisposable::new(Rc::clone(&second_count))),
-        },
-    );
+    disposables.add(Box::new(CountingDisposable::new(Rc::clone(&first_count))));
+    disposables.add(Box::new(CountingDisposable::new(Rc::clone(&second_count))));
 
-    assert_eq!(state.disposable_count(), 2);
+    assert_eq!(disposables.len(), 2);
 
-    reduce(&mut state, BehaviorAction::DisposeAll);
+    disposables.dispose_all();
 
     assert_eq!(first_count.get(), 1);
     assert_eq!(second_count.get(), 1);
-    assert_eq!(state.disposable_count(), 0);
+    assert!(disposables.is_empty());
 }
 
 #[test]
-fn initialize_clears_registered_disposables() {
+fn timer_disposable_invokes_stop_on_dispose() {
     let dispose_count = Rc::new(Cell::new(0));
-    let mut state = BehaviorState::default();
+    let dispose_count_for_timer = Rc::clone(&dispose_count);
 
-    reduce(
-        &mut state,
-        BehaviorAction::AddDisposable {
-            disposable: Box::new(CountingDisposable::new(Rc::clone(&dispose_count))),
-        },
-    );
-
-    reduce(&mut state, BehaviorAction::Initialize);
+    let mut timer = TimerDisposable::new(move || {
+        dispose_count_for_timer.set(dispose_count_for_timer.get() + 1);
+    });
+    timer.dispose();
 
     assert_eq!(dispose_count.get(), 1);
-    assert_eq!(state.disposable_count(), 0);
+}
+
+#[test]
+fn behavior_activation_uses_lifecycle_contract() {
+    let behavior = StubBehavior;
+    let mut view_model = StubViewModel::default();
+    let mut disposables = CompositeDisposable::new();
+
+    behavior.activate(&mut view_model, &mut disposables);
+
+    assert!(view_model.activated);
 }

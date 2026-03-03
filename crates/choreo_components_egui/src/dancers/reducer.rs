@@ -61,10 +61,19 @@ pub fn reduce(state: &mut DancersState, action: DancersAction) {
             state.swap_to_dancer = state.dancers.get(index).cloned();
             update_can_swap(state);
         }
-        DancersAction::SwapDancers => {
+        DancersAction::RequestSwapDancers => {
+            if !state.can_swap_dancers {
+                return;
+            }
+            state.dialog_content = Some(build_swap_dialog_content(state));
+            state.is_dialog_open = true;
+        }
+        DancersAction::ConfirmSwapDancers => {
             swap_dancers(state);
             refresh_selection_state(state);
             ensure_swap_selections(state);
+            state.is_dialog_open = false;
+            state.dialog_content = None;
         }
         DancersAction::ShowDialog { content_id } => {
             state.dialog_content = content_id.clone();
@@ -74,9 +83,28 @@ pub fn reduce(state: &mut DancersState, action: DancersAction) {
             state.is_dialog_open = false;
             state.dialog_content = None;
         }
-        DancersAction::Cancel => {}
+        DancersAction::Cancel => {
+            state.is_dialog_open = false;
+            state.dialog_content = None;
+        }
         DancersAction::SaveToGlobal => save_to_global(state),
     }
+}
+
+fn build_swap_dialog_content(state: &DancersState) -> String {
+    let from_name = state
+        .swap_from_dancer
+        .as_ref()
+        .map(|dancer| dancer.name.as_str())
+        .filter(|name| !name.trim().is_empty())
+        .unwrap_or("?");
+    let to_name = state
+        .swap_to_dancer
+        .as_ref()
+        .map(|dancer| dancer.name.as_str())
+        .filter(|name| !name.trim().is_empty())
+        .unwrap_or("?");
+    format!("{from_name} <-> {to_name}")
 }
 
 fn load_from_global(state: &mut DancersState) {

@@ -21,7 +21,7 @@ fn nav_button_action_depends_on_nav_state() {
     let closed = NavBarState::default();
     assert_eq!(
         nav_button(&closed),
-        ("Open Nav", NavBarAction::ToggleNavigation)
+        ("open_navigation", NavBarAction::ToggleNavigation)
     );
 
     let open = NavBarState {
@@ -30,7 +30,7 @@ fn nav_button_action_depends_on_nav_state() {
     };
     assert_eq!(
         nav_button(&open),
-        ("Close Nav", NavBarAction::CloseNavigation)
+        ("close_navigation", NavBarAction::CloseNavigation)
     );
 }
 
@@ -39,7 +39,7 @@ fn settings_button_action_depends_on_settings_state() {
     let closed = NavBarState::default();
     assert_eq!(
         settings_button(&closed),
-        ("Open Settings", NavBarAction::ToggleChoreographySettings)
+        ("open_settings", NavBarAction::ToggleChoreographySettings)
     );
 
     let open = NavBarState {
@@ -48,7 +48,7 @@ fn settings_button_action_depends_on_settings_state() {
     };
     assert_eq!(
         settings_button(&open),
-        ("Close Settings", NavBarAction::CloseChoreographySettings)
+        ("close_settings", NavBarAction::CloseChoreographySettings)
     );
 }
 

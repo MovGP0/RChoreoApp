@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
 
-use super::state::AudioPlayerBackend;
+use crate::audio_player::AudioPlayerBackend;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SettingsAction {
     Initialize,
+    NavigateBack,
     LoadFromPreferences { entries: BTreeMap<String, String> },
     Reload,
     UpdateUseSystemTheme { enabled: bool },

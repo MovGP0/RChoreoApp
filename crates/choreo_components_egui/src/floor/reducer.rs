@@ -1,14 +1,21 @@
 use super::actions::FloorAction;
+use super::state::AxisLabel;
 use super::state::FloorLayoutMetrics;
+use super::state::FloorLayer;
 use super::state::FloorPosition;
 use super::state::FloorState;
+use super::state::LabeledPoint;
+use super::state::LineSegment;
 use super::state::Point;
+use super::state::RectPrimitive;
 use super::state::TouchAction;
 
 pub fn reduce(state: &mut FloorState, action: FloorAction) {
     match action {
         FloorAction::Initialize => {
             state.metrics = FloorLayoutMetrics::from_zoom(state.zoom);
+            recompute_layout(state);
+            recompute_geometry(state);
         }
         FloorAction::DrawFloor => {
             state.draw_count += 1;
@@ -16,9 +23,13 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                 state.render_marked = true;
                 state.render_mark_count += 1;
             }
+            recompute_layout(state);
+            recompute_geometry(state);
         }
         FloorAction::RedrawFloor => {
             state.draw_count += 1;
+            recompute_layout(state);
+            recompute_geometry(state);
         }
         FloorAction::SetInteractionMode { mode } => {
             state.interaction_mode = mode;
@@ -26,6 +37,7 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
         FloorAction::SetPositions { positions } => {
             state.positions = positions;
             state.selected_positions.clear();
+            recompute_geometry(state);
         }
         FloorAction::SelectRectangle { start, end } => {
             state.selection_rectangle = Some((start, end));
@@ -36,6 +48,7 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                 .filter(|(_, position)| point_in_rectangle(position.x, position.y, start, end))
                 .map(|(index, _)| index)
                 .collect();
+            recompute_geometry(state);
         }
         FloorAction::MoveSelectedByDelta { delta_x, delta_y } => {
             let selected = state.selected_positions.clone();
@@ -49,12 +62,14 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                     }
                 }
             }
+            recompute_geometry(state);
         }
         FloorAction::RotateSelectedAroundCenter { start, end } => {
             let Some(center) = selection_center(&state.positions, &state.selected_positions) else {
                 return;
             };
             rotate_selected(state, center, start, end);
+            recompute_geometry(state);
         }
         FloorAction::SetPivotFromPoint { point } => {
             let nearest = state
@@ -74,6 +89,7 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                 return;
             };
             rotate_selected(state, pivot, start, end);
+            recompute_geometry(state);
         }
         FloorAction::ScaleSelected { start, end } => {
             let Some(center) = selection_center(&state.positions, &state.selected_positions) else {
@@ -94,13 +110,16 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                     position.y = center.y + (position.y - center.y) * factor;
                 }
             }
+            recompute_geometry(state);
         }
         FloorAction::PlacePosition { point } => {
             state.positions.push(FloorPosition::new(point.x, point.y));
+            recompute_geometry(state);
         }
         FloorAction::ClearSelection => {
             state.selected_positions.clear();
             state.selection_rectangle = None;
+            recompute_geometry(state);
         }
         FloorAction::PointerPressed { point } => {
             state.pointer_anchor = Some(point);
@@ -116,12 +135,16 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
             let delta_y = point.y - anchor.y;
             state.transformation_matrix.translate(delta_x, delta_y);
             state.pointer_anchor = Some(point);
+            recompute_layout(state);
+            recompute_geometry(state);
         }
         FloorAction::PointerReleased { point } => {
             if let Some(last_tap) = state.last_tap_point
                 && distance(last_tap, point) <= 3.0
             {
                 state.transformation_matrix = super::state::Matrix::identity();
+                recompute_layout(state);
+                recompute_geometry(state);
             }
             state.last_tap_point = Some(point);
             state.pointer_anchor = None;
@@ -129,26 +152,41 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
         FloorAction::PointerWheelChanged {
             delta_x,
             delta_y,
-            ctrl: _,
+            ctrl,
+            cursor,
         } => {
-            if delta_x != 0.0 || !matches!(delta_y.abs(), value if (value - 120.0).abs() < 0.001) {
+            if !ctrl {
                 state.transformation_matrix.translate(delta_x, delta_y);
+                recompute_layout(state);
+                recompute_geometry(state);
                 return;
             }
 
             let current = state.transformation_matrix.scale_x;
             let factor = if delta_y > 0.0 { 1.1 } else { 0.9 };
-            state
-                .transformation_matrix
-                .set_uniform_scale(current * factor);
+            let new_scale = (current * factor).clamp(0.1, 10.0);
+
+            if let Some(cursor_point) = cursor {
+                let world_x = (cursor_point.x - state.transformation_matrix.trans_x) / current;
+                let world_y = (cursor_point.y - state.transformation_matrix.trans_y) / current;
+                state.transformation_matrix.set_uniform_scale(new_scale);
+                state.transformation_matrix.trans_x = cursor_point.x - world_x * new_scale;
+                state.transformation_matrix.trans_y = cursor_point.y - world_y * new_scale;
+            } else {
+                state.transformation_matrix.set_uniform_scale(new_scale);
+            }
+            recompute_layout(state);
+            recompute_geometry(state);
         }
         FloorAction::Touch {
             id,
             action,
             point,
             is_in_contact,
+            device,
         } => match action {
             TouchAction::Pressed | TouchAction::Moved => {
+                state.last_touch_device = Some(device);
                 if is_in_contact {
                     state.active_touches.insert(id, point);
                 }
@@ -164,6 +202,8 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                         state
                             .transformation_matrix
                             .set_uniform_scale(current * factor);
+                        recompute_layout(state);
+                        recompute_geometry(state);
                     }
                 }
             }
@@ -173,13 +213,56 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                     state.pinch_distance = None;
                 }
             }
+            TouchAction::Cancelled => {
+                state.active_touches.clear();
+                state.pinch_distance = None;
+                state.pointer_anchor = None;
+            }
         },
+        FloorAction::SetLayout {
+            width_px,
+            height_px,
+        } => {
+            state.layout_width_px = width_px.max(12.0);
+            state.layout_height_px = height_px.max(12.0);
+            recompute_layout(state);
+            recompute_geometry(state);
+        }
+        FloorAction::SetAxisLabels { x_axis, y_axis } => {
+            state.axis_labels = vec![
+                AxisLabel {
+                    text: x_axis,
+                    position: Point::new(state.floor_x + (state.floor_width / 2.0), state.floor_y - 24.0),
+                },
+                AxisLabel {
+                    text: y_axis,
+                    position: Point::new(state.floor_x - 24.0, state.floor_y + (state.floor_height / 2.0)),
+                },
+            ];
+        }
+        FloorAction::SetLegendEntries { entries } => {
+            state.legend_entries = entries
+                .into_iter()
+                .map(|(label, color)| super::state::LegendEntry { label, color })
+                .collect();
+        }
+        FloorAction::SetPlacementRemaining { count } => {
+            state.placement_remaining = count;
+        }
+        FloorAction::SetSvgOverlay { svg_path } => {
+            state.svg_path = svg_path;
+            recompute_geometry(state);
+        }
         FloorAction::ResetViewport => {
             state.transformation_matrix = super::state::Matrix::identity();
+            recompute_layout(state);
+            recompute_geometry(state);
         }
         FloorAction::SetZoom { zoom } => {
             state.zoom = zoom.max(0.1);
             state.metrics = FloorLayoutMetrics::from_zoom(state.zoom);
+            recompute_layout(state);
+            recompute_geometry(state);
         }
         FloorAction::SetSnapToGrid {
             enabled,
@@ -198,6 +281,7 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                     y: from_position.y + (to_position.y - from_position.y) * clamped_progress,
                 })
                 .collect();
+            recompute_geometry(state);
         }
     }
 }
@@ -257,4 +341,181 @@ fn distance(left: Point, right: Point) -> f64 {
 
 fn distance_squared(left: Point, right: Point) -> f64 {
     (right.x - left.x).powi(2) + (right.y - left.y).powi(2)
+}
+
+fn recompute_layout(state: &mut FloorState) {
+    let header_height = (60.0 * state.zoom).max(12.0);
+    let content_height = (state.layout_height_px - header_height).max(12.0);
+    let aspect = (state.metrics.floor_width / state.metrics.floor_height).max(0.1);
+    let fit_by_height = content_height * aspect;
+    let floor_width = state.layout_width_px.min(fit_by_height);
+    let floor_height = floor_width / aspect;
+    let floor_x = (state.layout_width_px - floor_width) / 2.0;
+    let floor_y = header_height + ((content_height - floor_height) / 2.0);
+
+    state.header_height_px = header_height;
+    state.content_height_px = content_height;
+    state.floor_x = floor_x;
+    state.floor_y = floor_y;
+    state.floor_width = floor_width;
+    state.floor_height = floor_height;
+    state.center_x = floor_x + (floor_width / 2.0);
+    state.center_y = floor_y + (floor_height / 2.0);
+}
+
+fn recompute_geometry(state: &mut FloorState) {
+    state.background_rect = Some(RectPrimitive::from_xywh(
+        state.floor_x,
+        state.floor_y,
+        state.floor_width,
+        state.floor_height,
+    ));
+    state.header_overlay_rect = Some(RectPrimitive::from_xywh(
+        state.floor_x,
+        state.floor_y - state.header_height_px,
+        state.floor_width,
+        state.header_height_px,
+    ));
+    state.svg_overlay_bounds = state.svg_path.as_ref().map(|_| {
+        RectPrimitive::from_xywh(
+            state.center_x - (state.floor_width / 2.0),
+            state.center_y - (state.floor_height / 2.0),
+            state.floor_width,
+            state.floor_height,
+        )
+    });
+
+    state.grid_lines.clear();
+    let spacing = (48.0 * state.zoom).max(12.0);
+    let mut x = state.floor_x;
+    while x <= state.floor_x + state.floor_width {
+        state.grid_lines.push(LineSegment {
+            from: Point::new(x, state.floor_y),
+            to: Point::new(x, state.floor_y + state.floor_height),
+        });
+        x += spacing;
+    }
+    let mut y = state.floor_y;
+    while y <= state.floor_y + state.floor_height {
+        state.grid_lines.push(LineSegment {
+            from: Point::new(state.floor_x, y),
+            to: Point::new(state.floor_x + state.floor_width, y),
+        });
+        y += spacing;
+    }
+    state.center_mark_segments = vec![
+        LineSegment {
+            from: Point::new(state.center_x - 12.0, state.center_y),
+            to: Point::new(state.center_x + 12.0, state.center_y),
+        },
+        LineSegment {
+            from: Point::new(state.center_x, state.center_y - 12.0),
+            to: Point::new(state.center_x, state.center_y + 12.0),
+        },
+    ];
+
+    let active_positions = if state.interpolated_positions.is_empty() {
+        state.positions.clone()
+    } else {
+        state.interpolated_positions.clone()
+    };
+
+    state.path_segments.clear();
+    for window in active_positions.windows(2) {
+        let first = window[0];
+        let second = window[1];
+        state.path_segments.push(LineSegment {
+            from: Point::new(first.x, first.y),
+            to: Point::new(second.x, second.y),
+        });
+    }
+
+    state.dashed_path_segments = build_dashed_segments(&state.path_segments, 24.0 * state.zoom);
+    state.position_circles = active_positions
+        .iter()
+        .map(|position| Point::new(position.x, position.y))
+        .collect();
+    state.position_labels = active_positions
+        .iter()
+        .enumerate()
+        .map(|(index, position)| LabeledPoint {
+            text: (index + 1).to_string(),
+            point: Point::new(position.x, position.y),
+        })
+        .collect();
+
+    state.selection_segments.clear();
+    if let Some((start, end)) = state.selection_rectangle {
+        let top_left = Point::new(start.x.min(end.x), start.y.min(end.y));
+        let top_right = Point::new(start.x.max(end.x), start.y.min(end.y));
+        let bottom_left = Point::new(start.x.min(end.x), start.y.max(end.y));
+        let bottom_right = Point::new(start.x.max(end.x), start.y.max(end.y));
+        state.selection_segments = vec![
+            LineSegment {
+                from: top_left,
+                to: top_right,
+            },
+            LineSegment {
+                from: top_right,
+                to: bottom_right,
+            },
+            LineSegment {
+                from: bottom_right,
+                to: bottom_left,
+            },
+            LineSegment {
+                from: bottom_left,
+                to: top_left,
+            },
+        ];
+    }
+
+    if state.axis_labels.is_empty() {
+        state.axis_labels = vec![
+            AxisLabel {
+                text: "X".to_string(),
+                position: Point::new(state.floor_x + (state.floor_width / 2.0), state.floor_y - 24.0),
+            },
+            AxisLabel {
+                text: "Y".to_string(),
+                position: Point::new(state.floor_x - 24.0, state.floor_y + (state.floor_height / 2.0)),
+            },
+        ];
+    }
+
+    state.layer_order = vec![
+        FloorLayer::Background,
+        FloorLayer::GridLines,
+        FloorLayer::FloorSvg,
+        FloorLayer::PathSegments,
+        FloorLayer::PositionCircles,
+        FloorLayer::PositionNumbers,
+        FloorLayer::SelectionSegments,
+        FloorLayer::HeaderOverlay,
+    ];
+}
+
+fn build_dashed_segments(source: &[LineSegment], dash_length: f64) -> Vec<LineSegment> {
+    let mut dashed = Vec::new();
+    for segment in source {
+        let dx = segment.to.x - segment.from.x;
+        let dy = segment.to.y - segment.from.y;
+        let length = (dx * dx + dy * dy).sqrt();
+        if length <= 0.001 {
+            continue;
+        }
+        let ux = dx / length;
+        let uy = dy / length;
+        let mut progress = 0.0;
+        let step = dash_length.max(1.0);
+        while progress < length {
+            let dash_end = (progress + step).min(length);
+            dashed.push(LineSegment {
+                from: Point::new(segment.from.x + ux * progress, segment.from.y + uy * progress),
+                to: Point::new(segment.from.x + ux * dash_end, segment.from.y + uy * dash_end),
+            });
+            progress += step * 2.0;
+        }
+    }
+    dashed
 }

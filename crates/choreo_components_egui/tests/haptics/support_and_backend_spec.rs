@@ -1,36 +1,13 @@
-use crate::haptics;
-use haptics::Report;
-
 #[test]
 fn support_and_backend_spec() {
-    let suite = rspec::describe("haptics support and backend", (), |spec| {
-        spec.it("resets support when backend becomes noop", |_| {
-            let mut state = haptics::state::HapticsState::default();
+    use choreo_components_egui::haptics::HapticFeedback;
+    use choreo_components_egui::haptics::NoopHapticFeedback;
+    use choreo_components_egui::haptics::PlatformHapticFeedback;
 
-            haptics::reducer::reduce(
-                &mut state,
-                haptics::actions::HapticsAction::SetBackend {
-                    backend: haptics::state::HapticBackend::Platform,
-                },
-            );
-            haptics::reducer::reduce(
-                &mut state,
-                haptics::actions::HapticsAction::SetSupported { supported: true },
-            );
-            assert!(state.supported);
-            assert_eq!(state.backend, haptics::state::HapticBackend::Platform);
+    let noop = NoopHapticFeedback::new();
+    assert!(!noop.is_supported());
+    noop.perform_click();
 
-            haptics::reducer::reduce(
-                &mut state,
-                haptics::actions::HapticsAction::SetBackend {
-                    backend: haptics::state::HapticBackend::Noop,
-                },
-            );
-
-            assert!(!state.supported);
-            assert_eq!(state.backend, haptics::state::HapticBackend::Noop);
-        });
-    });
-    let report = haptics::run_suite(&suite);
-    assert!(report.is_success());
+    let platform = PlatformHapticFeedback::default();
+    assert!(!platform.is_supported());
 }

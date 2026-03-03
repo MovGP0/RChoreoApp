@@ -1,3 +1,5 @@
+use crate::observability::TraceContext;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct AudioPlayerScene {
     pub scene_id: i32,
@@ -41,6 +43,7 @@ pub struct AudioPlayerState {
     pub selected_scene_id: Option<i32>,
     pub choreography_scenes: Vec<AudioPlayerChoreographyScene>,
     pub last_published_position: Option<f64>,
+    pub last_trace_context: Option<TraceContext>,
 }
 
 impl Default for AudioPlayerState {
@@ -74,6 +77,7 @@ impl Default for AudioPlayerState {
             selected_scene_id: None,
             choreography_scenes: Vec::new(),
             last_published_position: None,
+            last_trace_context: None,
         }
     }
 }

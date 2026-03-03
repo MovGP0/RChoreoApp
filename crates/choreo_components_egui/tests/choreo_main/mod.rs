@@ -5,14 +5,10 @@ use rspec::ConfigurationBuilder;
 use rspec::Logger;
 use rspec::Runner;
 
-#[path = "../../src/choreo_main/actions.rs"]
-pub mod actions;
-#[path = "../../src/choreo_main/reducer.rs"]
-pub mod reducer;
-#[path = "../../src/choreo_main/state.rs"]
-pub mod state;
-#[path = "../../src/choreo_main/ui.rs"]
-pub mod ui;
+pub use choreo_components_egui::choreo_main::actions;
+pub use choreo_components_egui::choreo_main::reducer;
+pub use choreo_components_egui::choreo_main::state;
+pub use choreo_components_egui::choreo_main::ui;
 
 pub use rspec::report::Report;
 

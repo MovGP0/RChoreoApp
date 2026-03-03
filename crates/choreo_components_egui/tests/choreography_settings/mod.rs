@@ -1,13 +1,11 @@
-#[path = "../../src/choreography_settings/actions.rs"]
-pub mod actions;
-#[path = "../../src/choreography_settings/reducer.rs"]
-pub mod reducer;
-#[path = "../../src/choreography_settings/state.rs"]
-pub mod state;
-#[path = "../../src/choreography_settings/ui.rs"]
-pub mod ui;
+pub use choreo_components_egui::choreography_settings::actions;
+pub use choreo_components_egui::choreography_settings::messages;
+pub use choreo_components_egui::choreography_settings::reducer;
+pub use choreo_components_egui::choreography_settings::state;
+pub use choreo_components_egui::choreography_settings::ui;
 
 pub mod choreo_info_ui_spec;
+pub mod command_mapping_spec;
 pub mod load_choreography_settings_behavior_spec;
 pub mod load_settings_preferences_behavior_spec;
 pub mod update_author_behavior_spec;

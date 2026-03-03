@@ -77,6 +77,70 @@ pub enum TouchAction {
     Pressed,
     Moved,
     Released,
+    Cancelled,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TouchDeviceType {
+    Mouse,
+    Touch,
+    Pen,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct AxisLabel {
+    pub text: String,
+    pub position: Point,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct LegendEntry {
+    pub label: String,
+    pub color: [u8; 4],
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RectPrimitive {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+}
+
+impl RectPrimitive {
+    #[must_use]
+    pub fn from_xywh(x: f64, y: f64, width: f64, height: f64) -> Self {
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct LineSegment {
+    pub from: Point,
+    pub to: Point,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct LabeledPoint {
+    pub text: String,
+    pub point: Point,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FloorLayer {
+    Background,
+    GridLines,
+    FloorSvg,
+    PathSegments,
+    PositionCircles,
+    PositionNumbers,
+    SelectionSegments,
+    HeaderOverlay,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -167,6 +231,32 @@ pub struct FloorState {
     pub pinch_distance: Option<f64>,
     pub pivot: Option<Point>,
     pub interpolated_positions: Vec<FloorPosition>,
+    pub layout_width_px: f64,
+    pub layout_height_px: f64,
+    pub content_height_px: f64,
+    pub floor_x: f64,
+    pub floor_y: f64,
+    pub floor_width: f64,
+    pub floor_height: f64,
+    pub header_height_px: f64,
+    pub center_x: f64,
+    pub center_y: f64,
+    pub axis_labels: Vec<AxisLabel>,
+    pub legend_entries: Vec<LegendEntry>,
+    pub placement_remaining: Option<u32>,
+    pub svg_path: Option<String>,
+    pub svg_overlay_bounds: Option<RectPrimitive>,
+    pub background_rect: Option<RectPrimitive>,
+    pub header_overlay_rect: Option<RectPrimitive>,
+    pub grid_lines: Vec<LineSegment>,
+    pub center_mark_segments: Vec<LineSegment>,
+    pub path_segments: Vec<LineSegment>,
+    pub dashed_path_segments: Vec<LineSegment>,
+    pub selection_segments: Vec<LineSegment>,
+    pub position_labels: Vec<LabeledPoint>,
+    pub position_circles: Vec<Point>,
+    pub layer_order: Vec<FloorLayer>,
+    pub last_touch_device: Option<TouchDeviceType>,
 }
 
 impl Default for FloorState {
@@ -196,6 +286,41 @@ impl Default for FloorState {
             pinch_distance: None,
             pivot: None,
             interpolated_positions: Vec::new(),
+            layout_width_px: 960.0,
+            layout_height_px: 720.0,
+            content_height_px: 660.0,
+            floor_x: 120.0,
+            floor_y: 150.0,
+            floor_width: 720.0,
+            floor_height: 480.0,
+            header_height_px: 60.0,
+            center_x: 480.0,
+            center_y: 390.0,
+            axis_labels: Vec::new(),
+            legend_entries: Vec::new(),
+            placement_remaining: None,
+            svg_path: None,
+            svg_overlay_bounds: None,
+            background_rect: None,
+            header_overlay_rect: None,
+            grid_lines: Vec::new(),
+            center_mark_segments: Vec::new(),
+            path_segments: Vec::new(),
+            dashed_path_segments: Vec::new(),
+            selection_segments: Vec::new(),
+            position_labels: Vec::new(),
+            position_circles: Vec::new(),
+            layer_order: vec![
+                FloorLayer::Background,
+                FloorLayer::GridLines,
+                FloorLayer::FloorSvg,
+                FloorLayer::PathSegments,
+                FloorLayer::PositionCircles,
+                FloorLayer::PositionNumbers,
+                FloorLayer::SelectionSegments,
+                FloorLayer::HeaderOverlay,
+            ],
+            last_touch_device: None,
         }
     }
 }

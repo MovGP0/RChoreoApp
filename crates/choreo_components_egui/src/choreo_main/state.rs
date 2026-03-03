@@ -1,5 +1,6 @@
 use super::actions::OpenAudioRequested;
 use super::actions::OpenSvgFileCommand;
+use crate::dancers::state::DancersState;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum MainContent {
@@ -12,11 +13,12 @@ pub enum MainContent {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum InteractionMode {
     #[default]
-    None,
+    View,
     Move,
     RotateAroundCenter,
     RotateAroundDancer,
     Scale,
+    LineOfSight,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -60,6 +62,7 @@ pub struct ChoreoMainState {
     pub selected_scene_index: Option<usize>,
     pub audio_position_seconds: f64,
     pub floor_scene_name: Option<String>,
+    pub dancers_state: DancersState,
 }
 
 impl Default for ChoreoMainState {
@@ -73,7 +76,7 @@ impl Default for ChoreoMainState {
             is_audio_player_open: false,
             is_dialog_open: false,
             dialog_content: None,
-            interaction_mode: InteractionMode::None,
+            interaction_mode: InteractionMode::View,
             interaction_state_machine: InteractionStateMachineState::Idle,
             selected_positions_count: 0,
             outgoing_audio_requests: Vec::new(),
@@ -85,6 +88,7 @@ impl Default for ChoreoMainState {
             selected_scene_index: None,
             audio_position_seconds: 0.0,
             floor_scene_name: None,
+            dancers_state: DancersState::default(),
         }
     }
 }

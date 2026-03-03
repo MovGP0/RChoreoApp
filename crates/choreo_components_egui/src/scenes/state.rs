@@ -47,7 +47,16 @@ pub struct ScenesState {
     pub show_timestamps: bool,
     pub is_place_mode: bool,
     pub can_save_choreo: bool,
+    pub can_delete_scene: bool,
+    pub can_navigate_to_settings: bool,
+    pub can_navigate_to_dancer_settings: bool,
     pub show_delete_scene_dialog: bool,
+    pub show_copy_scene_positions_dialog: bool,
+    pub copy_scene_positions_decision: Option<bool>,
+    pub request_open_choreo_dialog: bool,
+    pub request_save_choreo: bool,
+    pub navigate_to_settings_requested: bool,
+    pub navigate_to_dancer_settings_requested: bool,
     pub last_opened_choreo_file: Option<String>,
     pub pending_open_audio: Option<String>,
     pub close_audio_requested: bool,
@@ -55,6 +64,12 @@ pub struct ScenesState {
     pub reload_requested: bool,
     pub redraw_floor_requested: bool,
     pub selected_scene_changed: bool,
+    pub has_selected_scene: bool,
+    pub selected_scene_name: String,
+    pub selected_scene_text: String,
+    pub selected_scene_fixed_positions: bool,
+    pub selected_scene_timestamp_text: String,
+    pub selected_scene_color: Color,
 }
 
 impl ScenesState {
@@ -65,6 +80,11 @@ impl ScenesState {
         self.reload_requested = false;
         self.redraw_floor_requested = false;
         self.selected_scene_changed = false;
+        self.copy_scene_positions_decision = None;
+        self.request_open_choreo_dialog = false;
+        self.request_save_choreo = false;
+        self.navigate_to_settings_requested = false;
+        self.navigate_to_dancer_settings_requested = false;
     }
 }
 

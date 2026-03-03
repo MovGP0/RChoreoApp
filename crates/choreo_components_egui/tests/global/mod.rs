@@ -1,1 +1,1 @@
-pub mod global_state_reducer_spec;
+pub mod global_provider_actor_spec;

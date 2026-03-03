@@ -2,6 +2,7 @@ use crate::floor::floor_component::actions::FloorAction;
 use crate::floor::floor_component::reducer::reduce;
 use crate::floor::floor_component::state::FloorState;
 use crate::floor::floor_component::state::Point;
+use crate::floor::floor_component::state::TouchDeviceType;
 use crate::floor::floor_component::state::TouchAction;
 
 #[test]
@@ -28,7 +29,8 @@ fn gesture_handling_applies_pan_zoom_and_reset_semantics() {
         FloorAction::PointerWheelChanged {
             delta_x: 0.0,
             delta_y: 120.0,
-            ctrl: false,
+            ctrl: true,
+            cursor: Some(Point::new(100.0, 100.0)),
         },
     );
     assert!(state.transformation_matrix.scale_x > 1.0);
@@ -39,10 +41,11 @@ fn gesture_handling_applies_pan_zoom_and_reset_semantics() {
             delta_x: 14.0,
             delta_y: -10.0,
             ctrl: false,
+            cursor: None,
         },
     );
-    assert!((state.transformation_matrix.trans_x - 34.0).abs() < 0.0001);
-    assert!((state.transformation_matrix.trans_y - 5.0).abs() < 0.0001);
+    assert!((state.transformation_matrix.trans_x - 26.0).abs() < 0.0001);
+    assert!((state.transformation_matrix.trans_y - (-3.5)).abs() < 0.0001);
 
     reduce(
         &mut state,
@@ -51,6 +54,7 @@ fn gesture_handling_applies_pan_zoom_and_reset_semantics() {
             action: TouchAction::Pressed,
             point: Point::new(40.0, 50.0),
             is_in_contact: true,
+            device: TouchDeviceType::Touch,
         },
     );
     reduce(
@@ -60,6 +64,7 @@ fn gesture_handling_applies_pan_zoom_and_reset_semantics() {
             action: TouchAction::Pressed,
             point: Point::new(60.0, 50.0),
             is_in_contact: true,
+            device: TouchDeviceType::Touch,
         },
     );
     let scale_before_pinch = state.transformation_matrix.scale_x;
@@ -70,6 +75,7 @@ fn gesture_handling_applies_pan_zoom_and_reset_semantics() {
             action: TouchAction::Moved,
             point: Point::new(30.0, 50.0),
             is_in_contact: true,
+            device: TouchDeviceType::Touch,
         },
     );
     reduce(
@@ -79,6 +85,7 @@ fn gesture_handling_applies_pan_zoom_and_reset_semantics() {
             action: TouchAction::Moved,
             point: Point::new(70.0, 50.0),
             is_in_contact: true,
+            device: TouchDeviceType::Touch,
         },
     );
     assert!(state.transformation_matrix.scale_x > scale_before_pinch);

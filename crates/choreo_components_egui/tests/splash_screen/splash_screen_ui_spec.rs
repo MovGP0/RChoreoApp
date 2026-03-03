@@ -1,18 +1,25 @@
-use super::actions::SplashScreenAction;
-use super::state::SplashScreenState;
-use super::ui;
-
 #[test]
-fn splash_screen_ui_draws_without_panicking_and_emits_no_actions() {
-    let state = SplashScreenState::new();
+fn splash_screen_host_ui_draws_without_panicking() {
+    let state = super::splash_screen_host::ui::SplashScreenUiState::default();
     let context = egui::Context::default();
-    let mut emitted_actions: Vec<SplashScreenAction> = Vec::new();
 
     let _ = context.run(egui::RawInput::default(), |ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {
-            emitted_actions = ui::draw(ui, &state);
+            super::splash_screen_host::ui::draw(ui, &state);
         });
     });
+}
 
-    assert!(emitted_actions.is_empty());
+#[test]
+fn splash_screen_host_handles_empty_image_path() {
+    let state = super::splash_screen_host::ui::SplashScreenUiState {
+        splash_image_path: String::new(),
+    };
+    let context = egui::Context::default();
+
+    let _ = context.run(egui::RawInput::default(), |ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            super::splash_screen_host::ui::draw(ui, &state);
+        });
+    });
 }

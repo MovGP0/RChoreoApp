@@ -5,6 +5,10 @@ use crate::choreo_main::state::ChoreoMainState;
 use crate::choreo_main::state::InteractionMode;
 use crate::choreo_main::ui::mode_count;
 use crate::choreo_main::ui::mode_label;
+use choreo_components_egui::dancers::actions::DancersAction;
+use choreo_components_egui::dancers::state::DancerState;
+use choreo_components_egui::dancers::state::RoleState;
+use choreo_components_egui::dancers::state::transparent_color;
 
 #[test]
 fn ui_main_page_spec() {
@@ -60,6 +64,35 @@ fn ui_main_page_spec() {
                 assert!(!state.is_nav_open);
                 assert!(!state.is_choreography_settings_open);
                 assert!(!state.is_audio_player_open);
+            },
+        );
+
+        spec.it(
+            "routes dancers content through dancers pane and dispatches dancer actions",
+            |_| {
+                let mut state = ChoreoMainState::default();
+                state.content = crate::choreo_main::state::MainContent::Dancers;
+                state.dancers_state.dancers = vec![DancerState {
+                    dancer_id: 1,
+                    role: RoleState {
+                        name: "Lead".to_string(),
+                        color: transparent_color(),
+                        z_index: 0,
+                    },
+                    name: "Alex".to_string(),
+                    shortcut: "A".to_string(),
+                    color: transparent_color(),
+                    icon: None,
+                }];
+                state.dancers_state.selected_dancer = state.dancers_state.dancers.first().cloned();
+                state.dancers_state.can_delete_dancer = true;
+
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::DancersAction(DancersAction::DeleteSelectedDancer),
+                );
+
+                assert!(state.dancers_state.dancers.is_empty());
             },
         );
     });

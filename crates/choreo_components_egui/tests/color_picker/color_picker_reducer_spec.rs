@@ -1,17 +1,19 @@
+use egui::Color32;
 #[path = "../../src/color_picker/actions.rs"]
 mod actions;
 #[path = "../../src/color_picker/reducer.rs"]
 mod reducer;
 #[path = "../../src/color_picker/state.rs"]
 mod state;
-
-use egui::Color32;
+#[path = "../../src/color_picker/ui.rs"]
+mod ui;
 
 use actions::ColorPickerAction;
 use reducer::reduce;
 use state::ColorPickerDock;
 use state::ColorPickerState;
 use state::Hsb;
+use std::f64::consts::FRAC_1_SQRT_2;
 
 #[test]
 fn color_picker_defaults_match_source_component() {
@@ -79,6 +81,49 @@ fn update_from_wheel_preserves_brightness() {
 }
 
 #[test]
+fn update_from_wheel_point_maps_angle_and_clamps_saturation() {
+    let mut state = ColorPickerState::new();
+    state.hsb = Hsb::new(0.0, 0.0, 0.5);
+    state.selected_color = state.hsb.to_color();
+
+    let _ = reduce(
+        &mut state,
+        ColorPickerAction::UpdateFromWheelPoint {
+            x: 220.0,
+            y: 100.0,
+            center_x: 100.0,
+            center_y: 100.0,
+            radius_px: 100.0,
+        },
+    );
+
+    assert!((state.hsb.hue - 0.0).abs() < f64::EPSILON);
+    assert!((state.hsb.saturation - 1.0).abs() < f64::EPSILON);
+    assert!((state.hsb.brightness - 0.5).abs() < f64::EPSILON);
+}
+
+#[test]
+fn update_from_wheel_point_wraps_negative_angles_to_hue_range() {
+    let mut state = ColorPickerState::new();
+    state.hsb = Hsb::new(0.0, 0.0, 1.0);
+    state.selected_color = state.hsb.to_color();
+
+    let _ = reduce(
+        &mut state,
+        ColorPickerAction::UpdateFromWheelPoint {
+            x: 200.0,
+            y: 0.0,
+            center_x: 100.0,
+            center_y: 100.0,
+            radius_px: 200.0,
+        },
+    );
+
+    assert!((state.hsb.hue - 315.0).abs() < 0.001);
+    assert!((state.hsb.saturation - FRAC_1_SQRT_2).abs() < 0.001);
+}
+
+#[test]
 fn update_from_slider_only_changes_brightness() {
     let mut state = ColorPickerState::new();
     state.hsb = Hsb::new(240.0, 1.0, 1.0);
@@ -93,11 +138,8 @@ fn update_from_slider_only_changes_brightness() {
 }
 
 #[test]
-fn initialize_and_slider_position_actions_are_supported() {
+fn slider_position_actions_are_supported() {
     let mut state = ColorPickerState::new();
-
-    let initialize = reduce(&mut state, ColorPickerAction::Initialize);
-    assert!(initialize.is_none());
 
     let _ = reduce(
         &mut state,
@@ -122,4 +164,40 @@ fn initialize_and_slider_position_actions_are_supported() {
         },
     );
     assert_eq!(state.value_slider_position, ColorPickerDock::Right);
+}
+
+#[test]
+fn draw_uses_selection_thumb_size_and_stroke_settings() {
+    let context = egui::Context::default();
+    let mut state = ColorPickerState::new();
+    state.selection_thumb_size = 24.0;
+    state.selection_stroke_thickness = 3.0;
+    state.selection_stroke_color = Color32::from_rgb(4, 5, 6);
+
+    let output = context.run(egui::RawInput::default(), |ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let _ = ui::draw(ui, &state);
+        });
+    });
+
+    let mut saw_thumb_fill = false;
+    let mut saw_thumb_stroke = false;
+    for clipped in output.shapes {
+        if let egui::Shape::Circle(circle) = clipped.shape {
+            if (circle.radius - (state.selection_thumb_size * 0.5)).abs() < 0.01
+                && circle.fill == state.selected_color
+            {
+                saw_thumb_fill = true;
+            }
+            if (circle.radius - (state.selection_thumb_size * 0.5)).abs() < 0.01
+                && (circle.stroke.width - state.selection_stroke_thickness).abs() < 0.01
+                && circle.stroke.color == state.selection_stroke_color
+            {
+                saw_thumb_stroke = true;
+            }
+        }
+    }
+
+    assert!(saw_thumb_fill);
+    assert!(saw_thumb_stroke);
 }
