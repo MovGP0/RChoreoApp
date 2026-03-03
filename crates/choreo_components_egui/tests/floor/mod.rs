@@ -39,3 +39,4 @@ pub mod rotate_around_center_behavior_spec;
 pub mod scale_around_dancer_behavior_spec;
 pub mod scale_positions_behavior_spec;
 pub mod test_pointer_event_args_spec;
+pub mod ui_interaction_parity_spec;

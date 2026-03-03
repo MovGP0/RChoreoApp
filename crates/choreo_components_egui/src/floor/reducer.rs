@@ -324,19 +324,14 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
             state.axis_labels = vec![
                 AxisLabel {
                     text: x_axis,
-                    position: Point::new(
-                        state.floor_x + (state.floor_width / 2.0),
-                        state.floor_y - 24.0,
-                    ),
+                    position: Point::new(0.0, 0.0),
                 },
                 AxisLabel {
                     text: y_axis,
-                    position: Point::new(
-                        state.floor_x - 24.0,
-                        state.floor_y + (state.floor_height / 2.0),
-                    ),
+                    position: Point::new(0.0, 0.0),
                 },
             ];
+            recompute_geometry(state);
         }
         FloorAction::SetLegendEntries { entries } => {
             state.legend_entries = entries
@@ -476,19 +471,22 @@ fn recompute_layout(state: &mut FloorState) {
     let content_height = (state.layout_height_px - header_height).max(12.0);
     let aspect = (state.metrics.floor_width / state.metrics.floor_height).max(0.1);
     let fit_by_height = content_height * aspect;
-    let floor_width = state.layout_width_px.min(fit_by_height);
-    let floor_height = floor_width / aspect;
-    let floor_x = (state.layout_width_px - floor_width) / 2.0;
-    let floor_y = header_height + ((content_height - floor_height) / 2.0);
+    let base_floor_width = state.layout_width_px.min(fit_by_height);
+    let base_floor_height = base_floor_width / aspect;
+    let base_floor_x = (state.layout_width_px - base_floor_width) / 2.0;
+    let base_floor_y = header_height + ((content_height - base_floor_height) / 2.0);
+    let user_scale = state.transformation_matrix.scale_x.max(0.1);
+    let user_translate_x = state.transformation_matrix.trans_x;
+    let user_translate_y = state.transformation_matrix.trans_y;
 
-    state.header_height_px = header_height;
+    state.header_height_px = (header_height * user_scale).max(12.0);
     state.content_height_px = content_height;
-    state.floor_x = floor_x;
-    state.floor_y = floor_y;
-    state.floor_width = floor_width;
-    state.floor_height = floor_height;
-    state.center_x = floor_x + (floor_width / 2.0);
-    state.center_y = floor_y + (floor_height / 2.0);
+    state.floor_x = base_floor_x * user_scale + user_translate_x;
+    state.floor_y = base_floor_y * user_scale + user_translate_y;
+    state.floor_width = base_floor_width * user_scale;
+    state.floor_height = base_floor_height * user_scale;
+    state.center_x = state.floor_x + (state.floor_width / 2.0);
+    state.center_y = state.floor_y + (state.floor_height / 2.0);
 }
 
 fn recompute_geometry(state: &mut FloorState) {
@@ -553,31 +551,34 @@ fn recompute_geometry(state: &mut FloorState) {
         let first = window[0];
         let second = window[1];
         state.path_segments.push(LineSegment {
-            from: Point::new(first.x, first.y),
-            to: Point::new(second.x, second.y),
+            from: transform_position(state, first),
+            to: transform_position(state, second),
         });
     }
 
     state.dashed_path_segments = build_dashed_segments(&state.path_segments, 24.0 * state.zoom);
     state.position_circles = active_positions
         .iter()
-        .map(|position| Point::new(position.x, position.y))
+        .map(|position| transform_position(state, *position))
         .collect();
     state.position_labels = active_positions
         .iter()
         .enumerate()
         .map(|(index, position)| LabeledPoint {
             text: (index + 1).to_string(),
-            point: Point::new(position.x, position.y),
+            point: transform_position(state, *position),
         })
         .collect();
 
     state.selection_segments.clear();
     if let Some((start, end)) = state.selection_rectangle {
-        let top_left = Point::new(start.x.min(end.x), start.y.min(end.y));
-        let top_right = Point::new(start.x.max(end.x), start.y.min(end.y));
-        let bottom_left = Point::new(start.x.min(end.x), start.y.max(end.y));
-        let bottom_right = Point::new(start.x.max(end.x), start.y.max(end.y));
+        let top_left = transform_point(state, Point::new(start.x.min(end.x), start.y.min(end.y)));
+        let top_right =
+            transform_point(state, Point::new(start.x.max(end.x), start.y.min(end.y)));
+        let bottom_left =
+            transform_point(state, Point::new(start.x.min(end.x), start.y.max(end.y)));
+        let bottom_right =
+            transform_point(state, Point::new(start.x.max(end.x), start.y.max(end.y)));
         state.selection_segments = vec![
             LineSegment {
                 from: top_left,
@@ -598,24 +599,7 @@ fn recompute_geometry(state: &mut FloorState) {
         ];
     }
 
-    if state.axis_labels.is_empty() {
-        state.axis_labels = vec![
-            AxisLabel {
-                text: "X".to_string(),
-                position: Point::new(
-                    state.floor_x + (state.floor_width / 2.0),
-                    state.floor_y - 24.0,
-                ),
-            },
-            AxisLabel {
-                text: "Y".to_string(),
-                position: Point::new(
-                    state.floor_x - 24.0,
-                    state.floor_y + (state.floor_height / 2.0),
-                ),
-            },
-        ];
-    }
+    refresh_axis_label_positions(state);
 
     state.layer_order = vec![
         FloorLayer::Background,
@@ -626,6 +610,48 @@ fn recompute_geometry(state: &mut FloorState) {
         FloorLayer::PositionNumbers,
         FloorLayer::SelectionSegments,
         FloorLayer::HeaderOverlay,
+    ];
+}
+
+fn transform_position(state: &FloorState, position: FloorPosition) -> Point {
+    transform_point(state, Point::new(position.x, position.y))
+}
+
+fn transform_point(state: &FloorState, point: Point) -> Point {
+    Point::new(
+        point.x * state.transformation_matrix.scale_x + state.transformation_matrix.trans_x,
+        point.y * state.transformation_matrix.scale_y + state.transformation_matrix.trans_y,
+    )
+}
+
+fn refresh_axis_label_positions(state: &mut FloorState) {
+    let axis_offset = 24.0 * state.zoom * state.transformation_matrix.scale_x.max(0.1);
+    let x_text = state
+        .axis_labels
+        .first()
+        .map(|label| label.text.clone())
+        .unwrap_or_else(|| "X".to_string());
+    let y_text = state
+        .axis_labels
+        .get(1)
+        .map(|label| label.text.clone())
+        .unwrap_or_else(|| "Y".to_string());
+
+    state.axis_labels = vec![
+        AxisLabel {
+            text: x_text,
+            position: Point::new(
+                state.floor_x + (state.floor_width / 2.0),
+                state.floor_y - axis_offset,
+            ),
+        },
+        AxisLabel {
+            text: y_text,
+            position: Point::new(
+                state.floor_x - axis_offset,
+                state.floor_y + (state.floor_height / 2.0),
+            ),
+        },
     ];
 }
 
