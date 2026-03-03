@@ -1,6 +1,9 @@
 use crate::audio_player::audio_player_component::ui::denormalize_speed_from_slider_value;
+use crate::audio_player::audio_player_component::ui::link_icon_name;
+use crate::audio_player::audio_player_component::ui::link_icon_svg;
 use crate::audio_player::audio_player_component::ui::normalize_speed_to_slider_value;
 use crate::audio_player::audio_player_component::ui::play_pause_icon_label;
+use crate::audio_player::audio_player_component::ui::play_pause_icon_svg;
 
 #[test]
 fn speed_normalization_round_trips_between_slider_and_speed_range() {
@@ -16,6 +19,14 @@ fn speed_normalization_round_trips_between_slider_and_speed_range() {
 
 #[test]
 fn play_pause_icon_label_maps_to_icon_text_tokens() {
-    assert_eq!(play_pause_icon_label(false), "[>]");
-    assert_eq!(play_pause_icon_label(true), "[||]");
+    assert_eq!(play_pause_icon_label(false), "play_arrow");
+    assert_eq!(play_pause_icon_label(true), "pause");
+}
+
+#[test]
+fn icon_controls_preserve_image_semantics() {
+    assert_eq!(link_icon_name(), "link");
+    assert!(link_icon_svg().contains("<svg"));
+    assert!(play_pause_icon_svg(false).contains("<svg"));
+    assert!(play_pause_icon_svg(true).contains("<svg"));
 }

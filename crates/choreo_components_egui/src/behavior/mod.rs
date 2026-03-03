@@ -1,8 +1,3 @@
 mod types;
 
-pub use types::{
-    Behavior,
-    CompositeDisposable,
-    Disposable,
-    TimerDisposable,
-};
+pub use types::{Behavior, CompositeDisposable, Disposable, TimerDisposable};

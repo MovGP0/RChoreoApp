@@ -232,7 +232,11 @@ impl MovePositionsBehavior {
                 if let Some(position) = scene.positions.get_mut(*index) {
                     let mut position_x = start_point.x + delta_x;
                     let mut position_y = start_point.y + delta_y;
-                    Self::snap_to_grid(&global_state.choreography, &mut position_x, &mut position_y);
+                    Self::snap_to_grid(
+                        &global_state.choreography,
+                        &mut position_x,
+                        &mut position_y,
+                    );
                     position.x = position_x;
                     position.y = position_y;
                 }

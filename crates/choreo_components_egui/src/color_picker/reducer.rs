@@ -33,13 +33,8 @@ pub fn reduce(
             center_y,
             radius_px,
         } => {
-            let (hue, saturation) = map_wheel_point_to_hue_saturation(
-                x,
-                y,
-                center_x,
-                center_y,
-                radius_px,
-            );
+            let (hue, saturation) =
+                map_wheel_point_to_hue_saturation(x, y, center_x, center_y, radius_px);
 
             set_hsb(
                 state,

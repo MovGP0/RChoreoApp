@@ -102,12 +102,27 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
                 scene.color.a,
             );
             let label = if scene.is_selected {
-                format!("● {}{}", scene.name, scene.timestamp.map(|v| format!(" ({v:.1})")).unwrap_or_default())
+                format!(
+                    "● {}{}",
+                    scene.name,
+                    scene
+                        .timestamp
+                        .map(|v| format!(" ({v:.1})"))
+                        .unwrap_or_default()
+                )
             } else {
-                format!("{}{}", scene.name, scene.timestamp.map(|v| format!(" ({v:.1})")).unwrap_or_default())
+                format!(
+                    "{}{}",
+                    scene.name,
+                    scene
+                        .timestamp
+                        .map(|v| format!(" ({v:.1})"))
+                        .unwrap_or_default()
+                )
             };
             ui.horizontal(|ui| {
-                let (rect, _) = ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
+                let (rect, _) =
+                    ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
                 ui.painter().circle_filled(rect.center(), 5.0, fill);
                 if ui.selectable_label(scene.is_selected, label).clicked() {
                     actions.push(ScenesAction::SelectScene { index });
@@ -123,11 +138,18 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
             ui.label(state.selected_scene_text.clone());
         }
         if !state.selected_scene_timestamp_text.is_empty() {
-            ui.label(format!("Timestamp: {}", state.selected_scene_timestamp_text));
+            ui.label(format!(
+                "Timestamp: {}",
+                state.selected_scene_timestamp_text
+            ));
         }
         ui.label(format!(
             "Fixed positions: {}",
-            if state.selected_scene_fixed_positions { "Yes" } else { "No" }
+            if state.selected_scene_fixed_positions {
+                "Yes"
+            } else {
+                "No"
+            }
         ));
     }
 

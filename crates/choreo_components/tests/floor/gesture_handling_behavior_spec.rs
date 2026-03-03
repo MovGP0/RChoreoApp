@@ -118,45 +118,48 @@ fn gesture_handling_behavior_spec() {
             assert!(panned);
         });
 
-        spec.it("ignores pointer drag while two-finger touch gesture is active", |_| {
-            let context = floor::FloorTestContext::new();
-            context.configure_canvas();
+        spec.it(
+            "ignores pointer drag while two-finger touch gesture is active",
+            |_| {
+                let context = floor::FloorTestContext::new();
+                context.configure_canvas();
 
-            context.send_touch(
-                1,
-                choreo_components::floor::TouchAction::Pressed,
-                Point::new(40.0, 50.0),
-                true,
-            );
-            context.send_touch(
-                2,
-                choreo_components::floor::TouchAction::Pressed,
-                Point::new(60.0, 50.0),
-                true,
-            );
-            context.send_touch(
-                1,
-                choreo_components::floor::TouchAction::Moved,
-                Point::new(35.0, 50.0),
-                true,
-            );
-            context.send_touch(
-                2,
-                choreo_components::floor::TouchAction::Moved,
-                Point::new(65.0, 50.0),
-                true,
-            );
+                context.send_touch(
+                    1,
+                    choreo_components::floor::TouchAction::Pressed,
+                    Point::new(40.0, 50.0),
+                    true,
+                );
+                context.send_touch(
+                    2,
+                    choreo_components::floor::TouchAction::Pressed,
+                    Point::new(60.0, 50.0),
+                    true,
+                );
+                context.send_touch(
+                    1,
+                    choreo_components::floor::TouchAction::Moved,
+                    Point::new(35.0, 50.0),
+                    true,
+                );
+                context.send_touch(
+                    2,
+                    choreo_components::floor::TouchAction::Moved,
+                    Point::new(65.0, 50.0),
+                    true,
+                );
 
-            let before_pointer_drag = context.view_model.borrow().transformation_matrix;
+                let before_pointer_drag = context.view_model.borrow().transformation_matrix;
 
-            context.send_pointer_pressed(Point::new(30.0, 30.0));
-            context.send_pointer_moved(Point::new(90.0, 90.0));
-            context.send_pointer_released(Point::new(90.0, 90.0));
+                context.send_pointer_pressed(Point::new(30.0, 30.0));
+                context.send_pointer_moved(Point::new(90.0, 90.0));
+                context.send_pointer_released(Point::new(90.0, 90.0));
 
-            context.pump_events();
-            let after_pointer_drag = context.view_model.borrow().transformation_matrix;
-            assert_eq!(after_pointer_drag, before_pointer_drag);
-        });
+                context.pump_events();
+                let after_pointer_drag = context.view_model.borrow().transformation_matrix;
+                assert_eq!(after_pointer_drag, before_pointer_drag);
+            },
+        );
 
         spec.it("resets viewport on double tap", |_| {
             let context = floor::FloorTestContext::new();
@@ -185,14 +188,19 @@ fn gesture_handling_behavior_spec() {
             context.configure_canvas();
 
             let original_matrix = choreo_components::floor::Matrix::translation(18.0, -12.0)
-                .concat(&choreo_components::floor::Matrix::scale(1.2, 1.2, 50.0, 50.0));
+                .concat(&choreo_components::floor::Matrix::scale(
+                    1.2, 1.2, 50.0, 50.0,
+                ));
             context.set_transformation_matrix(original_matrix);
 
             context.send_pointer_pressed(Point::new(40.0, 40.0));
             context.send_pointer_released(Point::new(40.0, 40.0));
 
             context.pump_events();
-            assert_eq!(context.view_model.borrow().transformation_matrix, original_matrix);
+            assert_eq!(
+                context.view_model.borrow().transformation_matrix,
+                original_matrix
+            );
         });
     });
 

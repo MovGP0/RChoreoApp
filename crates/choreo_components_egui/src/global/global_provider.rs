@@ -17,7 +17,9 @@ impl GlobalProvider {
         let global_state_store = GlobalStateActor::new();
         let global_state = global_state_store.state_handle();
         let state_machine = Rc::new(RefCell::new(
-            ApplicationStateMachine::with_default_transitions(Box::new(GlobalStateModel::default())),
+            ApplicationStateMachine::with_default_transitions(
+                Box::new(GlobalStateModel::default()),
+            ),
         ));
 
         Self {

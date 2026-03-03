@@ -18,7 +18,11 @@ pub struct NavBarViewModel {
 
 impl Default for NavBarViewModel {
     fn default() -> Self {
-        Self::new(NavBarState::default(), NavBarRuntimeHandlers::default(), None)
+        Self::new(
+            NavBarState::default(),
+            NavBarRuntimeHandlers::default(),
+            None,
+        )
     }
 }
 

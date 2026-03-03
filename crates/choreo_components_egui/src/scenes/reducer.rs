@@ -289,10 +289,8 @@ fn update_selected_scene_projection(state: &mut ScenesState) {
     state.selected_scene_name = selected.name.clone();
     state.selected_scene_text = selected.text.clone();
     state.selected_scene_fixed_positions = selected.fixed_positions;
-    state.selected_scene_timestamp_text = selected
-        .timestamp
-        .map(format_seconds)
-        .unwrap_or_default();
+    state.selected_scene_timestamp_text =
+        selected.timestamp.map(format_seconds).unwrap_or_default();
     state.selected_scene_color = selected.color.clone();
 }
 

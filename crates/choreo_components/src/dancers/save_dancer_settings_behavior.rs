@@ -98,7 +98,8 @@ impl SaveDancerSettingsBehavior {
                 };
 
                 if let Some(new_dancer) = dancer_map.get(&dancer_id) {
-                    global_state.selected_positions_snapshot[index].dancer = Some(new_dancer.clone());
+                    global_state.selected_positions_snapshot[index].dancer =
+                        Some(new_dancer.clone());
                 } else {
                     global_state.selected_positions_snapshot.remove(index);
                 }

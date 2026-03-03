@@ -20,7 +20,10 @@ fn provider_pipeline_spec() {
             let view_model = view_model.borrow();
             assert!(view_model.state.use_primary_color);
             assert_eq!(view_model.state.primary_color_hex, "#FF010203");
-            assert_eq!(view_model.state.audio_player_backend, AudioPlayerBackend::Awedio);
+            assert_eq!(
+                view_model.state.audio_player_backend,
+                AudioPlayerBackend::Awedio
+            );
         });
     });
 

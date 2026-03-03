@@ -27,6 +27,7 @@ where
 pub mod audio_position_interpolation_spec;
 pub mod draw_floor_behavior_spec;
 pub mod floor_canvas_zoom_layout_spec;
+pub mod floor_public_api_parity_spec;
 pub mod gesture_handling_behavior_spec;
 pub mod move_positions_behavior_spec;
 pub mod move_positions_feature_spec;

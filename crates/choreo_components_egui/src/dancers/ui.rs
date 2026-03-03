@@ -10,9 +10,9 @@ use egui::ScrollArea;
 use egui::Sense;
 use egui::Stroke;
 use egui::Ui;
-use egui_material3::MaterialButton;
 use egui::pos2;
 use egui::vec2;
+use egui_material3::MaterialButton;
 
 use super::actions::DancersAction;
 use super::state::DancerState;
@@ -113,7 +113,10 @@ fn draw_settings_panel(
         .map(|dancer| dancer.name.clone())
         .unwrap_or_default();
     if ui
-        .add_enabled(state.has_selected_dancer, egui::TextEdit::singleline(&mut name))
+        .add_enabled(
+            state.has_selected_dancer,
+            egui::TextEdit::singleline(&mut name),
+        )
         .changed()
     {
         actions.push(DancersAction::UpdateDancerName { value: name });
@@ -150,7 +153,11 @@ fn draw_settings_panel(
             }
         });
     if let Some(option) = state.icon_options.get(selected_icon)
-        && state.selected_icon_option.as_ref().map(|value| value.key.as_str()) != Some(option.key.as_str())
+        && state
+            .selected_icon_option
+            .as_ref()
+            .map(|value| value.key.as_str())
+            != Some(option.key.as_str())
     {
         actions.push(DancersAction::UpdateDancerIcon {
             value: option.icon_name.clone(),
@@ -179,7 +186,12 @@ fn draw_settings_panel(
     let from_index = state
         .swap_from_dancer
         .as_ref()
-        .and_then(|from| state.dancers.iter().position(|dancer| dancer.dancer_id == from.dancer_id))
+        .and_then(|from| {
+            state
+                .dancers
+                .iter()
+                .position(|dancer| dancer.dancer_id == from.dancer_id)
+        })
         .unwrap_or(0);
     let mut from_index_mut = from_index;
     egui::ComboBox::from_label(t(locale, "DancerSwapFromLabel", "Swap from"))
@@ -198,7 +210,12 @@ fn draw_settings_panel(
     let to_index = state
         .swap_to_dancer
         .as_ref()
-        .and_then(|to| state.dancers.iter().position(|dancer| dancer.dancer_id == to.dancer_id))
+        .and_then(|to| {
+            state
+                .dancers
+                .iter()
+                .position(|dancer| dancer.dancer_id == to.dancer_id)
+        })
         .unwrap_or(0);
     let mut to_index_mut = to_index;
     egui::ComboBox::from_label(t(locale, "DancerSwapToLabel", "Swap to"))
@@ -209,7 +226,9 @@ fn draw_settings_panel(
             }
         });
     if to_index_mut != to_index {
-        actions.push(DancersAction::UpdateSwapTo { index: to_index_mut });
+        actions.push(DancersAction::UpdateSwapTo {
+            index: to_index_mut,
+        });
     }
 
     if ui
@@ -256,13 +275,21 @@ fn draw_swap_dialog(
             ui.label(state.dialog_content.clone().unwrap_or_default());
             ui.horizontal(|ui| {
                 if ui
-                    .add(MaterialButton::new(t(locale, "DancerSwapDialogCancel", "Cancel")))
+                    .add(MaterialButton::new(t(
+                        locale,
+                        "DancerSwapDialogCancel",
+                        "Cancel",
+                    )))
                     .clicked()
                 {
                     actions.push(DancersAction::Cancel);
                 }
                 if ui
-                    .add(MaterialButton::new(t(locale, "DancerSwapDialogConfirm", "Swap")))
+                    .add(MaterialButton::new(t(
+                        locale,
+                        "DancerSwapDialogConfirm",
+                        "Swap",
+                    )))
                     .clicked()
                 {
                     actions.push(DancersAction::ConfirmSwapDancers);

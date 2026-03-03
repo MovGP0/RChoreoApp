@@ -1,9 +1,9 @@
 #[path = "../../src/scenes/actions.rs"]
 pub mod actions;
-#[path = "../../src/scenes/reducer.rs"]
-pub mod reducer;
 #[path = "../../src/scenes/provider.rs"]
 pub mod provider;
+#[path = "../../src/scenes/reducer.rs"]
+pub mod reducer;
 #[path = "../../src/scenes/state.rs"]
 pub mod state;
 #[path = "../../src/scenes/ui.rs"]
@@ -18,12 +18,12 @@ pub mod filter_scenes_behavior_spec;
 pub mod insert_scene_behavior_spec;
 pub mod load_scenes_behavior_spec;
 pub mod open_choreo_behavior_spec;
+pub mod provider_lifecycle_parity_spec;
 pub mod save_choreo_behavior_spec;
 pub mod select_scene_behavior_spec;
 pub mod select_scene_from_audio_position_behavior_spec;
 pub mod selected_scene_detail_projection_spec;
 pub mod show_scene_timestamps_behavior_spec;
-pub mod provider_lifecycle_parity_spec;
 
 use std::rc::Rc;
 

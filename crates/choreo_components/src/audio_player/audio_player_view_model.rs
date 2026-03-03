@@ -1,13 +1,11 @@
-use std::cell::RefCell;
-use std::rc::{Rc, Weak};
 use crossbeam_channel::Sender;
 use nject::injectable;
+use std::cell::RefCell;
+use std::rc::{Rc, Weak};
 
 use crate::behavior::{Behavior, CompositeDisposable};
 use crate::timestamp_state_machine::{
-    OwnershipPhase,
-    TimestampEvent,
-    TimestampOwnershipStateMachine
+    OwnershipPhase, TimestampEvent, TimestampOwnershipStateMachine,
 };
 
 use super::messages::LinkSceneToPositionCommand;
@@ -251,10 +249,8 @@ impl AudioPlayerViewState {
     }
 
     pub fn on_position_drag_started(&mut self, view_model: &mut AudioPlayerViewModel) {
-        self.machine.set_playback_from_player(
-            view_model.player.is_some(),
-            view_model.is_playing,
-        );
+        self.machine
+            .set_playback_from_player(view_model.player.is_some(), view_model.is_playing);
         let was_playing = self.machine.apply_event(TimestampEvent::DragStarted {
             is_playing: view_model.is_playing,
         });
@@ -344,9 +340,10 @@ impl AudioPlayerViewState {
     }
 
     pub fn should_accept_player_position(&mut self, player_position: f64) -> bool {
-        self.machine.apply_event(TimestampEvent::ActorPositionSampled {
-            position: player_position,
-        })
+        self.machine
+            .apply_event(TimestampEvent::ActorPositionSampled {
+                position: player_position,
+            })
     }
 }
 

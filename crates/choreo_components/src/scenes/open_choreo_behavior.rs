@@ -292,8 +292,14 @@ impl Behavior<ScenesPaneViewModel> for OpenChoreoBehavior {
             move || {
                 while let Ok(request) = receiver.try_recv() {
                     let mut span = start_internal_span("scenes.open_choreo.command_handled", None);
-                    span.set_bool_attribute("choreo.scenes.has_file_path", request.file_path.is_some());
-                    span.set_bool_attribute("choreo.scenes.has_file_name", request.file_name.is_some());
+                    span.set_bool_attribute(
+                        "choreo.scenes.has_file_path",
+                        request.file_path.is_some(),
+                    );
+                    span.set_bool_attribute(
+                        "choreo.scenes.has_file_name",
+                        request.file_name.is_some(),
+                    );
                     let mut view_model = view_model_handle.borrow_mut();
                     behavior.load_choreo_from_contents(
                         request.file_path,

@@ -10,10 +10,10 @@ use super::audio_backend_preferences_behavior::AudioBackendPreferencesBehavior;
 use super::color_preferences_behavior::{ColorPreferencesBehavior, ColorPreferencesReceivers};
 use super::load_settings_preferences_behavior::LoadSettingsPreferencesBehavior;
 use super::messages::{
-    ReloadSettingsCommand, SwitchThemeModeCommand, UpdatePrimaryColorHexCommand,
-    UpdateSecondaryColorHexCommand, UpdateTertiaryColorHexCommand, UpdateUsePrimaryColorCommand,
-    UpdateUseSecondaryColorCommand, UpdateUseSystemThemeCommand, UpdateUseTertiaryColorCommand,
-    UpdateAudioPlayerBackendCommand,
+    ReloadSettingsCommand, SwitchThemeModeCommand, UpdateAudioPlayerBackendCommand,
+    UpdatePrimaryColorHexCommand, UpdateSecondaryColorHexCommand, UpdateTertiaryColorHexCommand,
+    UpdateUsePrimaryColorCommand, UpdateUseSecondaryColorCommand, UpdateUseSystemThemeCommand,
+    UpdateUseTertiaryColorCommand,
 };
 use super::settings_view_model::{SettingsViewModel, SettingsViewModelActions};
 use super::switch_dark_light_mode_behavior::SwitchDarkLightModeBehavior;

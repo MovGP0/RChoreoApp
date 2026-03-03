@@ -1,5 +1,5 @@
-use choreo_master_mobile_json::Color;
 use choreo_i18n::icon_names;
+use choreo_master_mobile_json::Color;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct IconOption {

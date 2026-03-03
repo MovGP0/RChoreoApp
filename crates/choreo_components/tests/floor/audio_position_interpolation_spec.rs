@@ -3,8 +3,8 @@ use std::rc::Rc;
 
 use crate::floor;
 
-use choreo_components::audio_player::AudioPlayerPositionChangedEvent;
 use choreo_components::FloorInfo;
+use choreo_components::audio_player::AudioPlayerPositionChangedEvent;
 use choreo_components::floor::FloorAdapter;
 use choreo_components::global::GlobalStateModel;
 use choreo_components::preferences::InMemoryPreferences;
@@ -18,9 +18,9 @@ use choreo_models::PositionModel;
 use choreo_models::RoleModel;
 use choreo_models::SceneModel;
 use crossbeam_channel::unbounded;
+use floor::Report;
 use slint::ComponentHandle;
 use slint::Model;
-use floor::Report;
 
 #[test]
 #[serial_test::serial]
@@ -34,7 +34,8 @@ fn audio_position_interpolation_spec() {
                     .stack_size(8 * 1024 * 1024)
                     .spawn(move || {
                         let context = floor::FloorTestContext::new();
-                        let view = shell::create_shell_host().expect("shell host should be created");
+                        let view =
+                            shell::create_shell_host().expect("shell host should be created");
                         let global_state = Rc::new(RefCell::new(GlobalStateModel::default()));
                         let preferences: Rc<dyn Preferences> = Rc::new(InMemoryPreferences::new());
                         let (audio_sender, audio_receiver) =

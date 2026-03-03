@@ -1,0 +1,181 @@
+use std::sync::mpsc::SyncSender;
+use std::sync::mpsc::TrySendError;
+
+use std::sync::Arc;
+
+use crate::behavior::Behavior;
+use crate::behavior::CompositeDisposable;
+
+use super::messages::DrawFloorCommand;
+use super::messages::PointerMovedCommand;
+use super::messages::PointerPressedCommand;
+use super::messages::PointerReleasedCommand;
+use super::messages::PointerWheelChangedCommand;
+use super::messages::TouchCommand;
+use super::types::CanvasViewHandle;
+use super::types::Matrix;
+use super::types::Rect;
+use super::types::Size;
+
+pub struct FloorCanvasViewModel {
+    draw_floor_command_sender: SyncSender<DrawFloorCommand>,
+    disposables: CompositeDisposable,
+    pointer_pressed_senders: Vec<SyncSender<PointerPressedCommand>>,
+    pointer_moved_senders: Vec<SyncSender<PointerMovedCommand>>,
+    pointer_released_senders: Vec<SyncSender<PointerReleasedCommand>>,
+    pointer_wheel_changed_senders: Vec<SyncSender<PointerWheelChangedCommand>>,
+    touch_senders: Vec<SyncSender<TouchCommand>>,
+    on_redraw: Option<Arc<dyn Fn() + Send + Sync>>,
+    pub canvas_view: Option<CanvasViewHandle>,
+    pub transformation_matrix: Matrix,
+    has_floor_bounds: bool,
+    floor_bounds: Rect,
+    canvas_size: Size,
+}
+
+impl FloorCanvasViewModel {
+    pub const MAX_ZOOM_FACTOR: f32 = 5.0;
+    pub const MIN_ZOOM_FACTOR: f32 = 0.2;
+    pub const PAN_MARGIN: f32 = 20.0;
+
+    #[must_use]
+    pub fn new(
+        draw_floor_command_sender: SyncSender<DrawFloorCommand>,
+        event_senders: FloorPointerEventSenders,
+    ) -> Self {
+        Self {
+            draw_floor_command_sender,
+            disposables: CompositeDisposable::new(),
+            pointer_pressed_senders: event_senders.pointer_pressed_senders,
+            pointer_moved_senders: event_senders.pointer_moved_senders,
+            pointer_released_senders: event_senders.pointer_released_senders,
+            pointer_wheel_changed_senders: event_senders.pointer_wheel_changed_senders,
+            touch_senders: event_senders.touch_senders,
+            on_redraw: None,
+            canvas_view: None,
+            transformation_matrix: Matrix::identity(),
+            has_floor_bounds: false,
+            floor_bounds: Rect::default(),
+            canvas_size: Size::default(),
+        }
+    }
+
+    pub fn activate(
+        view_model: &mut FloorCanvasViewModel,
+        behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>>,
+    ) {
+        let mut disposables = CompositeDisposable::new();
+        for behavior in &behaviors {
+            behavior.activate(view_model, &mut disposables);
+        }
+        view_model.disposables = disposables;
+    }
+
+    pub fn draw_floor(&mut self) {
+        match self.draw_floor_command_sender.try_send(DrawFloorCommand) {
+            Ok(()) | Err(TrySendError::Full(_)) | Err(TrySendError::Disconnected(_)) => {}
+        }
+        self.request_redraw();
+    }
+
+    pub fn request_redraw(&self) {
+        if let Some(handler) = self.on_redraw.as_ref() {
+            handler();
+        }
+    }
+
+    #[must_use]
+    pub fn draw_floor_command_sender(&self) -> &SyncSender<DrawFloorCommand> {
+        &self.draw_floor_command_sender
+    }
+
+    pub fn set_on_redraw(&mut self, handler: Option<Arc<dyn Fn() + Send + Sync>>) {
+        self.on_redraw = handler;
+    }
+
+    #[must_use]
+    pub fn pointer_pressed(&self, command: PointerPressedCommand) -> PointerPressedCommand {
+        Self::try_send_all(&self.pointer_pressed_senders, &command);
+        command
+    }
+
+    #[must_use]
+    pub fn pointer_moved(&self, command: PointerMovedCommand) -> PointerMovedCommand {
+        Self::try_send_all(&self.pointer_moved_senders, &command);
+        command
+    }
+
+    #[must_use]
+    pub fn pointer_released(&self, command: PointerReleasedCommand) -> PointerReleasedCommand {
+        Self::try_send_all(&self.pointer_released_senders, &command);
+        command
+    }
+
+    #[must_use]
+    pub fn pointer_wheel_changed(
+        &self,
+        command: PointerWheelChangedCommand,
+    ) -> PointerWheelChangedCommand {
+        Self::try_send_all(&self.pointer_wheel_changed_senders, &command);
+        command
+    }
+
+    #[must_use]
+    pub fn touch(&self, command: TouchCommand) -> TouchCommand {
+        Self::try_send_all(&self.touch_senders, &command);
+        command
+    }
+
+    pub fn set_floor_bounds(&mut self, bounds: Rect) {
+        self.floor_bounds = bounds;
+        self.has_floor_bounds = true;
+    }
+
+    pub fn set_canvas_size(&mut self, size: Size) {
+        self.canvas_size = size;
+    }
+
+    pub fn set_transformation_matrix(&mut self, matrix: Matrix) {
+        self.transformation_matrix = matrix;
+    }
+
+    pub fn reset_viewport(&mut self) {
+        self.transformation_matrix = Matrix::identity();
+        self.draw_floor();
+    }
+
+    #[must_use]
+    pub fn floor_bounds(&self) -> Rect {
+        self.floor_bounds
+    }
+
+    #[must_use]
+    pub fn canvas_size(&self) -> Size {
+        self.canvas_size
+    }
+
+    #[must_use]
+    pub fn has_floor_bounds(&self) -> bool {
+        self.has_floor_bounds
+    }
+
+    fn try_send_all<T: Clone>(senders: &[SyncSender<T>], command: &T) {
+        for sender in senders {
+            let _ = sender.try_send(command.clone());
+        }
+    }
+}
+
+impl Drop for FloorCanvasViewModel {
+    fn drop(&mut self) {
+        self.disposables.dispose_all();
+    }
+}
+
+pub struct FloorPointerEventSenders {
+    pub pointer_pressed_senders: Vec<SyncSender<PointerPressedCommand>>,
+    pub pointer_moved_senders: Vec<SyncSender<PointerMovedCommand>>,
+    pub pointer_released_senders: Vec<SyncSender<PointerReleasedCommand>>,
+    pub pointer_wheel_changed_senders: Vec<SyncSender<PointerWheelChangedCommand>>,
+    pub touch_senders: Vec<SyncSender<TouchCommand>>,
+}

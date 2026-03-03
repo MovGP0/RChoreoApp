@@ -4,6 +4,7 @@ use std::sync::mpsc::Sender;
 use crate::observability::start_internal_span;
 
 use super::AudioPlayerBackend;
+use super::actions::AudioPlayerAction;
 use super::messages::AudioPlayerPositionChangedEvent;
 use super::messages::CloseAudioFileCommand;
 use super::messages::LinkSceneToPositionCommand;
@@ -13,7 +14,6 @@ use super::reducer::reduce;
 use super::runtime::AudioPlayerRuntime;
 use super::runtime::apply_player_sample;
 use super::state::AudioPlayerState;
-use super::actions::AudioPlayerAction;
 
 pub struct AudioPlayerBehaviorDependencies {
     pub open_audio_receiver: Receiver<OpenAudioFileCommand>,
@@ -33,7 +33,9 @@ pub struct AudioPlayerBehaviorPipeline {
     pub haptic_feedback: Option<Box<dyn AudioPlayerHapticFeedback>>,
 }
 
-pub fn build_audio_player_behaviors(deps: AudioPlayerBehaviorDependencies) -> AudioPlayerBehaviorPipeline {
+pub fn build_audio_player_behaviors(
+    deps: AudioPlayerBehaviorDependencies,
+) -> AudioPlayerBehaviorPipeline {
     AudioPlayerBehaviorPipeline {
         open_audio_file: OpenAudioFileBehavior::new(deps.open_audio_receiver, deps.backend),
         close_audio_file: CloseAudioFileBehavior::new(deps.close_audio_receiver),
@@ -67,7 +69,10 @@ impl OpenAudioFileBehavior {
         let Some(command) = latest else {
             return;
         };
-        let mut span = start_internal_span("audio_player.open_audio_file", command.trace_context.as_ref());
+        let mut span = start_internal_span(
+            "audio_player.open_audio_file",
+            command.trace_context.as_ref(),
+        );
         span.set_string_attribute("choreo.command.type", "OpenAudioFileCommand".to_string());
         if command.file_path.trim().is_empty() {
             span.set_bool_attribute("choreo.success", false);
@@ -105,7 +110,10 @@ impl CloseAudioFileBehavior {
         let Some(command) = latest else {
             return;
         };
-        let mut span = start_internal_span("audio_player.close_audio_file", command.trace_context.as_ref());
+        let mut span = start_internal_span(
+            "audio_player.close_audio_file",
+            command.trace_context.as_ref(),
+        );
         span.set_string_attribute("choreo.command.type", "CloseAudioFileCommand".to_string());
 
         runtime.close();

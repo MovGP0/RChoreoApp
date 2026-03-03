@@ -1,7 +1,7 @@
 use super::actions::FloorAction;
 use super::state::AxisLabel;
-use super::state::FloorLayoutMetrics;
 use super::state::FloorLayer;
+use super::state::FloorLayoutMetrics;
 use super::state::FloorPosition;
 use super::state::FloorState;
 use super::state::LabeledPoint;
@@ -124,6 +124,19 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
         FloorAction::PointerPressed { point } => {
             state.pointer_anchor = Some(point);
         }
+        FloorAction::PointerPressedWithContext {
+            canvas_view,
+            event_args,
+        } => {
+            state.last_canvas_view = Some(canvas_view);
+            state.last_pointer_pressed = Some(event_args);
+            reduce(
+                state,
+                FloorAction::PointerPressed {
+                    point: event_args.position,
+                },
+            );
+        }
         FloorAction::PointerMoved { point } => {
             if state.active_touches.len() >= 2 {
                 return;
@@ -138,6 +151,19 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
             recompute_layout(state);
             recompute_geometry(state);
         }
+        FloorAction::PointerMovedWithContext {
+            canvas_view,
+            event_args,
+        } => {
+            state.last_canvas_view = Some(canvas_view);
+            state.last_pointer_moved = Some(event_args);
+            reduce(
+                state,
+                FloorAction::PointerMoved {
+                    point: event_args.position,
+                },
+            );
+        }
         FloorAction::PointerReleased { point } => {
             if let Some(last_tap) = state.last_tap_point
                 && distance(last_tap, point) <= 3.0
@@ -148,6 +174,19 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
             }
             state.last_tap_point = Some(point);
             state.pointer_anchor = None;
+        }
+        FloorAction::PointerReleasedWithContext {
+            canvas_view,
+            event_args,
+        } => {
+            state.last_canvas_view = Some(canvas_view);
+            state.last_pointer_released = Some(event_args);
+            reduce(
+                state,
+                FloorAction::PointerReleased {
+                    point: event_args.position,
+                },
+            );
         }
         FloorAction::PointerWheelChanged {
             delta_x,
@@ -177,6 +216,26 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
             }
             recompute_layout(state);
             recompute_geometry(state);
+        }
+        FloorAction::PointerWheelChangedWithContext {
+            canvas_view,
+            delta_x,
+            delta_y,
+            control_modifier,
+            position,
+        } => {
+            state.last_canvas_view = Some(canvas_view);
+            state.last_wheel_control_modifier = control_modifier;
+            state.last_wheel_position = position;
+            reduce(
+                state,
+                FloorAction::PointerWheelChanged {
+                    delta_x,
+                    delta_y,
+                    ctrl: control_modifier,
+                    cursor: position,
+                },
+            );
         }
         FloorAction::Touch {
             id,
@@ -219,6 +278,23 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                 state.pointer_anchor = None;
             }
         },
+        FloorAction::TouchWithContext {
+            canvas_view,
+            event_args,
+        } => {
+            state.last_canvas_view = Some(canvas_view);
+            state.last_touch_event = Some(event_args);
+            reduce(
+                state,
+                FloorAction::Touch {
+                    id: event_args.id,
+                    action: event_args.action,
+                    point: event_args.location,
+                    is_in_contact: event_args.in_contact,
+                    device: event_args.device_type,
+                },
+            );
+        }
         FloorAction::SetLayout {
             width_px,
             height_px,
@@ -232,11 +308,17 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
             state.axis_labels = vec![
                 AxisLabel {
                     text: x_axis,
-                    position: Point::new(state.floor_x + (state.floor_width / 2.0), state.floor_y - 24.0),
+                    position: Point::new(
+                        state.floor_x + (state.floor_width / 2.0),
+                        state.floor_y - 24.0,
+                    ),
                 },
                 AxisLabel {
                     text: y_axis,
-                    position: Point::new(state.floor_x - 24.0, state.floor_y + (state.floor_height / 2.0)),
+                    position: Point::new(
+                        state.floor_x - 24.0,
+                        state.floor_y + (state.floor_height / 2.0),
+                    ),
                 },
             ];
         }
@@ -474,11 +556,17 @@ fn recompute_geometry(state: &mut FloorState) {
         state.axis_labels = vec![
             AxisLabel {
                 text: "X".to_string(),
-                position: Point::new(state.floor_x + (state.floor_width / 2.0), state.floor_y - 24.0),
+                position: Point::new(
+                    state.floor_x + (state.floor_width / 2.0),
+                    state.floor_y - 24.0,
+                ),
             },
             AxisLabel {
                 text: "Y".to_string(),
-                position: Point::new(state.floor_x - 24.0, state.floor_y + (state.floor_height / 2.0)),
+                position: Point::new(
+                    state.floor_x - 24.0,
+                    state.floor_y + (state.floor_height / 2.0),
+                ),
             },
         ];
     }
@@ -511,8 +599,14 @@ fn build_dashed_segments(source: &[LineSegment], dash_length: f64) -> Vec<LineSe
         while progress < length {
             let dash_end = (progress + step).min(length);
             dashed.push(LineSegment {
-                from: Point::new(segment.from.x + ux * progress, segment.from.y + uy * progress),
-                to: Point::new(segment.from.x + ux * dash_end, segment.from.y + uy * dash_end),
+                from: Point::new(
+                    segment.from.x + ux * progress,
+                    segment.from.y + uy * progress,
+                ),
+                to: Point::new(
+                    segment.from.x + ux * dash_end,
+                    segment.from.y + uy * dash_end,
+                ),
             });
             progress += step * 2.0;
         }

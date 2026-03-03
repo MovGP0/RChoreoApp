@@ -2,8 +2,8 @@ use std::time::Duration;
 
 use crate::settings;
 
-use choreo_components::preferences::Preferences;
 use choreo_components::audio_player::AudioPlayerBackend;
+use choreo_components::preferences::Preferences;
 use choreo_components::settings::ThemeMode;
 use choreo_models::SettingsPreferenceKeys;
 use settings::Report;

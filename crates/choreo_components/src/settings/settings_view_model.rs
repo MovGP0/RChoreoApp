@@ -3,8 +3,8 @@ use nject::injectable;
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
-use crate::behavior::{Behavior, CompositeDisposable};
 use crate::audio_player::AudioPlayerBackend;
+use crate::behavior::{Behavior, CompositeDisposable};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {

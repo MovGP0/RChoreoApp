@@ -3,8 +3,15 @@ use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::reducer::reduce;
 use crate::choreo_main::state::ChoreoMainState;
 use crate::choreo_main::state::InteractionMode;
+use crate::choreo_main::ui::home_icon_name;
 use crate::choreo_main::ui::mode_count;
 use crate::choreo_main::ui::mode_label;
+use crate::choreo_main::ui::nav_icon_name;
+use crate::choreo_main::ui::open_audio_icon_name;
+use crate::choreo_main::ui::open_image_icon_name;
+use crate::choreo_main::ui::top_bar_nav_action;
+use crate::choreo_main::ui::top_bar_settings_action;
+use crate::choreo_main::ui::top_bar_settings_icon_name;
 use choreo_components_egui::dancers::actions::DancersAction;
 use choreo_components_egui::dancers::state::DancerState;
 use choreo_components_egui::dancers::state::RoleState;
@@ -32,6 +39,31 @@ fn ui_main_page_spec() {
             assert_eq!(mode_label(3), "Rotate Dancer");
             assert_eq!(mode_label(4), "Scale");
             assert_eq!(mode_label(5), "Line of Sight");
+        });
+
+        spec.it(
+            "maps top bar toggles to nav/settings open-close actions",
+            |_| {
+                assert_eq!(top_bar_nav_action(false), ChoreoMainAction::ToggleNav);
+                assert_eq!(top_bar_nav_action(true), ChoreoMainAction::CloseNav);
+                assert_eq!(
+                    top_bar_settings_action(false),
+                    ChoreoMainAction::OpenSettings
+                );
+                assert_eq!(
+                    top_bar_settings_action(true),
+                    ChoreoMainAction::CloseSettings
+                );
+            },
+        );
+
+        spec.it("uses parity icon tokens for top bar actions", |_| {
+            assert_eq!(nav_icon_name(false), "menu");
+            assert_eq!(nav_icon_name(true), "close");
+            assert_eq!(top_bar_settings_icon_name(), "edit");
+            assert_eq!(home_icon_name(), "home");
+            assert_eq!(open_image_icon_name(), "image");
+            assert_eq!(open_audio_icon_name(), "play_circle");
         });
 
         spec.it(

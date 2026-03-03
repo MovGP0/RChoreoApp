@@ -3,8 +3,8 @@ use std::time::Duration;
 
 use crate::dancers;
 
-use choreo_models::DancerModel;
 use choreo_components::scenes::SceneViewModel;
+use choreo_models::DancerModel;
 use dancers::Report;
 
 #[test]

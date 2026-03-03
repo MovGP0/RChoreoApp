@@ -2,31 +2,19 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::time::Duration;
 
-use choreo_models::{
-    DancerModel,
-    RoleModel
-};
-use crossbeam_channel::{
-    Receiver,
-    Sender
-};
+use choreo_models::{DancerModel, RoleModel};
+use crossbeam_channel::{Receiver, Sender};
 use nject::injectable;
 use slint::TimerMode;
 
-use crate::behavior::{
-    Behavior,
-    CompositeDisposable,
-    TimerDisposable
-};
+use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::global::GlobalStateActor;
 use crate::logging::BehaviorLog;
 
 use super::dancer_settings_view_model::DancerSettingsViewModel;
 use super::mapper::{default_role, ensure_default_roles};
 use super::messages::{
-    DancerSelectionCommand,
-    ReloadDancerSettingsCommand,
-    UpdateSwapSelectionCommand
+    DancerSelectionCommand, ReloadDancerSettingsCommand, UpdateSwapSelectionCommand,
 };
 
 #[injectable]
@@ -148,7 +136,9 @@ impl Behavior<DancerSettingsViewModel> for LoadDancerSettingsBehavior {
             while reload_receiver.try_recv().is_ok() {
                 let mut view_model = view_model_handle.borrow_mut();
                 behavior.load(&mut view_model);
-                let _ = behavior.selection_sender.send(DancerSelectionCommand::Refresh);
+                let _ = behavior
+                    .selection_sender
+                    .send(DancerSelectionCommand::Refresh);
                 let _ = behavior
                     .swap_selection_sender
                     .send(UpdateSwapSelectionCommand);

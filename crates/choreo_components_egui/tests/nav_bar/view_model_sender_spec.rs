@@ -16,7 +16,8 @@ fn view_model_with_senders_forwards_commands() {
         interaction_mode_changed: mode_sender,
     };
 
-    let mut view_model = choreo_components_egui::nav_bar::view_model::NavBarViewModel::with_senders(senders);
+    let mut view_model =
+        choreo_components_egui::nav_bar::view_model::NavBarViewModel::with_senders(senders);
     view_model.dispatch(NavBarAction::OpenAudio);
     view_model.dispatch(NavBarAction::OpenImage);
     view_model.dispatch(NavBarAction::ResetFloorViewport);

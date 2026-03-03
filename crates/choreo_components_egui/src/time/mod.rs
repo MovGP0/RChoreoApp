@@ -3,10 +3,10 @@ use time::OffsetDateTime;
 pub struct SystemClock;
 
 impl SystemClock {
-    #[must_use]
     pub fn now_utc() -> OffsetDateTime {
         #[cfg(target_arch = "wasm32")]
         {
+            // In browsers, Performance timestamps are monotonic and provide a unix-based origin.
             let millis_since_unix_epoch = web_sys::window()
                 .and_then(|window| window.performance())
                 .map(|performance| performance.time_origin() + performance.now())
@@ -44,7 +44,6 @@ pub fn parse_timestamp_seconds(value: &str) -> Option<f64> {
     Some(hours * 3600.0 + minutes * 60.0 + seconds)
 }
 
-#[must_use]
 pub fn format_seconds(value: f64) -> String {
     let mut text = format!("{value:.3}");
     if text.find('.').is_some() {

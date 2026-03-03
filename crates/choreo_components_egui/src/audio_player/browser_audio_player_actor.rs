@@ -8,7 +8,11 @@ pub struct BrowserAudioPlayerActor {
 impl BrowserAudioPlayerActor {
     #[must_use]
     pub fn new(file_path: String) -> Self {
-        let duration = if file_path.trim().is_empty() { 0.0 } else { 1.0 };
+        let duration = if file_path.trim().is_empty() {
+            0.0
+        } else {
+            1.0
+        };
         Self {
             sample: AudioPlayerSample {
                 is_playing: false,

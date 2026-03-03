@@ -13,8 +13,8 @@ use crate::logging::BehaviorLog;
 use crate::observability::start_internal_span;
 use crate::preferences::Preferences;
 
-use super::audio_player_view_model::AudioPlayerViewModel;
 use super::AudioPlayerBackend;
+use super::audio_player_view_model::AudioPlayerViewModel;
 use super::create_platform_audio_player;
 use super::messages::OpenAudioFileCommand;
 
@@ -86,11 +86,12 @@ impl Behavior<AudioPlayerViewModel> for OpenAudioFileBehavior {
             let stream_path = file_path.clone();
             let has_audio_file = Path::new(&file_path).is_file();
             let selected_backend = AudioPlayerBackend::from_preference(
-                preferences.get_string(
-                    SettingsPreferenceKeys::AUDIO_PLAYER_BACKEND,
-                    AudioPlayerBackend::RODIO_KEY,
-                )
-                .as_str(),
+                preferences
+                    .get_string(
+                        SettingsPreferenceKeys::AUDIO_PLAYER_BACKEND,
+                        AudioPlayerBackend::RODIO_KEY,
+                    )
+                    .as_str(),
             );
 
             {

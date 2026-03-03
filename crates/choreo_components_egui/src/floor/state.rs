@@ -37,6 +37,16 @@ impl Matrix {
         self.trans_y += delta_y;
     }
 
+    #[must_use]
+    pub fn translation(delta_x: f32, delta_y: f32) -> Self {
+        Self {
+            scale_x: 1.0,
+            scale_y: 1.0,
+            trans_x: f64::from(delta_x),
+            trans_y: f64::from(delta_y),
+        }
+    }
+
     pub fn set_uniform_scale(&mut self, scale: f64) {
         self.scale_x = scale;
         self.scale_y = scale;
@@ -65,6 +75,11 @@ pub enum PointerButton {
     Secondary,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct CanvasViewHandle {
+    pub id: u64,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PointerEventArgs {
     pub position: Point,
@@ -85,6 +100,15 @@ pub enum TouchDeviceType {
     Mouse,
     Touch,
     Pen,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TouchEventArgs {
+    pub id: i64,
+    pub action: TouchAction,
+    pub device_type: TouchDeviceType,
+    pub location: Point,
+    pub in_contact: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -257,6 +281,13 @@ pub struct FloorState {
     pub position_circles: Vec<Point>,
     pub layer_order: Vec<FloorLayer>,
     pub last_touch_device: Option<TouchDeviceType>,
+    pub last_pointer_pressed: Option<PointerEventArgs>,
+    pub last_pointer_moved: Option<PointerEventArgs>,
+    pub last_pointer_released: Option<PointerEventArgs>,
+    pub last_touch_event: Option<TouchEventArgs>,
+    pub last_canvas_view: Option<CanvasViewHandle>,
+    pub last_wheel_control_modifier: bool,
+    pub last_wheel_position: Option<Point>,
 }
 
 impl Default for FloorState {
@@ -321,6 +352,13 @@ impl Default for FloorState {
                 FloorLayer::HeaderOverlay,
             ],
             last_touch_device: None,
+            last_pointer_pressed: None,
+            last_pointer_moved: None,
+            last_pointer_released: None,
+            last_touch_event: None,
+            last_canvas_view: None,
+            last_wheel_control_modifier: false,
+            last_wheel_position: None,
         }
     }
 }

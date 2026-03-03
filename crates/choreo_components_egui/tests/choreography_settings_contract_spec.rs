@@ -1,20 +1,31 @@
-use choreo_components_egui::choreography_settings::ChoreographySettingsViewModel;
-use choreo_components_egui::choreography_settings::behaviors::UpdateCommentBehavior;
+use choreo_components_egui::choreography_settings::actions::ChoreographySettingsAction;
+use choreo_components_egui::choreography_settings::actions::from_command;
 use choreo_components_egui::choreography_settings::messages::ChoreographySettingsCommand;
+use choreo_components_egui::choreography_settings::reducer::reduce;
+use choreo_components_egui::choreography_settings::state::ChoreographySettingsState;
 
 #[test]
-fn view_model_dispatches_commands_through_reducer_contract() {
-    let mut view_model = ChoreographySettingsViewModel::default();
-    view_model.dispatch(ChoreographySettingsCommand::UpdateName("Parity".to_string()));
-    view_model.dispatch(ChoreographySettingsCommand::UpdateComment("  test  ".to_string()));
+fn commands_are_mapped_and_reduced_through_current_contract() {
+    let mut state = ChoreographySettingsState::default();
+    let update_name = from_command(ChoreographySettingsCommand::UpdateName(
+        "Parity".to_string(),
+    ));
+    let update_comment = from_command(ChoreographySettingsCommand::UpdateComment(
+        "  test  ".to_string(),
+    ));
+    reduce(&mut state, update_name);
+    reduce(&mut state, update_comment);
 
-    assert_eq!(view_model.state.name, "Parity");
-    assert_eq!(view_model.state.comment, "test");
+    assert_eq!(state.name, "Parity");
+    assert_eq!(state.comment, "test");
 }
 
 #[test]
-fn update_behavior_wrappers_apply_command_flows() {
-    let mut view_model = ChoreographySettingsViewModel::default();
-    UpdateCommentBehavior::apply(&mut view_model, "  wrapped  ".to_string());
-    assert_eq!(view_model.state.comment, "wrapped");
+fn direct_action_reduction_updates_state() {
+    let mut state = ChoreographySettingsState::default();
+    reduce(
+        &mut state,
+        ChoreographySettingsAction::UpdateComment("  wrapped  ".to_string()),
+    );
+    assert_eq!(state.comment, "wrapped");
 }

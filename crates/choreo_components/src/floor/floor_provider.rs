@@ -7,8 +7,8 @@ use slint::{ComponentHandle, Timer, TimerMode};
 
 use choreo_state_machine::ApplicationStateMachine;
 
-use crate::ShellHost;
 use crate::FloorMetricsInfo;
+use crate::ShellHost;
 use crate::audio_player::AudioPlayerPositionChangedEvent;
 use crate::behavior::Behavior;
 use crate::global::{GlobalStateActor, GlobalStateModel};

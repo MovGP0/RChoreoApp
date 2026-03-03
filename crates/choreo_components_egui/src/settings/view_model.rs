@@ -27,10 +27,8 @@ pub struct SettingsViewModelActions {
     pub update_use_system_theme: Option<SettingsBooleanHandler<UpdateUseSystemThemeCommand>>,
     pub update_is_dark_mode: Option<SettingsBooleanHandler<SwitchThemeModeCommand>>,
     pub update_use_primary_color: Option<SettingsBooleanHandler<UpdateUsePrimaryColorCommand>>,
-    pub update_use_secondary_color:
-        Option<SettingsBooleanHandler<UpdateUseSecondaryColorCommand>>,
-    pub update_use_tertiary_color:
-        Option<SettingsBooleanHandler<UpdateUseTertiaryColorCommand>>,
+    pub update_use_secondary_color: Option<SettingsBooleanHandler<UpdateUseSecondaryColorCommand>>,
+    pub update_use_tertiary_color: Option<SettingsBooleanHandler<UpdateUseTertiaryColorCommand>>,
     pub update_primary_color_hex: Option<SettingsStringHandler<UpdatePrimaryColorHexCommand>>,
     pub update_secondary_color_hex: Option<SettingsStringHandler<UpdateSecondaryColorHexCommand>>,
     pub update_tertiary_color_hex: Option<SettingsStringHandler<UpdateTertiaryColorHexCommand>>,

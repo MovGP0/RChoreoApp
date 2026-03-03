@@ -2,16 +2,16 @@ use std::sync::mpsc::channel;
 
 use crate::audio_player::audio_player_component::AudioPlayerBackend;
 use crate::audio_player::audio_player_component::OpenAudioFileCommand;
+use crate::audio_player::audio_player_component::actions::AudioPlayerAction;
 use crate::audio_player::audio_player_component::audio_player_behaviors::AudioPlayerBehaviorDependencies;
 use crate::audio_player::audio_player_component::build_audio_player_behaviors;
 use crate::audio_player::audio_player_component::messages::CloseAudioFileCommand;
 use crate::audio_player::audio_player_component::messages::LinkSceneToPositionCommand;
+use crate::audio_player::audio_player_component::reducer::reduce;
 use crate::audio_player::audio_player_component::runtime::AudioPlayerRuntime;
 use crate::audio_player::audio_player_component::state::AudioPlayerChoreographyScene;
 use crate::audio_player::audio_player_component::state::AudioPlayerScene;
 use crate::audio_player::audio_player_component::state::AudioPlayerState;
-use crate::audio_player::audio_player_component::reducer::reduce;
-use crate::audio_player::audio_player_component::actions::AudioPlayerAction;
 
 #[test]
 fn build_pipeline_handles_open_and_close_commands() {
@@ -96,12 +96,10 @@ fn pipeline_links_scene_and_publishes_position_changed_event() {
                 timestamp: Some(5.0),
             },
         ],
-        choreography_scenes: vec![
-            AudioPlayerChoreographyScene {
-                scene_id: 2,
-                timestamp: None,
-            },
-        ],
+        choreography_scenes: vec![AudioPlayerChoreographyScene {
+            scene_id: 2,
+            timestamp: None,
+        }],
         ..AudioPlayerState::default()
     };
 

@@ -17,7 +17,9 @@ pub fn create_platform_audio_player(
     #[cfg(target_arch = "wasm32")]
     {
         let _ = backend;
-        Box::new(browser_audio_player_actor::BrowserAudioPlayerActor::new(file_path))
+        Box::new(browser_audio_player_actor::BrowserAudioPlayerActor::new(
+            file_path,
+        ))
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -25,9 +27,9 @@ pub fn create_platform_audio_player(
         match backend {
             AudioPlayerBackend::Awedio
             | AudioPlayerBackend::Rodio
-            | AudioPlayerBackend::Browser => {
-                Box::new(native_audio_player_actor::NativeAudioPlayerActor::new(file_path))
-            }
+            | AudioPlayerBackend::Browser => Box::new(
+                native_audio_player_actor::NativeAudioPlayerActor::new(file_path),
+            ),
         }
     }
 }

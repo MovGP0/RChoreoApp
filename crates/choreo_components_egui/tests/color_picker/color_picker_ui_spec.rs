@@ -42,3 +42,23 @@ fn draw_uses_selection_thumb_size_and_stroke_settings() {
     assert!(saw_thumb_fill);
     assert!(saw_thumb_stroke);
 }
+
+#[test]
+fn vertical_slider_mapping_is_identity_for_left_dock() {
+    let brightness = 0.25;
+    let slider_value = ui::slider_value_from_brightness(brightness, false);
+    let mapped_back = ui::brightness_from_slider_value(slider_value, false);
+
+    assert!((slider_value - 0.25).abs() < f64::EPSILON);
+    assert!((mapped_back - brightness).abs() < f64::EPSILON);
+}
+
+#[test]
+fn vertical_slider_mapping_is_inverted_for_right_dock() {
+    let brightness = 0.25;
+    let slider_value = ui::slider_value_from_brightness(brightness, true);
+    let mapped_back = ui::brightness_from_slider_value(slider_value, true);
+
+    assert!((slider_value - 0.75).abs() < f64::EPSILON);
+    assert!((mapped_back - brightness).abs() < f64::EPSILON);
+}

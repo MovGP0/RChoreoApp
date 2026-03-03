@@ -15,18 +15,8 @@ use crate::global::GlobalStateModel;
 use crate::observability::start_internal_span;
 use crate::preferences::Preferences;
 use crate::{
-    AxisLabel,
-    ChoreoInfo,
-    FloorInfo,
-    FloorMetricsInfo,
-    FloorCurve,
-    FloorLegendEntries,
-    FloorPosition,
-    LegendEntry,
-    LineSegment,
-    SceneInfo,
-    ShellHost,
-    ZoomPanInfo,
+    AxisLabel, ChoreoInfo, FloorCurve, FloorInfo, FloorLegendEntries, FloorMetricsInfo,
+    FloorPosition, LegendEntry, LineSegment, SceneInfo, ShellHost, ZoomPanInfo,
 };
 
 pub struct FloorAdapter {
@@ -94,7 +84,10 @@ impl FloorAdapter {
             let choreography = &global_state.choreography;
             let settings = &choreography.settings;
             let (previous_scene, current_scene, next_scene) =
-                get_adjacent_scenes_for_audio_or_selected(&global_state, self.current_audio_seconds);
+                get_adjacent_scenes_for_audio_or_selected(
+                    &global_state,
+                    self.current_audio_seconds,
+                );
 
             (
                 choreography.name.clone(),
@@ -259,11 +252,13 @@ impl FloorAdapter {
         floor_info.set_floor_dashed_curve_segments(ModelRc::new(VecModel::from(
             Vec::<LineSegment>::new(),
         )));
-        floor_info.set_floor_selection_segments(ModelRc::new(VecModel::from(Vec::<LineSegment>::new())));
+        floor_info
+            .set_floor_selection_segments(ModelRc::new(VecModel::from(Vec::<LineSegment>::new())));
         floor_info.set_floor_axis_labels_x(ModelRc::new(VecModel::from(Vec::<AxisLabel>::new())));
         floor_info.set_floor_axis_labels_y(ModelRc::new(VecModel::from(Vec::<AxisLabel>::new())));
         let floor_legend_entries = view.global::<FloorLegendEntries<'_>>();
-        floor_legend_entries.set_legend_entries(ModelRc::new(VecModel::from(Vec::<LegendEntry>::new())));
+        floor_legend_entries
+            .set_legend_entries(ModelRc::new(VecModel::from(Vec::<LegendEntry>::new())));
         floor_info.set_floor_show_axis_labels(false);
         floor_legend_entries.set_show_legend(false);
         floor_info.set_floor_has_svg_overlay(false);

@@ -38,7 +38,10 @@ pub fn draw(ui: &mut Ui, state: &MainPageDrawerHostState) -> Vec<MainPageDrawerH
     });
 
     let mut inline_left = state.inline_left;
-    if ui.checkbox(&mut inline_left, "Inline left drawer").changed() {
+    if ui
+        .checkbox(&mut inline_left, "Inline left drawer")
+        .changed()
+    {
         actions.push(MainPageDrawerHostAction::SetInlineLeft {
             inline: inline_left,
         });
@@ -52,7 +55,10 @@ pub fn draw(ui: &mut Ui, state: &MainPageDrawerHostState) -> Vec<MainPageDrawerH
     let left = state.left_panel();
     let right = state.right_panel();
 
-    ui.label(format!("inline_left_width: {:.0}", state.inline_left_width()));
+    ui.label(format!(
+        "inline_left_width: {:.0}",
+        state.inline_left_width()
+    ));
     ui.label(format!("overlay_visible: {}", state.overlay_visible()));
     ui.label(format!(
         "content rect: x={:.0}, y={:.0}, w={:.0}, h={:.0}",

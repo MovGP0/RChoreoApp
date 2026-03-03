@@ -14,20 +14,19 @@ use super::messages::UpdateDancerDetailsCommand;
 
 #[injectable]
 #[inject(|receiver: Receiver<UpdateDancerDetailsCommand>| Self { receiver })]
-pub struct UpdateDancerDetailsBehavior
-{
+pub struct UpdateDancerDetailsBehavior {
     receiver: Receiver<UpdateDancerDetailsCommand>,
 }
 
-impl UpdateDancerDetailsBehavior
-{
-    pub(super) fn new(receiver: Receiver<UpdateDancerDetailsCommand>) -> Self
-    {
+impl UpdateDancerDetailsBehavior {
+    pub(super) fn new(receiver: Receiver<UpdateDancerDetailsCommand>) -> Self {
         Self { receiver }
     }
 
-    fn update_selected_dancer(view_model: &mut DancerSettingsViewModel, command: UpdateDancerDetailsCommand)
-    {
+    fn update_selected_dancer(
+        view_model: &mut DancerSettingsViewModel,
+        command: UpdateDancerDetailsCommand,
+    ) {
         let Some(selected) = view_model.selected_dancer.as_ref() else {
             return;
         };
@@ -59,14 +58,12 @@ impl UpdateDancerDetailsBehavior
     }
 }
 
-impl Behavior<DancerSettingsViewModel> for UpdateDancerDetailsBehavior
-{
+impl Behavior<DancerSettingsViewModel> for UpdateDancerDetailsBehavior {
     fn activate(
         &self,
         view_model: &mut DancerSettingsViewModel,
         disposables: &mut CompositeDisposable,
-    )
-    {
+    ) {
         BehaviorLog::behavior_activated("UpdateDancerDetailsBehavior", "DancerSettingsViewModel");
         let Some(view_model_handle) = view_model.self_handle().and_then(|handle| handle.upgrade())
         else {

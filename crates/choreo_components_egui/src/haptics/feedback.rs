@@ -38,8 +38,8 @@ mod android {
         #[must_use]
         pub fn new() -> Self {
             let context = android_context();
-            let vm = unsafe { JavaVM::from_raw(context.vm()) }
-                .expect("Failed to attach to Android JVM");
+            let vm =
+                unsafe { JavaVM::from_raw(context.vm()) }.expect("Failed to attach to Android JVM");
             let env = vm
                 .attach_current_thread()
                 .expect("Failed to attach Android thread");
@@ -55,7 +55,10 @@ mod android {
             }
         }
 
-        fn with_env<R>(&self, action: impl FnOnce(&jni::JNIEnv, JObject) -> Option<R>) -> Option<R> {
+        fn with_env<R>(
+            &self,
+            action: impl FnOnce(&jni::JNIEnv, JObject) -> Option<R>,
+        ) -> Option<R> {
             let env = self.vm.attach_current_thread().ok()?;
             action(&env, self.context.as_obj())
         }

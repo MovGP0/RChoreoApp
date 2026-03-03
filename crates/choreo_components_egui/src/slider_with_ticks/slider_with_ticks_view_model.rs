@@ -1,6 +1,9 @@
 use crate::behavior::Behavior;
 use crate::behavior::CompositeDisposable;
+use nject::injectable;
 
+#[injectable]
+#[inject(|behaviors: Vec<Box<dyn Behavior<SliderWithTicksViewModel>>>| Self::new(behaviors))]
 pub struct SliderWithTicksViewModel {
     pub minimum: f64,
     pub maximum: f64,

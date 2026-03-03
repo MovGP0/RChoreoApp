@@ -17,18 +17,10 @@ pub enum OwnershipPhase {
 
 #[derive(Debug, Clone, Copy)]
 pub enum TimestampEvent {
-    DragStarted {
-        is_playing: bool,
-    },
-    PreviewPositionChanged {
-        position: f64,
-    },
-    SeekCommitted {
-        position: f64,
-    },
-    ActorPositionSampled {
-        position: f64,
-    },
+    DragStarted { is_playing: bool },
+    PreviewPositionChanged { position: f64 },
+    SeekCommitted { position: f64 },
+    ActorPositionSampled { position: f64 },
 }
 
 #[derive(Debug, Clone, Copy)]

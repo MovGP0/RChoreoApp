@@ -39,9 +39,11 @@ fn maps_selected_scene_command_to_action() {
 
     assert_eq!(
         action,
-        ChoreographySettingsAction::UpdateSelectedScene(UpdateSelectedSceneAction::SceneTimestamp {
-            has_timestamp: true,
-            seconds: 12.34
-        })
+        ChoreographySettingsAction::UpdateSelectedScene(
+            UpdateSelectedSceneAction::SceneTimestamp {
+                has_timestamp: true,
+                seconds: 12.34
+            }
+        )
     );
 }

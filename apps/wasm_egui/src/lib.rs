@@ -86,7 +86,9 @@ pub fn main() {
                 .await;
 
             if let Err(error) = result {
-                web_sys::console::error_1(&format!("failed to start wasm egui app: {error}").into());
+                web_sys::console::error_1(
+                    &format!("failed to start wasm egui app: {error}").into(),
+                );
             }
         });
     }

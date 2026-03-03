@@ -2,8 +2,8 @@ use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-use awedio::backends::CpalBackend;
 use awedio::Sound;
+use awedio::backends::CpalBackend;
 use crossbeam_channel::{Receiver, Sender, TrySendError, bounded};
 
 use super::rodio_audio_player_actor::read_duration_seconds;
@@ -397,7 +397,8 @@ impl AudioPlayer for AwedioAudioPlayerActor {
     }
 
     fn set_loop(&mut self, loop_enabled: bool) {
-        self.mailbox.send_latest(AudioCommand::SetLoop(loop_enabled));
+        self.mailbox
+            .send_latest(AudioCommand::SetLoop(loop_enabled));
     }
 }
 
@@ -500,7 +501,9 @@ mod tests {
         mailbox.send_latest(AudioCommand::SetSpeed(1.0));
         mailbox.send_latest(AudioCommand::SetSpeed(1.5));
 
-        let queued = receiver.try_recv().expect("latest command should be queued");
+        let queued = receiver
+            .try_recv()
+            .expect("latest command should be queued");
         assert_eq!(queued, AudioCommand::SetSpeed(1.5));
     }
 

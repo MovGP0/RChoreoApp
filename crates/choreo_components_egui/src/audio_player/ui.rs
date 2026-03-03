@@ -1,5 +1,9 @@
 use egui::Ui;
-use egui_material3::MaterialButton;
+use egui_material3::MaterialIconButton;
+use egui_material3::MaterialSlider;
+
+use crate::slider_with_ticks::ui::SliderWithTicksInteraction;
+use crate::slider_with_ticks::ui::SliderWithTicksUiState;
 
 use super::actions::AudioPlayerAction;
 use super::state::AudioPlayerState;
@@ -9,21 +13,19 @@ use super::state::play_pause_glyph;
 pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
     let mut actions: Vec<AudioPlayerAction> = Vec::new();
     ui.horizontal(|ui| {
-        let mut normalized_speed = normalize_speed_to_slider_value(
-            state.speed,
-            state.minimum_speed,
-            state.maximum_speed,
-        );
-        let speed_response = ui.add_enabled(
-            state.can_set_speed,
-            egui::Slider::new(&mut normalized_speed, 0.0..=100.0)
+        let mut normalized_speed =
+            normalize_speed_to_slider_value(state.speed, state.minimum_speed, state.maximum_speed)
+                as f32;
+        let speed_response = ui.add(
+            MaterialSlider::new(&mut normalized_speed, 0.0..=100.0)
+                .enabled(state.can_set_speed)
                 .show_value(false)
-                .text("Speed"),
+                .width(240.0),
         );
         if speed_response.changed() {
             actions.push(AudioPlayerAction::SpeedChanged {
                 speed: denormalize_speed_from_slider_value(
-                    normalized_speed,
+                    f64::from(normalized_speed),
                     state.minimum_speed,
                     state.maximum_speed,
                 ),
@@ -31,35 +33,45 @@ pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
         }
         ui.label(&state.speed_label);
 
-        let maximum = state.duration.max(0.0);
-        let mut position = state.pending_seek_position.unwrap_or(state.position);
-        let timeline_response = ui.add_enabled(
-            state.can_seek,
-            egui::Slider::new(&mut position, 0.0..=maximum)
-                .show_value(false)
-                .text("Position"),
+        let position = state.pending_seek_position.unwrap_or(state.position);
+        let interactions = crate::slider_with_ticks::ui::draw(
+            ui,
+            SliderWithTicksUiState {
+                enabled: state.can_seek,
+                minimum: 0.0,
+                maximum: state.duration.max(0.0),
+                value: position,
+                tick_values: &state.tick_values,
+                tick_color: Some(ui.visuals().selection.bg_fill),
+                width: 240.0,
+            },
         );
-        draw_timeline_ticks(ui, timeline_response.rect, maximum, &state.tick_values);
-        if timeline_response.drag_started() {
-            actions.push(AudioPlayerAction::PositionDragStarted);
-        }
-        if timeline_response.changed() {
-            if timeline_response.dragged() {
-                actions.push(AudioPlayerAction::PositionPreviewChanged { position });
-            } else {
-                actions.push(AudioPlayerAction::SeekToPosition { position });
+
+        for interaction in interactions {
+            match interaction {
+                SliderWithTicksInteraction::DragStarted => {
+                    actions.push(AudioPlayerAction::PositionDragStarted);
+                }
+                SliderWithTicksInteraction::ValueChanged { value, is_dragging } => {
+                    if is_dragging {
+                        actions.push(AudioPlayerAction::PositionPreviewChanged { position: value });
+                    } else {
+                        actions.push(AudioPlayerAction::SeekToPosition { position: value });
+                    }
+                }
+                SliderWithTicksInteraction::DragCompleted { value } => {
+                    actions.push(AudioPlayerAction::PositionDragCompleted { position: value });
+                }
             }
-        }
-        if timeline_response.drag_stopped() {
-            actions.push(AudioPlayerAction::PositionDragCompleted { position });
         }
 
         ui.label(&state.duration_label);
 
         if ui
-            .add_enabled(
-                state.can_link_scene_to_position,
-                MaterialButton::new("[link]"),
+            .add(
+                MaterialIconButton::standard(link_icon_name())
+                    .svg_data(link_icon_svg())
+                    .enabled(state.can_link_scene_to_position),
             )
             .clicked()
         {
@@ -67,7 +79,10 @@ pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
         }
 
         if ui
-            .add(MaterialButton::new(play_pause_icon_label(state.is_playing)))
+            .add(
+                MaterialIconButton::standard(play_pause_icon_name(state.is_playing))
+                    .svg_data(play_pause_icon_svg(state.is_playing)),
+            )
             .clicked()
         {
             actions.push(AudioPlayerAction::TogglePlayPause);
@@ -78,10 +93,33 @@ pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
 
 #[must_use]
 pub fn play_pause_icon_label(is_playing: bool) -> &'static str {
+    play_pause_icon_name(is_playing)
+}
+
+#[must_use]
+pub fn play_pause_icon_name(is_playing: bool) -> &'static str {
     match play_pause_glyph(is_playing) {
-        PlayPauseGlyph::Play => "[>]",
-        PlayPauseGlyph::Pause => "[||]",
+        PlayPauseGlyph::Play => "play_arrow",
+        PlayPauseGlyph::Pause => "pause",
     }
+}
+
+#[must_use]
+pub fn link_icon_name() -> &'static str {
+    "link"
+}
+
+#[must_use]
+pub fn play_pause_icon_svg(is_playing: bool) -> &'static str {
+    match play_pause_glyph(is_playing) {
+        PlayPauseGlyph::Play => include_str!("../../../choreo_components/ui/icons/Play.svg"),
+        PlayPauseGlyph::Pause => include_str!("../../../choreo_components/ui/icons/Pause.svg"),
+    }
+}
+
+#[must_use]
+pub fn link_icon_svg() -> &'static str {
+    include_str!("../../../choreo_components/ui/icons/Link.svg")
 }
 
 #[must_use]
@@ -100,24 +138,4 @@ pub fn denormalize_speed_from_slider_value(
 ) -> f64 {
     let normalized = value.clamp(0.0, 100.0) / 100.0;
     minimum_speed + (maximum_speed - minimum_speed) * normalized
-}
-
-fn draw_timeline_ticks(ui: &Ui, rect: egui::Rect, duration: f64, ticks: &[f64]) {
-    if duration <= 0.0 || ticks.is_empty() {
-        return;
-    }
-    let painter = ui.painter();
-    let tick_top = rect.bottom() + 2.0;
-    let tick_bottom = tick_top + 8.0;
-    for tick in ticks {
-        if *tick < 0.0 || *tick > duration {
-            continue;
-        }
-        let t = (*tick / duration) as f32;
-        let x = egui::lerp(rect.x_range(), t);
-        painter.line_segment(
-            [egui::pos2(x, tick_top), egui::pos2(x, tick_bottom)],
-            egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.fg_stroke.color),
-        );
-    }
 }

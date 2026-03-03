@@ -27,7 +27,9 @@ fn nav_view_model_triggers_haptic_feedback_for_click_actions() {
     let mut view_model = NavBarViewModel::new(
         NavBarState::default(),
         NavBarRuntimeHandlers::default(),
-        Some(Box::new(TestHaptics { count: Arc::clone(&count) })),
+        Some(Box::new(TestHaptics {
+            count: Arc::clone(&count),
+        })),
     );
 
     view_model.dispatch(NavBarAction::OpenAudio);

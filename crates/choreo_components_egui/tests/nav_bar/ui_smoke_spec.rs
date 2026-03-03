@@ -53,17 +53,17 @@ fn settings_button_action_depends_on_settings_state() {
 }
 
 #[test]
-fn mode_labels_match_expected_navigation_terms() {
-    assert_eq!(mode_label(InteractionMode::View), "View");
-    assert_eq!(mode_label(InteractionMode::Move), "Move");
+fn mode_labels_map_to_translation_keys() {
+    assert_eq!(mode_label(InteractionMode::View), "ModeView");
+    assert_eq!(mode_label(InteractionMode::Move), "ModeMove");
     assert_eq!(
         mode_label(InteractionMode::RotateAroundCenter),
-        "Rotate Center"
+        "ModeRotateAroundCenter"
     );
     assert_eq!(
         mode_label(InteractionMode::RotateAroundDancer),
-        "Rotate Dancer"
+        "ModeRotateAroundDancer"
     );
-    assert_eq!(mode_label(InteractionMode::Scale), "Scale");
-    assert_eq!(mode_label(InteractionMode::LineOfSight), "Line of Sight");
+    assert_eq!(mode_label(InteractionMode::Scale), "ModeScale");
+    assert_eq!(mode_label(InteractionMode::LineOfSight), "ModeLineOfSight");
 }

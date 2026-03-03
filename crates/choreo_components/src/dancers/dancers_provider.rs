@@ -21,12 +21,12 @@ use super::messages::{
 };
 use super::save_dancer_settings_behavior::SaveDancerSettingsBehavior;
 use super::selected_dancer_state_behavior::SelectedDancerStateBehavior;
-use super::update_dancer_details_behavior::UpdateDancerDetailsBehavior;
 use super::selected_icon_behavior::SelectedIconBehavior;
 use super::selected_role_behavior::SelectedRoleBehavior;
 use super::show_dancer_dialog_behavior::ShowDancerDialogBehavior;
 use super::swap_dancer_selection_behavior::SwapDancerSelectionBehavior;
 use super::swap_dancers_behavior::SwapDancersBehavior;
+use super::update_dancer_details_behavior::UpdateDancerDetailsBehavior;
 
 pub struct DancersProviderDependencies {
     pub global_state: Rc<GlobalStateActor>,
@@ -135,14 +135,16 @@ impl DancersProvider {
                 let _ = select_role_sender_for_action.send(SelectRoleCommand { index });
             })),
             update_dancer_name: Some(Rc::new(move |_view_model, value| {
-                let _ = update_details_sender_for_name.send(UpdateDancerDetailsCommand::Name(value));
+                let _ =
+                    update_details_sender_for_name.send(UpdateDancerDetailsCommand::Name(value));
             })),
             update_dancer_shortcut: Some(Rc::new(move |_view_model, value| {
                 let _ = update_details_sender_for_shortcut
                     .send(UpdateDancerDetailsCommand::Shortcut(value));
             })),
             update_dancer_color: Some(Rc::new(move |_view_model, value| {
-                let _ = update_details_sender_for_color.send(UpdateDancerDetailsCommand::Color(value));
+                let _ =
+                    update_details_sender_for_color.send(UpdateDancerDetailsCommand::Color(value));
             })),
             update_dancer_icon: Some(Rc::new(move |_view_model, value| {
                 let _ = update_icon_sender_for_action.send(UpdateDancerIconCommand { value });

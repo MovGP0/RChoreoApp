@@ -16,7 +16,11 @@ pub(super) struct NativeAudioPlayerActor {
 impl NativeAudioPlayerActor {
     #[must_use]
     pub(super) fn new(file_path: String) -> Self {
-        let duration = if file_path.trim().is_empty() { 0.0 } else { 1.0 };
+        let duration = if file_path.trim().is_empty() {
+            0.0
+        } else {
+            1.0
+        };
         Self {
             duration,
             accumulated_position: 0.0,

@@ -83,7 +83,9 @@ pub fn from_command(command: ChoreographySettingsCommand) -> ChoreographySetting
         ChoreographySettingsCommand::UpdateComment(value) => {
             ChoreographySettingsAction::UpdateComment(value)
         }
-        ChoreographySettingsCommand::UpdateName(value) => ChoreographySettingsAction::UpdateName(value),
+        ChoreographySettingsCommand::UpdateName(value) => {
+            ChoreographySettingsAction::UpdateName(value)
+        }
         ChoreographySettingsCommand::UpdateSubtitle(value) => {
             ChoreographySettingsAction::UpdateSubtitle(value)
         }
@@ -153,7 +155,9 @@ pub fn from_command(command: ChoreographySettingsCommand) -> ChoreographySetting
 }
 
 #[must_use]
-pub fn from_selected_scene_command(command: UpdateSelectedSceneCommand) -> UpdateSelectedSceneAction {
+pub fn from_selected_scene_command(
+    command: UpdateSelectedSceneCommand,
+) -> UpdateSelectedSceneAction {
     match command {
         UpdateSelectedSceneCommand::SyncFromSelected => UpdateSelectedSceneAction::SyncFromSelected,
         UpdateSelectedSceneCommand::SceneName(value) => UpdateSelectedSceneAction::SceneName(value),
@@ -161,7 +165,9 @@ pub fn from_selected_scene_command(command: UpdateSelectedSceneCommand) -> Updat
         UpdateSelectedSceneCommand::SceneFixedPositions(value) => {
             UpdateSelectedSceneAction::SceneFixedPositions(value)
         }
-        UpdateSelectedSceneCommand::SceneColor(value) => UpdateSelectedSceneAction::SceneColor(value),
+        UpdateSelectedSceneCommand::SceneColor(value) => {
+            UpdateSelectedSceneAction::SceneColor(value)
+        }
         UpdateSelectedSceneCommand::SceneTimestamp {
             has_timestamp,
             seconds,

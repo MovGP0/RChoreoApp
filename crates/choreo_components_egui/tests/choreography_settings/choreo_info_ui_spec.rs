@@ -36,3 +36,34 @@ fn choreography_settings_ui_draw_handles_choreo_info_inputs() {
         });
     });
 }
+
+#[test]
+fn selected_scene_controls_enabled_matches_scene_selection_state() {
+    let mut state = create_state();
+    state.has_selected_scene = false;
+    assert!(!crate::choreography_settings::ui::selected_scene_controls_enabled(&state));
+
+    state.has_selected_scene = true;
+    assert!(crate::choreography_settings::ui::selected_scene_controls_enabled(&state));
+}
+
+#[test]
+fn scene_timestamp_controls_enabled_requires_selected_scene_and_timestamp() {
+    let mut state = create_state();
+
+    state.has_selected_scene = false;
+    state.scene_has_timestamp = false;
+    assert!(!crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state));
+
+    state.has_selected_scene = true;
+    state.scene_has_timestamp = false;
+    assert!(!crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state));
+
+    state.has_selected_scene = false;
+    state.scene_has_timestamp = true;
+    assert!(!crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state));
+
+    state.has_selected_scene = true;
+    state.scene_has_timestamp = true;
+    assert!(crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state));
+}

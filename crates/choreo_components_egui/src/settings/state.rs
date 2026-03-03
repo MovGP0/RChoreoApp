@@ -67,7 +67,9 @@ impl Default for SettingsState {
             primary_color_hex: DEFAULT_PRIMARY_COLOR_HEX.to_string(),
             secondary_color_hex: DEFAULT_SECONDARY_COLOR_HEX.to_string(),
             tertiary_color_hex: DEFAULT_TERTIARY_COLOR_HEX.to_string(),
-            audio_player_backend: AudioPlayerBackend::from_preference(AudioPlayerBackend::RODIO_KEY),
+            audio_player_backend: AudioPlayerBackend::from_preference(
+                AudioPlayerBackend::RODIO_KEY,
+            ),
             preferences: BTreeMap::new(),
             material_scheme: MaterialSchemeState::default(),
             material_update_count: 0,

@@ -100,73 +100,23 @@ fn open_audio_file_ignores_empty_paths_spec() {
 #[serial_test::serial]
 fn open_audio_file_keeps_player_disabled_when_selected_file_is_invalid_spec() {
     let suite = rspec::describe("open audio file behavior", (), |spec| {
-        spec.it("keeps player disabled when the selected mp3 file is invalid", |_| {
-            let preferences = Rc::new(choreo_components::preferences::InMemoryPreferences::new());
-            let (sender, receiver) = unbounded::<OpenAudioFileCommand>();
-            let behavior =
-                OpenAudioFileBehavior::new(receiver, preferences.clone() as Rc<dyn Preferences>);
-            let context = audio_player::AudioPlayerTestContext::with_dependencies(
-                vec![Box::new(behavior) as Box<dyn Behavior<_>>],
-                choreo_components::global::GlobalStateActor::new(),
-                preferences.clone(),
-            );
-
-            let file_path = unique_temp_file("invalid-audio");
-            fs::write(&file_path, b"not-an-mp3").expect("invalid temp file should be written");
-
-            sender
-                .send(OpenAudioFileCommand {
-                    file_path: file_path.to_string_lossy().into_owned(),
-                    trace_context: None,
-                })
-                .expect("send should succeed");
-
-            let settled = context.wait_until(Duration::from_secs(1), || {
-                let view_model = context.view_model.borrow();
-                view_model.stream_factory.is_some() && view_model.player.is_some()
-            });
-            assert!(settled);
-
-            context.view_model.borrow_mut().toggle_play_pause();
-            let not_playing = context.wait_until(Duration::from_secs(1), || {
-                let view_model = context.view_model.borrow();
-                view_model
-                    .player
-                    .as_ref()
-                    .map(|player| !player.is_playing())
-                    .unwrap_or(true)
-            });
-            assert!(not_playing);
-
-            let stored =
-                preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_AUDIO_FILE, "");
-            assert_eq!(stored, file_path.to_string_lossy());
-
-            fs::remove_file(file_path).expect("invalid temp file should be removed");
-        });
-    });
-
-    let report = audio_player::run_suite(&suite);
-    assert!(report.is_success());
-}
-
-#[test]
-#[serial_test::serial]
-fn open_audio_file_does_not_retain_view_model_after_context_drop_spec() {
-    let suite = rspec::describe("open audio file behavior", (), |spec| {
-        spec.it("does not retain view model after processing invalid file", |_| {
-            let weak_view_model = {
-                let preferences = Rc::new(choreo_components::preferences::InMemoryPreferences::new());
+        spec.it(
+            "keeps player disabled when the selected mp3 file is invalid",
+            |_| {
+                let preferences =
+                    Rc::new(choreo_components::preferences::InMemoryPreferences::new());
                 let (sender, receiver) = unbounded::<OpenAudioFileCommand>();
-                let behavior =
-                    OpenAudioFileBehavior::new(receiver, preferences.clone() as Rc<dyn Preferences>);
+                let behavior = OpenAudioFileBehavior::new(
+                    receiver,
+                    preferences.clone() as Rc<dyn Preferences>,
+                );
                 let context = audio_player::AudioPlayerTestContext::with_dependencies(
                     vec![Box::new(behavior) as Box<dyn Behavior<_>>],
                     choreo_components::global::GlobalStateActor::new(),
-                    preferences,
+                    preferences.clone(),
                 );
 
-                let file_path = unique_temp_file("drop-leak-invalid-audio");
+                let file_path = unique_temp_file("invalid-audio");
                 fs::write(&file_path, b"not-an-mp3").expect("invalid temp file should be written");
 
                 sender
@@ -182,20 +132,83 @@ fn open_audio_file_does_not_retain_view_model_after_context_drop_spec() {
                 });
                 assert!(settled);
 
-                let weak = Rc::downgrade(&context.view_model);
+                context.view_model.borrow_mut().toggle_play_pause();
+                let not_playing = context.wait_until(Duration::from_secs(1), || {
+                    let view_model = context.view_model.borrow();
+                    view_model
+                        .player
+                        .as_ref()
+                        .map(|player| !player.is_playing())
+                        .unwrap_or(true)
+                });
+                assert!(not_playing);
+
+                let stored =
+                    preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_AUDIO_FILE, "");
+                assert_eq!(stored, file_path.to_string_lossy());
+
                 fs::remove_file(file_path).expect("invalid temp file should be removed");
-                weak
-            };
+            },
+        );
+    });
 
-            // Allow timer disposal to run before checking that no Rc cycle remains.
-            i_slint_backend_testing::mock_elapsed_time(Duration::from_millis(20));
-            slint::platform::update_timers_and_animations();
+    let report = audio_player::run_suite(&suite);
+    assert!(report.is_success());
+}
 
-            assert!(
-                weak_view_model.upgrade().is_none(),
-                "open-audio behavior should not retain the view model after context drop",
-            );
-        });
+#[test]
+#[serial_test::serial]
+fn open_audio_file_does_not_retain_view_model_after_context_drop_spec() {
+    let suite = rspec::describe("open audio file behavior", (), |spec| {
+        spec.it(
+            "does not retain view model after processing invalid file",
+            |_| {
+                let weak_view_model = {
+                    let preferences =
+                        Rc::new(choreo_components::preferences::InMemoryPreferences::new());
+                    let (sender, receiver) = unbounded::<OpenAudioFileCommand>();
+                    let behavior = OpenAudioFileBehavior::new(
+                        receiver,
+                        preferences.clone() as Rc<dyn Preferences>,
+                    );
+                    let context = audio_player::AudioPlayerTestContext::with_dependencies(
+                        vec![Box::new(behavior) as Box<dyn Behavior<_>>],
+                        choreo_components::global::GlobalStateActor::new(),
+                        preferences,
+                    );
+
+                    let file_path = unique_temp_file("drop-leak-invalid-audio");
+                    fs::write(&file_path, b"not-an-mp3")
+                        .expect("invalid temp file should be written");
+
+                    sender
+                        .send(OpenAudioFileCommand {
+                            file_path: file_path.to_string_lossy().into_owned(),
+                            trace_context: None,
+                        })
+                        .expect("send should succeed");
+
+                    let settled = context.wait_until(Duration::from_secs(1), || {
+                        let view_model = context.view_model.borrow();
+                        view_model.stream_factory.is_some() && view_model.player.is_some()
+                    });
+                    assert!(settled);
+
+                    let weak = Rc::downgrade(&context.view_model);
+                    fs::remove_file(file_path).expect("invalid temp file should be removed");
+                    weak
+                };
+
+                // Allow timer disposal to run before checking that no Rc cycle remains.
+                i_slint_backend_testing::mock_elapsed_time(Duration::from_millis(20));
+                slint::platform::update_timers_and_animations();
+
+                assert!(
+                    weak_view_model.upgrade().is_none(),
+                    "open-audio behavior should not retain the view model after context drop",
+                );
+            },
+        );
     });
 
     let report = audio_player::run_suite(&suite);

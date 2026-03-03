@@ -2,10 +2,10 @@ use crate::dancers::state::DancerState;
 use crate::dancers::state::DancersState;
 use crate::dancers::state::RoleState;
 use crate::dancers::state::transparent_color;
-use choreo_i18n::icon_names;
 use crate::dancers::ui::selected_dancer_index;
 use crate::dancers::ui::selected_icon_index;
 use crate::dancers::ui::selected_role_index;
+use choreo_i18n::icon_names;
 
 #[test]
 fn dancer_settings_page_draw_executes_without_panicking() {

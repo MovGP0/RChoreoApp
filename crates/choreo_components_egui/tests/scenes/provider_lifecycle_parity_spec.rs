@@ -65,7 +65,10 @@ fn provider_activates_behaviors_and_dispatches_actions() {
     provider.tick();
 
     assert_eq!(provider.activation_order[0], ScenesBehaviorKind::Load);
-    assert_eq!(provider.activation_order[1], ScenesBehaviorKind::ShowTimestamps);
+    assert_eq!(
+        provider.activation_order[1],
+        ScenesBehaviorKind::ShowTimestamps
+    );
     assert_eq!(provider.state().scenes.len(), 1);
 
     provider.deactivate();

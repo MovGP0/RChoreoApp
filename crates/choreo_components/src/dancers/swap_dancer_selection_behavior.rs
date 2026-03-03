@@ -8,11 +8,7 @@ use crate::behavior::{Behavior, CompositeDisposable, TimerDisposable};
 use crate::logging::BehaviorLog;
 
 use super::dancer_settings_view_model::DancerSettingsViewModel;
-use super::messages::{
-    UpdateSwapFromCommand,
-    UpdateSwapSelectionCommand,
-    UpdateSwapToCommand,
-};
+use super::messages::{UpdateSwapFromCommand, UpdateSwapSelectionCommand, UpdateSwapToCommand};
 
 #[injectable]
 #[inject(

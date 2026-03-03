@@ -3,17 +3,19 @@ use std::rc::Rc;
 
 use crate::choreo_main;
 
+use choreo_components::ScenesInfo;
 use choreo_components::audio_player::{
     AudioPlayerBehaviorDependencies, AudioPlayerPositionChangedEvent, AudioPlayerViewModel,
     CloseAudioFileCommand, LinkSceneToPositionCommand, build_audio_player_behaviors,
 };
-use choreo_components::choreo_main::{MainPageActionHandlers, MainPageBinding, MainPageDependencies};
+use choreo_components::choreo_main::{
+    MainPageActionHandlers, MainPageBinding, MainPageDependencies,
+};
 use choreo_components::global::GlobalProvider;
 use choreo_components::preferences::{InMemoryPreferences, Preferences};
 use choreo_components::shell;
-use choreo_components::ScenesInfo;
-use crossbeam_channel::{bounded, unbounded};
 use choreo_main::Report;
+use crossbeam_channel::{bounded, unbounded};
 use slint::ComponentHandle;
 
 fn create_binding() -> MainPageBinding {
@@ -35,7 +37,10 @@ fn create_binding() -> MainPageBinding {
         global_state_store: Rc::clone(&global_state_store),
         open_audio_receiver,
         close_audio_receiver,
-        position_changed_senders: vec![audio_position_sender_for_scenes, audio_position_sender_for_floor],
+        position_changed_senders: vec![
+            audio_position_sender_for_scenes,
+            audio_position_sender_for_floor,
+        ],
         link_scene_receiver,
         preferences: Rc::clone(&preferences),
     });
@@ -94,19 +99,22 @@ fn run_in_ui_thread(test: impl FnOnce() + Send + 'static) {
 #[serial_test::serial]
 fn navigate_main_to_settings_spec() {
     let suite = rspec::describe("navigate from main page to settings page", (), |spec| {
-        spec.it("shows the settings page when scenes requests settings navigation", |_| {
-            run_in_ui_thread(|| {
-                i_slint_backend_testing::init_no_event_loop();
+        spec.it(
+            "shows the settings page when scenes requests settings navigation",
+            |_| {
+                run_in_ui_thread(|| {
+                    i_slint_backend_testing::init_no_event_loop();
 
-                let binding = create_binding();
-                let view = binding.view();
-                let scenes_info = view.global::<ScenesInfo<'_>>();
+                    let binding = create_binding();
+                    let view = binding.view();
+                    let scenes_info = view.global::<ScenesInfo<'_>>();
 
-                assert_eq!(view.get_content_index(), 0);
-                scenes_info.invoke_navigate_to_settings();
-                assert_eq!(view.get_content_index(), 1);
-            });
-        });
+                    assert_eq!(view.get_content_index(), 0);
+                    scenes_info.invoke_navigate_to_settings();
+                    assert_eq!(view.get_content_index(), 1);
+                });
+            },
+        );
     });
 
     let report = choreo_main::run_suite(&suite);

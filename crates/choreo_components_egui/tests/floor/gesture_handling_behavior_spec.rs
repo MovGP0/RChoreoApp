@@ -2,8 +2,8 @@ use crate::floor::floor_component::actions::FloorAction;
 use crate::floor::floor_component::reducer::reduce;
 use crate::floor::floor_component::state::FloorState;
 use crate::floor::floor_component::state::Point;
-use crate::floor::floor_component::state::TouchDeviceType;
 use crate::floor::floor_component::state::TouchAction;
+use crate::floor::floor_component::state::TouchDeviceType;
 
 #[test]
 fn gesture_handling_applies_pan_zoom_and_reset_semantics() {

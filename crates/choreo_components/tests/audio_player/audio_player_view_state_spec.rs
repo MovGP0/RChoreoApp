@@ -4,9 +4,9 @@ use std::rc::Rc;
 use crate::audio_player;
 
 use audio_player::Report;
-use choreo_components::audio_player::AudioPlayer;
 use audio_player::TestAudioPlayer;
 use audio_player::TestAudioPlayerState;
+use choreo_components::audio_player::AudioPlayer;
 use choreo_components::audio_player::AudioPlayerViewState;
 
 #[derive(Default)]
@@ -133,7 +133,10 @@ fn audio_player_view_state_spec() {
                     ..LaggingAudioPlayer::default()
                 };
                 lagging.is_playing = false;
-                context.view_model.borrow_mut().set_player(Box::new(lagging));
+                context
+                    .view_model
+                    .borrow_mut()
+                    .set_player(Box::new(lagging));
 
                 let mut view_state = AudioPlayerViewState::new();
                 {

@@ -4,18 +4,20 @@ use std::time::Duration;
 
 use crate::choreo_main;
 
+use choreo_components::AudioPlayerInfo;
+use choreo_components::FloorInfo;
+use choreo_components::SceneInfo;
+use choreo_components::ScenesInfo;
 use choreo_components::audio_player::{
     AudioPlayerBehaviorDependencies, AudioPlayerPositionChangedEvent, AudioPlayerViewModel,
     CloseAudioFileCommand, LinkSceneToPositionCommand, build_audio_player_behaviors,
 };
-use choreo_components::choreo_main::{MainPageActionHandlers, MainPageBinding, MainPageDependencies};
-use choreo_components::AudioPlayerInfo;
-use choreo_components::FloorInfo;
+use choreo_components::choreo_main::{
+    MainPageActionHandlers, MainPageBinding, MainPageDependencies,
+};
 use choreo_components::global::GlobalProvider;
 use choreo_components::preferences::{InMemoryPreferences, Preferences};
 use choreo_components::shell;
-use choreo_components::SceneInfo;
-use choreo_components::ScenesInfo;
 use choreo_master_mobile_json::SceneId;
 use choreo_models::{
     ChoreographyModel, Colors, DancerModel, FloorModel, PositionModel, RoleModel, SceneModel,
@@ -149,7 +151,8 @@ fn timestamp_sync_spec() {
                     });
 
                     let (open_audio_sender, open_audio_receiver) = bounded(1);
-                    let (close_audio_sender, close_audio_receiver) = bounded::<CloseAudioFileCommand>(1);
+                    let (close_audio_sender, close_audio_receiver) =
+                        bounded::<CloseAudioFileCommand>(1);
                     let (audio_position_sender_for_scenes, audio_position_receiver_for_scenes) =
                         bounded::<AudioPlayerPositionChangedEvent>(16);
                     let (audio_position_sender_for_floor, audio_position_receiver_for_floor) =
@@ -198,9 +201,7 @@ fn timestamp_sync_spec() {
                     );
 
                     let view = binding.view();
-                    let selected = wait_until(Duration::from_secs(1), || {
-                        scene_count(view) >= 2
-                    });
+                    let selected = wait_until(Duration::from_secs(1), || scene_count(view) >= 2);
                     assert!(selected);
 
                     view.global::<ScenesInfo<'_>>().invoke_select_scene(1);
@@ -239,7 +240,8 @@ fn timestamp_sync_spec() {
                     });
 
                     let (open_audio_sender, open_audio_receiver) = bounded(1);
-                    let (close_audio_sender, close_audio_receiver) = bounded::<CloseAudioFileCommand>(1);
+                    let (close_audio_sender, close_audio_receiver) =
+                        bounded::<CloseAudioFileCommand>(1);
                     let (audio_position_sender_for_scenes, audio_position_receiver_for_scenes) =
                         bounded::<AudioPlayerPositionChangedEvent>(16);
                     let (audio_position_sender_for_floor, audio_position_receiver_for_floor) =
@@ -288,12 +290,11 @@ fn timestamp_sync_spec() {
                     );
 
                     let view = binding.view();
-                    let ready = wait_until(Duration::from_secs(1), || {
-                        scene_count(view) >= 3
-                    });
+                    let ready = wait_until(Duration::from_secs(1), || scene_count(view) >= 3);
                     assert!(ready);
 
-                    view.global::<AudioPlayerInfo<'_>>().invoke_position_changed(12.0);
+                    view.global::<AudioPlayerInfo<'_>>()
+                        .invoke_position_changed(12.0);
                     let synced = wait_until(Duration::from_secs(1), || {
                         view.global::<SceneInfo<'_>>().get_scene_name() == "Scene 2"
                     });
@@ -338,7 +339,8 @@ fn timestamp_sync_spec() {
                     });
 
                     let (open_audio_sender, open_audio_receiver) = bounded(1);
-                    let (close_audio_sender, close_audio_receiver) = bounded::<CloseAudioFileCommand>(1);
+                    let (close_audio_sender, close_audio_receiver) =
+                        bounded::<CloseAudioFileCommand>(1);
                     let (audio_position_sender_for_scenes, audio_position_receiver_for_scenes) =
                         bounded::<AudioPlayerPositionChangedEvent>(16);
                     let (audio_position_sender_for_floor, audio_position_receiver_for_floor) =
@@ -456,7 +458,8 @@ fn timestamp_sync_spec() {
                     });
 
                     let (open_audio_sender, open_audio_receiver) = bounded(1);
-                    let (close_audio_sender, close_audio_receiver) = bounded::<CloseAudioFileCommand>(1);
+                    let (close_audio_sender, close_audio_receiver) =
+                        bounded::<CloseAudioFileCommand>(1);
                     let (audio_position_sender_for_scenes, audio_position_receiver_for_scenes) =
                         bounded::<AudioPlayerPositionChangedEvent>(16);
                     let (audio_position_sender_for_floor, audio_position_receiver_for_floor) =
@@ -509,7 +512,8 @@ fn timestamp_sync_spec() {
                         scene_count(view) >= 2
                     }));
 
-                    view.global::<AudioPlayerInfo<'_>>().invoke_position_changed(5.0);
+                    view.global::<AudioPlayerInfo<'_>>()
+                        .invoke_position_changed(5.0);
                     let synced = wait_until(Duration::from_secs(1), || {
                         let positions = view.global::<FloorInfo<'_>>().get_floor_positions();
                         if positions.row_count() == 0 {
@@ -529,4 +533,3 @@ fn timestamp_sync_spec() {
     let report = choreo_main::run_suite(&suite);
     assert!(report.is_success());
 }
-

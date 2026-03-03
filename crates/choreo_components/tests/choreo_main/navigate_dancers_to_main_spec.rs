@@ -8,12 +8,14 @@ use choreo_components::audio_player::{
     AudioPlayerBehaviorDependencies, AudioPlayerPositionChangedEvent, AudioPlayerViewModel,
     CloseAudioFileCommand, LinkSceneToPositionCommand, build_audio_player_behaviors,
 };
-use choreo_components::choreo_main::{MainPageActionHandlers, MainPageBinding, MainPageDependencies};
+use choreo_components::choreo_main::{
+    MainPageActionHandlers, MainPageBinding, MainPageDependencies,
+};
 use choreo_components::global::GlobalProvider;
 use choreo_components::preferences::{InMemoryPreferences, Preferences};
 use choreo_components::shell;
-use crossbeam_channel::{bounded, unbounded};
 use choreo_main::Report;
+use crossbeam_channel::{bounded, unbounded};
 
 fn create_binding() -> MainPageBinding {
     let ui = shell::create_shell_host().expect("shell should be created");
@@ -34,7 +36,10 @@ fn create_binding() -> MainPageBinding {
         global_state_store: Rc::clone(&global_state_store),
         open_audio_receiver,
         close_audio_receiver,
-        position_changed_senders: vec![audio_position_sender_for_scenes, audio_position_sender_for_floor],
+        position_changed_senders: vec![
+            audio_position_sender_for_scenes,
+            audio_position_sender_for_floor,
+        ],
         link_scene_receiver,
         preferences: Rc::clone(&preferences),
     });
@@ -106,32 +111,39 @@ fn wait_until(timeout: Duration, mut predicate: impl FnMut() -> bool) -> bool {
 #[serial_test::serial]
 fn navigate_dancers_to_main_spec() {
     let suite = rspec::describe("navigate from dancers page to main page", (), |spec| {
-        spec.it("returns to the main page when dancer settings cancel is requested", |_| {
-            run_in_ui_thread(|| {
-                i_slint_backend_testing::init_no_event_loop();
+        spec.it(
+            "returns to the main page when dancer settings cancel is requested",
+            |_| {
+                run_in_ui_thread(|| {
+                    i_slint_backend_testing::init_no_event_loop();
 
-                let binding = create_binding();
-                let view = binding.view();
+                    let binding = create_binding();
+                    let view = binding.view();
 
-                view.set_content_index(2);
-                view.invoke_dancer_settings_cancel();
-                assert_eq!(view.get_content_index(), 0);
-            });
-        });
+                    view.set_content_index(2);
+                    view.invoke_dancer_settings_cancel();
+                    assert_eq!(view.get_content_index(), 0);
+                });
+            },
+        );
 
-        spec.it("returns to the main page when dancer settings ok is requested", |_| {
-            run_in_ui_thread(|| {
-                i_slint_backend_testing::init_no_event_loop();
+        spec.it(
+            "returns to the main page when dancer settings ok is requested",
+            |_| {
+                run_in_ui_thread(|| {
+                    i_slint_backend_testing::init_no_event_loop();
 
-                let binding = create_binding();
-                let view = binding.view();
+                    let binding = create_binding();
+                    let view = binding.view();
 
-                view.set_content_index(2);
-                view.invoke_dancer_settings_save();
-                let navigated = wait_until(Duration::from_secs(1), || view.get_content_index() == 0);
-                assert!(navigated);
-            });
-        });
+                    view.set_content_index(2);
+                    view.invoke_dancer_settings_save();
+                    let navigated =
+                        wait_until(Duration::from_secs(1), || view.get_content_index() == 0);
+                    assert!(navigated);
+                });
+            },
+        );
     });
 
     let report = choreo_main::run_suite(&suite);

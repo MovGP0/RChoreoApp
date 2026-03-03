@@ -1,8 +1,11 @@
 use crate::behavior::Behavior;
 use crate::behavior::CompositeDisposable;
+use nject::injectable;
 
 use super::SliderWithTicksViewModel;
 
+#[injectable]
+#[inject(|| Self)]
 pub struct SliderWithTicksBehavior;
 
 impl Behavior<SliderWithTicksViewModel> for SliderWithTicksBehavior {

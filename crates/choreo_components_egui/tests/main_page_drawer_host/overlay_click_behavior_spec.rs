@@ -23,28 +23,31 @@ fn overlay_click_behavior_spec() {
             assert_eq!(state.top_inset, 0.0);
         });
 
-        spec.it("requests close and closes both drawers when click-away is enabled", |_| {
-            let mut state = MainPageDrawerHostState {
-                is_left_open: true,
-                is_right_open: true,
-                left_close_on_click_away: true,
-                right_close_on_click_away: true,
-                ..MainPageDrawerHostState::default()
-            };
+        spec.it(
+            "requests close and closes both drawers when click-away is enabled",
+            |_| {
+                let mut state = MainPageDrawerHostState {
+                    is_left_open: true,
+                    is_right_open: true,
+                    left_close_on_click_away: true,
+                    right_close_on_click_away: true,
+                    ..MainPageDrawerHostState::default()
+                };
 
-            let effects = reduce(&mut state, MainPageDrawerHostAction::OverlayClicked);
+                let effects = reduce(&mut state, MainPageDrawerHostAction::OverlayClicked);
 
-            assert!(!state.is_left_open);
-            assert!(!state.is_right_open);
-            assert_eq!(
-                effects,
-                vec![
-                    MainPageDrawerHostEffect::LeftCloseRequested,
-                    MainPageDrawerHostEffect::RightCloseRequested,
-                    MainPageDrawerHostEffect::OverlayClicked,
-                ]
-            );
-        });
+                assert!(!state.is_left_open);
+                assert!(!state.is_right_open);
+                assert_eq!(
+                    effects,
+                    vec![
+                        MainPageDrawerHostEffect::LeftCloseRequested,
+                        MainPageDrawerHostEffect::RightCloseRequested,
+                        MainPageDrawerHostEffect::OverlayClicked,
+                    ]
+                );
+            },
+        );
 
         spec.it("keeps drawers open when click-away is disabled", |_| {
             let mut state = MainPageDrawerHostState {

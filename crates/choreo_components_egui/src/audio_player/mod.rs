@@ -1,7 +1,7 @@
 pub mod actions;
-pub mod audio_player_behaviors;
 pub mod audio_player_actor;
 pub mod audio_player_backend;
+pub mod audio_player_behaviors;
 pub mod messages;
 pub mod reducer;
 pub mod runtime;
@@ -9,11 +9,11 @@ pub mod state;
 pub mod types;
 pub mod ui;
 
+pub use audio_player_actor::create_platform_audio_player;
+pub use audio_player_backend::AudioPlayerBackend;
 pub use audio_player_behaviors::AudioPlayerBehaviorDependencies;
 pub use audio_player_behaviors::AudioPlayerBehaviorPipeline;
 pub use audio_player_behaviors::build_audio_player_behaviors;
-pub use audio_player_actor::create_platform_audio_player;
-pub use audio_player_backend::AudioPlayerBackend;
 pub use messages::AudioPlayerPositionChangedEvent;
 pub use messages::CloseAudioFileCommand;
 pub use messages::LinkSceneToPositionCommand;

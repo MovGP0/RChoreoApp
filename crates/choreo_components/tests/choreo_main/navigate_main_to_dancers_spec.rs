@@ -4,24 +4,29 @@ use std::time::{Duration, Instant};
 
 use crate::choreo_main;
 
+use choreo_components::ScenesInfo;
 use choreo_components::audio_player::{
     AudioPlayerBehaviorDependencies, AudioPlayerPositionChangedEvent, AudioPlayerViewModel,
     CloseAudioFileCommand, LinkSceneToPositionCommand, build_audio_player_behaviors,
 };
-use choreo_components::choreo_main::{MainPageActionHandlers, MainPageBinding, MainPageDependencies};
+use choreo_components::choreo_main::{
+    MainPageActionHandlers, MainPageBinding, MainPageDependencies,
+};
 use choreo_components::global::GlobalProvider;
 use choreo_components::preferences::{InMemoryPreferences, Preferences};
 use choreo_components::scenes::SceneViewModel;
 use choreo_components::shell;
-use choreo_components::ScenesInfo;
+use choreo_main::Report;
 use choreo_master_mobile_json::{DancerId, SceneId};
 use choreo_models::{Colors, DancerModel, PositionModel, RoleModel, SceneModel};
 use crossbeam_channel::{bounded, unbounded};
-use choreo_main::Report;
 use slint::ComponentHandle;
 use slint::Model;
 
-fn create_binding() -> (MainPageBinding, Rc<choreo_components::global::GlobalStateActor>) {
+fn create_binding() -> (
+    MainPageBinding,
+    Rc<choreo_components::global::GlobalStateActor>,
+) {
     let ui = shell::create_shell_host().expect("shell should be created");
     let global_provider = GlobalProvider::new();
     let global_state = global_provider.global_state();
@@ -122,7 +127,10 @@ fn create_binding() -> (MainPageBinding, Rc<choreo_components::global::GlobalSta
         global_state_store: Rc::clone(&global_state_store),
         open_audio_receiver,
         close_audio_receiver,
-        position_changed_senders: vec![audio_position_sender_for_scenes, audio_position_sender_for_floor],
+        position_changed_senders: vec![
+            audio_position_sender_for_scenes,
+            audio_position_sender_for_floor,
+        ],
         link_scene_receiver,
         preferences: Rc::clone(&preferences),
     });
@@ -196,19 +204,22 @@ fn wait_until(timeout: Duration, mut predicate: impl FnMut() -> bool) -> bool {
 #[serial_test::serial]
 fn navigate_main_to_dancers_spec() {
     let suite = rspec::describe("navigate from main page to dancers page", (), |spec| {
-        spec.it("shows the dancers page when scenes requests dancer settings navigation", |_| {
-            run_in_ui_thread(|| {
-                i_slint_backend_testing::init_no_event_loop();
+        spec.it(
+            "shows the dancers page when scenes requests dancer settings navigation",
+            |_| {
+                run_in_ui_thread(|| {
+                    i_slint_backend_testing::init_no_event_loop();
 
-                let (binding, _global_state_store) = create_binding();
-                let view = binding.view();
-                let scenes_info = view.global::<ScenesInfo<'_>>();
+                    let (binding, _global_state_store) = create_binding();
+                    let view = binding.view();
+                    let scenes_info = view.global::<ScenesInfo<'_>>();
 
-                assert_eq!(view.get_content_index(), 0);
-                scenes_info.invoke_navigate_to_dancer_settings();
-                assert_eq!(view.get_content_index(), 2);
-            });
-        });
+                    assert_eq!(view.get_content_index(), 0);
+                    scenes_info.invoke_navigate_to_dancer_settings();
+                    assert_eq!(view.get_content_index(), 2);
+                });
+            },
+        );
 
         spec.it(
             "loads dancer list items into the dancers settings page when opened",
@@ -261,11 +272,13 @@ fn navigate_main_to_dancers_spec() {
                             && view.get_dancer_settings_dancer_color().green() == 20
                             && view.get_dancer_settings_dancer_color().blue() == 30
                     });
-                    assert!(selected_second, "role and color should reflect selected dancer");
+                    assert!(
+                        selected_second,
+                        "role and color should reflect selected dancer"
+                    );
                 });
             },
         );
-
     });
 
     let report = choreo_main::run_suite(&suite);
