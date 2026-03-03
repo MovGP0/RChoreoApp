@@ -52,4 +52,10 @@ impl AppShellViewModel {
             }
         });
     }
+
+    pub fn route_external_file_path(&self, file_path: &str) {
+        if let Some(binding) = self.main_page_binding.as_ref() {
+            binding.route_external_file_path(file_path);
+        }
+    }
 }

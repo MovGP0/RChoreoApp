@@ -1,6 +1,7 @@
 use choreo_components_egui::behavior::Behavior;
 use choreo_components_egui::slider_with_ticks::SliderWithTicksBehavior;
 use choreo_components_egui::slider_with_ticks::SliderWithTicksViewModel;
+use choreo_components_egui::slider_with_ticks::ui::slider_value_change_is_dragging;
 use choreo_components_egui::slider_with_ticks::ui::visible_tick_fractions;
 
 #[test]
@@ -44,4 +45,16 @@ fn set_value_clamps_to_range() {
 fn visible_tick_fractions_filters_values_outside_range() {
     let fractions = visible_tick_fractions(0.0, 10.0, &[-1.0, 0.0, 2.5, 10.0, 12.0]);
     assert_eq!(fractions, vec![0.0, 0.25, 1.0]);
+}
+
+#[test]
+fn slider_value_change_is_dragging_is_false_for_keyboard_or_programmatic_changes() {
+    assert!(!slider_value_change_is_dragging(false, false, false));
+}
+
+#[test]
+fn slider_value_change_is_dragging_is_true_when_drag_lifecycle_is_active() {
+    assert!(slider_value_change_is_dragging(false, true, false));
+    assert!(slider_value_change_is_dragging(true, false, false));
+    assert!(slider_value_change_is_dragging(false, false, true));
 }

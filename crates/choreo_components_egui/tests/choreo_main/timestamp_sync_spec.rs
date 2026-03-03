@@ -99,6 +99,46 @@ fn timestamp_sync_spec() {
                 assert_eq!(state.floor_scene_name.as_deref(), Some("Scene 3"));
             },
         );
+
+        spec.it(
+            "links selected scene timestamp to current audio position rounded to 100ms",
+            |_| {
+                let mut state = ChoreoMainState::default();
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::SetScenes {
+                        scenes: vec![
+                            SceneState {
+                                name: "Scene 1".to_string(),
+                                timestamp_seconds: Some(5.0),
+                            },
+                            SceneState {
+                                name: "Scene 2".to_string(),
+                                timestamp_seconds: Some(10.0),
+                            },
+                        ],
+                    },
+                );
+                reduce(&mut state, ChoreoMainAction::SelectScene { index: 1 });
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::UpdateAudioPosition { seconds: 12.345 },
+                );
+
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::LinkSelectedSceneToAudioPosition,
+                );
+
+                assert_eq!(state.floor_scene_name.as_deref(), Some("Scene 2"));
+                assert_eq!(state.selected_scene_index, Some(1));
+                assert!((state.audio_position_seconds - 12.3).abs() < f64::EPSILON);
+                assert_eq!(
+                    state.scenes[1].timestamp_seconds,
+                    Some(state.audio_position_seconds)
+                );
+            },
+        );
     });
 
     let report = crate::choreo_main::run_suite(&suite);

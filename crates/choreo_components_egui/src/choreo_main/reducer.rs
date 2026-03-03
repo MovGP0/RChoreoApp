@@ -56,6 +56,9 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             state.dialog_content = None;
             state.is_dialog_open = false;
         }
+        ChoreoMainAction::RequestOpenChoreo(request) => {
+            state.outgoing_open_choreo_requests.push(request);
+        }
         ChoreoMainAction::RequestOpenAudio(request) => {
             state.outgoing_audio_requests.push(request);
         }
@@ -132,10 +135,23 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
                 select_scene_internal(state, index, true);
             }
         }
+        ChoreoMainAction::LinkSelectedSceneToAudioPosition => {
+            let Some(selected_index) = state.selected_scene_index else {
+                return;
+            };
+            let Some(selected_scene) = state.scenes.get_mut(selected_index) else {
+                return;
+            };
+            let linked_timestamp = round_to_100_millis(state.audio_position_seconds);
+            selected_scene.timestamp_seconds = Some(linked_timestamp);
+            state.audio_position_seconds = linked_timestamp;
+            state.floor_scene_name = Some(selected_scene.name.clone());
+        }
         ChoreoMainAction::DancersAction(action) => {
             crate::dancers::reducer::reduce(&mut state.dancers_state, action);
         }
         ChoreoMainAction::ClearOutgoingCommands => {
+            state.outgoing_open_choreo_requests.clear();
             state.outgoing_audio_requests.clear();
             state.outgoing_open_svg_commands.clear();
         }
@@ -200,4 +216,10 @@ fn select_scene_internal(state: &mut ChoreoMainState, index: usize, keep_audio_p
     if !keep_audio_position && let Some(timestamp) = scene.timestamp_seconds {
         state.audio_position_seconds = timestamp;
     }
+}
+
+fn round_to_100_millis(seconds: f64) -> f64 {
+    let milliseconds = seconds * 1000.0;
+    let rounded = (milliseconds / 100.0).round() * 100.0;
+    rounded / 1000.0
 }

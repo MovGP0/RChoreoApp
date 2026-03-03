@@ -1249,6 +1249,7 @@ dependencies = [
  "choreo_master_mobile_json",
  "choreo_models",
  "choreo_state_machine",
+ "crossbeam-channel",
  "dark-light",
  "dirs",
  "egui",

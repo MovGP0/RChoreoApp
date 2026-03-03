@@ -1,4 +1,5 @@
 pub use super::actions::OpenAudioRequested;
+pub use super::actions::OpenChoreoRequested;
 pub use super::actions::OpenSvgFileCommand;
 use crate::observability::TraceContext;
 

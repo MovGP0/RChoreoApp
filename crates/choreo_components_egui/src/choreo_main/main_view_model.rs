@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use nject::injectable;
+
 use crate::behavior::Behavior;
 use crate::behavior::CompositeDisposable;
 
@@ -12,6 +14,8 @@ use super::messages::ShowDialogCommand;
 use super::reducer::reduce;
 use super::state::ChoreoMainState;
 
+#[injectable]
+#[inject(|behaviors: Vec<Box<dyn Behavior<MainViewModel>>>| Self::new(behaviors))]
 pub struct MainViewModel {
     state: ChoreoMainState,
     behaviors: Vec<Box<dyn Behavior<MainViewModel>>>,

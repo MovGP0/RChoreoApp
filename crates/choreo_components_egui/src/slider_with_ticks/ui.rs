@@ -37,6 +37,9 @@ pub fn draw(ui: &mut Ui, state: SliderWithTicksUiState<'_>) -> Vec<SliderWithTic
             .show_value(false)
             .width(state.width),
     );
+    let mut was_dragging = ui
+        .memory(|memory| memory.data.get_temp::<bool>(response.id))
+        .unwrap_or(false);
 
     draw_tick_marks(
         ui,
@@ -56,19 +59,32 @@ pub fn draw(ui: &mut Ui, state: SliderWithTicksUiState<'_>) -> Vec<SliderWithTic
     };
 
     if response.drag_started() {
+        was_dragging = true;
         interactions.push(SliderWithTicksInteraction::DragStarted);
     }
     if response.changed() {
         interactions.push(SliderWithTicksInteraction::ValueChanged {
             value: clamped_value,
-            is_dragging: response.dragged(),
+            is_dragging: slider_value_change_is_dragging(
+                was_dragging,
+                response.drag_started(),
+                response.dragged(),
+            ),
         });
     }
     if response.drag_stopped() {
+        was_dragging = false;
         interactions.push(SliderWithTicksInteraction::DragCompleted {
             value: clamped_value,
         });
     }
+    ui.memory_mut(|memory| {
+        if was_dragging {
+            memory.data.insert_temp(response.id, true);
+        } else {
+            memory.data.remove::<bool>(response.id);
+        }
+    });
 
     interactions
 }
@@ -113,4 +129,13 @@ pub fn visible_tick_fractions(minimum: f64, maximum: f64, tick_values: &[f64]) -
         fractions.push(((*tick - minimum) / span) as f32);
     }
     fractions
+}
+
+#[must_use]
+pub fn slider_value_change_is_dragging(
+    was_dragging: bool,
+    drag_started: bool,
+    is_currently_dragged: bool,
+) -> bool {
+    was_dragging || drag_started || is_currently_dragged
 }

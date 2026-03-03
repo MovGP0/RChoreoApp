@@ -8,6 +8,7 @@
 
 use choreo_components_egui::AppShellViewModel;
 use choreo_components_egui::shell;
+use std::env;
 use std::sync::Once;
 
 const APP_ID: &str = "rchoreo_desktop_egui";
@@ -29,6 +30,18 @@ impl DesktopEguiApp {
 
 impl eframe::App for DesktopEguiApp {
     fn update(&mut self, context: &egui::Context, _frame: &mut eframe::Frame) {
+        let dropped_paths = context.input(|input| {
+            input
+                .raw
+                .dropped_files
+                .iter()
+                .filter_map(|file| file.path.as_ref())
+                .map(|path| path.to_string_lossy().into_owned())
+                .collect::<Vec<_>>()
+        });
+        for file_path in dropped_paths {
+            self.shell.route_external_file_path(&file_path);
+        }
         self.shell.ui(context);
     }
 }
@@ -44,10 +57,18 @@ fn main() -> eframe::Result<()> {
         ..Default::default()
     };
 
+    let external_paths = env::args().skip(1).collect::<Vec<_>>();
+
     eframe::run_native(
         APP_TITLE,
         native_options,
-        Box::new(|creation_context| Ok(Box::new(DesktopEguiApp::new(creation_context)))),
+        Box::new(move |creation_context| {
+            let app = DesktopEguiApp::new(creation_context);
+            for file_path in &external_paths {
+                app.shell.route_external_file_path(file_path);
+            }
+            Ok(Box::new(app))
+        }),
     )
 }
 

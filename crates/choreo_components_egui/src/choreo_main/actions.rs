@@ -3,6 +3,13 @@ use super::state::SceneState;
 use crate::dancers::actions::DancersAction;
 use crate::observability::TraceContext;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OpenChoreoRequested {
+    pub file_path: Option<String>,
+    pub file_name: Option<String>,
+    pub contents: String,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct OpenAudioRequested {
     pub file_path: String,
@@ -34,6 +41,7 @@ pub enum ChoreoMainAction {
         content: Option<String>,
     },
     HideDialog,
+    RequestOpenChoreo(OpenChoreoRequested),
     RequestOpenAudio(OpenAudioRequested),
     RequestOpenImage {
         file_path: String,
@@ -56,6 +64,7 @@ pub enum ChoreoMainAction {
     UpdateAudioPosition {
         seconds: f64,
     },
+    LinkSelectedSceneToAudioPosition,
     DancersAction(DancersAction),
     ClearOutgoingCommands,
 }
