@@ -96,6 +96,11 @@ fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMa
             if nav_response.clicked() {
                 actions.push(top_bar_nav_action(state.is_nav_open));
             }
+            let _ = nav_response.on_hover_text(if state.is_nav_open {
+                "Close navigation"
+            } else {
+                "Open navigation"
+            });
 
             ui.add_space(12.0);
             let previous_mode_index =
@@ -127,12 +132,18 @@ fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMa
             if settings_response.clicked() {
                 actions.push(top_bar_settings_action(state.is_choreography_settings_open));
             }
+            let _ = settings_response.on_hover_text(if state.is_choreography_settings_open {
+                "Close choreography settings"
+            } else {
+                "Open choreography settings"
+            });
 
             let home_response =
                 ui.add(MaterialIconButton::standard(home_icon_name()).svg_data(home_icon_svg()));
             if home_response.clicked() {
                 actions.push(ChoreoMainAction::ResetFloorViewport);
             }
+            let _ = home_response.on_hover_text("Reset floor viewport");
 
             let open_image_response = ui.add(
                 MaterialIconButton::standard(open_image_icon_name())
@@ -143,6 +154,7 @@ fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMa
                     file_path: String::new(),
                 });
             }
+            let _ = open_image_response.on_hover_text("Open image");
 
             let open_audio_response = ui.add(
                 MaterialIconButton::standard(open_audio_icon_name())
@@ -151,6 +163,7 @@ fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMa
             if open_audio_response.clicked() {
                 actions.push(ChoreoMainAction::OpenAudioPanel);
             }
+            let _ = open_audio_response.on_hover_text("Open audio");
         },
     );
 }
