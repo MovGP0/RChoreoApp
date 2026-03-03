@@ -1,6 +1,19 @@
+use std::rc::Rc;
+use std::sync::mpsc::channel;
+
+use choreo_models::SettingsPreferenceKeys;
+
+use crate::audio_player::audio_player_component::AudioPlayerBackend;
+use crate::audio_player::audio_player_component::OpenAudioFileCommand;
 use crate::audio_player::audio_player_component::actions::AudioPlayerAction;
+use crate::audio_player::audio_player_component::audio_player_behaviors::AudioPlayerBehaviorDependencies;
+use crate::audio_player::audio_player_component::build_audio_player_behaviors;
 use crate::audio_player::audio_player_component::reducer::reduce;
+use crate::audio_player::audio_player_component::runtime::AudioPlayerRuntime;
 use crate::audio_player::audio_player_component::state::AudioPlayerState;
+use crate::global::GlobalStateActor;
+use crate::preferences::InMemoryPreferences;
+use crate::preferences::Preferences;
 
 #[test]
 fn open_audio_file_sets_stream_factory_flag_and_persists_last_opened_path() {
@@ -67,5 +80,49 @@ fn open_audio_file_keeps_player_disabled_when_file_does_not_exist() {
     assert_eq!(
         state.last_opened_audio_file_path.as_deref(),
         Some("C:\\temp\\missing.mp3")
+    );
+}
+
+#[test]
+fn open_behavior_reads_backend_and_persists_last_opened_path_for_missing_file() {
+    let (open_tx, open_rx) = channel();
+    let (_close_tx, close_rx) = channel();
+    let (_link_tx, link_rx) = channel();
+    let (position_tx, _position_rx) = channel();
+
+    let preferences = Rc::new(InMemoryPreferences::new());
+    preferences.set_string(
+        SettingsPreferenceKeys::AUDIO_PLAYER_BACKEND,
+        AudioPlayerBackend::Awedio.as_preference().to_string(),
+    );
+
+    let pipeline = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
+        global_state_store: GlobalStateActor::new(),
+        open_audio_receiver: open_rx,
+        close_audio_receiver: close_rx,
+        position_changed_senders: vec![position_tx],
+        link_scene_receiver: link_rx,
+        preferences: preferences.clone(),
+        haptic_feedback: None,
+    });
+
+    let file_path = "C:\\temp\\missing-parity.mp3".to_string();
+    open_tx
+        .send(OpenAudioFileCommand {
+            file_path: file_path.clone(),
+            trace_context: None,
+        })
+        .expect("open command should send");
+
+    let mut state = AudioPlayerState::default();
+    let mut runtime = AudioPlayerRuntime::new(AudioPlayerBackend::Rodio);
+    pipeline.open_audio_file.poll(&mut state, &mut runtime);
+
+    assert!(state.has_stream_factory);
+    assert!(!state.has_player);
+    assert_eq!(state.last_opened_audio_file_path, Some(file_path.clone()));
+    assert_eq!(
+        preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_AUDIO_FILE, ""),
+        file_path
     );
 }

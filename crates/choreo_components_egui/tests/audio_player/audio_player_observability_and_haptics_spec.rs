@@ -1,7 +1,13 @@
+use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::mpsc::channel;
+
+use choreo_master_mobile_json::Color;
+use choreo_master_mobile_json::SceneId;
+use choreo_models::ChoreographyModel;
+use choreo_models::SceneModel;
 
 use crate::audio_player::audio_player_component::AudioPlayerBackend;
 use crate::audio_player::audio_player_component::actions::AudioPlayerAction;
@@ -10,11 +16,10 @@ use crate::audio_player::audio_player_component::audio_player_behaviors::AudioPl
 use crate::audio_player::audio_player_component::audio_player_behaviors::reduce_with_haptics;
 use crate::audio_player::audio_player_component::build_audio_player_behaviors;
 use crate::audio_player::audio_player_component::messages::LinkSceneToPositionCommand;
-use crate::audio_player::audio_player_component::reducer::reduce;
-use crate::audio_player::audio_player_component::state::AudioPlayerChoreographyScene;
-use crate::audio_player::audio_player_component::state::AudioPlayerScene;
 use crate::audio_player::audio_player_component::state::AudioPlayerState;
+use crate::global::GlobalStateActor;
 use crate::observability::TraceContext;
+use crate::preferences::InMemoryPreferences;
 
 struct MockHaptic {
     click_count: Arc<AtomicUsize>,
@@ -62,12 +67,31 @@ fn link_command_keeps_trace_context_and_propagates_to_position_event() {
         click_count: Arc::clone(&click_count),
     });
 
+    let global_state = GlobalStateActor::new();
+    global_state.try_update(|state| {
+        state.scenes = vec![
+            scene_model(1, "A", Some("1.0")),
+            scene_model(2, "B", None),
+            scene_model(3, "C", Some("5.0")),
+        ];
+        state.selected_scene = state.scenes.get(1).cloned();
+        state.choreography = ChoreographyModel {
+            scenes: vec![
+                scene_model(1, "A", Some("1.0")),
+                scene_model(2, "B", None),
+                scene_model(3, "C", Some("5.0")),
+            ],
+            ..ChoreographyModel::default()
+        };
+    });
+
     let pipeline = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
+        global_state_store: Rc::clone(&global_state),
         open_audio_receiver: open_rx,
         close_audio_receiver: close_rx,
         position_changed_senders: vec![position_tx],
         link_scene_receiver: link_rx,
-        backend: AudioPlayerBackend::Rodio,
+        preferences: Rc::new(InMemoryPreferences::new()),
         haptic_feedback: Some(haptic),
     });
 
@@ -78,32 +102,13 @@ fn link_command_keeps_trace_context_and_propagates_to_position_event() {
 
     let mut state = AudioPlayerState {
         position: 2.0,
-        selected_scene_id: Some(2),
-        scenes: vec![
-            AudioPlayerScene {
-                scene_id: 1,
-                name: "A".to_string(),
-                timestamp: Some(1.0),
-            },
-            AudioPlayerScene {
-                scene_id: 2,
-                name: "B".to_string(),
-                timestamp: None,
-            },
-            AudioPlayerScene {
-                scene_id: 3,
-                name: "C".to_string(),
-                timestamp: Some(5.0),
-            },
-        ],
-        choreography_scenes: vec![AudioPlayerChoreographyScene {
-            scene_id: 2,
-            timestamp: None,
-        }],
         ..AudioPlayerState::default()
     };
+    let mut runtime = crate::audio_player::audio_player_component::runtime::AudioPlayerRuntime::new(
+        AudioPlayerBackend::Rodio,
+    );
+    pipeline.ticks.poll(&mut state, &mut runtime);
 
-    let _ = reduce(&mut state, AudioPlayerAction::UpdateTicksAndLinkState);
     link_tx
         .send(LinkSceneToPositionCommand {
             trace_context: Some(trace_context.clone()),
@@ -129,4 +134,19 @@ fn link_command_keeps_trace_context_and_propagates_to_position_event() {
 
     let _ = open_tx;
     let _ = close_tx;
+}
+
+fn scene_model(scene_id: i32, name: &str, timestamp: Option<&str>) -> SceneModel {
+    SceneModel {
+        scene_id: SceneId(scene_id),
+        positions: Vec::new(),
+        name: name.to_string(),
+        text: None,
+        fixed_positions: false,
+        timestamp: timestamp.map(str::to_string),
+        variation_depth: 0,
+        variations: Vec::new(),
+        current_variation: Vec::new(),
+        color: Color::transparent(),
+    }
 }

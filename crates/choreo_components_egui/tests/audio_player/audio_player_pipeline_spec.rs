@@ -1,17 +1,25 @@
+use std::fs;
+use std::rc::Rc;
 use std::sync::mpsc::channel;
+use std::time::SystemTime;
+
+use choreo_master_mobile_json::Color;
+use choreo_master_mobile_json::SceneId;
+use choreo_models::ChoreographyModel;
+use choreo_models::SceneModel;
+use choreo_models::SettingsPreferenceKeys;
 
 use crate::audio_player::audio_player_component::AudioPlayerBackend;
 use crate::audio_player::audio_player_component::OpenAudioFileCommand;
-use crate::audio_player::audio_player_component::actions::AudioPlayerAction;
 use crate::audio_player::audio_player_component::audio_player_behaviors::AudioPlayerBehaviorDependencies;
 use crate::audio_player::audio_player_component::build_audio_player_behaviors;
 use crate::audio_player::audio_player_component::messages::CloseAudioFileCommand;
 use crate::audio_player::audio_player_component::messages::LinkSceneToPositionCommand;
-use crate::audio_player::audio_player_component::reducer::reduce;
 use crate::audio_player::audio_player_component::runtime::AudioPlayerRuntime;
-use crate::audio_player::audio_player_component::state::AudioPlayerChoreographyScene;
-use crate::audio_player::audio_player_component::state::AudioPlayerScene;
 use crate::audio_player::audio_player_component::state::AudioPlayerState;
+use crate::global::GlobalStateActor;
+use crate::preferences::InMemoryPreferences;
+use crate::preferences::Preferences;
 
 #[test]
 fn build_pipeline_handles_open_and_close_commands() {
@@ -20,21 +28,30 @@ fn build_pipeline_handles_open_and_close_commands() {
     let (link_tx, link_rx) = channel();
     let (position_tx, _position_rx) = channel();
 
+    let preferences = Rc::new(InMemoryPreferences::new());
+    preferences.set_string(
+        SettingsPreferenceKeys::AUDIO_PLAYER_BACKEND,
+        AudioPlayerBackend::Rodio.as_preference().to_string(),
+    );
+    let global_state = GlobalStateActor::new();
+
     let pipeline = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
+        global_state_store: Rc::clone(&global_state),
         open_audio_receiver: open_rx,
         close_audio_receiver: close_rx,
         position_changed_senders: vec![position_tx],
         link_scene_receiver: link_rx,
-        backend: AudioPlayerBackend::Rodio,
+        preferences: preferences.clone(),
         haptic_feedback: None,
     });
 
+    let file_path = create_temp_audio_file_path();
     let mut state = AudioPlayerState::default();
-    let mut runtime = AudioPlayerRuntime::new(AudioPlayerBackend::Rodio);
+    let mut runtime = AudioPlayerRuntime::new(AudioPlayerBackend::Awedio);
 
     open_tx
         .send(OpenAudioFileCommand {
-            file_path: "C:\\temp\\sample.mp3".to_string(),
+            file_path: file_path.clone(),
             trace_context: None,
         })
         .expect("open command should send");
@@ -44,7 +61,13 @@ fn build_pipeline_handles_open_and_close_commands() {
     assert!(state.has_stream_factory);
     assert_eq!(
         state.last_opened_audio_file_path.as_deref(),
-        Some("C:\\temp\\sample.mp3")
+        Some(file_path.as_str())
+    );
+    assert_eq!(
+        preferences
+            .get_string(SettingsPreferenceKeys::LAST_OPENED_AUDIO_FILE, "")
+            .as_str(),
+        file_path
     );
 
     close_tx
@@ -57,6 +80,7 @@ fn build_pipeline_handles_open_and_close_commands() {
     assert!(!state.has_player);
     assert!(!runtime.has_player());
 
+    let _ = fs::remove_file(file_path);
     let _ = link_tx;
 }
 
@@ -67,43 +91,42 @@ fn pipeline_links_scene_and_publishes_position_changed_event() {
     let (link_tx, link_rx) = channel();
     let (position_tx, position_rx) = channel();
 
+    let preferences = Rc::new(InMemoryPreferences::new());
+    let global_state = GlobalStateActor::new();
+    global_state.try_update(|state| {
+        state.scenes = vec![
+            scene_model(1, "A", Some("1.0")),
+            scene_model(2, "B", None),
+            scene_model(3, "C", Some("5.0")),
+        ];
+        state.selected_scene = state.scenes.get(1).cloned();
+        state.choreography = ChoreographyModel {
+            scenes: vec![
+                scene_model(1, "A", Some("1.0")),
+                scene_model(2, "B", None),
+                scene_model(3, "C", Some("5.0")),
+            ],
+            ..ChoreographyModel::default()
+        };
+    });
+
     let pipeline = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
+        global_state_store: Rc::clone(&global_state),
         open_audio_receiver: open_rx,
         close_audio_receiver: close_rx,
         position_changed_senders: vec![position_tx],
         link_scene_receiver: link_rx,
-        backend: AudioPlayerBackend::Rodio,
+        preferences,
         haptic_feedback: None,
     });
 
     let mut state = AudioPlayerState {
         position: 2.1,
-        selected_scene_id: Some(2),
-        scenes: vec![
-            AudioPlayerScene {
-                scene_id: 1,
-                name: "A".to_string(),
-                timestamp: Some(1.0),
-            },
-            AudioPlayerScene {
-                scene_id: 2,
-                name: "B".to_string(),
-                timestamp: None,
-            },
-            AudioPlayerScene {
-                scene_id: 3,
-                name: "C".to_string(),
-                timestamp: Some(5.0),
-            },
-        ],
-        choreography_scenes: vec![AudioPlayerChoreographyScene {
-            scene_id: 2,
-            timestamp: None,
-        }],
         ..AudioPlayerState::default()
     };
+    let mut runtime = AudioPlayerRuntime::new(AudioPlayerBackend::Rodio);
+    pipeline.ticks.poll(&mut state, &mut runtime);
 
-    let _ = reduce(&mut state, AudioPlayerAction::UpdateTicksAndLinkState);
     link_tx
         .send(LinkSceneToPositionCommand {
             trace_context: None,
@@ -113,7 +136,7 @@ fn pipeline_links_scene_and_publishes_position_changed_event() {
 
     assert_eq!(state.scenes[1].timestamp, Some(2.1));
     assert_eq!(
-        state.choreography_scenes[0].timestamp.as_deref(),
+        state.choreography_scenes[1].timestamp.as_deref(),
         Some("2.1")
     );
 
@@ -125,4 +148,29 @@ fn pipeline_links_scene_and_publishes_position_changed_event() {
 
     let _ = open_tx;
     let _ = close_tx;
+}
+
+fn scene_model(scene_id: i32, name: &str, timestamp: Option<&str>) -> SceneModel {
+    SceneModel {
+        scene_id: SceneId(scene_id),
+        positions: Vec::new(),
+        name: name.to_string(),
+        text: None,
+        fixed_positions: false,
+        timestamp: timestamp.map(str::to_string),
+        variation_depth: 0,
+        variations: Vec::new(),
+        current_variation: Vec::new(),
+        color: Color::transparent(),
+    }
+}
+
+fn create_temp_audio_file_path() -> String {
+    let unique = SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("system time should be after unix epoch")
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!("rchoreo-audio-pipeline-{unique}.mp3"));
+    fs::write(&path, b"audio-test").expect("temp audio file should be writable");
+    path.to_string_lossy().into_owned()
 }
