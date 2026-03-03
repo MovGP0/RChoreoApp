@@ -1,22 +1,33 @@
-use crate::floor::floor_component::floor_adapter::AudioInterpolationInput;
-use crate::floor::floor_component::floor_adapter::FloorAdapter;
-use crate::floor::floor_component::floor_adapter::FloorAdapterInput;
-use crate::floor::floor_component::floor_provider::FloorBehavior;
-use crate::floor::floor_component::floor_provider::FloorBehaviorFactory;
-use crate::floor::floor_component::floor_provider::FloorBehaviorKind;
-use crate::floor::floor_component::floor_provider::FloorProvider;
-use crate::floor::floor_component::floor_provider::FloorProviderDependencies;
-use crate::floor::floor_component::floor_provider::TickRedrawBehaviorFactory;
+use crate::floor::floor_component::AudioInterpolationInput;
+use crate::floor::floor_component::FloorAdapter;
+use crate::floor::floor_component::FloorAdapterInput;
+use crate::floor::floor_component::FloorPointerEventSenders;
+use crate::floor::floor_component::FloorProvider;
+use crate::floor::floor_component::FloorProviderDependencies;
+use crate::floor::floor_component::FloorRenderGateImpl;
 use crate::floor::floor_component::state::FloorPosition;
 use crate::floor::floor_component::state::FloorState;
+use std::sync::Arc;
 
 #[test]
 fn adapter_maps_scene_overlay_and_audio_interpolation_into_state() {
     let adapter = FloorAdapter::new();
     let mut state = FloorState::default();
+    let (draw_sender, _draw_receiver) = std::sync::mpsc::sync_channel(4);
+    let mut view_model = crate::floor::floor_component::FloorCanvasViewModel::new(
+        draw_sender,
+        FloorPointerEventSenders {
+            pointer_pressed_senders: Vec::new(),
+            pointer_moved_senders: Vec::new(),
+            pointer_released_senders: Vec::new(),
+            pointer_wheel_changed_senders: Vec::new(),
+            touch_senders: Vec::new(),
+        },
+    );
 
     adapter.apply(
         &mut state,
+        &mut view_model,
         FloorAdapterInput {
             scene_positions: vec![FloorPosition::new(0.0, 0.0), FloorPosition::new(24.0, 36.0)],
             axis_x_label: "X Axis".to_string(),
@@ -25,10 +36,11 @@ fn adapter_maps_scene_overlay_and_audio_interpolation_into_state() {
             svg_path: Some("floor.svg".to_string()),
             placement_remaining: Some(3),
             interpolation: Some(AudioInterpolationInput {
-                from: vec![FloorPosition::new(0.0, 0.0)],
-                to: vec![FloorPosition::new(12.0, 0.0)],
+                from: vec![FloorPosition::new(0.0, 0.0), FloorPosition::new(24.0, 36.0)],
+                to: vec![FloorPosition::new(12.0, 0.0), FloorPosition::new(24.0, 48.0)],
                 progress: 0.5,
             }),
+            layout_size: Some((1200.0, 720.0)),
         },
     );
 
@@ -37,68 +49,41 @@ fn adapter_maps_scene_overlay_and_audio_interpolation_into_state() {
     assert_eq!(state.legend_entries.len(), 1);
     assert_eq!(state.placement_remaining, Some(3));
     assert_eq!(state.svg_path.as_deref(), Some("floor.svg"));
-    assert_eq!(state.interpolated_positions.len(), 1);
+    assert_eq!(state.interpolated_positions.len(), 2);
     assert!((state.interpolated_positions[0].x - 6.0).abs() < 0.001);
-}
-
-#[derive(Default)]
-struct ProbeBehavior {
-    pub activated: bool,
-    pub deactivated: bool,
-    pub ticks: usize,
-}
-
-impl FloorBehavior for ProbeBehavior {
-    fn kind(&self) -> FloorBehaviorKind {
-        FloorBehaviorKind::Gesture
-    }
-
-    fn activate(&mut self, _state: &mut FloorState) {
-        self.activated = true;
-    }
-
-    fn on_tick(&mut self, _state: &mut FloorState) {
-        self.ticks += 1;
-    }
-
-    fn deactivate(&mut self, _state: &mut FloorState) {
-        self.deactivated = true;
-    }
-}
-
-struct ProbeFactory;
-
-impl FloorBehaviorFactory for ProbeFactory {
-    fn create(&self) -> Box<dyn FloorBehavior> {
-        Box::<ProbeBehavior>::default()
-    }
+    assert!(view_model.has_floor_bounds());
+    assert_eq!(view_model.canvas_size().width, 1200.0);
+    assert!(!state.path_commands.is_empty());
+    assert!(!state.dashed_path_commands.is_empty());
 }
 
 #[test]
-fn provider_activates_behaviors_in_order_and_ticks_redraw_pipeline() {
-    let _all_kinds = [
-        FloorBehaviorKind::Draw,
-        FloorBehaviorKind::Redraw,
-        FloorBehaviorKind::Gesture,
-        FloorBehaviorKind::Move,
-        FloorBehaviorKind::Place,
-        FloorBehaviorKind::Rotate,
-        FloorBehaviorKind::Scale,
-    ];
-
+fn provider_orchestrates_draw_and_redraw_with_render_gate() {
+    let render_gate = Arc::new(FloorRenderGateImpl::new());
     let mut provider = FloorProvider::new(
-        FloorState::default(),
         FloorProviderDependencies {
-            behavior_factories: vec![Box::new(ProbeFactory), Box::new(TickRedrawBehaviorFactory)],
+            state: FloorState::default(),
+            floor_adapter: FloorAdapter::new(),
+            floor_render_gate: render_gate,
+            view_model_behaviors: Vec::new(),
+            floor_event_senders: FloorPointerEventSenders {
+                pointer_pressed_senders: Vec::new(),
+                pointer_moved_senders: Vec::new(),
+                pointer_released_senders: Vec::new(),
+                pointer_wheel_changed_senders: Vec::new(),
+                touch_senders: Vec::new(),
+            },
         },
     );
 
     provider.activate();
-    provider.state_mut().zoom = 1.25;
+    provider.floor_view_model().borrow_mut().draw_floor();
     provider.tick();
-
-    assert_eq!(provider.activation_order[0], FloorBehaviorKind::Gesture);
-    assert_eq!(provider.activation_order[1], FloorBehaviorKind::Redraw);
+    assert!(provider.floor_render_gate().is_rendered());
+    assert!(provider.state().draw_count >= 2);
+    provider.floor_view_model().borrow().request_redraw();
+    assert!(provider.state().draw_count >= 2);
+    provider.tick();
     assert!(provider.state().draw_count >= 2);
 
     provider.deactivate();

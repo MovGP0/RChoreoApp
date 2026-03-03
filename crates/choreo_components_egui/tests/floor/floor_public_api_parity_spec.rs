@@ -26,7 +26,7 @@ fn floor_view_model_public_api_matches_non_ui_pipeline_contract() {
     );
 
     view_model.set_transformation_matrix(Matrix::translation(24.0, 36.0));
-    view_model.pointer_pressed(PointerPressedCommand {
+    let _ = view_model.pointer_pressed(PointerPressedCommand {
         canvas_view: CanvasViewHandle { id: 7 },
         event_args: PointerEventArgs {
             position: Point::new(120.0, 144.0),

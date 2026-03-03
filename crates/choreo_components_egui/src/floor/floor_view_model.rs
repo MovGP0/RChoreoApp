@@ -1,7 +1,8 @@
+use std::cell::RefCell;
+use std::rc::Weak;
 use std::sync::mpsc::SyncSender;
 use std::sync::mpsc::TrySendError;
-
-use std::sync::Arc;
+use std::rc::Rc;
 
 use crate::behavior::Behavior;
 use crate::behavior::CompositeDisposable;
@@ -25,7 +26,8 @@ pub struct FloorCanvasViewModel {
     pointer_released_senders: Vec<SyncSender<PointerReleasedCommand>>,
     pointer_wheel_changed_senders: Vec<SyncSender<PointerWheelChangedCommand>>,
     touch_senders: Vec<SyncSender<TouchCommand>>,
-    on_redraw: Option<Arc<dyn Fn() + Send + Sync>>,
+    on_redraw: Option<Rc<dyn Fn()>>,
+    self_handle: Option<Weak<RefCell<FloorCanvasViewModel>>>,
     pub canvas_view: Option<CanvasViewHandle>,
     pub transformation_matrix: Matrix,
     has_floor_bounds: bool,
@@ -52,6 +54,7 @@ impl FloorCanvasViewModel {
             pointer_wheel_changed_senders: event_senders.pointer_wheel_changed_senders,
             touch_senders: event_senders.touch_senders,
             on_redraw: None,
+            self_handle: None,
             canvas_view: None,
             transformation_matrix: Matrix::identity(),
             has_floor_bounds: false,
@@ -89,8 +92,17 @@ impl FloorCanvasViewModel {
         &self.draw_floor_command_sender
     }
 
-    pub fn set_on_redraw(&mut self, handler: Option<Arc<dyn Fn() + Send + Sync>>) {
+    pub fn set_on_redraw(&mut self, handler: Option<Rc<dyn Fn()>>) {
         self.on_redraw = handler;
+    }
+
+    pub fn set_self_handle(&mut self, handle: Weak<RefCell<FloorCanvasViewModel>>) {
+        self.self_handle = Some(handle);
+    }
+
+    #[must_use]
+    pub fn self_handle(&self) -> Option<Weak<RefCell<FloorCanvasViewModel>>> {
+        self.self_handle.clone()
     }
 
     #[must_use]

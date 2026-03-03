@@ -1,15 +1,21 @@
 pub mod actions;
-pub mod floor_adapter;
-pub mod floor_provider;
+mod floor_adapter;
+mod floor_provider;
 mod floor_view_model;
 mod messages;
 pub mod reducer;
 pub mod state;
+mod translations;
 mod types;
 pub mod ui;
 
+pub use floor_adapter::AudioInterpolationInput;
+pub use floor_adapter::FloorAdapter;
+pub use floor_adapter::FloorAdapterInput;
 pub use floor_view_model::FloorCanvasViewModel;
 pub use floor_view_model::FloorPointerEventSenders;
+pub use floor_provider::FloorProvider;
+pub use floor_provider::FloorProviderDependencies;
 pub use messages::DrawFloorCommand;
 pub use messages::PanUpdatedCommand;
 pub use messages::PinchUpdatedCommand;
