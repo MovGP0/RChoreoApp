@@ -9,7 +9,7 @@ use egui::Ui;
 use egui::Vec2;
 use egui::vec2;
 
-const DEFAULT_BUTTON_SIZE_PX: f32 = 48.0;
+const MIN_BUTTON_SIZE_PX: f32 = 40.0;
 const CONTENT_PADDING_PX: f32 = 10.0;
 const CHECKED_ROTATION_DEGREES: f32 = 35.0;
 const DISABLED_OPACITY: f32 = 0.38;
@@ -33,7 +33,7 @@ pub fn draw(
     tooltip: &str,
     size: Option<Vec2>,
 ) -> Response {
-    let desired_size = size.unwrap_or(vec2(DEFAULT_BUTTON_SIZE_PX, DEFAULT_BUTTON_SIZE_PX));
+    let desired_size = desired_size(size);
     let sense = if enabled {
         Sense::click()
     } else {
@@ -79,6 +79,24 @@ pub fn draw(
     painter.line_segment([geometry.bottom_start, geometry.bottom_end], stroke);
 
     response
+}
+
+#[must_use]
+pub fn desired_size(size: Option<Vec2>) -> Vec2 {
+    let requested_size = size.unwrap_or(vec2(MIN_BUTTON_SIZE_PX, MIN_BUTTON_SIZE_PX));
+    vec2(
+        requested_size.x.max(MIN_BUTTON_SIZE_PX),
+        requested_size.y.max(MIN_BUTTON_SIZE_PX),
+    )
+}
+
+#[must_use]
+pub fn toggled_state_after_click(checked: bool, toggle_on_click: bool, clicked: bool) -> bool {
+    if clicked && toggle_on_click {
+        !checked
+    } else {
+        checked
+    }
 }
 
 #[must_use]

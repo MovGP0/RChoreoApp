@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::io;
 use std::sync::Arc;
 
@@ -7,14 +5,10 @@ use rspec::ConfigurationBuilder;
 use rspec::Logger;
 use rspec::Runner;
 
-#[path = "../../src/main_page_drawer_host/actions.rs"]
-pub mod actions;
-#[path = "../../src/main_page_drawer_host/reducer.rs"]
-pub mod reducer;
-#[path = "../../src/main_page_drawer_host/state.rs"]
-pub mod state;
-#[path = "../../src/main_page_drawer_host/ui.rs"]
-pub mod ui;
+pub use choreo_components_egui::choreo_main::actions;
+pub use choreo_components_egui::choreo_main::reducer;
+pub use choreo_components_egui::choreo_main::state;
+pub use choreo_components_egui::main_page::ui;
 
 pub use rspec::report::Report;
 
@@ -32,6 +26,4 @@ where
     runner.run(suite)
 }
 
-pub mod layout_state_spec;
-pub mod overlay_click_behavior_spec;
-pub mod ui_smoke_spec;
+pub mod ui_parity_spec;

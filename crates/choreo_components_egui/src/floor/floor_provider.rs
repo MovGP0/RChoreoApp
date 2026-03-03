@@ -5,7 +5,6 @@ use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::SyncSender;
-use std::sync::mpsc::TryRecvError;
 use std::sync::mpsc::sync_channel;
 
 use crate::behavior::Behavior;
@@ -115,14 +114,9 @@ impl FloorProvider {
     }
 
     pub fn tick(&self) {
-        loop {
-            match self.draw_floor_receiver.try_recv() {
-                Ok(DrawFloorCommand) => {
-                    reduce(&mut self.state.borrow_mut(), FloorAction::DrawFloor);
-                    self.floor_render_gate.mark_rendered();
-                }
-                Err(TryRecvError::Empty | TryRecvError::Disconnected) => break,
-            }
+        while let Ok(DrawFloorCommand) = self.draw_floor_receiver.try_recv() {
+            reduce(&mut self.state.borrow_mut(), FloorAction::DrawFloor);
+            self.floor_render_gate.mark_rendered();
         }
     }
 

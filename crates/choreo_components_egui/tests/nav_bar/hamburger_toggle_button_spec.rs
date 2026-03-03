@@ -2,7 +2,9 @@ use egui::Rect;
 use egui::pos2;
 use egui::vec2;
 
+use crate::nav_bar::nav_bar_component::hamburger_toggle_button::desired_size;
 use crate::nav_bar::nav_bar_component::hamburger_toggle_button::geometry_for_rect;
+use crate::nav_bar::nav_bar_component::hamburger_toggle_button::toggled_state_after_click;
 
 #[test]
 fn unchecked_geometry_keeps_three_parallel_bars() {
@@ -33,4 +35,25 @@ fn checked_geometry_collapses_top_and_bottom_to_middle_with_rotations() {
 
     let middle_delta_y = geometry.middle_end.y - geometry.middle_start.y;
     assert_eq!(middle_delta_y, 0.0);
+}
+
+#[test]
+fn desired_size_defaults_to_slint_minimum() {
+    let size = desired_size(None);
+    assert_eq!(size.x, 40.0);
+    assert_eq!(size.y, 40.0);
+}
+
+#[test]
+fn desired_size_clamps_to_slint_minimum_when_too_small() {
+    let size = desired_size(Some(vec2(24.0, 30.0)));
+    assert_eq!(size.x, 40.0);
+    assert_eq!(size.y, 40.0);
+}
+
+#[test]
+fn toggle_on_click_matches_slint_toggle_semantics() {
+    assert!(toggled_state_after_click(false, true, true));
+    assert!(!toggled_state_after_click(false, false, true));
+    assert!(!toggled_state_after_click(false, true, false));
 }

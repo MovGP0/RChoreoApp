@@ -103,6 +103,33 @@ fn layout_reserves_header_and_binds_overlay_to_floor_coordinates() {
 }
 
 #[test]
+fn legend_panel_uses_layout_metrics_and_sits_right_of_floor() {
+    let mut state = FloorState::default();
+
+    reduce(
+        &mut state,
+        FloorAction::SetLayout {
+            width_px: 2200.0,
+            height_px: 900.0,
+        },
+    );
+    reduce(
+        &mut state,
+        FloorAction::SetLegendEntries {
+            entries: vec![("Couple A".to_string(), [255, 0, 0, 255])],
+        },
+    );
+    reduce(&mut state, FloorAction::DrawFloor);
+
+    let legend = state
+        .legend_panel_rect
+        .expect("legend panel rect should be built when entries are present");
+    assert!(legend.x >= state.floor_x + state.floor_width);
+    assert!((legend.width - state.metrics.legend_panel_width).abs() < 0.001);
+    assert!((legend.height - state.metrics.legend_panel_height).abs() < 0.001);
+}
+
+#[test]
 fn touch_cancelled_clears_active_gesture_state() {
     let mut state = FloorState::default();
 

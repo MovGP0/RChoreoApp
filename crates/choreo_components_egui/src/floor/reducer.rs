@@ -339,6 +339,7 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
                 .into_iter()
                 .map(|(label, color)| super::state::LegendEntry { label, color })
                 .collect();
+            recompute_geometry(state);
         }
         FloorAction::SetPlacementRemaining { count } => {
             state.placement_remaining = count;
@@ -503,6 +504,27 @@ fn recompute_geometry(state: &mut FloorState) {
         state.floor_width,
         state.header_height_px,
     ));
+    state.legend_panel_rect = if state.legend_entries.is_empty() {
+        None
+    } else {
+        let user_scale = state.transformation_matrix.scale_x.max(0.1);
+        let legend_margin = 60.0 * state.zoom * user_scale;
+        let legend_width = state.metrics.legend_panel_width * user_scale;
+        let legend_height = state.metrics.legend_panel_height * user_scale;
+        let legend_x = (state.floor_x + state.floor_width + legend_margin)
+            .min((state.layout_width_px - legend_width).max(12.0))
+            .max(12.0);
+        let legend_y = state
+            .floor_y
+            .min((state.layout_height_px - legend_height).max(12.0))
+            .max(12.0);
+        Some(RectPrimitive::from_xywh(
+            legend_x,
+            legend_y,
+            legend_width,
+            legend_height,
+        ))
+    };
     state.svg_overlay_bounds = state.svg_path.as_ref().map(|_| {
         RectPrimitive::from_xywh(
             state.center_x - (state.floor_width / 2.0),

@@ -38,6 +38,29 @@ fn choreography_settings_ui_draw_handles_choreo_info_inputs() {
 }
 
 #[test]
+fn selected_scene_section_renders_even_without_selected_scene() {
+    let mut state = create_state();
+    state.has_selected_scene = false;
+
+    let context = egui::Context::default();
+    let output = context.run(egui::RawInput::default(), |ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let _ = crate::choreography_settings::ui::draw(ui, &state);
+        });
+    });
+
+    let mut found_selected_scene_heading = false;
+    for clipped in output.shapes {
+        if format!("{:?}", clipped.shape).contains("Selected Scene") {
+            found_selected_scene_heading = true;
+            break;
+        }
+    }
+
+    assert!(found_selected_scene_heading);
+}
+
+#[test]
 fn selected_scene_controls_enabled_matches_scene_selection_state() {
     let mut state = create_state();
     state.has_selected_scene = false;

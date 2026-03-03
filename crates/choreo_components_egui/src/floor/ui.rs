@@ -122,32 +122,47 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
         );
         painter.rect_filled(overlay, 0.0, ui.visuals().faint_bg_color);
     }
-    if !state.legend_entries.is_empty() {
-        let legend_width = (state.floor_width * 0.25) as f32;
-        let legend_height = ((state.legend_entries.len() as f32) * 24.0 + 24.0).max(48.0);
-        let legend_rect = Rect::from_min_size(
-            to_screen_point(Point::new(
-                state.floor_x + state.floor_width - f64::from(legend_width) - 12.0,
-                state.floor_y + 12.0,
-            )),
-            egui::vec2(legend_width, legend_height),
+    if let Some(legend_panel_rect) = state.legend_panel_rect {
+        let legend_rect = to_screen_rect(
+            legend_panel_rect.x,
+            legend_panel_rect.y,
+            legend_panel_rect.width,
+            legend_panel_rect.height,
         );
         painter.rect_filled(
             legend_rect,
             6.0,
             ui.visuals().widgets.noninteractive.bg_fill,
         );
+        painter.rect_stroke(
+            legend_rect,
+            6.0,
+            egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
+            egui::StrokeKind::Middle,
+        );
+        let user_scale = state.transformation_matrix.scale_x.max(0.1) as f32;
+        let row_height = (24.0 * user_scale).max(12.0);
+        let text_x =
+            legend_rect.left() + state.metrics.legend_first_row_offset_x as f32 * user_scale;
+        let square_x =
+            legend_rect.left() + state.metrics.legend_first_square_offset_x as f32 * user_scale;
+        let start_y =
+            legend_rect.top() + state.metrics.legend_first_row_offset_y as f32 * user_scale;
         for (index, entry) in state.legend_entries.iter().enumerate() {
-            let y = legend_rect.top() + 12.0 + index as f32 * 24.0;
+            let y = start_y + index as f32 * row_height;
             let color = egui::Color32::from_rgba_unmultiplied(
                 entry.color[0],
                 entry.color[1],
                 entry.color[2],
                 entry.color[3],
             );
-            painter.circle_filled(egui::pos2(legend_rect.left() + 10.0, y + 6.0), 5.0, color);
+            painter.circle_filled(
+                egui::pos2(square_x, y + 6.0 * user_scale),
+                6.0 * user_scale,
+                color,
+            );
             painter.text(
-                egui::pos2(legend_rect.left() + 24.0, y),
+                egui::pos2(text_x, y),
                 egui::Align2::LEFT_TOP,
                 &entry.label,
                 egui::TextStyle::Body.resolve(ui.style()),

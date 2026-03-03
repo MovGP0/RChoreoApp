@@ -38,10 +38,8 @@ pub fn draw(ui: &mut Ui, state: &ChoreographySettingsState) -> Vec<ChoreographyS
     draw_floor_section(ui, state, locale, &mut actions);
     ui.separator();
     draw_display_section(ui, state, locale, &mut actions);
-    if state.has_selected_scene {
-        ui.separator();
-        draw_selected_scene_section(ui, state, locale, &mut actions);
-    }
+    ui.separator();
+    draw_selected_scene_section(ui, state, locale, &mut actions);
 
     actions
 }

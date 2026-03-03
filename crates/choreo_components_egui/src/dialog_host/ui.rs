@@ -54,16 +54,32 @@ pub fn draw_dialog_host(
         .fixed_pos(host_rect.min)
         .show(ui.ctx(), |ui| {
             let overlay_rect = Rect::from_min_size(Pos2::ZERO, host_rect.size());
-            let response = ui.allocate_rect(overlay_rect, Sense::click());
+            let _response = ui.allocate_rect(overlay_rect, Sense::click());
             ui.painter()
                 .rect_filled(overlay_rect, 0.0, props.overlay_color);
 
-            if !props.close_on_click_away || !response.clicked() {
+            if !props.close_on_click_away {
                 return false;
             }
 
-            let pointer_pos = ui.input(|input| input.pointer.interact_pos());
-            pointer_pos.is_some_and(|position| !local_panel_rect.contains(position))
+            let pointer_release_pos = ui.input(|input| {
+                input.events.iter().rev().find_map(|event| {
+                    if let egui::Event::PointerButton {
+                        pos,
+                        button: egui::PointerButton::Primary,
+                        pressed: false,
+                        ..
+                    } = event
+                    {
+                        return Some(*pos);
+                    }
+                    None
+                })
+            });
+
+            pointer_release_pos.is_some_and(|position| {
+                overlay_rect.contains(position) && !local_panel_rect.contains(position)
+            })
         })
         .inner;
 

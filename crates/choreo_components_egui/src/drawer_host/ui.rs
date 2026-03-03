@@ -9,6 +9,7 @@ use super::state::DrawerHostState;
 #[derive(Debug, Clone, Copy)]
 pub struct DrawerHostLayout {
     pub content_rect: Rect,
+    pub overlay_rect: Rect,
     pub panel_rect: Rect,
     pub left_panel_rect: Rect,
     pub right_panel_rect: Rect,
@@ -42,29 +43,43 @@ pub fn compute_layout(container_rect: Rect, state: &DrawerHostState) -> DrawerHo
     let panel_min = pos2(container_rect.min.x, container_rect.min.y + state.top_inset);
     let panel_rect = Rect::from_min_max(panel_min, container_rect.max);
 
+    let left_x = if state.inline_left || state.is_left_open {
+        panel_rect.min.x
+    } else {
+        panel_rect.min.x - state.left_drawer_width
+    };
     let left_panel_rect = Rect::from_min_size(
-        panel_rect.min,
+        pos2(left_x, panel_rect.min.y),
         egui::vec2(state.left_drawer_width, panel_rect.height()),
     );
 
-    let right_min = pos2(
-        panel_rect.max.x - state.right_drawer_width,
-        panel_rect.min.y,
-    );
+    let right_x = if state.is_right_open {
+        panel_rect.max.x - state.right_drawer_width
+    } else {
+        panel_rect.max.x
+    };
+    let right_min = pos2(right_x, panel_rect.min.y);
     let right_panel_rect = Rect::from_min_size(
         right_min,
         egui::vec2(state.right_drawer_width, panel_rect.height()),
     );
 
+    let top_y = if state.is_top_open {
+        panel_rect.min.y
+    } else {
+        panel_rect.min.y - state.top_drawer_height
+    };
     let top_panel_rect = Rect::from_min_size(
-        panel_rect.min,
+        pos2(panel_rect.min.x, top_y),
         egui::vec2(panel_rect.width(), state.top_drawer_height),
     );
 
-    let bottom_min = pos2(
-        panel_rect.min.x,
-        panel_rect.max.y - state.bottom_drawer_height,
-    );
+    let bottom_y = if state.is_bottom_open {
+        panel_rect.max.y - state.bottom_drawer_height
+    } else {
+        panel_rect.max.y
+    };
+    let bottom_min = pos2(panel_rect.min.x, bottom_y);
     let bottom_panel_rect = Rect::from_min_size(
         bottom_min,
         egui::vec2(panel_rect.width(), state.bottom_drawer_height),
@@ -72,6 +87,7 @@ pub fn compute_layout(container_rect: Rect, state: &DrawerHostState) -> DrawerHo
 
     DrawerHostLayout {
         content_rect,
+        overlay_rect: container_rect,
         panel_rect,
         left_panel_rect,
         right_panel_rect,
@@ -90,11 +106,11 @@ pub fn draw(ui: &mut Ui, state: &DrawerHostState) -> Vec<DrawerHostAction> {
 
     if overlay_visible(state) {
         let response = ui.interact(
-            layout.panel_rect,
+            layout.overlay_rect,
             ui.id().with("drawer_host_overlay"),
             Sense::click(),
         );
-        painter.rect_filled(layout.panel_rect, 0.0, state.overlay_color);
+        painter.rect_filled(layout.overlay_rect, 0.0, state.overlay_color);
         if response.clicked() {
             actions.push(DrawerHostAction::OverlayClicked);
         }

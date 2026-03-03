@@ -1,3 +1,4 @@
+#[allow(dead_code, unused_imports)]
 #[path = "../../src/floor/mod.rs"]
 pub mod floor_component;
 

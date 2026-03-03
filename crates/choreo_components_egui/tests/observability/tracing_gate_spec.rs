@@ -43,6 +43,6 @@ fn tracing_gate_spec() {
     });
 
     let report = run_suite(&suite);
-    set_tracing_enabled(true);
+    set_tracing_enabled(false);
     assert!(report.is_success());
 }
