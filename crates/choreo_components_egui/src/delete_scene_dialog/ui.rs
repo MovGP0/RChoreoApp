@@ -68,11 +68,8 @@ pub fn draw_delete_scene_dialog(
         ui.horizontal(|ui| {
             let swatch_size = vec2(12.0, 12.0);
             let (rect, _) = ui.allocate_exact_size(swatch_size, Sense::hover());
-            ui.painter().rect_filled(
-                rect,
-                CornerRadius::same(6),
-                view_model.scene_color,
-            );
+            ui.painter()
+                .rect_filled(rect, CornerRadius::same(6), view_model.scene_color);
             ui.label(view_model.scene_name);
         });
         ui.label(view_model.message_text);

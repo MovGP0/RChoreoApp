@@ -90,3 +90,20 @@ fn scene_timestamp_controls_enabled_requires_selected_scene_and_timestamp() {
     state.scene_has_timestamp = true;
     assert!(crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state));
 }
+
+#[test]
+fn floor_size_maximum_uses_last_floor_option_like_slint_card() {
+    let mut state = create_state();
+    state.floor_size_options = vec![12, 24, 36, 48];
+
+    assert_eq!(
+        crate::choreography_settings::ui::floor_size_maximum(&state),
+        48
+    );
+
+    state.floor_size_options.clear();
+    assert_eq!(
+        crate::choreography_settings::ui::floor_size_maximum(&state),
+        100
+    );
+}

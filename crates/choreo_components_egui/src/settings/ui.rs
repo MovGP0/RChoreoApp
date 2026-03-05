@@ -2,6 +2,7 @@ use egui::Color32;
 use egui::Ui;
 use egui_material3::MaterialIconButton;
 
+use crate::ui_style::material_style_metrics::material_style_metrics;
 use crate::ui_style::typography;
 use crate::ui_style::typography::TypographyRole;
 
@@ -18,7 +19,8 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
     let mut actions: Vec<SettingsAction> = Vec::new();
     let strings = settings_translations("en");
 
-    ui.spacing_mut().item_spacing = egui::vec2(12.0, 12.0);
+    let spacing = content_spacing_token();
+    ui.spacing_mut().item_spacing = egui::vec2(spacing, spacing);
     ui.horizontal(|ui| {
         if ui
             .add(
@@ -160,6 +162,11 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
 #[must_use]
 pub const fn page_title_role() -> TypographyRole {
     TypographyRole::HeadlineSmall
+}
+
+#[must_use]
+pub const fn content_spacing_token() -> f32 {
+    material_style_metrics().spacings.spacing_12
 }
 
 #[must_use]

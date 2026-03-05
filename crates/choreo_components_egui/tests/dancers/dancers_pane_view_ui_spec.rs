@@ -1,5 +1,6 @@
 use crate::dancers;
 use crate::dancers::Report;
+use choreo_components_egui::ui_style::typography::TypographyRole;
 
 #[test]
 fn dancers_pane_view_ui_spec() {
@@ -41,11 +42,21 @@ fn dancers_pane_view_ui_spec() {
             assert_eq!(selected_index, Some(1));
         });
 
+        spec.it("uses title-medium typography for the pane title", |_| {
+            assert_eq!(
+                dancers::dancers_pane_view::ui::title_role(),
+                TypographyRole::TitleMedium
+            );
+        });
+
         spec.it("maps pane select action to dancers select action", |_| {
             let action = dancers::ui::map_pane_action(
                 dancers::dancers_pane_view::ui::DancersPaneViewAction::SelectDancer { index: 3 },
             );
-            assert_eq!(action, dancers::actions::DancersAction::SelectDancer { index: 3 });
+            assert_eq!(
+                action,
+                dancers::actions::DancersAction::SelectDancer { index: 3 }
+            );
         });
 
         spec.it("maps pane add action to dancers add action", |_| {
@@ -59,7 +70,10 @@ fn dancers_pane_view_ui_spec() {
             let action = dancers::ui::map_pane_action(
                 dancers::dancers_pane_view::ui::DancersPaneViewAction::DeleteDancer,
             );
-            assert_eq!(action, dancers::actions::DancersAction::DeleteSelectedDancer);
+            assert_eq!(
+                action,
+                dancers::actions::DancersAction::DeleteSelectedDancer
+            );
         });
     });
 

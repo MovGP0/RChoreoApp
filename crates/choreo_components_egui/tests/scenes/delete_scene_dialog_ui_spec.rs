@@ -1,8 +1,9 @@
 use super::state::SceneItemState;
 use super::state::ScenesState;
+use super::ui::delete_scene_dialog_scene;
+use super::ui::draw;
 use crate::delete_scene_dialog::ui::DeleteSceneDialogAction;
 use crate::delete_scene_dialog::ui::build_delete_scene_dialog_view_model;
-use super::ui::draw;
 use crate::delete_scene_dialog::ui::draw_delete_scene_dialog;
 
 #[test]
@@ -28,6 +29,20 @@ fn delete_scene_dialog_view_model_formats_message_with_scene_name() {
 }
 
 #[test]
+fn delete_scene_dialog_view_model_uses_default_name_when_scene_name_is_blank() {
+    let scene = SceneItemState::new(
+        choreo_master_mobile_json::SceneId(9),
+        "   ",
+        choreo_master_mobile_json::Color::transparent(),
+    );
+
+    let view_model = build_delete_scene_dialog_view_model(&scene, "en");
+
+    assert_eq!(view_model.scene_name, "this scene");
+    assert_eq!(view_model.message_text, "Delete scene \"this scene\"?");
+}
+
+#[test]
 fn scenes_ui_draw_and_delete_dialog_render_without_panicking() {
     let context = egui::Context::default();
     let state = ScenesState {
@@ -37,6 +52,11 @@ fn scenes_ui_draw_and_delete_dialog_render_without_panicking() {
             choreo_master_mobile_json::Color::transparent(),
         )),
         show_delete_scene_dialog: true,
+        delete_scene_dialog_scene: Some(SceneItemState::new(
+            choreo_master_mobile_json::SceneId(8),
+            "Outro",
+            choreo_master_mobile_json::Color::transparent(),
+        )),
         ..ScenesState::default()
     };
 
@@ -71,4 +91,27 @@ fn draw_delete_scene_dialog_returns_no_action_without_click() {
             assert_eq!(action, None);
         });
     });
+}
+
+#[test]
+fn delete_scene_dialog_uses_captured_scene_snapshot() {
+    let state = ScenesState {
+        selected_scene: Some(SceneItemState::new(
+            choreo_master_mobile_json::SceneId(10),
+            "Current",
+            choreo_master_mobile_json::Color::transparent(),
+        )),
+        show_delete_scene_dialog: true,
+        delete_scene_dialog_scene: Some(SceneItemState::new(
+            choreo_master_mobile_json::SceneId(11),
+            "Captured",
+            choreo_master_mobile_json::Color::transparent(),
+        )),
+        ..ScenesState::default()
+    };
+
+    assert_eq!(
+        delete_scene_dialog_scene(&state).map(|scene| scene.name.as_str()),
+        Some("Captured")
+    );
 }

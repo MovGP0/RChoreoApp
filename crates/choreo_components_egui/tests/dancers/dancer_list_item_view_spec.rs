@@ -5,6 +5,7 @@ use egui::vec2;
 
 use crate::dancers;
 use crate::dancers::Report;
+use choreo_components_egui::ui_style::typography::TypographyRole;
 
 #[test]
 fn dancer_list_item_view_spec() {
@@ -17,6 +18,17 @@ fn dancer_list_item_view_spec() {
             let details = dancers::dancer_list_item_view::role_details_text(&dancer);
 
             assert_eq!(details, "Lead (2)  [A]");
+        });
+
+        spec.it("uses body-medium typography for the primary label", |_| {
+            assert_eq!(
+                dancers::dancer_list_item_view::title_role(),
+                TypographyRole::BodyMedium
+            );
+            assert_eq!(
+                dancers::dancer_list_item_view::subtitle_role(),
+                TypographyRole::BodySmall
+            );
         });
 
         spec.it("computes row geometry using slint offsets", |_| {
@@ -46,7 +58,7 @@ fn dancer_list_item_view_spec() {
 
             assert_eq!(selected.background, visuals.selection.bg_fill);
             assert_eq!(selected.border, visuals.selection.stroke.color);
-            assert_eq!(selected.title, visuals.selection.stroke.color);
+            assert_eq!(selected.title, visuals.strong_text_color());
             assert_eq!(selected.subtitle, visuals.weak_text_color());
             assert_eq!(unselected.background, visuals.extreme_bg_color);
             assert_eq!(

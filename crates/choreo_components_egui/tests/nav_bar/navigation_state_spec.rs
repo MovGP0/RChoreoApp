@@ -37,6 +37,17 @@ fn settings_and_audio_state_changes_are_applied() {
 
     reduce(
         &mut state,
+        NavBarAction::SetFloorSvgOverlayOpened { is_open: true },
+    );
+    assert!(state.is_floor_svg_overlay_open);
+    reduce(
+        &mut state,
+        NavBarAction::SetFloorSvgOverlayOpened { is_open: false },
+    );
+    assert!(!state.is_floor_svg_overlay_open);
+
+    reduce(
+        &mut state,
         NavBarAction::SetModeSelectionEnabled { enabled: false },
     );
     assert!(!state.is_mode_selection_enabled);

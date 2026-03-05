@@ -1,5 +1,8 @@
 use std::time::Duration;
 
+use egui::Context;
+use egui::Id;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CubicBezierEasing {
     p1x: f32,
@@ -86,6 +89,47 @@ impl CubicBezierEasing {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MaterialAnimation {
+    Emphasized,
+    EmphasizedDecelerate,
+    EmphasizedAccelerate,
+    StandardDecelerate,
+    StandardAccelerate,
+    StandardFast,
+    Ripple,
+    Opacity,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct MaterialAnimationSpec {
+    pub duration: Duration,
+    pub easing: CubicBezierEasing,
+}
+
+impl MaterialAnimationSpec {
+    pub const fn new(duration: Duration, easing: CubicBezierEasing) -> Self {
+        Self { duration, easing }
+    }
+
+    #[must_use]
+    pub fn sample(self, time_fraction: f32) -> f32 {
+        self.easing.sample(time_fraction)
+    }
+
+    #[must_use]
+    pub fn animate_bool(self, ctx: &Context, id: Id, value: bool) -> f32 {
+        let progress = ctx.animate_bool_with_time(id, value, self.duration.as_secs_f32());
+        self.sample(progress)
+    }
+
+    #[must_use]
+    pub fn animate_value(self, ctx: &Context, id: Id, value: f32) -> f32 {
+        let progress = ctx.animate_value_with_time(id, value, self.duration.as_secs_f32());
+        self.sample(progress)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MaterialAnimations;
 
 impl MaterialAnimations {
@@ -104,4 +148,38 @@ impl MaterialAnimations {
 
     pub const OPACITY_EASING: CubicBezierEasing = CubicBezierEasing::new(0.25, 0.1, 0.25, 1.0);
     pub const OPACITY_DURATION: Duration = Duration::from_millis(250);
+
+    #[must_use]
+    pub const fn spec(animation: MaterialAnimation) -> MaterialAnimationSpec {
+        match animation {
+            MaterialAnimation::Emphasized => {
+                MaterialAnimationSpec::new(Self::EMPHASIZED_DURATION, Self::EMPHASIZED_EASING)
+            }
+            MaterialAnimation::EmphasizedDecelerate => MaterialAnimationSpec::new(
+                Self::EMPHASIZED_DECELERATE_DURATION,
+                Self::EMPHASIZED_EASING,
+            ),
+            MaterialAnimation::EmphasizedAccelerate => MaterialAnimationSpec::new(
+                Self::EMPHASIZED_ACCELERATE_DURATION,
+                Self::EMPHASIZED_EASING,
+            ),
+            MaterialAnimation::StandardDecelerate => MaterialAnimationSpec::new(
+                Self::STANDARD_DECELERATE_DURATION,
+                Self::STANDARD_EASING,
+            ),
+            MaterialAnimation::StandardAccelerate => MaterialAnimationSpec::new(
+                Self::STANDARD_ACCELERATE_DURATION,
+                Self::STANDARD_EASING,
+            ),
+            MaterialAnimation::StandardFast => {
+                MaterialAnimationSpec::new(Self::STANDARD_FAST_DURATION, Self::STANDARD_EASING)
+            }
+            MaterialAnimation::Ripple => {
+                MaterialAnimationSpec::new(Self::RIPPLE_DURATION, Self::RIPPLE_EASING)
+            }
+            MaterialAnimation::Opacity => {
+                MaterialAnimationSpec::new(Self::OPACITY_DURATION, Self::OPACITY_EASING)
+            }
+        }
+    }
 }

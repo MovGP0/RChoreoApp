@@ -61,6 +61,7 @@ pub struct ScenesState {
     pub pending_open_audio: Option<String>,
     pub close_audio_requested: bool,
     pub delete_scene_requested: bool,
+    pub delete_scene_requested_scene_id: Option<SceneId>,
     pub reload_requested: bool,
     pub redraw_floor_requested: bool,
     pub selected_scene_changed: bool,
@@ -70,6 +71,7 @@ pub struct ScenesState {
     pub selected_scene_fixed_positions: bool,
     pub selected_scene_timestamp_text: String,
     pub selected_scene_color: Color,
+    pub delete_scene_dialog_scene: Option<SceneItemState>,
 }
 
 impl ScenesState {
@@ -77,6 +79,7 @@ impl ScenesState {
         self.pending_open_audio = None;
         self.close_audio_requested = false;
         self.delete_scene_requested = false;
+        self.delete_scene_requested_scene_id = None;
         self.reload_requested = false;
         self.redraw_floor_requested = false;
         self.selected_scene_changed = false;

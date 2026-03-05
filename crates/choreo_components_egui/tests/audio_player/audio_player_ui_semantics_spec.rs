@@ -1,9 +1,9 @@
-use crate::audio_player::audio_player_component::ui::denormalize_speed_from_slider_value;
-use crate::audio_player::audio_player_component::ui::link_icon_name;
-use crate::audio_player::audio_player_component::ui::link_icon_svg;
-use crate::audio_player::audio_player_component::ui::normalize_speed_to_slider_value;
-use crate::audio_player::audio_player_component::ui::play_pause_icon_label;
-use crate::audio_player::audio_player_component::ui::play_pause_icon_svg;
+use choreo_components_egui::audio_player::ui::denormalize_speed_from_slider_value;
+use choreo_components_egui::audio_player::ui::link_icon_name;
+use choreo_components_egui::audio_player::ui::link_icon_svg;
+use choreo_components_egui::audio_player::ui::normalize_speed_to_slider_value;
+use choreo_components_egui::audio_player::ui::play_pause_icon_label;
+use choreo_components_egui::audio_player::ui::play_pause_icon_svg;
 
 #[test]
 fn speed_normalization_round_trips_between_slider_and_speed_range() {

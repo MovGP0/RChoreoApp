@@ -9,10 +9,14 @@ pub mod state;
 pub mod types;
 pub mod ui;
 
+pub use crate::haptics::HapticFeedback;
+pub use crate::haptics::NoopHapticFeedback;
+pub use crate::haptics::PlatformHapticFeedback;
 pub use audio_player_actor::create_platform_audio_player;
 pub use audio_player_backend::AudioPlayerBackend;
 pub use audio_player_behaviors::AudioPlayerBehaviorDependencies;
 pub use audio_player_behaviors::AudioPlayerBehaviorPipeline;
+pub use audio_player_behaviors::AudioPlayerHapticFeedback;
 pub use audio_player_behaviors::build_audio_player_behaviors;
 pub use messages::AudioPlayerPositionChangedEvent;
 pub use messages::CloseAudioFileCommand;

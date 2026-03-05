@@ -1,6 +1,6 @@
-use crate::audio_player::audio_player_component::actions::AudioPlayerAction;
-use crate::audio_player::audio_player_component::reducer::reduce;
-use crate::audio_player::audio_player_component::state::AudioPlayerState;
+use choreo_components_egui::audio_player::actions::AudioPlayerAction;
+use choreo_components_egui::audio_player::reducer::reduce;
+use choreo_components_egui::audio_player::state::AudioPlayerState;
 
 #[test]
 fn close_audio_file_resets_player_state() {

@@ -85,7 +85,7 @@ pub fn draw(ui: &mut Ui, dancer: &DancerState, is_selected: bool) -> Response {
 
 #[must_use]
 pub const fn title_role() -> TypographyRole {
-    TypographyRole::TitleSmall
+    TypographyRole::BodyMedium
 }
 
 #[must_use]
@@ -119,7 +119,7 @@ pub fn colors_for_selection(visuals: &egui::Visuals, is_selected: bool) -> Dance
         (
             visuals.selection.bg_fill,
             visuals.selection.stroke.color,
-            visuals.selection.stroke.color,
+            visuals.strong_text_color(),
         )
     } else {
         (

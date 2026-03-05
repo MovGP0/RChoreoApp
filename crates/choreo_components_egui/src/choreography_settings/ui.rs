@@ -1,16 +1,15 @@
 use egui::Color32;
-use egui::DragValue;
 use egui::RichText;
 use egui::Ui;
 use egui_material3::MaterialSelect;
-use egui_material3::MaterialSlider;
 use egui_material3::MaterialSwitch;
 
-use choreo_master_mobile_json::Color;
 use crate::choreo_info::messages::ChoreoInfoAction;
 use crate::choreo_info::state::ChoreoDate;
 use crate::choreo_info::state::ChoreoInfoState;
 use crate::choreo_info::ui::ChoreoInfoLabels;
+use crate::number_picker::ui::NumberPickerUiState;
+use choreo_master_mobile_json::Color;
 
 use super::actions::ChoreographySettingsAction;
 use super::actions::UpdateSelectedSceneAction;
@@ -57,6 +56,11 @@ pub fn scene_timestamp_controls_enabled(state: &ChoreographySettingsState) -> bo
     state.has_selected_scene && state.scene_has_timestamp
 }
 
+#[must_use]
+pub fn floor_size_maximum(state: &ChoreographySettingsState) -> i32 {
+    state.floor_size_options.last().copied().unwrap_or(100)
+}
+
 fn draw_choreography_section(
     ui: &mut Ui,
     state: &ChoreographySettingsState,
@@ -87,28 +91,59 @@ fn draw_floor_section(
     actions: &mut Vec<ChoreographySettingsAction>,
 ) {
     ui.label(RichText::new(ChoreographySettingsTranslations::floor(locale)).strong());
-    ui.horizontal(|ui| {
-        ui.label(ChoreographySettingsTranslations::floor_front(locale));
-        let mut front = state.floor_front;
-        if ui.add(DragValue::new(&mut front).range(1..=100)).changed() {
-            actions.push(ChoreographySettingsAction::UpdateFloorFront(front));
-        }
-        ui.label(ChoreographySettingsTranslations::floor_back(locale));
-        let mut back = state.floor_back;
-        if ui.add(DragValue::new(&mut back).range(1..=100)).changed() {
-            actions.push(ChoreographySettingsAction::UpdateFloorBack(back));
-        }
-        ui.label(ChoreographySettingsTranslations::floor_left(locale));
-        let mut left = state.floor_left;
-        if ui.add(DragValue::new(&mut left).range(1..=100)).changed() {
-            actions.push(ChoreographySettingsAction::UpdateFloorLeft(left));
-        }
-        ui.label(ChoreographySettingsTranslations::floor_right(locale));
-        let mut right = state.floor_right;
-        if ui.add(DragValue::new(&mut right).range(1..=100)).changed() {
-            actions.push(ChoreographySettingsAction::UpdateFloorRight(right));
-        }
-    });
+    let floor_maximum = floor_size_maximum(state);
+    if let Some(front) = crate::number_picker::ui::draw(
+        ui,
+        NumberPickerUiState {
+            label: &ChoreographySettingsTranslations::floor_front(locale),
+            value: state.floor_front,
+            minimum: 1,
+            maximum: floor_maximum,
+            step: 1,
+            enabled: true,
+        },
+    ) {
+        actions.push(ChoreographySettingsAction::UpdateFloorFront(front));
+    }
+    if let Some(back) = crate::number_picker::ui::draw(
+        ui,
+        NumberPickerUiState {
+            label: &ChoreographySettingsTranslations::floor_back(locale),
+            value: state.floor_back,
+            minimum: 1,
+            maximum: floor_maximum,
+            step: 1,
+            enabled: true,
+        },
+    ) {
+        actions.push(ChoreographySettingsAction::UpdateFloorBack(back));
+    }
+    if let Some(left) = crate::number_picker::ui::draw(
+        ui,
+        NumberPickerUiState {
+            label: &ChoreographySettingsTranslations::floor_left(locale),
+            value: state.floor_left,
+            minimum: 1,
+            maximum: floor_maximum,
+            step: 1,
+            enabled: true,
+        },
+    ) {
+        actions.push(ChoreographySettingsAction::UpdateFloorLeft(left));
+    }
+    if let Some(right) = crate::number_picker::ui::draw(
+        ui,
+        NumberPickerUiState {
+            label: &ChoreographySettingsTranslations::floor_right(locale),
+            value: state.floor_right,
+            minimum: 1,
+            maximum: floor_maximum,
+            step: 1,
+            enabled: true,
+        },
+    ) {
+        actions.push(ChoreographySettingsAction::UpdateFloorRight(right));
+    }
 
     ui.label(ChoreographySettingsTranslations::floor_color(locale));
     let mut floor_color = to_color32(&state.floor_color);
@@ -147,23 +182,12 @@ fn draw_display_section(
         ));
     }
 
-    let mut transparency = state.transparency as f32;
-    ui.label(format!(
-        "{}: {}",
-        ChoreographySettingsTranslations::transparency(locale),
-        transparency_percentage_text(f64::from(transparency)).replace("Transparency: ", ""),
-    ));
-    if ui
-        .add(
-            MaterialSlider::new(&mut transparency, 0.0..=1.0)
-                .show_value(false)
-                .width(240.0),
-        )
-        .changed()
-    {
-        actions.push(ChoreographySettingsAction::UpdateTransparency(f64::from(
-            transparency,
-        )));
+    if let Some(action) = crate::choreo_info::ui::draw_transparency(
+        ui,
+        state.transparency,
+        &ChoreographySettingsTranslations::transparency(locale),
+    ) {
+        actions.push(map_choreo_info_action(action));
     }
 
     render_toggle_switch(
@@ -269,21 +293,51 @@ fn draw_selected_scene_section(
             let mut minutes = state.scene_timestamp_minutes;
             let mut seconds = state.scene_timestamp_seconds_part;
             let mut millis = state.scene_timestamp_millis;
-            let mut timestamp_parts_changed = false;
-            ui.horizontal(|ui| {
-                ui.label(ChoreographySettingsTranslations::timestamp_minutes(locale));
-                timestamp_parts_changed |= ui
-                    .add(DragValue::new(&mut minutes).range(0..=1440))
-                    .changed();
-                ui.label(ChoreographySettingsTranslations::timestamp_seconds(locale));
-                timestamp_parts_changed |=
-                    ui.add(DragValue::new(&mut seconds).range(0..=59)).changed();
-                ui.label(ChoreographySettingsTranslations::timestamp_millis(locale));
-                timestamp_parts_changed |=
-                    ui.add(DragValue::new(&mut millis).range(0..=999)).changed();
-            });
-            if timestamp_parts_changed {
-                let millis = (millis / 10) * 10;
+
+            if let Some(next_minutes) = crate::number_picker::ui::draw(
+                ui,
+                NumberPickerUiState {
+                    label: &ChoreographySettingsTranslations::timestamp_minutes(locale),
+                    value: minutes,
+                    minimum: 0,
+                    maximum: 1440,
+                    step: 1,
+                    enabled: true,
+                },
+            ) {
+                minutes = next_minutes;
+            }
+            if let Some(next_seconds) = crate::number_picker::ui::draw(
+                ui,
+                NumberPickerUiState {
+                    label: &ChoreographySettingsTranslations::timestamp_seconds(locale),
+                    value: seconds,
+                    minimum: 0,
+                    maximum: 59,
+                    step: 1,
+                    enabled: true,
+                },
+            ) {
+                seconds = next_seconds;
+            }
+            if let Some(next_millis) = crate::number_picker::ui::draw(
+                ui,
+                NumberPickerUiState {
+                    label: &ChoreographySettingsTranslations::timestamp_millis(locale),
+                    value: millis,
+                    minimum: 0,
+                    maximum: 999,
+                    step: 10,
+                    enabled: true,
+                },
+            ) {
+                millis = next_millis;
+            }
+
+            if minutes != state.scene_timestamp_minutes
+                || seconds != state.scene_timestamp_seconds_part
+                || millis != state.scene_timestamp_millis
+            {
                 let total = (minutes as f64 * 60.0) + (seconds as f64) + (millis as f64 / 1000.0);
                 actions.push(ChoreographySettingsAction::UpdateSelectedScene(
                     UpdateSelectedSceneAction::SceneTimestamp {
@@ -354,7 +408,9 @@ fn map_choreo_info_action(action: ChoreoInfoAction) -> ChoreographySettingsActio
     match action {
         ChoreoInfoAction::UpdateComment(value) => ChoreographySettingsAction::UpdateComment(value),
         ChoreoInfoAction::UpdateName(value) => ChoreographySettingsAction::UpdateName(value),
-        ChoreoInfoAction::UpdateSubtitle(value) => ChoreographySettingsAction::UpdateSubtitle(value),
+        ChoreoInfoAction::UpdateSubtitle(value) => {
+            ChoreographySettingsAction::UpdateSubtitle(value)
+        }
         ChoreoInfoAction::UpdateDate { year, month, day } => {
             ChoreographySettingsAction::UpdateDate { year, month, day }
         }
@@ -364,6 +420,9 @@ fn map_choreo_info_action(action: ChoreoInfoAction) -> ChoreographySettingsActio
         ChoreoInfoAction::UpdateAuthor(value) => ChoreographySettingsAction::UpdateAuthor(value),
         ChoreoInfoAction::UpdateDescription(value) => {
             ChoreographySettingsAction::UpdateDescription(value)
+        }
+        ChoreoInfoAction::UpdateTransparency(value) => {
+            ChoreographySettingsAction::UpdateTransparency(value)
         }
     }
 }

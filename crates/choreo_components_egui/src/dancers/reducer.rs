@@ -74,7 +74,7 @@ pub fn reduce(state: &mut DancersState, action: DancersAction) {
             if !state.can_swap_dancers {
                 return;
             }
-            state.dialog_content = Some(build_swap_dialog_content(state));
+            state.dialog_content = Some("swap_dancers".to_string());
             state.is_dialog_open = true;
         }
         DancersAction::ConfirmSwapDancers => {
@@ -93,27 +93,10 @@ pub fn reduce(state: &mut DancersState, action: DancersAction) {
             state.dialog_content = None;
         }
         DancersAction::Cancel => {
-            state.is_dialog_open = false;
-            state.dialog_content = None;
+            // Page-level cancel is handled by outer navigation; dialog dismissal uses HideDialog.
         }
         DancersAction::SaveToGlobal => save_to_global(state),
     }
-}
-
-fn build_swap_dialog_content(state: &DancersState) -> String {
-    let from_name = state
-        .swap_from_dancer
-        .as_ref()
-        .map(|dancer| dancer.name.as_str())
-        .filter(|name| !name.trim().is_empty())
-        .unwrap_or("?");
-    let to_name = state
-        .swap_to_dancer
-        .as_ref()
-        .map(|dancer| dancer.name.as_str())
-        .filter(|name| !name.trim().is_empty())
-        .unwrap_or("?");
-    format!("{from_name} <-> {to_name}")
 }
 
 fn load_from_global(state: &mut DancersState) {

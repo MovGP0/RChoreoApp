@@ -68,35 +68,36 @@ fn layout_state_spec() {
             },
         );
 
-        spec.it(
-            "computes host geometry from viewport and top inset",
-            |_| {
-                let state = MainPageDrawerHostState {
-                    left_drawer_width: 320.0,
-                    right_drawer_width: 480.0,
-                    top_inset: 84.0,
-                    inline_left: false,
-                    is_left_open: true,
-                    is_right_open: true,
-                    viewport_width: 1600.0,
-                    viewport_height: 900.0,
-                    ..MainPageDrawerHostState::default()
-                };
-                let host_rect = Rect::from_min_max(pos2(20.0, 30.0), pos2(1620.0, 930.0));
-                let layout = compute_layout(host_rect, &state);
+        spec.it("computes host geometry from viewport and top inset", |_| {
+            let state = MainPageDrawerHostState {
+                left_drawer_width: 320.0,
+                right_drawer_width: 480.0,
+                top_inset: 84.0,
+                inline_left: false,
+                is_left_open: true,
+                is_right_open: true,
+                viewport_width: 1600.0,
+                viewport_height: 900.0,
+                ..MainPageDrawerHostState::default()
+            };
+            let host_rect = Rect::from_min_max(pos2(20.0, 30.0), pos2(1620.0, 930.0));
+            let layout = compute_layout(host_rect, &state);
 
-                assert_eq!(layout.content_rect.left(), 20.0);
-                assert_eq!(layout.content_rect.top(), 114.0);
-                assert_eq!(layout.content_rect.width(), 1600.0);
-                assert_eq!(layout.content_rect.height(), 816.0);
-                assert_eq!(layout.panel_rect.left(), 20.0);
-                assert_eq!(layout.panel_rect.top(), 114.0);
-                assert_eq!(layout.left_panel_rect.left(), 20.0);
-                assert_eq!(layout.left_panel_rect.width(), 320.0);
-                assert_eq!(layout.right_panel_rect.left(), 1140.0);
-                assert_eq!(layout.right_panel_rect.width(), 480.0);
-            },
-        );
+            assert_eq!(layout.content_rect.left(), 20.0);
+            assert_eq!(layout.content_rect.top(), 114.0);
+            assert_eq!(layout.content_rect.width(), 1600.0);
+            assert_eq!(layout.content_rect.height(), 816.0);
+            assert_eq!(layout.overlay_rect.left(), 20.0);
+            assert_eq!(layout.overlay_rect.top(), 30.0);
+            assert_eq!(layout.overlay_rect.width(), 1600.0);
+            assert_eq!(layout.overlay_rect.height(), 900.0);
+            assert_eq!(layout.panel_rect.left(), 20.0);
+            assert_eq!(layout.panel_rect.top(), 114.0);
+            assert_eq!(layout.left_panel_rect.left(), 20.0);
+            assert_eq!(layout.left_panel_rect.width(), 320.0);
+            assert_eq!(layout.right_panel_rect.left(), 1140.0);
+            assert_eq!(layout.right_panel_rect.width(), 480.0);
+        });
     });
 
     let report = crate::main_page_drawer_host::run_suite(&suite);

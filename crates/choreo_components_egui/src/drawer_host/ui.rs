@@ -1,3 +1,6 @@
+use egui::Area;
+use egui::Id;
+use egui::Order;
 use egui::Rect;
 use egui::Sense;
 use egui::Ui;
@@ -98,35 +101,114 @@ pub fn compute_layout(container_rect: Rect, state: &DrawerHostState) -> DrawerHo
 
 #[must_use]
 pub fn draw(ui: &mut Ui, state: &DrawerHostState) -> Vec<DrawerHostAction> {
+    draw_with_slots(
+        ui,
+        "drawer_host",
+        state,
+        |_| {},
+        |_| {},
+        |_| {},
+        |_| {},
+        |_| {},
+    )
+}
+
+#[must_use]
+pub fn draw_with_slots(
+    ui: &mut Ui,
+    id_source: &str,
+    state: &DrawerHostState,
+    draw_content: impl FnOnce(&mut Ui),
+    draw_left_panel: impl FnOnce(&mut Ui),
+    draw_right_panel: impl FnOnce(&mut Ui),
+    draw_top_panel: impl FnOnce(&mut Ui),
+    draw_bottom_panel: impl FnOnce(&mut Ui),
+) -> Vec<DrawerHostAction> {
     let mut actions: Vec<DrawerHostAction> = Vec::new();
     let host_rect = ui.max_rect();
     let layout = compute_layout(host_rect, state);
-    let painter = ui.painter();
-    let _ = layout.content_rect;
+
+    Area::new(Id::new((id_source, "content")))
+        .order(Order::Middle)
+        .fixed_pos(layout.content_rect.min)
+        .show(ui.ctx(), |ui| {
+            ui.set_min_size(layout.content_rect.size());
+            draw_content(ui);
+        });
 
     if overlay_visible(state) {
-        let response = ui.interact(
-            layout.overlay_rect,
-            ui.id().with("drawer_host_overlay"),
-            Sense::click(),
-        );
-        painter.rect_filled(layout.overlay_rect, 0.0, state.overlay_color);
-        if response.clicked() {
+        let overlay_clicked = Area::new(Id::new((id_source, "overlay")))
+            .order(Order::Foreground)
+            .fixed_pos(layout.overlay_rect.min)
+            .show(ui.ctx(), |ui| {
+                let overlay_rect =
+                    Rect::from_min_size(egui::Pos2::ZERO, layout.overlay_rect.size());
+                let response = ui.allocate_rect(overlay_rect, Sense::click());
+                ui.painter()
+                    .rect_filled(overlay_rect, 0.0, state.overlay_color);
+                response.clicked()
+            })
+            .inner;
+        if overlay_clicked {
             actions.push(DrawerHostAction::OverlayClicked);
         }
     }
 
     if state.inline_left || state.is_left_open {
-        painter.rect_filled(layout.left_panel_rect, 0.0, state.drawer_background);
+        Area::new(Id::new((id_source, "left_panel")))
+            .order(Order::Foreground)
+            .fixed_pos(layout.left_panel_rect.min)
+            .show(ui.ctx(), |ui| {
+                ui.set_min_size(layout.left_panel_rect.size());
+                ui.painter().rect_filled(
+                    Rect::from_min_size(egui::Pos2::ZERO, layout.left_panel_rect.size()),
+                    0.0,
+                    state.drawer_background,
+                );
+                draw_left_panel(ui);
+            });
     }
     if state.is_right_open {
-        painter.rect_filled(layout.right_panel_rect, 0.0, state.drawer_background);
+        Area::new(Id::new((id_source, "right_panel")))
+            .order(Order::Foreground)
+            .fixed_pos(layout.right_panel_rect.min)
+            .show(ui.ctx(), |ui| {
+                ui.set_min_size(layout.right_panel_rect.size());
+                ui.painter().rect_filled(
+                    Rect::from_min_size(egui::Pos2::ZERO, layout.right_panel_rect.size()),
+                    0.0,
+                    state.drawer_background,
+                );
+                draw_right_panel(ui);
+            });
     }
     if state.is_top_open {
-        painter.rect_filled(layout.top_panel_rect, 0.0, state.drawer_background);
+        Area::new(Id::new((id_source, "top_panel")))
+            .order(Order::Foreground)
+            .fixed_pos(layout.top_panel_rect.min)
+            .show(ui.ctx(), |ui| {
+                ui.set_min_size(layout.top_panel_rect.size());
+                ui.painter().rect_filled(
+                    Rect::from_min_size(egui::Pos2::ZERO, layout.top_panel_rect.size()),
+                    0.0,
+                    state.drawer_background,
+                );
+                draw_top_panel(ui);
+            });
     }
     if state.is_bottom_open {
-        painter.rect_filled(layout.bottom_panel_rect, 0.0, state.drawer_background);
+        Area::new(Id::new((id_source, "bottom_panel")))
+            .order(Order::Foreground)
+            .fixed_pos(layout.bottom_panel_rect.min)
+            .show(ui.ctx(), |ui| {
+                ui.set_min_size(layout.bottom_panel_rect.size());
+                ui.painter().rect_filled(
+                    Rect::from_min_size(egui::Pos2::ZERO, layout.bottom_panel_rect.size()),
+                    0.0,
+                    state.drawer_background,
+                );
+                draw_bottom_panel(ui);
+            });
     }
 
     actions

@@ -1,6 +1,6 @@
-use crate::audio_player::audio_player_component::actions::AudioPlayerAction;
-use crate::audio_player::audio_player_component::reducer::reduce;
-use crate::audio_player::audio_player_component::state::AudioPlayerState;
+use choreo_components_egui::audio_player::actions::AudioPlayerAction;
+use choreo_components_egui::audio_player::reducer::reduce;
+use choreo_components_egui::audio_player::state::AudioPlayerState;
 
 #[test]
 fn audio_player_view_state_restores_playback_after_drag_when_previously_playing() {
@@ -97,7 +97,7 @@ fn audio_player_reducer_and_ui_cover_core_action_paths() {
     let raw_input = egui::RawInput::default();
     let _ = context.run(raw_input, |ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {
-            let _ = crate::audio_player::audio_player_component::ui::draw(ui, &state);
+            let _ = choreo_components_egui::audio_player::ui::draw(ui, &state);
         });
     });
 }

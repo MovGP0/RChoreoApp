@@ -1,14 +1,12 @@
 use egui::Ui;
-use egui_material3::MaterialIconButton;
 
 use crate::dancers;
 use crate::dialog_host::ui::DialogHostProps;
 use crate::dialog_host::ui::dialog_metrics_tokens;
 use crate::dialog_host::ui::draw_dialog_host;
 use crate::main_page;
+use crate::settings;
 use crate::ui_style::material_style_metrics::material_style_metrics;
-use crate::ui_icons;
-use crate::ui_icons::UiIconKey;
 
 use super::actions::ChoreoMainAction;
 use super::state::ChoreoMainState;
@@ -42,7 +40,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
             ui.spacing_mut().item_spacing = egui::vec2(spacing, spacing);
 
             match state.content {
-                MainContent::Settings => draw_full_settings_page(ui, &mut actions),
+                MainContent::Settings => draw_full_settings_page(ui, state, &mut actions),
                 MainContent::Dancers => draw_full_dancers_page(ui, state, &mut actions),
                 MainContent::Main => {
                     actions.extend(main_page::ui::draw(ui, state));
@@ -58,16 +56,17 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     actions
 }
 
-fn draw_full_settings_page(ui: &mut Ui, actions: &mut Vec<ChoreoMainAction>) {
-    ui.heading("Settings");
-    let back_icon = ui_icons::icon(UiIconKey::SettingsNavigateBack);
-    if ui
-        .add(MaterialIconButton::standard(back_icon.token).svg_data(back_icon.svg))
-        .on_hover_text("Back")
-        .clicked()
-    {
-        actions.push(ChoreoMainAction::NavigateToMain);
-    }
+fn draw_full_settings_page(
+    ui: &mut Ui,
+    state: &ChoreoMainState,
+    actions: &mut Vec<ChoreoMainAction>,
+) {
+    let settings_actions = settings::ui::draw(ui, &state.settings_state);
+    actions.extend(
+        settings_actions
+            .into_iter()
+            .map(ChoreoMainAction::SettingsAction),
+    );
 }
 
 fn draw_full_dancers_page(

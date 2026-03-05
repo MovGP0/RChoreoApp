@@ -4,16 +4,14 @@ use super::reducer::reduce;
 use super::runtime::NavBarRuntimeHandlers;
 use super::runtime::dispatch_effects;
 use super::state::NavBarState;
+use crate::haptics::HapticFeedback;
 
-pub trait NavBarHapticFeedback {
-    fn is_supported(&self) -> bool;
-    fn perform_click(&self);
-}
+pub use crate::haptics::HapticFeedback as NavBarHapticFeedback;
 
 pub struct NavBarViewModel {
     pub state: NavBarState,
     runtime_handlers: NavBarRuntimeHandlers,
-    haptic_feedback: Option<Box<dyn NavBarHapticFeedback>>,
+    haptic_feedback: Option<Box<dyn HapticFeedback>>,
 }
 
 impl Default for NavBarViewModel {
@@ -31,7 +29,7 @@ impl NavBarViewModel {
     pub fn new(
         state: NavBarState,
         runtime_handlers: NavBarRuntimeHandlers,
-        haptic_feedback: Option<Box<dyn NavBarHapticFeedback>>,
+        haptic_feedback: Option<Box<dyn HapticFeedback>>,
     ) -> Self {
         Self {
             state,
@@ -67,7 +65,7 @@ impl NavBarViewModel {
     }
 
     pub fn dispatch(&mut self, action: NavBarAction) {
-        if should_emit_click_feedback(&action) {
+        if emits_click_feedback(&action) {
             self.perform_click();
         }
         let effects = reduce(&mut self.state, action);
@@ -83,11 +81,15 @@ impl NavBarViewModel {
     }
 }
 
-fn should_emit_click_feedback(action: &NavBarAction) -> bool {
+/// Nav-bar click feedback matches the original view-model parity only for
+/// command/toggle actions that explicitly invoked `perform_click`.
+#[must_use]
+pub fn emits_click_feedback(action: &NavBarAction) -> bool {
     matches!(
         action,
         NavBarAction::OpenAudio
             | NavBarAction::OpenImage
+            | NavBarAction::CloseChoreographySettings
             | NavBarAction::ToggleChoreographySettings
             | NavBarAction::ResetFloorViewport
     )

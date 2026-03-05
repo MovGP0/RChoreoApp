@@ -4,6 +4,7 @@ pub mod messages;
 pub mod reducer;
 pub mod runtime;
 pub mod state;
+pub mod translations;
 pub mod ui;
 pub mod view_model;
 

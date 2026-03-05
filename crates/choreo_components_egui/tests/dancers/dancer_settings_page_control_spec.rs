@@ -18,16 +18,10 @@ fn dancer_settings_page_control_spec() {
             );
             assert!(!state.is_dancer_list_open);
 
-            dancers::reducer::reduce(
-                &mut state,
-                dancers::actions::DancersAction::OpenDancerList,
-            );
+            dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::OpenDancerList);
             assert!(state.is_dancer_list_open);
 
-            dancers::reducer::reduce(
-                &mut state,
-                dancers::actions::DancersAction::CloseDancerList,
-            );
+            dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::CloseDancerList);
             assert!(!state.is_dancer_list_open);
         });
     });

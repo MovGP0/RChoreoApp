@@ -102,14 +102,62 @@ fn env_var(name: &str) -> Option<String> {
 }
 
 fn resolve_traces_endpoint() -> Option<String> {
-    if let Some(endpoint) = env_var("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") {
+    resolve_traces_endpoint_from(env_var)
+}
+
+fn resolve_traces_endpoint_from(read_env: impl Fn(&str) -> Option<String>) -> Option<String> {
+    if let Some(endpoint) = read_env("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") {
         return Some(endpoint);
     }
 
-    let endpoint = env_var("OTEL_EXPORTER_OTLP_ENDPOINT")?;
+    let endpoint = read_env("OTEL_EXPORTER_OTLP_ENDPOINT")?;
     if endpoint.ends_with('/') {
         return Some(format!("{endpoint}v1/traces"));
     }
 
     Some(format!("{endpoint}/v1/traces"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::resolve_traces_endpoint_from;
+
+    #[test]
+    fn resolve_traces_endpoint_prefers_traces_specific_value() {
+        let endpoint = resolve_traces_endpoint_from(|name| match name {
+            "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT" => {
+                Some("http://collector:4318/custom".to_string())
+            }
+            "OTEL_EXPORTER_OTLP_ENDPOINT" => Some("http://collector:4318".to_string()),
+            _ => None,
+        });
+
+        assert_eq!(endpoint.as_deref(), Some("http://collector:4318/custom"));
+    }
+
+    #[test]
+    fn resolve_traces_endpoint_appends_v1_traces_without_double_slash() {
+        let trailing_slash = resolve_traces_endpoint_from(|name| {
+            (name == "OTEL_EXPORTER_OTLP_ENDPOINT").then(|| "http://collector:4318/".to_string())
+        });
+        let no_trailing_slash = resolve_traces_endpoint_from(|name| {
+            (name == "OTEL_EXPORTER_OTLP_ENDPOINT").then(|| "http://collector:4318".to_string())
+        });
+
+        assert_eq!(
+            trailing_slash.as_deref(),
+            Some("http://collector:4318/v1/traces")
+        );
+        assert_eq!(
+            no_trailing_slash.as_deref(),
+            Some("http://collector:4318/v1/traces")
+        );
+    }
+
+    #[test]
+    fn resolve_traces_endpoint_returns_none_when_env_is_missing() {
+        let endpoint = resolve_traces_endpoint_from(|_| None);
+
+        assert!(endpoint.is_none());
+    }
 }

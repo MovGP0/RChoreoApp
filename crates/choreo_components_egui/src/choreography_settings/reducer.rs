@@ -202,6 +202,7 @@ fn reduce_selected_scene(state: &mut ChoreographySettingsState, action: UpdateSe
                     model_scene.name = value.clone();
                 }
                 state.scene_name = value;
+                state.redraw_requested = true;
             }
         }
         UpdateSelectedSceneAction::SceneText(value) => {
@@ -213,6 +214,7 @@ fn reduce_selected_scene(state: &mut ChoreographySettingsState, action: UpdateSe
                     model_scene.text = normalize_text(&value);
                 }
                 state.scene_text = value;
+                state.redraw_requested = true;
             }
         }
         UpdateSelectedSceneAction::SceneFixedPositions(value) => {
@@ -224,6 +226,7 @@ fn reduce_selected_scene(state: &mut ChoreographySettingsState, action: UpdateSe
                     model_scene.fixed_positions = value;
                 }
                 state.scene_fixed_positions = value;
+                state.redraw_requested = true;
             }
         }
         UpdateSelectedSceneAction::SceneColor(value) => {
@@ -235,6 +238,7 @@ fn reduce_selected_scene(state: &mut ChoreographySettingsState, action: UpdateSe
                     model_scene.color = value.clone();
                 }
                 state.scene_color = value;
+                state.redraw_requested = true;
             }
         }
         UpdateSelectedSceneAction::SceneTimestamp {
@@ -254,6 +258,7 @@ fn reduce_selected_scene(state: &mut ChoreographySettingsState, action: UpdateSe
                 }
                 state.scene_has_timestamp = has_timestamp;
                 state.set_scene_timestamp_seconds(seconds);
+                state.redraw_requested = true;
             }
         }
     }

@@ -33,12 +33,9 @@ pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
         }
         ScenesAction::ReloadScenes => {
             map_scenes_from_choreography(state);
-            if let Some(selected_id) = state.selected_scene.as_ref().map(|scene| scene.scene_id) {
-                set_selected_scene_by_id(state, selected_id);
-            } else {
-                select_first_scene(state);
-            }
+            select_first_scene(state);
             state.reload_requested = true;
+            state.selected_scene_changed = state.selected_scene.is_some();
             update_caps_and_projection(state);
         }
         ScenesAction::UpdateSearchText(value) => {
@@ -153,15 +150,22 @@ pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
             state.choreography.settings.show_timestamps = value;
         }
         ScenesAction::OpenDeleteSceneDialog => {
-            if state.selected_scene.is_some() {
+            if let Some(selected_scene) = state.selected_scene.clone() {
                 state.show_delete_scene_dialog = true;
+                state.delete_scene_dialog_scene = Some(selected_scene);
             }
         }
         ScenesAction::CancelDeleteSceneDialog => {
             state.show_delete_scene_dialog = false;
+            state.delete_scene_dialog_scene = None;
         }
         ScenesAction::ConfirmDeleteSceneDialog => {
+            state.delete_scene_requested_scene_id = state
+                .delete_scene_dialog_scene
+                .as_ref()
+                .map(|scene| scene.scene_id);
             state.show_delete_scene_dialog = false;
+            state.delete_scene_dialog_scene = None;
             state.delete_scene_requested = true;
         }
         ScenesAction::OpenCopyScenePositionsDialog => {
@@ -187,6 +191,7 @@ pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
             map_scenes_from_choreography(state);
             select_first_scene(state);
             state.reload_requested = true;
+            state.selected_scene_changed = state.selected_scene.is_some();
             state.show_timestamps = state.choreography.settings.show_timestamps;
             state.last_opened_choreo_file = file_path.or(file_name);
             state.pending_open_audio = audio_path;
@@ -261,7 +266,7 @@ fn update_can_save(state: &mut ScenesState) {
     let has_file = state
         .last_opened_choreo_file
         .as_ref()
-        .is_some_and(|path| !path.trim().is_empty());
+        .is_some_and(|path| !path.trim().is_empty() && std::path::Path::new(path).exists());
     let has_choreo = !state.choreography.name.is_empty() || !state.choreography.scenes.is_empty();
     state.can_save_choreo = has_file && has_choreo;
 }

@@ -1,12 +1,13 @@
 use choreo_master_mobile_json::Color;
 use egui::Align;
-use egui::Align2;
 use egui::Color32;
 use egui::CornerRadius;
 use egui::Frame;
 use egui::Layout;
 use egui::Margin;
+use egui::RichText;
 use egui::ScrollArea;
+use egui::Sense;
 use egui::Stroke;
 use egui::Ui;
 use egui::vec2;
@@ -17,6 +18,9 @@ use crate::dancers::state::DancerState;
 use crate::dancers::state::DancersState;
 use crate::dancers_pane_view::ui as dancers_pane_view;
 use crate::dancers_pane_view::ui::DancersPaneViewAction;
+use crate::dialog_host::ui::DialogHostProps;
+use crate::dialog_host::ui::dialog_metrics_tokens;
+use crate::dialog_host::ui::draw_dialog_host_with_panel;
 use crate::i18n::t;
 use crate::main_page_drawer_host::actions::MainPageDrawerHostAction;
 use crate::main_page_drawer_host::state::MainPageDrawerHostState;
@@ -26,9 +30,10 @@ use crate::ui_style::material_style_metrics::material_style_metrics;
 use crate::ui_style::typography;
 use crate::ui_style::typography::TypographyRole;
 
-const TOP_BAR_HEIGHT_PX: f32 = 60.0;
+const TOP_BAR_HEIGHT_PX: f32 = 64.0;
 // Slint source control uses 420px for the drawer width.
 const LIST_DRAWER_WIDTH_PX: f32 = 420.0;
+const SWAP_DANCERS_DIALOG_ID: &str = "swap_dancers";
 
 #[must_use]
 pub const fn content_spacing_token() -> f32 {
@@ -40,14 +45,89 @@ pub const fn card_corner_radius_token() -> f32 {
     material_style_metrics().corner_radii.border_radius_12
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SwapDialogViewModel {
+    pub title_text: String,
+    pub first_dancer_name: String,
+    pub second_dancer_name: String,
+    pub first_dancer_color: Color32,
+    pub second_dancer_color: Color32,
+    pub message_text: String,
+    pub cancel_text: String,
+    pub confirm_text: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SwapDialogAction {
+    Cancel,
+    Confirm,
+}
+
+#[must_use]
+pub const fn map_swap_dialog_action(action: SwapDialogAction) -> DancersAction {
+    match action {
+        SwapDialogAction::Cancel => DancersAction::HideDialog,
+        SwapDialogAction::Confirm => DancersAction::ConfirmSwapDancers,
+    }
+}
+
 pub fn draw(ui: &mut Ui, state: &DancersState) -> Vec<DancersAction> {
-    let mut actions: Vec<DancersAction> = Vec::new();
+    let mut page_actions: Vec<DancersAction> = Vec::new();
+    let mut dialog_action = None;
     let locale = "en";
     let spacing = content_spacing_token();
+    let dialog_metrics = dialog_metrics_tokens();
 
-    draw_top_bar(ui, state, &mut actions, locale);
-    ui.add_space(spacing);
+    let close_requested = draw_dialog_host_with_panel(
+        ui,
+        &DialogHostProps {
+            id_source: "dancer_settings_page_dialog_host",
+            is_open: state.is_dialog_open,
+            close_on_click_away: true,
+            overlay_color: ui.visuals().window_fill().linear_multiply(0.7),
+            dialog_background: ui.visuals().widgets.noninteractive.bg_fill,
+            dialog_text_color: ui.visuals().text_color(),
+            dialog_padding: dialog_metrics.dialog_padding,
+            dialog_margin: dialog_metrics.dialog_margin,
+            dialog_corner_radius: dialog_metrics.dialog_corner_radius,
+            dialog_content: state.dialog_content.as_deref().unwrap_or_default(),
+        },
+        |ui| {
+            draw_top_bar(ui, state, &mut page_actions, locale);
+            ui.add_space(spacing);
+            draw_main_content(ui, state, &mut page_actions, locale);
+        },
+        |ui| {
+            dialog_action = draw_dialog_panel(ui, state, locale);
+        },
+    );
 
+    if let Some(dialog_action) = dialog_action {
+        page_actions.push(map_swap_dialog_action(dialog_action));
+    }
+
+    if close_requested {
+        page_actions.push(DancersAction::HideDialog);
+    }
+
+    page_actions
+}
+
+fn draw_dialog_panel(ui: &mut Ui, state: &DancersState, locale: &str) -> Option<SwapDialogAction> {
+    if state.dialog_content.as_deref() == Some(SWAP_DANCERS_DIALOG_ID) {
+        return draw_swap_dialog_panel(ui, state, locale);
+    }
+
+    ui.label(state.dialog_content.as_deref().unwrap_or_default());
+    None
+}
+
+fn draw_main_content(
+    ui: &mut Ui,
+    state: &DancersState,
+    actions: &mut Vec<DancersAction>,
+    locale: &str,
+) {
     let drawer_state = MainPageDrawerHostState {
         left_drawer_width: LIST_DRAWER_WIDTH_PX,
         top_inset: 0.0,
@@ -79,10 +159,6 @@ pub fn draw(ui: &mut Ui, state: &DancersState) -> Vec<DancersAction> {
             actions.push(DancersAction::CloseDancerList);
         }
     }
-
-    draw_swap_dialog(ui, state, &mut actions, locale);
-
-    actions
 }
 
 fn draw_top_bar(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersAction>, locale: &str) {
@@ -107,9 +183,7 @@ fn draw_top_bar(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersActi
                 if response.clicked() {
                     actions.push(DancersAction::ToggleDancerList);
                 }
-                ui.label(
-                    typography::rich_text_for_role(title, top_bar_title_role()),
-                );
+                ui.label(typography::rich_text_for_role(title, top_bar_title_role()));
             });
         });
 }
@@ -117,6 +191,45 @@ fn draw_top_bar(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersActi
 #[must_use]
 pub const fn top_bar_title_role() -> TypographyRole {
     TypographyRole::TitleLarge
+}
+
+#[must_use]
+pub fn build_swap_dialog_view_model(
+    state: &DancersState,
+    locale: &str,
+) -> Option<SwapDialogViewModel> {
+    if !state.is_dialog_open || state.dialog_content.as_deref() != Some(SWAP_DANCERS_DIALOG_ID) {
+        return None;
+    }
+
+    let first_name = swap_dialog_dancer_name(state.swap_from_dancer.as_ref());
+    let second_name = swap_dialog_dancer_name(state.swap_to_dancer.as_ref());
+    let message_template = t(
+        locale,
+        "DancerSwapDialogMessage",
+        "Swap dancers \"{0}\" and \"{1}\"?",
+    );
+
+    Some(SwapDialogViewModel {
+        title_text: t(locale, "DancerSwapDialogTitle", "Swap dancers"),
+        first_dancer_name: first_name.clone(),
+        second_dancer_name: second_name.clone(),
+        first_dancer_color: state
+            .swap_from_dancer
+            .as_ref()
+            .map(|dancer| color_to_egui(&dancer.color))
+            .unwrap_or(Color32::TRANSPARENT),
+        second_dancer_color: state
+            .swap_to_dancer
+            .as_ref()
+            .map(|dancer| color_to_egui(&dancer.color))
+            .unwrap_or(Color32::TRANSPARENT),
+        message_text: message_template
+            .replace("{0}", &first_name)
+            .replace("{1}", &second_name),
+        cancel_text: t(locale, "DancerSwapDialogCancel", "Cancel"),
+        confirm_text: t(locale, "DancerSwapDialogConfirm", "Swap"),
+    })
 }
 
 fn draw_dancers_pane(
@@ -215,8 +328,11 @@ fn draw_dancer_card(
             if ui
                 .add_enabled(
                     state.has_selected_dancer,
-                    egui::TextEdit::singleline(&mut name)
-                        .hint_text(t(locale, "DancerNameLabel", "Name")),
+                    egui::TextEdit::singleline(&mut name).hint_text(t(
+                        locale,
+                        "DancerNameLabel",
+                        "Name",
+                    )),
                 )
                 .changed()
             {
@@ -231,8 +347,11 @@ fn draw_dancer_card(
             if ui
                 .add_enabled(
                     state.has_selected_dancer,
-                    egui::TextEdit::singleline(&mut shortcut)
-                        .hint_text(t(locale, "DancerShortcutLabel", "Shortcut")),
+                    egui::TextEdit::singleline(&mut shortcut).hint_text(t(
+                        locale,
+                        "DancerShortcutLabel",
+                        "Shortcut",
+                    )),
                 )
                 .changed()
             {
@@ -250,7 +369,11 @@ fn draw_dancer_card(
                 .selected_text(selected_icon_label)
                 .show_ui(ui, |ui| {
                     for (index, option) in state.icon_options.iter().enumerate() {
-                        ui.selectable_value(&mut selected_icon, index, option.display_name.as_str());
+                        ui.selectable_value(
+                            &mut selected_icon,
+                            index,
+                            option.display_name.as_str(),
+                        );
                     }
                 });
             if let Some(option) = state.icon_options.get(selected_icon)
@@ -286,7 +409,12 @@ fn draw_dancer_card(
         });
 }
 
-fn draw_swap_card(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersAction>, locale: &str) {
+fn draw_swap_card(
+    ui: &mut Ui,
+    state: &DancersState,
+    actions: &mut Vec<DancersAction>,
+    locale: &str,
+) {
     Frame::new()
         .fill(ui.visuals().window_fill)
         .stroke(Stroke::new(
@@ -343,7 +471,9 @@ fn draw_swap_card(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersAc
                     }
                 });
             if to_index_mut != to_index {
-                actions.push(DancersAction::UpdateSwapTo { index: to_index_mut });
+                actions.push(DancersAction::UpdateSwapTo {
+                    index: to_index_mut,
+                });
             }
 
             if ui
@@ -358,45 +488,71 @@ fn draw_swap_card(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersAc
         });
 }
 
-fn draw_swap_dialog(
+pub fn draw_swap_dialog_panel(
     ui: &mut Ui,
     state: &DancersState,
-    actions: &mut Vec<DancersAction>,
     locale: &str,
-) {
-    if !state.is_dialog_open {
-        return;
-    }
+) -> Option<SwapDialogAction> {
+    let Some(view_model) = build_swap_dialog_view_model(state, locale) else {
+        return None;
+    };
 
-    egui::Window::new(t(locale, "DancerSwapDialogTitle", "Swap dancers"))
-        .collapsible(false)
-        .resizable(false)
-        .anchor(Align2::CENTER_CENTER, egui::Vec2::ZERO)
-        .show(ui.ctx(), |ui| {
-            ui.label(state.dialog_content.clone().unwrap_or_default());
-            ui.horizontal(|ui| {
-                if ui
-                    .add(MaterialButton::new(t(
-                        locale,
-                        "DancerSwapDialogCancel",
-                        "Cancel",
-                    )))
-                    .clicked()
-                {
-                    actions.push(DancersAction::Cancel);
-                }
-                if ui
-                    .add(MaterialButton::new(t(
-                        locale,
-                        "DancerSwapDialogConfirm",
-                        "Swap",
-                    )))
-                    .clicked()
-                {
-                    actions.push(DancersAction::ConfirmSwapDancers);
-                }
-            });
-        });
+    let mut action = None;
+    ui.set_min_width(360.0);
+    ui.vertical(|ui| {
+        ui.spacing_mut().item_spacing = vec2(content_spacing_token(), content_spacing_token());
+
+        ui.label(typography::rich_text_for_role(
+            view_model.title_text,
+            TypographyRole::TitleLarge,
+        ));
+        draw_swap_dialog_dancer_row(
+            ui,
+            &view_model.first_dancer_name,
+            view_model.first_dancer_color,
+        );
+        draw_swap_dialog_dancer_row(
+            ui,
+            &view_model.second_dancer_name,
+            view_model.second_dancer_color,
+        );
+        ui.label(typography::rich_text_for_role(
+            view_model.message_text,
+            TypographyRole::BodyMedium,
+        ));
+        if ui
+            .add(MaterialButton::new(view_model.cancel_text))
+            .clicked()
+        {
+            action = Some(SwapDialogAction::Cancel);
+        }
+        if ui
+            .add(MaterialButton::new(view_model.confirm_text))
+            .clicked()
+        {
+            action = Some(SwapDialogAction::Confirm);
+        }
+    });
+
+    action
+}
+
+fn draw_swap_dialog_dancer_row(ui: &mut Ui, dancer_name: &str, dancer_color: Color32) {
+    ui.horizontal(|ui| {
+        let (swatch_rect, _) = ui.allocate_exact_size(
+            vec2(content_spacing_token(), content_spacing_token()),
+            Sense::hover(),
+        );
+        ui.painter().rect_filled(
+            swatch_rect,
+            CornerRadius::same((content_spacing_token() / 2.0) as u8),
+            dancer_color,
+        );
+        ui.label(
+            RichText::new(dancer_name)
+                .font(typography::font_id_for_role(TypographyRole::BodyMedium)),
+        );
+    });
 }
 
 fn dancer_name_for_index(state: &DancersState, index: usize) -> String {
@@ -405,6 +561,21 @@ fn dancer_name_for_index(state: &DancersState, index: usize) -> String {
         .get(index)
         .map(|dancer| dancer.name.clone())
         .unwrap_or_default()
+}
+
+fn swap_dialog_dancer_name(dancer: Option<&DancerState>) -> String {
+    let Some(dancer) = dancer else {
+        return "?".to_string();
+    };
+
+    if !dancer.name.trim().is_empty() {
+        return dancer.name.clone();
+    }
+    if !dancer.shortcut.trim().is_empty() {
+        return dancer.shortcut.clone();
+    }
+
+    format!("#{}", dancer.dancer_id)
 }
 
 #[must_use]
@@ -421,7 +592,10 @@ pub fn selected_dancer_index(state: &DancersState) -> Option<usize> {
 
 #[must_use]
 pub fn selected_role_index(state: &DancersState) -> Option<usize> {
-    let selected_role_name = state.selected_role.as_ref().map(|role| role.name.as_str())?;
+    let selected_role_name = state
+        .selected_role
+        .as_ref()
+        .map(|role| role.name.as_str())?;
     state
         .roles
         .iter()

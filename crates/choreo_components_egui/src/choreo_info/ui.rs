@@ -1,5 +1,6 @@
 use egui::DragValue;
 use egui::Ui;
+use egui_material3::MaterialSlider;
 
 use super::messages::ChoreoInfoAction;
 use super::state::ChoreoInfoState;
@@ -21,8 +22,16 @@ pub fn choreo_date_text(year: i32, month: u8, day: u8) -> String {
 
 #[must_use]
 pub fn transparency_percentage_text(transparency: f64) -> String {
+    format!(
+        "Transparency: {}",
+        transparency_percentage_suffix(transparency)
+    )
+}
+
+#[must_use]
+pub fn transparency_percentage_suffix(transparency: f64) -> String {
     let percentage = (transparency.clamp(0.0, 1.0) * 100.0).round() as i32;
-    format!("Transparency: {percentage}%")
+    format!("{percentage}%")
 }
 
 pub fn draw(
@@ -92,4 +101,25 @@ pub fn draw(
     }
 
     actions
+}
+
+pub fn draw_transparency(ui: &mut Ui, transparency: f64, label: &str) -> Option<ChoreoInfoAction> {
+    let mut value = transparency as f32;
+    ui.label(format!(
+        "{label}: {}",
+        transparency_percentage_suffix(f64::from(value))
+    ));
+
+    if ui
+        .add(
+            MaterialSlider::new(&mut value, 0.0..=1.0)
+                .show_value(false)
+                .width(240.0),
+        )
+        .changed()
+    {
+        return Some(ChoreoInfoAction::UpdateTransparency(f64::from(value)));
+    }
+
+    None
 }

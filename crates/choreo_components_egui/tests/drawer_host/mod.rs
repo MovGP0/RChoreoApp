@@ -32,4 +32,5 @@ where
 
 pub mod layout_state_spec;
 pub mod overlay_behavior_spec;
+pub mod slot_rendering_spec;
 pub mod ui_smoke_spec;

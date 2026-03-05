@@ -9,15 +9,16 @@ use choreo_models::ChoreographyModel;
 use choreo_models::SceneModel;
 use choreo_models::SettingsPreferenceKeys;
 
-use crate::audio_player::audio_player_component::AudioPlayerBackend;
-use crate::audio_player::audio_player_component::OpenAudioFileCommand;
-use crate::audio_player::audio_player_component::audio_player_behaviors::AudioPlayerBehaviorDependencies;
-use crate::audio_player::audio_player_component::build_audio_player_behaviors;
-use crate::audio_player::audio_player_component::messages::CloseAudioFileCommand;
-use crate::audio_player::audio_player_component::messages::LinkSceneToPositionCommand;
-use crate::audio_player::audio_player_component::runtime::AudioPlayerRuntime;
-use crate::audio_player::audio_player_component::state::AudioPlayerState;
+use choreo_components_egui::audio_player::AudioPlayerBackend;
+use choreo_components_egui::audio_player::OpenAudioFileCommand;
+use choreo_components_egui::audio_player::audio_player_behaviors::AudioPlayerBehaviorDependencies;
+use choreo_components_egui::audio_player::build_audio_player_behaviors;
+use choreo_components_egui::audio_player::messages::CloseAudioFileCommand;
+use choreo_components_egui::audio_player::messages::LinkSceneToPositionCommand;
+use choreo_components_egui::audio_player::runtime::AudioPlayerRuntime;
+use choreo_components_egui::audio_player::state::AudioPlayerState;
 use choreo_components_egui::global::GlobalStateActor;
+use choreo_components_egui::global::SceneViewModel;
 use choreo_components_egui::preferences::InMemoryPreferences;
 use choreo_components_egui::preferences::Preferences;
 
@@ -93,11 +94,11 @@ fn pipeline_links_scene_and_publishes_position_changed_event() {
 
     let preferences = Rc::new(InMemoryPreferences::new());
     let global_state = GlobalStateActor::new();
-    global_state.try_update(|state| {
+    assert!(global_state.try_update(|state| {
         state.scenes = vec![
-            scene_model(1, "A", Some("1.0")),
-            scene_model(2, "B", None),
-            scene_model(3, "C", Some("5.0")),
+            scene_view_model(1, "A", Some(1.0)),
+            scene_view_model(2, "B", None),
+            scene_view_model(3, "C", Some(5.0)),
         ];
         state.selected_scene = state.scenes.get(1).cloned();
         state.choreography = ChoreographyModel {
@@ -108,7 +109,7 @@ fn pipeline_links_scene_and_publishes_position_changed_event() {
             ],
             ..ChoreographyModel::default()
         };
-    });
+    }));
 
     let pipeline = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
         global_state_store: Rc::clone(&global_state),
@@ -163,6 +164,12 @@ fn scene_model(scene_id: i32, name: &str, timestamp: Option<&str>) -> SceneModel
         current_variation: Vec::new(),
         color: Color::transparent(),
     }
+}
+
+fn scene_view_model(scene_id: i32, name: &str, timestamp: Option<f64>) -> SceneViewModel {
+    let mut scene = SceneViewModel::new(SceneId(scene_id), name, Color::transparent());
+    scene.timestamp = timestamp;
+    scene
 }
 
 fn create_temp_audio_file_path() -> String {

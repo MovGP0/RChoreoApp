@@ -7,7 +7,7 @@ pub type MaterialPalette = crate::shell::MaterialScheme;
 pub type ShellHost = crate::shell_host::ShellHostViewModel;
 pub type ScenesInfo = crate::scenes::state::ScenesState;
 pub type SceneListItem = crate::scenes::state::SceneItemState;
-pub type ChoreoInfo = crate::choreography_settings::state::ChoreographySettingsState;
+pub type ChoreoInfo = crate::choreo_info::state::ChoreoInfoState;
 pub type ChoreographySettings = crate::choreography_settings::state::ChoreographySettingsState;
 pub type AudioPlayerInfo = crate::audio_player::state::AudioPlayerState;
 pub type SettingsInfo = crate::settings::state::SettingsState;
@@ -21,6 +21,34 @@ pub type FloorMetricsInfo = crate::floor::state::FloorLayoutMetrics;
 pub type FloorLegendEntries = Vec<LegendEntry>;
 pub type MainRootState = crate::choreo_main::state::ChoreoMainState;
 pub type MainRootAction = crate::choreo_main::actions::ChoreoMainAction;
+
+pub struct Translations;
+
+impl Translations {
+    #[must_use]
+    pub fn text(locale: &str, key: &str) -> Option<&'static str> {
+        let normalized_key = slint_key_to_i18n_key(key);
+        choreo_i18n::translation_with_fallback(locale, normalized_key.as_str())
+    }
+
+    #[must_use]
+    pub fn app_title(locale: &str) -> &'static str {
+        Self::text(locale, "app_title").unwrap_or(crate::shell::app_title())
+    }
+}
+
+fn slint_key_to_i18n_key(key: &str) -> String {
+    let mut normalized = String::with_capacity(key.len());
+    for segment in key.split('_').filter(|segment| !segment.is_empty()) {
+        let mut chars = segment.chars();
+        if let Some(first) = chars.next() {
+            normalized.push(first.to_ascii_uppercase());
+            normalized.extend(chars);
+        }
+    }
+
+    normalized
+}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct FloorCurve {

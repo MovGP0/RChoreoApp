@@ -1,8 +1,10 @@
+use choreo_components_egui::choreo_info::messages::ChoreoInfoAction;
 use choreo_components_egui::choreo_info::state::ChoreoInfoState;
+use choreo_components_egui::choreo_info::ui::ChoreoInfoLabels;
 use choreo_components_egui::choreo_info::ui::choreo_date_text;
 use choreo_components_egui::choreo_info::ui::draw;
+use choreo_components_egui::choreo_info::ui::draw_transparency;
 use choreo_components_egui::choreo_info::ui::transparency_percentage_text;
-use choreo_components_egui::choreo_info::ui::ChoreoInfoLabels;
 
 #[test]
 fn choreo_info_state_defaults_match_slint_global_defaults() {
@@ -27,6 +29,33 @@ fn transparency_percentage_text_rounds_like_slint_math_round() {
     assert_eq!(transparency_percentage_text(0.0), "Transparency: 0%");
     assert_eq!(transparency_percentage_text(0.245), "Transparency: 25%");
     assert_eq!(transparency_percentage_text(0.999), "Transparency: 100%");
+}
+
+#[test]
+fn transparency_draw_renders_shared_label_and_percentage() {
+    let context = egui::Context::default();
+    let output = context.run(egui::RawInput::default(), |ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let action = draw_transparency(ui, 0.42, "Transparency");
+            assert_eq!(action, None);
+        });
+    });
+
+    let mut found_transparency = false;
+    for clipped in output.shapes {
+        if format!("{:?}", clipped.shape).contains("Transparency: 42%") {
+            found_transparency = true;
+            break;
+        }
+    }
+
+    assert!(found_transparency);
+}
+
+#[test]
+fn transparency_action_variant_preserves_fractional_value() {
+    let action = ChoreoInfoAction::UpdateTransparency(0.42);
+    assert_eq!(action, ChoreoInfoAction::UpdateTransparency(0.42));
 }
 
 #[test]

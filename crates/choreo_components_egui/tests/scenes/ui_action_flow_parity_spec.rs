@@ -1,5 +1,12 @@
 use super::actions::ScenesAction;
 use super::create_state;
+use super::ui::navigate_dancers_icon;
+use super::ui::navigate_settings_icon;
+use super::ui::open_choreography_icon;
+use super::ui::save_choreography_icon;
+use super::ui::scene_add_after_icon;
+use super::ui::scene_add_before_icon;
+use super::ui::scene_delete_icon;
 use super::ui::scene_pane_action_flow;
 
 #[test]
@@ -39,4 +46,15 @@ fn scene_pane_action_flow_excludes_non_parity_controls() {
             .iter()
             .any(|action| { matches!(action, ScenesAction::UpdateShowTimestamps(_)) })
     );
+}
+
+#[test]
+fn scene_toolbar_icons_match_original_slint_catalog() {
+    assert_eq!(scene_add_before_icon().slint_name, "TableRowPlusBefore");
+    assert_eq!(scene_add_after_icon().slint_name, "TableRowPlusAfter");
+    assert_eq!(scene_delete_icon().slint_name, "Delete");
+    assert_eq!(open_choreography_icon().slint_name, "FolderOpen");
+    assert_eq!(save_choreography_icon().slint_name, "ContentSave");
+    assert_eq!(navigate_settings_icon().slint_name, "Cog");
+    assert_eq!(navigate_dancers_icon().slint_name, "AccountGroup");
 }

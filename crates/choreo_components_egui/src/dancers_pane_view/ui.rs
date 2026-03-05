@@ -8,9 +8,11 @@ use egui_material3::MaterialIconButton;
 
 use crate::dancers::dancer_list_item_view;
 use crate::dancers::state::DancerState;
-use crate::ui_style::material_style_metrics::material_style_metrics;
 use crate::ui_icons;
 use crate::ui_icons::UiIconKey;
+use crate::ui_style::material_style_metrics::material_style_metrics;
+use crate::ui_style::typography;
+use crate::ui_style::typography::TypographyRole;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DancersPaneViewUiState<'a> {
@@ -47,12 +49,20 @@ pub const fn pane_icon_gap_token() -> f32 {
     material_style_metrics().spacings.spacing_8
 }
 
+#[must_use]
+pub const fn title_role() -> TypographyRole {
+    TypographyRole::TitleMedium
+}
+
 pub fn draw(ui: &mut Ui, state: DancersPaneViewUiState<'_>) -> Vec<DancersPaneViewAction> {
     let mut actions = Vec::new();
     let spacing = pane_spacing_token();
 
     ui.add_space(spacing);
-    ui.heading(state.title_text);
+    ui.label(typography::rich_text_for_role(
+        state.title_text,
+        title_role(),
+    ));
     ui.add_space(spacing);
 
     Frame::new()

@@ -38,6 +38,7 @@ fn update_selected_scene_syncs_and_updates_name() {
 
     assert_eq!(state.scene_name, "Updated");
     assert_eq!(state.choreography.scenes[0].name, "Updated");
+    assert!(state.redraw_requested);
 }
 
 #[test]
@@ -61,7 +62,9 @@ fn update_selected_scene_updates_text_timestamp_and_color() {
         )),
     );
     assert_eq!(state.choreography.scenes[0].text.as_deref(), Some("Note"));
+    assert!(state.redraw_requested);
 
+    state.clear_ephemeral_outputs();
     reduce(
         &mut state,
         ChoreographySettingsAction::UpdateSelectedScene(
@@ -75,7 +78,9 @@ fn update_selected_scene_updates_text_timestamp_and_color() {
         state.choreography.scenes[0].timestamp.as_deref(),
         Some("12.5")
     );
+    assert!(state.redraw_requested);
 
+    state.clear_ephemeral_outputs();
     reduce(
         &mut state,
         ChoreographySettingsAction::UpdateSelectedScene(
@@ -83,7 +88,9 @@ fn update_selected_scene_updates_text_timestamp_and_color() {
         ),
     );
     assert!(state.choreography.scenes[0].fixed_positions);
+    assert!(state.redraw_requested);
 
+    state.clear_ephemeral_outputs();
     let scene_color = color(255, 5, 6, 7);
     reduce(
         &mut state,
@@ -92,4 +99,5 @@ fn update_selected_scene_updates_text_timestamp_and_color() {
         )),
     );
     assert_eq!(state.choreography.scenes[0].color, scene_color);
+    assert!(state.redraw_requested);
 }

@@ -3,6 +3,7 @@ use choreo_components_egui::nav_bar::runtime::NavBarRuntimeHandlers;
 use choreo_components_egui::nav_bar::state::NavBarState;
 use choreo_components_egui::nav_bar::view_model::NavBarHapticFeedback;
 use choreo_components_egui::nav_bar::view_model::NavBarViewModel;
+use choreo_components_egui::nav_bar::view_model::emits_click_feedback;
 use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
@@ -36,6 +37,33 @@ fn nav_view_model_triggers_haptic_feedback_for_click_actions() {
     view_model.dispatch(NavBarAction::OpenImage);
     view_model.dispatch(NavBarAction::ResetFloorViewport);
     view_model.dispatch(NavBarAction::ToggleChoreographySettings);
+    view_model.dispatch(NavBarAction::CloseChoreographySettings);
 
-    assert_eq!(count.load(Ordering::SeqCst), 4);
+    assert_eq!(count.load(Ordering::SeqCst), 5);
+}
+
+#[test]
+fn nav_view_model_documents_which_actions_emit_click_feedback_for_parity() {
+    assert!(emits_click_feedback(&NavBarAction::OpenAudio));
+    assert!(emits_click_feedback(&NavBarAction::OpenImage));
+    assert!(emits_click_feedback(
+        &NavBarAction::ToggleChoreographySettings
+    ));
+    assert!(emits_click_feedback(
+        &NavBarAction::CloseChoreographySettings
+    ));
+    assert!(emits_click_feedback(&NavBarAction::ResetFloorViewport));
+
+    assert!(!emits_click_feedback(&NavBarAction::ToggleNavigation));
+    assert!(!emits_click_feedback(&NavBarAction::CloseNavigation));
+    assert!(!emits_click_feedback(&NavBarAction::Initialize));
+    assert!(!emits_click_feedback(
+        &NavBarAction::SetModeSelectionEnabled { enabled: true }
+    ));
+    assert!(!emits_click_feedback(&NavBarAction::SetAudioPlayerOpened {
+        is_open: true,
+    }));
+    assert!(!emits_click_feedback(&NavBarAction::SetSelectedMode {
+        mode: choreo_components_egui::nav_bar::state::InteractionMode::View,
+    }));
 }

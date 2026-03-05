@@ -31,6 +31,7 @@ fn swap_dancers_behavior_spec() {
                     dancers::actions::DancersAction::RequestSwapDancers,
                 );
                 assert!(state.is_dialog_open);
+                assert_eq!(state.dialog_content.as_deref(), Some("swap_dancers"));
                 dancers::reducer::reduce(
                     &mut state,
                     dancers::actions::DancersAction::ConfirmSwapDancers,

@@ -161,6 +161,47 @@ fn gesture_handling_behavior_spec() {
             },
         );
 
+        spec.it(
+            "stops an in-flight pointer pan when a two-finger touch gesture takes over",
+            |_| {
+                let context = floor::FloorTestContext::new();
+                context.configure_canvas();
+
+                context.send_pointer_pressed(Point::new(10.0, 10.0));
+                context.send_pointer_moved(Point::new(30.0, 25.0));
+
+                let pointer_pan_applied = context.wait_until(Duration::from_secs(1), || {
+                    let matrix = context.view_model.borrow().transformation_matrix;
+                    (matrix.trans_x() - 20.0).abs() < 0.001
+                        && (matrix.trans_y() - 15.0).abs() < 0.001
+                });
+                assert!(pointer_pan_applied);
+
+                context.send_touch(
+                    1,
+                    choreo_components::floor::TouchAction::Pressed,
+                    Point::new(40.0, 50.0),
+                    true,
+                );
+                context.send_touch(
+                    2,
+                    choreo_components::floor::TouchAction::Pressed,
+                    Point::new(60.0, 50.0),
+                    true,
+                );
+
+                let before_blocked_pointer_move = context.view_model.borrow().transformation_matrix;
+
+                context.send_pointer_moved(Point::new(90.0, 90.0));
+                context.send_pointer_released(Point::new(90.0, 90.0));
+
+                context.pump_events();
+
+                let after_blocked_pointer_move = context.view_model.borrow().transformation_matrix;
+                assert_eq!(after_blocked_pointer_move, before_blocked_pointer_move);
+            },
+        );
+
         spec.it("resets viewport on double tap", |_| {
             let context = floor::FloorTestContext::new();
             context.configure_canvas();

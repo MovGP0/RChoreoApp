@@ -9,16 +9,17 @@ use choreo_master_mobile_json::SceneId;
 use choreo_models::ChoreographyModel;
 use choreo_models::SceneModel;
 
-use crate::audio_player::audio_player_component::AudioPlayerBackend;
-use crate::audio_player::audio_player_component::actions::AudioPlayerAction;
-use crate::audio_player::audio_player_component::audio_player_behaviors::AudioPlayerBehaviorDependencies;
-use crate::audio_player::audio_player_component::audio_player_behaviors::AudioPlayerHapticFeedback;
-use crate::audio_player::audio_player_component::audio_player_behaviors::reduce_with_haptics;
-use crate::audio_player::audio_player_component::build_audio_player_behaviors;
-use crate::audio_player::audio_player_component::messages::LinkSceneToPositionCommand;
-use crate::audio_player::audio_player_component::state::AudioPlayerState;
+use choreo_components_egui::audio_player::AudioPlayerBackend;
+use choreo_components_egui::audio_player::actions::AudioPlayerAction;
+use choreo_components_egui::audio_player::audio_player_behaviors::AudioPlayerBehaviorDependencies;
+use choreo_components_egui::audio_player::audio_player_behaviors::AudioPlayerHapticFeedback;
+use choreo_components_egui::audio_player::audio_player_behaviors::reduce_with_haptics;
+use choreo_components_egui::audio_player::build_audio_player_behaviors;
+use choreo_components_egui::audio_player::messages::LinkSceneToPositionCommand;
+use choreo_components_egui::audio_player::state::AudioPlayerState;
 use choreo_components_egui::global::GlobalStateActor;
-use crate::observability::TraceContext;
+use choreo_components_egui::global::SceneViewModel;
+use choreo_components_egui::observability::TraceContext;
 use choreo_components_egui::preferences::InMemoryPreferences;
 
 struct MockHaptic {
@@ -68,11 +69,11 @@ fn link_command_keeps_trace_context_and_propagates_to_position_event() {
     });
 
     let global_state = GlobalStateActor::new();
-    global_state.try_update(|state| {
+    assert!(global_state.try_update(|state| {
         state.scenes = vec![
-            scene_model(1, "A", Some("1.0")),
-            scene_model(2, "B", None),
-            scene_model(3, "C", Some("5.0")),
+            scene_view_model(1, "A", Some(1.0)),
+            scene_view_model(2, "B", None),
+            scene_view_model(3, "C", Some(5.0)),
         ];
         state.selected_scene = state.scenes.get(1).cloned();
         state.choreography = ChoreographyModel {
@@ -83,7 +84,7 @@ fn link_command_keeps_trace_context_and_propagates_to_position_event() {
             ],
             ..ChoreographyModel::default()
         };
-    });
+    }));
 
     let pipeline = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
         global_state_store: Rc::clone(&global_state),
@@ -104,7 +105,7 @@ fn link_command_keeps_trace_context_and_propagates_to_position_event() {
         position: 2.0,
         ..AudioPlayerState::default()
     };
-    let mut runtime = crate::audio_player::audio_player_component::runtime::AudioPlayerRuntime::new(
+    let mut runtime = choreo_components_egui::audio_player::runtime::AudioPlayerRuntime::new(
         AudioPlayerBackend::Rodio,
     );
     pipeline.ticks.poll(&mut state, &mut runtime);
@@ -149,4 +150,10 @@ fn scene_model(scene_id: i32, name: &str, timestamp: Option<&str>) -> SceneModel
         current_variation: Vec::new(),
         color: Color::transparent(),
     }
+}
+
+fn scene_view_model(scene_id: i32, name: &str, timestamp: Option<f64>) -> SceneViewModel {
+    let mut scene = SceneViewModel::new(SceneId(scene_id), name, Color::transparent());
+    scene.timestamp = timestamp;
+    scene
 }

@@ -3,6 +3,7 @@ use super::choreography_with_scenes;
 use super::create_state;
 use super::reducer::reduce;
 use super::scene_model;
+use std::fs;
 
 #[test]
 fn save_choreo_maps_scene_view_state_back_to_model() {
@@ -53,4 +54,37 @@ fn save_choreo_with_no_last_opened_file_does_not_enable_can_save() {
     reduce(&mut state, ScenesAction::SaveChoreography);
 
     assert!(!state.can_save_choreo);
+}
+
+#[test]
+fn save_choreo_requires_existing_file_for_enablement_parity() {
+    let mut state = create_state();
+    let choreography = choreography_with_scenes("Before", vec![]);
+
+    reduce(
+        &mut state,
+        ScenesAction::LoadScenes {
+            choreography: Box::new(choreography),
+        },
+    );
+
+    let temp_root = std::env::temp_dir().join("rchoreo_scenes_save_enablement_spec");
+    fs::create_dir_all(&temp_root).expect("temp dir should be created");
+    let missing_path = temp_root.join("missing.choreo");
+    state.last_opened_choreo_file = Some(missing_path.to_string_lossy().into_owned());
+
+    reduce(&mut state, ScenesAction::SaveChoreography);
+
+    assert!(!state.can_save_choreo);
+
+    let existing_path = temp_root.join("existing.choreo");
+    fs::write(&existing_path, "{}").expect("temp file should be created");
+    state.last_opened_choreo_file = Some(existing_path.to_string_lossy().into_owned());
+
+    reduce(&mut state, ScenesAction::SaveChoreography);
+
+    assert!(state.can_save_choreo);
+
+    let _ = fs::remove_file(existing_path);
+    let _ = fs::remove_dir(temp_root);
 }

@@ -1,7 +1,7 @@
-use crate::audio_player::audio_player_component::AudioPlayerBackend;
-use crate::audio_player::audio_player_component::runtime::AudioPlayerRuntime;
-use crate::audio_player::audio_player_component::runtime::apply_player_sample;
-use crate::audio_player::audio_player_component::state::AudioPlayerState;
+use choreo_components_egui::audio_player::AudioPlayerBackend;
+use choreo_components_egui::audio_player::runtime::AudioPlayerRuntime;
+use choreo_components_egui::audio_player::runtime::apply_player_sample;
+use choreo_components_egui::audio_player::state::AudioPlayerState;
 
 #[test]
 fn runtime_creates_player_for_platform_backend() {

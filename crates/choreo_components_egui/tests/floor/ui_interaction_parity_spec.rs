@@ -66,27 +66,29 @@ fn draw_emits_pointer_wheel_and_touch_actions_for_canvas_events() {
     assert!(
         actions
             .iter()
-            .any(|action| matches!(action, FloorAction::PointerPressed { .. }))
+            .any(|action| matches!(action, FloorAction::PointerPressedWithContext { .. }))
     );
     assert!(
         actions
             .iter()
-            .any(|action| matches!(action, FloorAction::PointerMoved { .. }))
+            .any(|action| matches!(action, FloorAction::PointerMovedWithContext { .. }))
     );
     assert!(
         actions
             .iter()
-            .any(|action| matches!(action, FloorAction::PointerReleased { .. }))
+            .any(|action| matches!(action, FloorAction::PointerReleasedWithContext { .. }))
     );
+    assert!(actions.iter().any(|action| matches!(
+        action,
+        FloorAction::PointerWheelChangedWithContext {
+            control_modifier: true,
+            ..
+        }
+    )));
     assert!(
         actions
             .iter()
-            .any(|action| matches!(action, FloorAction::PointerWheelChanged { ctrl: true, .. }))
-    );
-    assert!(
-        actions
-            .iter()
-            .any(|action| matches!(action, FloorAction::Touch { .. }))
+            .any(|action| matches!(action, FloorAction::TouchWithContext { .. }))
     );
 }
 
@@ -137,4 +139,55 @@ fn pan_and_zoom_recompute_layout_bounds() {
     assert!(state.floor_y > floor_y_after_zoom);
     assert_ne!(state.floor_x, base_floor_x);
     assert_ne!(state.floor_y, base_floor_y);
+}
+
+#[test]
+fn secondary_pointer_input_keeps_button_context_and_does_not_start_pan() {
+    let state = FloorState::default();
+
+    let raw_input = egui::RawInput {
+        screen_rect: Some(egui::Rect::from_min_size(
+            egui::pos2(0.0, 0.0),
+            egui::vec2(640.0, 480.0),
+        )),
+        events: vec![
+            egui::Event::PointerButton {
+                pos: egui::pos2(200.0, 150.0),
+                button: egui::PointerButton::Secondary,
+                pressed: true,
+                modifiers: egui::Modifiers::NONE,
+            },
+            egui::Event::PointerMoved(egui::pos2(260.0, 190.0)),
+            egui::Event::PointerButton {
+                pos: egui::pos2(260.0, 190.0),
+                button: egui::PointerButton::Secondary,
+                pressed: false,
+                modifiers: egui::Modifiers::NONE,
+            },
+        ],
+        ..egui::RawInput::default()
+    };
+
+    let actions = draw_actions(&state, raw_input);
+    assert!(
+        actions
+            .iter()
+            .all(|action| !matches!(action, FloorAction::ClearSelection))
+    );
+
+    let mut reduced = FloorState::default();
+    for action in actions {
+        reduce(&mut reduced, action);
+    }
+
+    let last_pressed = reduced
+        .last_pointer_pressed
+        .expect("secondary press metadata should be preserved");
+    assert_eq!(
+        last_pressed.button,
+        crate::floor::floor_component::state::PointerButton::Secondary
+    );
+    assert_eq!(reduced.transformation_matrix.trans_x, 0.0);
+    assert_eq!(reduced.transformation_matrix.trans_y, 0.0);
+    assert!(reduced.pointer_anchor.is_none());
 }

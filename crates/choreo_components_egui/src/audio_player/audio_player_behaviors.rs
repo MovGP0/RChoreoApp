@@ -9,10 +9,10 @@ use choreo_models::SettingsPreferenceKeys;
 
 use crate::global::GlobalStateActor;
 use crate::global::GlobalStateModel;
+use crate::global::SceneViewModel;
 use crate::observability::start_internal_span;
 use crate::preferences::Preferences;
 use crate::time::format_seconds;
-use crate::time::parse_timestamp_seconds;
 
 use super::actions::AudioPlayerAction;
 use super::audio_player_backend::AudioPlayerBackend;
@@ -66,10 +66,7 @@ pub fn build_audio_player_behaviors(
     }
 }
 
-pub trait AudioPlayerHapticFeedback {
-    fn is_supported(&self) -> bool;
-    fn perform_click(&self);
-}
+pub use crate::haptics::HapticFeedback as AudioPlayerHapticFeedback;
 
 pub struct OpenAudioFileBehavior {
     receiver: Receiver<OpenAudioFileCommand>,
@@ -315,11 +312,11 @@ fn sync_scenes_from_global_state(state: &mut AudioPlayerState, global_state: &Gl
     );
 }
 
-fn map_scene_model(scene: &SceneModel) -> AudioPlayerScene {
+fn map_scene_model(scene: &SceneViewModel) -> AudioPlayerScene {
     AudioPlayerScene {
         scene_id: scene.scene_id.0,
         name: scene.name.clone(),
-        timestamp: scene.timestamp.as_deref().and_then(parse_timestamp_seconds),
+        timestamp: scene.timestamp,
     }
 }
 
@@ -347,7 +344,7 @@ fn handle_link_scene_to_position(position: f64, global_state: &mut GlobalStateMo
     let formatted_timestamp = format_seconds(linked_timestamp);
 
     if let Some(selected_scene) = global_state.selected_scene.as_mut() {
-        selected_scene.timestamp = Some(formatted_timestamp.clone());
+        selected_scene.timestamp = Some(linked_timestamp);
     }
 
     if let Some(scene) = global_state
@@ -355,7 +352,7 @@ fn handle_link_scene_to_position(position: f64, global_state: &mut GlobalStateMo
         .iter_mut()
         .find(|scene| scene.scene_id == selected_scene_id)
     {
-        scene.timestamp = Some(formatted_timestamp.clone());
+        scene.timestamp = Some(linked_timestamp);
     }
 
     if let Some(scene) = global_state
@@ -371,21 +368,18 @@ fn handle_link_scene_to_position(position: f64, global_state: &mut GlobalStateMo
 fn try_get_linked_timestamp(
     position: f64,
     selected_scene_id: SceneId,
-    scenes: &[SceneModel],
+    scenes: &[SceneViewModel],
 ) -> Option<f64> {
     let selected_index = scenes
         .iter()
         .position(|scene| scene.scene_id == selected_scene_id)?;
 
-    let before_timestamp = selected_index.checked_sub(1).and_then(|index| {
-        scenes[index]
-            .timestamp
-            .as_deref()
-            .and_then(parse_timestamp_seconds)
-    });
+    let before_timestamp = selected_index
+        .checked_sub(1)
+        .and_then(|index| scenes[index].timestamp);
     let after_timestamp = scenes
         .get(selected_index + 1)
-        .and_then(|scene| scene.timestamp.as_deref().and_then(parse_timestamp_seconds));
+        .and_then(|scene| scene.timestamp);
 
     let rounded = round_to_100_millis(position);
 

@@ -9,6 +9,12 @@ use choreo_models::SceneModel;
 use crate::floor::state::Matrix;
 use crate::floor::state::Point;
 
+pub type SceneViewModel = crate::scenes::state::SceneItemState;
+
+// egui does not expose a retained canvas handle equivalent to the Slint view handle,
+// so parity is modeled as an opaque placeholder until a real handle is needed.
+pub type MainCanvasViewHandle = ();
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SelectionRectangle {
     pub start: Point,
@@ -29,14 +35,14 @@ pub enum InteractionMode {
 #[derive(Debug, Default)]
 pub struct GlobalStateModel {
     pub choreography: ChoreographyModel,
-    pub scenes: Vec<SceneModel>,
-    pub selected_scene: Option<SceneModel>,
+    pub scenes: Vec<SceneViewModel>,
+    pub selected_scene: Option<SceneViewModel>,
     pub selected_positions: Vec<PositionModel>,
     pub selected_positions_snapshot: Vec<PositionModel>,
     pub selection_rectangle: Option<SelectionRectangle>,
     pub is_place_mode: bool,
     pub interaction_mode: InteractionMode,
-    pub main_canvas_view: Option<Rc<()>>,
+    pub main_canvas_view: Option<Rc<MainCanvasViewHandle>>,
     pub main_canvas_view_matrix: Matrix,
     pub scene_list_scroll_offset: f32,
     pub should_scroll_to_selected_scene: bool,

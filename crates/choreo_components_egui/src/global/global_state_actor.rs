@@ -43,7 +43,6 @@ impl GlobalStateActor {
         F: FnOnce(&mut GlobalStateModel) + 'static,
     {
         self.queue.borrow_mut().push_back(Box::new(command));
-        self.drain();
     }
 
     pub fn subscribe(&self, handler: Rc<dyn Fn()>) {

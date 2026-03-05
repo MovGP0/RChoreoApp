@@ -2,9 +2,11 @@ use crate::settings::state::AudioPlayerBackend;
 use crate::settings::state::SettingsState;
 use crate::settings::translations::settings_translations;
 use crate::settings::ui::audio_backend_label;
+use crate::settings::ui::content_spacing_token;
 use crate::settings::ui::navigate_back_icon_name;
 use crate::settings::ui::navigate_back_icon_svg;
 use crate::settings::ui::parse_argb_hex;
+use choreo_components_egui::ui_style::material_style_metrics::material_style_metrics;
 
 #[test]
 fn settings_ui_draw_executes_without_panicking() {
@@ -31,6 +33,14 @@ fn audio_backend_labels_match_expected_values() {
 }
 
 #[test]
+fn settings_translations_bind_slint_catalog_values() {
+    let strings = settings_translations("de");
+
+    assert_eq!(strings.title, "Einstellungen");
+    assert_eq!(strings.use_system_theme, "Systemdesign verwenden");
+}
+
+#[test]
 fn parse_argb_hex_handles_valid_and_invalid_values() {
     assert!(parse_argb_hex("#FF112233").is_some());
     assert!(parse_argb_hex("#112233").is_none());
@@ -41,4 +51,12 @@ fn parse_argb_hex_handles_valid_and_invalid_values() {
 fn navigate_back_control_uses_icon_catalog_mapping() {
     assert_eq!(navigate_back_icon_name(), "arrow_back");
     assert!(navigate_back_icon_svg().contains("<svg"));
+}
+
+#[test]
+fn settings_spacing_uses_shared_material_metrics_token() {
+    assert_eq!(
+        content_spacing_token(),
+        material_style_metrics().spacings.spacing_12
+    );
 }

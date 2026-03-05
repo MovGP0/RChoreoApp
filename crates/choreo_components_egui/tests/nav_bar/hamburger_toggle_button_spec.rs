@@ -2,10 +2,17 @@ use egui::Rect;
 use egui::pos2;
 use egui::vec2;
 
+use crate::nav_bar::nav_bar_component::hamburger_toggle_button::checked_animation_spec;
+use crate::nav_bar::nav_bar_component::hamburger_toggle_button::content_padding_token;
 use crate::nav_bar::nav_bar_component::hamburger_toggle_button::desired_size;
 use crate::nav_bar::nav_bar_component::hamburger_toggle_button::geometry_for_rect;
 use crate::nav_bar::nav_bar_component::hamburger_toggle_button::geometry_for_rect_with_progress;
+use crate::nav_bar::nav_bar_component::hamburger_toggle_button::minimum_button_size_token;
+use crate::nav_bar::nav_bar_component::hamburger_toggle_button::state_layer_animation_spec;
 use crate::nav_bar::nav_bar_component::hamburger_toggle_button::toggled_state_after_click;
+use choreo_components_egui::ui_style::material_animations::MaterialAnimation;
+use choreo_components_egui::ui_style::material_animations::MaterialAnimations;
+use choreo_components_egui::ui_style::material_style_metrics::material_style_metrics;
 
 #[test]
 fn unchecked_geometry_keeps_three_parallel_bars() {
@@ -56,15 +63,35 @@ fn partial_transition_geometry_interpolates_between_unchecked_and_checked() {
 #[test]
 fn desired_size_defaults_to_slint_minimum() {
     let size = desired_size(None);
-    assert_eq!(size.x, 40.0);
-    assert_eq!(size.y, 40.0);
+    assert_eq!(size.x, minimum_button_size_token());
+    assert_eq!(size.y, minimum_button_size_token());
 }
 
 #[test]
 fn desired_size_clamps_to_slint_minimum_when_too_small() {
     let size = desired_size(Some(vec2(24.0, 30.0)));
-    assert_eq!(size.x, 40.0);
-    assert_eq!(size.y, 40.0);
+    assert_eq!(size.x, minimum_button_size_token());
+    assert_eq!(size.y, minimum_button_size_token());
+}
+
+#[test]
+fn hamburger_button_tokens_map_to_shared_material_metrics() {
+    let metrics = material_style_metrics();
+
+    assert_eq!(minimum_button_size_token(), metrics.sizes.size_40);
+    assert_eq!(content_padding_token(), metrics.paddings.padding_10);
+}
+
+#[test]
+fn hamburger_button_uses_shared_material_animation_specs() {
+    assert_eq!(
+        checked_animation_spec(),
+        MaterialAnimations::spec(MaterialAnimation::Emphasized)
+    );
+    assert_eq!(
+        state_layer_animation_spec(),
+        MaterialAnimations::spec(MaterialAnimation::Opacity)
+    );
 }
 
 #[test]

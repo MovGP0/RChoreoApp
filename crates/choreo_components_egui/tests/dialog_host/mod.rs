@@ -33,12 +33,23 @@ fn draw_close_requested(
     close_on_click_away: bool,
     click_position: egui::Pos2,
 ) -> bool {
+    draw_close_requested_in_bounds(
+        egui::Rect::from_min_size(egui::pos2(0.0, 0.0), egui::vec2(200.0, 200.0)),
+        is_open,
+        close_on_click_away,
+        click_position,
+    )
+}
+
+fn draw_close_requested_in_bounds(
+    bounds: egui::Rect,
+    is_open: bool,
+    close_on_click_away: bool,
+    click_position: egui::Pos2,
+) -> bool {
     let context = egui::Context::default();
     let raw_input = egui::RawInput {
-        screen_rect: Some(egui::Rect::from_min_size(
-            egui::pos2(0.0, 0.0),
-            egui::vec2(200.0, 200.0),
-        )),
+        screen_rect: Some(bounds),
         events: click_events(click_position),
         ..egui::RawInput::default()
     };
@@ -96,13 +107,17 @@ fn dialog_host_ui_spec() {
             assert_eq!(panel.bottom(), 296.0);
         });
 
-        spec.it("clamps panel size to zero when margin exceeds bounds", |_| {
-            let bounds = egui::Rect::from_min_size(egui::pos2(0.0, 0.0), egui::vec2(40.0, 40.0));
-            let panel = ui::dialog_panel_rect(bounds, 24.0);
+        spec.it(
+            "clamps panel size to zero when margin exceeds bounds",
+            |_| {
+                let bounds =
+                    egui::Rect::from_min_size(egui::pos2(0.0, 0.0), egui::vec2(40.0, 40.0));
+                let panel = ui::dialog_panel_rect(bounds, 24.0);
 
-            assert_eq!(panel.width(), 0.0);
-            assert_eq!(panel.height(), 0.0);
-        });
+                assert_eq!(panel.width(), 0.0);
+                assert_eq!(panel.height(), 0.0);
+            },
+        );
 
         spec.it(
             "returns close requested when overlay is clicked away and click-away is enabled",
@@ -117,10 +132,25 @@ fn dialog_host_ui_spec() {
             assert!(!close_requested);
         });
 
-        spec.it("does not close when clicking inside the dialog panel", |_| {
-            let close_requested = draw_close_requested(true, true, egui::pos2(100.0, 100.0));
-            assert!(!close_requested);
-        });
+        spec.it(
+            "does not close when clicking inside the dialog panel",
+            |_| {
+                let close_requested = draw_close_requested(true, true, egui::pos2(100.0, 100.0));
+                assert!(!close_requested);
+            },
+        );
+
+        spec.it(
+            "closes on click-away when the dialog host is rendered at a non-zero origin",
+            |_| {
+                let bounds =
+                    egui::Rect::from_min_size(egui::pos2(120.0, 80.0), egui::vec2(200.0, 200.0));
+                let close_requested =
+                    draw_close_requested_in_bounds(bounds, true, true, egui::pos2(128.0, 88.0));
+
+                assert!(close_requested);
+            },
+        );
     });
 
     let report = run_suite(&suite);

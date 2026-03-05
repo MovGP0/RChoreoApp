@@ -2,8 +2,10 @@ use super::actions::OpenAudioRequested;
 use super::actions::OpenChoreoRequested;
 use super::actions::OpenSvgFileCommand;
 use crate::audio_player::state::AudioPlayerState;
+use crate::choreography_settings::state::ChoreographySettingsState;
 use crate::dancers::state::DancersState;
 use crate::floor::state::FloorState;
+use crate::settings::state::SettingsState;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum MainContent {
@@ -68,6 +70,8 @@ pub struct ChoreoMainState {
     pub floor_scene_name: Option<String>,
     pub floor_state: FloorState,
     pub audio_player_state: AudioPlayerState,
+    pub choreography_settings_state: ChoreographySettingsState,
+    pub settings_state: SettingsState,
     pub dancers_state: DancersState,
 }
 
@@ -97,6 +101,8 @@ impl Default for ChoreoMainState {
             floor_scene_name: None,
             floor_state: FloorState::default(),
             audio_player_state: AudioPlayerState::default(),
+            choreography_settings_state: ChoreographySettingsState::default(),
+            settings_state: SettingsState::default(),
             dancers_state: DancersState::default(),
         }
     }

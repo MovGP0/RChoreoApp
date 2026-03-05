@@ -3,6 +3,17 @@ name = "rchoreo_android_egui"
 version = "0.1.0"
 edition = "2024"
 
+[package.metadata.android]
+package = "app.rchoreo.egui"
+resources = "res"
+build_targets = [
+    "aarch64-linux-android",
+]
+
+[package.metadata.android.application]
+label = "ChoreoApp"
+icon = "@mipmap/ic_launcher"
+
 [lib]
 crate-type = ["cdylib"]
 

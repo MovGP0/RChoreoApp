@@ -156,9 +156,18 @@ pub fn apply_text_styles(style: &Style) -> Style {
             TextStyle::Heading,
             font_id_for_role(TypographyRole::HeadlineSmall),
         ),
-        (TextStyle::Body, font_id_for_role(TypographyRole::BodyMedium)),
-        (TextStyle::Button, font_id_for_role(TypographyRole::LabelLarge)),
-        (TextStyle::Small, font_id_for_role(TypographyRole::BodySmall)),
+        (
+            TextStyle::Body,
+            font_id_for_role(TypographyRole::BodyMedium),
+        ),
+        (
+            TextStyle::Button,
+            font_id_for_role(TypographyRole::LabelLarge),
+        ),
+        (
+            TextStyle::Small,
+            font_id_for_role(TypographyRole::BodySmall),
+        ),
         (
             TextStyle::Monospace,
             FontId::new(12.0, FontFamily::Monospace),

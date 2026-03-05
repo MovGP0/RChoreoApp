@@ -48,6 +48,7 @@ pub struct NavBarState {
     pub is_nav_open: bool,
     pub is_audio_player_open: bool,
     pub is_choreography_settings_open: bool,
+    pub is_floor_svg_overlay_open: bool,
 }
 
 impl NavBarState {
@@ -63,6 +64,7 @@ impl Default for NavBarState {
             is_nav_open: false,
             is_audio_player_open: false,
             is_choreography_settings_open: false,
+            is_floor_svg_overlay_open: false,
         }
     }
 }

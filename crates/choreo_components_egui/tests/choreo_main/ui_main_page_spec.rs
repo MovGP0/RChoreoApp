@@ -3,6 +3,7 @@ use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::reducer::reduce;
 use crate::choreo_main::state::ChoreoMainState;
 use crate::choreo_main::state::InteractionMode;
+use crate::choreo_main::state::MainContent;
 use crate::choreo_main::ui::home_icon_name;
 use crate::choreo_main::ui::mode_count;
 use crate::choreo_main::ui::mode_label;
@@ -12,10 +13,14 @@ use crate::choreo_main::ui::open_image_icon_name;
 use crate::choreo_main::ui::top_bar_nav_action;
 use crate::choreo_main::ui::top_bar_settings_action;
 use crate::choreo_main::ui::top_bar_settings_icon_name;
+use choreo_components_egui::choreography_settings::actions::ChoreographySettingsAction;
+use choreo_components_egui::choreography_settings::actions::UpdateSelectedSceneAction;
 use choreo_components_egui::dancers::actions::DancersAction;
 use choreo_components_egui::dancers::state::DancerState;
 use choreo_components_egui::dancers::state::RoleState;
 use choreo_components_egui::dancers::state::transparent_color;
+use choreo_components_egui::settings::actions::SettingsAction;
+use choreo_components_egui::settings::state::AudioPlayerBackend;
 
 #[test]
 fn ui_main_page_spec() {
@@ -35,10 +40,10 @@ fn ui_main_page_spec() {
             assert_eq!(mode_count(), 6);
             assert_eq!(mode_label(0), "View");
             assert_eq!(mode_label(1), "Move");
-            assert_eq!(mode_label(2), "Rotate Center");
-            assert_eq!(mode_label(3), "Rotate Dancer");
+            assert_eq!(mode_label(2), "Rotate around center");
+            assert_eq!(mode_label(3), "Rotate around dancer");
             assert_eq!(mode_label(4), "Scale");
-            assert_eq!(mode_label(5), "Line of Sight");
+            assert_eq!(mode_label(5), "Line of sight");
         });
 
         spec.it(
@@ -100,10 +105,70 @@ fn ui_main_page_spec() {
         );
 
         spec.it(
+            "syncs choreography settings projection from main scene selection",
+            |_| {
+                let mut state = ChoreoMainState::default();
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::SetScenes {
+                        scenes: vec![
+                            crate::choreo_main::state::SceneState {
+                                name: "Intro".to_string(),
+                                timestamp_seconds: Some(1.5),
+                            },
+                            crate::choreo_main::state::SceneState {
+                                name: "Finale".to_string(),
+                                timestamp_seconds: Some(3.0),
+                            },
+                        ],
+                    },
+                );
+                reduce(&mut state, ChoreoMainAction::SelectScene { index: 1 });
+
+                assert_eq!(state.choreography_settings_state.scene_name, "Finale");
+                assert!(state.choreography_settings_state.scene_has_timestamp);
+                assert!(
+                    (state.choreography_settings_state.scene_timestamp_seconds - 3.0).abs()
+                        < 0.0001
+                );
+            },
+        );
+
+        spec.it(
+            "routes choreography settings drawer actions back into shared main state",
+            |_| {
+                let mut state = ChoreoMainState::default();
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::SetScenes {
+                        scenes: vec![crate::choreo_main::state::SceneState {
+                            name: "Intro".to_string(),
+                            timestamp_seconds: Some(1.5),
+                        }],
+                    },
+                );
+
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::ChoreographySettingsAction(
+                        ChoreographySettingsAction::UpdateSelectedScene(
+                            UpdateSelectedSceneAction::SceneName("Updated".to_string()),
+                        ),
+                    ),
+                );
+
+                assert_eq!(state.choreography_settings_state.scene_name, "Updated");
+                assert_eq!(state.scenes[0].name, "Updated");
+                assert_eq!(state.floor_scene_name.as_deref(), Some("Updated"));
+                assert_eq!(state.draw_floor_request_count, 1);
+            },
+        );
+
+        spec.it(
             "routes dancers content through dancers pane and dispatches dancer actions",
             |_| {
                 let mut state = ChoreoMainState::default();
-                state.content = crate::choreo_main::state::MainContent::Dancers;
+                state.content = MainContent::Dancers;
                 state.dancers_state.dancers = vec![DancerState {
                     dancer_id: 1,
                     role: RoleState {
@@ -125,6 +190,31 @@ fn ui_main_page_spec() {
                 );
 
                 assert!(state.dancers_state.dancers.is_empty());
+            },
+        );
+
+        spec.it(
+            "routes settings content through settings actions and returns to the main page",
+            |_| {
+                let mut state = ChoreoMainState::default();
+                state.content = MainContent::Settings;
+
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::SettingsAction(SettingsAction::UpdateAudioPlayerBackend {
+                        backend: AudioPlayerBackend::Awedio,
+                    }),
+                );
+                assert_eq!(
+                    state.settings_state.audio_player_backend,
+                    AudioPlayerBackend::Awedio
+                );
+
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::SettingsAction(SettingsAction::NavigateBack),
+                );
+                assert_eq!(state.content, MainContent::Main);
             },
         );
     });

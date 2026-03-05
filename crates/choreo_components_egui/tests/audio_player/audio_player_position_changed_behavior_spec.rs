@@ -1,7 +1,7 @@
-use crate::audio_player::audio_player_component::actions::AudioPlayerAction;
-use crate::audio_player::audio_player_component::reducer::AudioPlayerEffect;
-use crate::audio_player::audio_player_component::reducer::reduce;
-use crate::audio_player::audio_player_component::state::AudioPlayerState;
+use choreo_components_egui::audio_player::actions::AudioPlayerAction;
+use choreo_components_egui::audio_player::reducer::AudioPlayerEffect;
+use choreo_components_egui::audio_player::reducer::reduce;
+use choreo_components_egui::audio_player::state::AudioPlayerState;
 
 #[test]
 fn audio_player_position_changed_emits_events_only_when_position_changes() {

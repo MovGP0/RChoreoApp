@@ -20,3 +20,16 @@ pub(crate) fn init_debug_otel() -> OTelGuard {
 pub(crate) fn capture_trace_context(_action_name: &str) -> Option<TraceContext> {
     None
 }
+
+#[cfg(all(test, not(all(debug_assertions, feature = "debug-otel"))))]
+mod tests {
+    use super::capture_trace_context;
+    use super::init_debug_otel;
+
+    #[test]
+    fn debug_otel_init_is_a_no_op_without_feature_support() {
+        let _guard = init_debug_otel();
+
+        assert!(capture_trace_context("ui.start").is_none());
+    }
+}

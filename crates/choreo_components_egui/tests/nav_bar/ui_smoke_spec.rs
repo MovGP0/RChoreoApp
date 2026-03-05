@@ -1,9 +1,13 @@
 use crate::nav_bar::nav_bar_component::actions::NavBarAction;
 use crate::nav_bar::nav_bar_component::state::InteractionMode;
 use crate::nav_bar::nav_bar_component::state::NavBarState;
+use crate::nav_bar::nav_bar_component::ui::image_button_checked;
 use crate::nav_bar::nav_bar_component::ui::mode_label;
+use crate::nav_bar::nav_bar_component::ui::mode_selector_height_token;
+use crate::nav_bar::nav_bar_component::ui::mode_selector_width_token;
 use crate::nav_bar::nav_bar_component::ui::nav_button;
 use crate::nav_bar::nav_bar_component::ui::settings_button;
+use crate::nav_bar::nav_bar_component::ui::settings_button_checked;
 
 #[test]
 fn nav_bar_ui_draw_executes_without_panicking() {
@@ -53,6 +57,21 @@ fn settings_button_action_depends_on_settings_state() {
 }
 
 #[test]
+fn toggle_icon_buttons_reflect_original_checked_state_mappings() {
+    let closed = NavBarState::default();
+    assert!(!settings_button_checked(&closed));
+    assert!(!image_button_checked(&closed));
+
+    let open = NavBarState {
+        is_choreography_settings_open: true,
+        is_floor_svg_overlay_open: true,
+        ..NavBarState::default()
+    };
+    assert!(settings_button_checked(&open));
+    assert!(image_button_checked(&open));
+}
+
+#[test]
 fn mode_labels_map_to_translation_keys() {
     assert_eq!(mode_label(InteractionMode::View), "ModeView");
     assert_eq!(mode_label(InteractionMode::Move), "ModeMove");
@@ -66,4 +85,32 @@ fn mode_labels_map_to_translation_keys() {
     );
     assert_eq!(mode_label(InteractionMode::Scale), "ModeScale");
     assert_eq!(mode_label(InteractionMode::LineOfSight), "ModeLineOfSight");
+}
+
+#[test]
+fn mode_selector_uses_original_top_bar_size_tokens() {
+    assert_eq!(mode_selector_width_token(), 180.0);
+    assert_eq!(mode_selector_height_token(), 56.0);
+}
+
+#[test]
+fn nav_bar_does_not_render_extra_mode_heading_text() {
+    let state = NavBarState::default();
+    let context = egui::Context::default();
+    let output = context.run(egui::RawInput::default(), |ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.set_width(1280.0);
+            let _ = crate::nav_bar::nav_bar_component::ui::draw(ui, &state);
+        });
+    });
+
+    let mut rendered_mode_heading = false;
+    for clipped in output.shapes {
+        if format!("{:?}", clipped.shape).contains("\"Mode\"") {
+            rendered_mode_heading = true;
+            break;
+        }
+    }
+
+    assert!(!rendered_mode_heading);
 }

@@ -19,9 +19,25 @@ fn key_component_icon_mappings_match_expected_tokens() {
     assert_eq!(audio_link.token, "link");
     assert_eq!(audio_link.slint_name, "Link");
 
+    let scenes_add_before = ui_icons::icon(UiIconKey::ScenesAddBefore);
+    assert_eq!(scenes_add_before.token, "add_row_above");
+    assert_eq!(scenes_add_before.slint_name, "TableRowPlusBefore");
+
+    let scenes_add_after = ui_icons::icon(UiIconKey::ScenesAddAfter);
+    assert_eq!(scenes_add_after.token, "add_row_below");
+    assert_eq!(scenes_add_after.slint_name, "TableRowPlusAfter");
+
+    let scenes_delete = ui_icons::icon(UiIconKey::ScenesDelete);
+    assert_eq!(scenes_delete.token, "delete");
+    assert_eq!(scenes_delete.slint_name, "Delete");
+
     let scenes_open = ui_icons::icon(UiIconKey::ScenesOpenChoreography);
     assert_eq!(scenes_open.token, "folder_open");
     assert_eq!(scenes_open.slint_name, "FolderOpen");
+
+    let scenes_dancers = ui_icons::icon(UiIconKey::ScenesNavigateDancers);
+    assert_eq!(scenes_dancers.token, "groups");
+    assert_eq!(scenes_dancers.slint_name, "AccountGroup");
 
     let settings_back = ui_icons::icon(UiIconKey::SettingsNavigateBack);
     assert_eq!(settings_back.token, "arrow_back");
@@ -40,6 +56,9 @@ fn component_icon_svgs_resolve_from_slint_catalog_assets() {
         UiIconKey::AudioPlay,
         UiIconKey::AudioPause,
         UiIconKey::AudioLink,
+        UiIconKey::ScenesAddBefore,
+        UiIconKey::ScenesAddAfter,
+        UiIconKey::ScenesDelete,
         UiIconKey::ScenesOpenChoreography,
         UiIconKey::ScenesSaveChoreography,
         UiIconKey::ScenesNavigateSettings,
@@ -68,9 +87,12 @@ fn slint_name_resolver_returns_catalog_entries() {
     let resolved = ui_icons::from_slint_name("PlayCircle").expect("PlayCircle should resolve");
     assert_eq!(resolved.token, "play_circle");
 
-    let resolved = ui_icons::from_slint_name("AccountMultipleRemove")
-        .expect("AccountMultipleRemove should resolve");
-    assert_eq!(resolved.token, "group_remove");
+    let resolved =
+        ui_icons::from_slint_name("TableRowPlusBefore").expect("TableRowPlusBefore should resolve");
+    assert_eq!(resolved.token, "add_row_above");
+
+    let resolved = ui_icons::from_slint_name("AccountGroup").expect("AccountGroup should resolve");
+    assert_eq!(resolved.token, "groups");
 
     assert!(ui_icons::from_slint_name("DoesNotExist").is_none());
 }

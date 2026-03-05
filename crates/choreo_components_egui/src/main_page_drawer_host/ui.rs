@@ -13,17 +13,24 @@ use super::state::MainPageDrawerHostState;
 #[derive(Debug, Clone, Copy)]
 pub struct MainPageDrawerHostLayout {
     pub content_rect: Rect,
+    pub overlay_rect: Rect,
     pub panel_rect: Rect,
     pub left_panel_rect: Rect,
     pub right_panel_rect: Rect,
 }
 
 #[must_use]
-pub fn compute_layout(container_rect: Rect, state: &MainPageDrawerHostState) -> MainPageDrawerHostLayout {
+pub fn compute_layout(
+    container_rect: Rect,
+    state: &MainPageDrawerHostState,
+) -> MainPageDrawerHostLayout {
     let inline_width = state.inline_left_width();
     let top_inset = state.top_inset.max(0.0);
 
-    let content_min = pos2(container_rect.min.x + inline_width, container_rect.min.y + top_inset);
+    let content_min = pos2(
+        container_rect.min.x + inline_width,
+        container_rect.min.y + top_inset,
+    );
     let content_rect = Rect::from_min_max(content_min, container_rect.max);
 
     let panel_min = pos2(container_rect.min.x, container_rect.min.y + top_inset);
@@ -45,6 +52,7 @@ pub fn compute_layout(container_rect: Rect, state: &MainPageDrawerHostState) -> 
 
     MainPageDrawerHostLayout {
         content_rect,
+        overlay_rect: container_rect,
         panel_rect,
         left_panel_rect,
         right_panel_rect,
@@ -53,14 +61,7 @@ pub fn compute_layout(container_rect: Rect, state: &MainPageDrawerHostState) -> 
 
 #[must_use]
 pub fn draw(ui: &mut Ui, state: &MainPageDrawerHostState) -> Vec<MainPageDrawerHostAction> {
-    draw_with_slots(
-        ui,
-        "main_page_drawer_host",
-        state,
-        |_| {},
-        |_| {},
-        |_| {},
-    )
+    draw_with_slots(ui, "main_page_drawer_host", state, |_| {}, |_| {}, |_| {})
 }
 
 #[must_use]
@@ -87,11 +88,13 @@ pub fn draw_with_slots(
     if state.overlay_visible() {
         let overlay_clicked = Area::new(Id::new((id_source, "overlay")))
             .order(Order::Foreground)
-            .fixed_pos(layout.panel_rect.min)
+            .fixed_pos(layout.overlay_rect.min)
             .show(ui.ctx(), |ui| {
-                let overlay_rect = Rect::from_min_size(egui::Pos2::ZERO, layout.panel_rect.size());
+                let overlay_rect =
+                    Rect::from_min_size(egui::Pos2::ZERO, layout.overlay_rect.size());
                 let response = ui.allocate_rect(overlay_rect, Sense::click());
-                ui.painter().rect_filled(overlay_rect, 0.0, state.overlay_color);
+                ui.painter()
+                    .rect_filled(overlay_rect, 0.0, state.overlay_color);
                 response.clicked()
             })
             .inner;

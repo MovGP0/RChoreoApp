@@ -1,9 +1,11 @@
 use super::state::InteractionMode;
 use super::state::SceneState;
 use crate::audio_player::actions::AudioPlayerAction;
+use crate::choreography_settings::actions::ChoreographySettingsAction;
 use crate::dancers::actions::DancersAction;
 use crate::floor::actions::FloorAction;
 use crate::observability::TraceContext;
+use crate::settings::actions::SettingsAction;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OpenChoreoRequested {
@@ -69,6 +71,8 @@ pub enum ChoreoMainAction {
     LinkSelectedSceneToAudioPosition,
     FloorAction(FloorAction),
     AudioPlayerAction(AudioPlayerAction),
+    ChoreographySettingsAction(ChoreographySettingsAction),
+    SettingsAction(SettingsAction),
     DancersAction(DancersAction),
     ClearOutgoingCommands,
 }

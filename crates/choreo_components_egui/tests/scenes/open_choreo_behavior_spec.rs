@@ -26,6 +26,14 @@ fn open_choreo_updates_state_and_audio_request() {
         state.last_opened_choreo_file.as_deref(),
         Some("C:/tmp/test.choreo")
     );
+    assert!(state.selected_scene_changed);
+    assert_eq!(
+        state
+            .selected_scene
+            .as_ref()
+            .map(|scene| scene.name.as_str()),
+        Some("Intro")
+    );
     assert_eq!(state.pending_open_audio.as_deref(), Some("C:/tmp/test.mp3"));
     assert!(!state.close_audio_requested);
 }

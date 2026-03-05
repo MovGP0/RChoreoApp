@@ -11,6 +11,10 @@ pub fn app_title() -> &'static str {
     "ChoreoApp"
 }
 
+/// Returns the canonical app icon SVG shared by egui targets.
+///
+/// Desktop rasterizes this asset into window-icon pixels at startup.
+/// WASM keeps a checked-in favicon copy that is kept byte-equal by a parity spec.
 pub fn app_icon_svg() -> &'static str {
     include_str!("../../../choreo_components/ui/app_icon.svg")
 }

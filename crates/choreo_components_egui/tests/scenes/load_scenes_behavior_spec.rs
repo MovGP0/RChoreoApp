@@ -64,3 +64,45 @@ fn reload_scenes_reloads_from_choreography() {
     assert_eq!(state.scenes[1].timestamp, Some(9.0));
     assert!(state.reload_requested);
 }
+
+#[test]
+fn reload_scenes_reselects_first_scene_and_marks_selection_changed() {
+    let mut state = create_state();
+    let choreography = choreography_with_scenes(
+        "Test",
+        vec![
+            scene_model(1, "First", None, vec![]),
+            scene_model(2, "Second", None, vec![]),
+        ],
+    );
+
+    reduce(
+        &mut state,
+        ScenesAction::LoadScenes {
+            choreography: Box::new(choreography),
+        },
+    );
+    state.clear_ephemeral_outputs();
+
+    reduce(&mut state, ScenesAction::SelectScene { index: 1 });
+    assert_eq!(
+        state
+            .selected_scene
+            .as_ref()
+            .map(|scene| scene.name.as_str()),
+        Some("Second")
+    );
+    state.clear_ephemeral_outputs();
+
+    reduce(&mut state, ScenesAction::ReloadScenes);
+
+    assert_eq!(
+        state
+            .selected_scene
+            .as_ref()
+            .map(|scene| scene.name.as_str()),
+        Some("First")
+    );
+    assert!(state.selected_scene_changed);
+    assert!(state.reload_requested);
+}

@@ -5,10 +5,14 @@ use egui::Ui;
 use egui::epaint::PathShape;
 
 use super::actions::FloorAction;
+use super::state::CanvasViewHandle;
 use super::state::FloorState;
 use super::state::Point;
+use super::state::PointerButton;
+use super::state::PointerEventArgs;
 use super::state::TouchAction;
 use super::state::TouchDeviceType;
+use super::state::TouchEventArgs;
 use super::translations::floor_translations;
 
 pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
@@ -202,6 +206,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
 }
 
 fn collect_interactions(ui: &Ui, rect: Rect, is_hovered: bool, actions: &mut Vec<FloorAction>) {
+    let canvas_view = CanvasViewHandle::default();
     ui.input(|input| {
         let mut last_canvas_point: Option<Point> = None;
         for event in &input.events {
@@ -214,19 +219,34 @@ fn collect_interactions(ui: &Ui, rect: Rect, is_hovered: bool, actions: &mut Vec
                 } if rect.contains(*pos) => {
                     let point = to_canvas_point(rect, *pos);
                     last_canvas_point = Some(point);
+                    let event_args = PointerEventArgs {
+                        position: point,
+                        button: map_pointer_button(*button),
+                        is_in_contact: *pressed,
+                    };
                     if *pressed {
-                        actions.push(FloorAction::PointerPressed { point });
+                        actions.push(FloorAction::PointerPressedWithContext {
+                            canvas_view,
+                            event_args,
+                        });
                     } else {
-                        actions.push(FloorAction::PointerReleased { point });
-                    }
-                    if *button == egui::PointerButton::Secondary {
-                        actions.push(FloorAction::ClearSelection);
+                        actions.push(FloorAction::PointerReleasedWithContext {
+                            canvas_view,
+                            event_args,
+                        });
                     }
                 }
                 Event::PointerMoved(pos) if rect.contains(*pos) => {
                     let point = to_canvas_point(rect, *pos);
                     last_canvas_point = Some(point);
-                    actions.push(FloorAction::PointerMoved { point });
+                    actions.push(FloorAction::PointerMovedWithContext {
+                        canvas_view,
+                        event_args: PointerEventArgs {
+                            position: point,
+                            button: PointerButton::Primary,
+                            is_in_contact: input.pointer.primary_down(),
+                        },
+                    });
                 }
                 Event::MouseWheel {
                     delta, modifiers, ..
@@ -238,23 +258,27 @@ fn collect_interactions(ui: &Ui, rect: Rect, is_hovered: bool, actions: &mut Vec
                         .map(|hover_pos| to_canvas_point(rect, hover_pos))
                         .or(last_canvas_point);
                     if is_hovered || cursor.is_some() {
-                        actions.push(FloorAction::PointerWheelChanged {
+                        actions.push(FloorAction::PointerWheelChangedWithContext {
+                            canvas_view,
                             delta_x: f64::from(delta.x),
                             delta_y: f64::from(delta.y),
-                            ctrl: modifiers.ctrl,
-                            cursor,
+                            control_modifier: modifiers.ctrl,
+                            position: cursor,
                         });
                     }
                 }
                 Event::Touch { id, phase, pos, .. } if rect.contains(*pos) => {
                     let point = to_canvas_point(rect, *pos);
                     last_canvas_point = Some(point);
-                    actions.push(FloorAction::Touch {
-                        id: id.0 as i64,
-                        action: map_touch_phase(*phase),
-                        point,
-                        is_in_contact: !matches!(phase, TouchPhase::End | TouchPhase::Cancel),
-                        device: TouchDeviceType::Touch,
+                    actions.push(FloorAction::TouchWithContext {
+                        canvas_view,
+                        event_args: TouchEventArgs {
+                            id: id.0 as i64,
+                            action: map_touch_phase(*phase),
+                            device_type: TouchDeviceType::Touch,
+                            location: point,
+                            in_contact: !matches!(phase, TouchPhase::End | TouchPhase::Cancel),
+                        },
                     });
                 }
                 _ => {}
@@ -276,5 +300,15 @@ fn map_touch_phase(phase: TouchPhase) -> TouchAction {
         TouchPhase::Move => TouchAction::Moved,
         TouchPhase::End => TouchAction::Released,
         TouchPhase::Cancel => TouchAction::Cancelled,
+    }
+}
+
+fn map_pointer_button(button: egui::PointerButton) -> PointerButton {
+    match button {
+        egui::PointerButton::Primary => PointerButton::Primary,
+        egui::PointerButton::Secondary
+        | egui::PointerButton::Middle
+        | egui::PointerButton::Extra1
+        | egui::PointerButton::Extra2 => PointerButton::Secondary,
     }
 }

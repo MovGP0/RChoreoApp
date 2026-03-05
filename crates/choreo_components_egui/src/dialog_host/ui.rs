@@ -55,10 +55,11 @@ pub fn dialog_panel_rect(bounds: Rect, margin: f32) -> Rect {
     Rect::from_min_size(pos2(left, top), vec2(width, height))
 }
 
-pub fn draw_dialog_host(
+pub fn draw_dialog_host_with_panel(
     ui: &mut Ui,
     props: &DialogHostProps<'_>,
     add_children: impl FnOnce(&mut Ui),
+    add_dialog_panel: impl FnOnce(&mut Ui),
 ) -> bool {
     add_children(ui);
 
@@ -68,13 +69,12 @@ pub fn draw_dialog_host(
 
     let host_rect = ui.max_rect();
     let panel_rect = dialog_panel_rect(host_rect, props.dialog_margin);
-    let local_panel_rect = panel_rect.translate(-host_rect.min.to_vec2());
-
     let close_requested = Area::new(Id::new((props.id_source, "overlay")))
         .order(Order::Foreground)
         .fixed_pos(host_rect.min)
         .show(ui.ctx(), |ui| {
             let overlay_rect = Rect::from_min_size(Pos2::ZERO, host_rect.size());
+            let screen_overlay_rect = overlay_rect.translate(host_rect.min.to_vec2());
             let _response = ui.allocate_rect(overlay_rect, Sense::click());
             ui.painter()
                 .rect_filled(overlay_rect, 0.0, props.overlay_color);
@@ -99,7 +99,7 @@ pub fn draw_dialog_host(
             });
 
             pointer_release_pos.is_some_and(|position| {
-                overlay_rect.contains(position) && !local_panel_rect.contains(position)
+                screen_overlay_rect.contains(position) && !panel_rect.contains(position)
             })
         })
         .inner;
@@ -113,12 +113,18 @@ pub fn draw_dialog_host(
                 .fill(props.dialog_background)
                 .corner_radius(CornerRadius::same(props.dialog_corner_radius))
                 .inner_margin(Margin::same(props.dialog_padding))
-                .show(ui, |ui| {
-                    ui.label(
-                        egui::RichText::new(props.dialog_content).color(props.dialog_text_color),
-                    );
-                });
+                .show(ui, add_dialog_panel);
         });
 
     close_requested
+}
+
+pub fn draw_dialog_host(
+    ui: &mut Ui,
+    props: &DialogHostProps<'_>,
+    add_children: impl FnOnce(&mut Ui),
+) -> bool {
+    draw_dialog_host_with_panel(ui, props, add_children, |ui| {
+        ui.label(egui::RichText::new(props.dialog_content).color(props.dialog_text_color));
+    })
 }

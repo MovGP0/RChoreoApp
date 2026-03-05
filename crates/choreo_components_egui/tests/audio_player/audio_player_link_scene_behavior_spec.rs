@@ -1,8 +1,8 @@
-use crate::audio_player::audio_player_component::actions::AudioPlayerAction;
-use crate::audio_player::audio_player_component::reducer::reduce;
-use crate::audio_player::audio_player_component::state::AudioPlayerChoreographyScene;
-use crate::audio_player::audio_player_component::state::AudioPlayerScene;
-use crate::audio_player::audio_player_component::state::AudioPlayerState;
+use choreo_components_egui::audio_player::actions::AudioPlayerAction;
+use choreo_components_egui::audio_player::reducer::reduce;
+use choreo_components_egui::audio_player::state::AudioPlayerChoreographyScene;
+use choreo_components_egui::audio_player::state::AudioPlayerScene;
+use choreo_components_egui::audio_player::state::AudioPlayerState;
 
 #[test]
 fn audio_player_link_scene_updates_selected_scene_timestamp_with_neighbor_bounds() {

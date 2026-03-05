@@ -40,6 +40,8 @@ impl eframe::App for AndroidEguiApp {
 #[unsafe(no_mangle)]
 pub fn android_main(app: winit::platform::android::activity::AndroidApp) {
     let native_options = eframe::NativeOptions {
+        // Launcher icon packaging is provided through cargo-apk resources in
+        // apps/android_egui/Cargo.toml and apps/android_egui/res.
         event_loop_builder: Some(Box::new(move |builder| {
             use winit::platform::android::EventLoopBuilderExtAndroid;
 

@@ -43,6 +43,10 @@ pub fn reduce(state: &mut NavBarState, action: NavBarAction) -> Vec<NavBarEffect
             state.is_audio_player_open = is_open;
             Vec::new()
         }
+        NavBarAction::SetFloorSvgOverlayOpened { is_open } => {
+            state.is_floor_svg_overlay_open = is_open;
+            Vec::new()
+        }
         NavBarAction::SetSelectedMode { mode } => {
             state.selected_mode = mode;
             vec![NavBarEffect::InteractionModeChanged { mode }]

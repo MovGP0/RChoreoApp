@@ -11,6 +11,9 @@ pub mod translations;
 #[path = "../../src/scenes/ui.rs"]
 pub mod ui;
 
+pub use choreo_components_egui::ui_icons;
+pub use rspec::report::Report;
+
 pub mod action_surface_parity_spec;
 pub mod apply_placement_mode_behavior_spec;
 pub mod copy_scene_positions_dialog_spec;
@@ -22,16 +25,36 @@ pub mod load_scenes_behavior_spec;
 pub mod open_choreo_behavior_spec;
 pub mod provider_lifecycle_parity_spec;
 pub mod save_choreo_behavior_spec;
+pub mod scene_item_view_parity_spec;
 pub mod select_scene_behavior_spec;
 pub mod select_scene_from_audio_position_behavior_spec;
 pub mod selected_scene_detail_projection_spec;
 pub mod show_scene_timestamps_behavior_spec;
 pub mod ui_action_flow_parity_spec;
 
+use std::io;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use choreo_master_mobile_json::{Color, DancerId, SceneId};
 use choreo_models::{ChoreographyModel, DancerModel, PositionModel, RoleModel, SceneModel};
+use rspec::ConfigurationBuilder;
+use rspec::Logger;
+use rspec::Runner;
+
+pub fn run_suite<T>(suite: &rspec::block::Suite<T>) -> rspec::report::SuiteReport
+where
+    T: Clone + Send + Sync + std::fmt::Debug,
+{
+    let configuration = ConfigurationBuilder::default()
+        .parallel(false)
+        .exit_on_failure(false)
+        .build()
+        .expect("rspec configuration should build");
+    let logger = Arc::new(Logger::new(io::stdout()));
+    let runner = Runner::new(configuration, vec![logger]);
+    runner.run(suite)
+}
 
 pub fn create_state() -> state::ScenesState {
     state::ScenesState::default()

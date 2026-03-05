@@ -9,6 +9,7 @@ pub enum NavBarAction {
     ToggleChoreographySettings,
     CloseChoreographySettings,
     SetAudioPlayerOpened { is_open: bool },
+    SetFloorSvgOverlayOpened { is_open: bool },
     SetSelectedMode { mode: InteractionMode },
     OpenAudio,
     OpenImage,

@@ -3,14 +3,14 @@ use std::sync::mpsc::channel;
 
 use choreo_models::SettingsPreferenceKeys;
 
-use crate::audio_player::audio_player_component::AudioPlayerBackend;
-use crate::audio_player::audio_player_component::OpenAudioFileCommand;
-use crate::audio_player::audio_player_component::actions::AudioPlayerAction;
-use crate::audio_player::audio_player_component::audio_player_behaviors::AudioPlayerBehaviorDependencies;
-use crate::audio_player::audio_player_component::build_audio_player_behaviors;
-use crate::audio_player::audio_player_component::reducer::reduce;
-use crate::audio_player::audio_player_component::runtime::AudioPlayerRuntime;
-use crate::audio_player::audio_player_component::state::AudioPlayerState;
+use choreo_components_egui::audio_player::AudioPlayerBackend;
+use choreo_components_egui::audio_player::OpenAudioFileCommand;
+use choreo_components_egui::audio_player::actions::AudioPlayerAction;
+use choreo_components_egui::audio_player::audio_player_behaviors::AudioPlayerBehaviorDependencies;
+use choreo_components_egui::audio_player::build_audio_player_behaviors;
+use choreo_components_egui::audio_player::reducer::reduce;
+use choreo_components_egui::audio_player::runtime::AudioPlayerRuntime;
+use choreo_components_egui::audio_player::state::AudioPlayerState;
 use choreo_components_egui::global::GlobalStateActor;
 use choreo_components_egui::preferences::InMemoryPreferences;
 use choreo_components_egui::preferences::Preferences;
