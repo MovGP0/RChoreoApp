@@ -1,7 +1,9 @@
 use super::actions::OpenAudioRequested;
 use super::actions::OpenChoreoRequested;
 use super::actions::OpenSvgFileCommand;
+use crate::audio_player::state::AudioPlayerState;
 use crate::dancers::state::DancersState;
+use crate::floor::state::FloorState;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum MainContent {
@@ -64,6 +66,8 @@ pub struct ChoreoMainState {
     pub selected_scene_index: Option<usize>,
     pub audio_position_seconds: f64,
     pub floor_scene_name: Option<String>,
+    pub floor_state: FloorState,
+    pub audio_player_state: AudioPlayerState,
     pub dancers_state: DancersState,
 }
 
@@ -91,6 +95,8 @@ impl Default for ChoreoMainState {
             selected_scene_index: None,
             audio_position_seconds: 0.0,
             floor_scene_name: None,
+            floor_state: FloorState::default(),
+            audio_player_state: AudioPlayerState::default(),
             dancers_state: DancersState::default(),
         }
     }

@@ -56,6 +56,7 @@ pub struct DancersGlobalState {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DancersState {
+    pub is_dancer_list_open: bool,
     pub roles: Vec<RoleState>,
     pub dancers: Vec<DancerState>,
     pub selected_dancer: Option<DancerState>,
@@ -75,6 +76,7 @@ pub struct DancersState {
 impl Default for DancersState {
     fn default() -> Self {
         Self {
+            is_dancer_list_open: true,
             roles: Vec::new(),
             dancers: Vec::new(),
             selected_dancer: None,

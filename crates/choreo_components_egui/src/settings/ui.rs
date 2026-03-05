@@ -1,12 +1,17 @@
 use egui::Color32;
 use egui::Ui;
-use egui_material3::MaterialButton;
+use egui_material3::MaterialIconButton;
+
+use crate::ui_style::typography;
+use crate::ui_style::typography::TypographyRole;
 
 use super::actions::SettingsAction;
 use super::state::AudioPlayerBackend;
 use super::state::SettingsState;
 use super::state::ThemeMode;
 use super::translations::settings_translations;
+use crate::ui_icons;
+use crate::ui_icons::UiIconKey;
 
 #[must_use]
 pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
@@ -16,17 +21,27 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
     ui.spacing_mut().item_spacing = egui::vec2(12.0, 12.0);
     ui.horizontal(|ui| {
         if ui
-            .add(MaterialButton::new(strings.navigate_back.as_str()))
+            .add(
+                MaterialIconButton::standard(navigate_back_icon_name())
+                    .svg_data(navigate_back_icon_svg()),
+            )
+            .on_hover_text(strings.navigate_back.as_str())
             .clicked()
         {
             actions.push(SettingsAction::NavigateBack);
         }
-        ui.heading(strings.title.as_str());
+        ui.label(typography::rich_text_for_role(
+            strings.title.as_str(),
+            page_title_role(),
+        ));
     });
 
     ui.group(|ui| {
         ui.set_min_width(300.0);
-        ui.label(strings.theme.as_str());
+        ui.label(typography::rich_text_for_role(
+            strings.theme.as_str(),
+            section_label_role(),
+        ));
 
         let mut use_system_theme = state.use_system_theme;
         ui.add_enabled_ui(state.can_use_system_theme, |ui| {
@@ -60,7 +75,10 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
 
     ui.group(|ui| {
         ui.set_min_width(300.0);
-        ui.label(strings.audio_backend.as_str());
+        ui.label(typography::rich_text_for_role(
+            strings.audio_backend.as_str(),
+            section_label_role(),
+        ));
 
         let mut selected_backend = state.audio_player_backend;
         egui::ComboBox::from_label(strings.audio_backend.as_str())
@@ -88,7 +106,10 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
 
     ui.group(|ui| {
         ui.set_min_width(300.0);
-        ui.label(strings.colors.as_str());
+        ui.label(typography::rich_text_for_role(
+            strings.colors.as_str(),
+            section_label_role(),
+        ));
 
         draw_color_controls(
             ui,
@@ -134,6 +155,26 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
     });
 
     actions
+}
+
+#[must_use]
+pub const fn page_title_role() -> TypographyRole {
+    TypographyRole::HeadlineSmall
+}
+
+#[must_use]
+pub const fn section_label_role() -> TypographyRole {
+    TypographyRole::TitleSmall
+}
+
+#[must_use]
+pub fn navigate_back_icon_name() -> &'static str {
+    ui_icons::icon(UiIconKey::SettingsNavigateBack).token
+}
+
+#[must_use]
+pub fn navigate_back_icon_svg() -> &'static str {
+    ui_icons::icon(UiIconKey::SettingsNavigateBack).svg
 }
 
 struct ColorControlSpec<'a> {

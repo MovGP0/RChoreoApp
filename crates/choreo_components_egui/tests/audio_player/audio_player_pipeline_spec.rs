@@ -17,9 +17,9 @@ use crate::audio_player::audio_player_component::messages::CloseAudioFileCommand
 use crate::audio_player::audio_player_component::messages::LinkSceneToPositionCommand;
 use crate::audio_player::audio_player_component::runtime::AudioPlayerRuntime;
 use crate::audio_player::audio_player_component::state::AudioPlayerState;
-use crate::global::GlobalStateActor;
-use crate::preferences::InMemoryPreferences;
-use crate::preferences::Preferences;
+use choreo_components_egui::global::GlobalStateActor;
+use choreo_components_egui::preferences::InMemoryPreferences;
+use choreo_components_egui::preferences::Preferences;
 
 #[test]
 fn build_pipeline_handles_open_and_close_commands() {

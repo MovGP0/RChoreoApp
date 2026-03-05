@@ -2,6 +2,8 @@ use crate::settings::state::AudioPlayerBackend;
 use crate::settings::state::SettingsState;
 use crate::settings::translations::settings_translations;
 use crate::settings::ui::audio_backend_label;
+use crate::settings::ui::navigate_back_icon_name;
+use crate::settings::ui::navigate_back_icon_svg;
 use crate::settings::ui::parse_argb_hex;
 
 #[test]
@@ -33,4 +35,10 @@ fn parse_argb_hex_handles_valid_and_invalid_values() {
     assert!(parse_argb_hex("#FF112233").is_some());
     assert!(parse_argb_hex("#112233").is_none());
     assert!(parse_argb_hex("#GG112233").is_none());
+}
+
+#[test]
+fn navigate_back_control_uses_icon_catalog_mapping() {
+    assert_eq!(navigate_back_icon_name(), "arrow_back");
+    assert!(navigate_back_icon_svg().contains("<svg"));
 }

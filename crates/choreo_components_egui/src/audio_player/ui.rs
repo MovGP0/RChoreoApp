@@ -4,6 +4,10 @@ use egui_material3::MaterialSlider;
 
 use crate::slider_with_ticks::ui::SliderWithTicksInteraction;
 use crate::slider_with_ticks::ui::SliderWithTicksUiState;
+use crate::ui_icons;
+use crate::ui_icons::UiIconKey;
+use crate::ui_style::typography;
+use crate::ui_style::typography::TypographyRole;
 
 use super::actions::AudioPlayerAction;
 use super::state::AudioPlayerState;
@@ -39,7 +43,11 @@ pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
         }
         ui.add_sized(
             [SPEED_LABEL_WIDTH_PX, 0.0],
-            egui::Label::new(&state.speed_label).truncate(),
+            egui::Label::new(typography::rich_text_for_role(
+                &state.speed_label,
+                speed_label_role(),
+            ))
+            .truncate(),
         );
 
         let position = state.pending_seek_position.unwrap_or(state.position);
@@ -76,7 +84,11 @@ pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
 
         ui.add_sized(
             [DURATION_LABEL_WIDTH_PX, 0.0],
-            egui::Label::new(&state.duration_label).truncate(),
+            egui::Label::new(typography::rich_text_for_role(
+                &state.duration_label,
+                duration_label_role(),
+            ))
+            .truncate(),
         );
 
         if ui
@@ -110,28 +122,43 @@ pub fn play_pause_icon_label(is_playing: bool) -> &'static str {
 
 #[must_use]
 pub fn play_pause_icon_name(is_playing: bool) -> &'static str {
-    match play_pause_glyph(is_playing) {
-        PlayPauseGlyph::Play => "play_arrow",
-        PlayPauseGlyph::Pause => "pause",
-    }
+    play_pause_icon_spec(is_playing).token
 }
 
 #[must_use]
 pub fn link_icon_name() -> &'static str {
-    "link"
+    link_icon_spec().token
+}
+
+#[must_use]
+pub const fn speed_label_role() -> TypographyRole {
+    TypographyRole::BodyMedium
+}
+
+#[must_use]
+pub const fn duration_label_role() -> TypographyRole {
+    TypographyRole::BodyMedium
 }
 
 #[must_use]
 pub fn play_pause_icon_svg(is_playing: bool) -> &'static str {
-    match play_pause_glyph(is_playing) {
-        PlayPauseGlyph::Play => include_str!("../../../choreo_components/ui/icons/Play.svg"),
-        PlayPauseGlyph::Pause => include_str!("../../../choreo_components/ui/icons/Pause.svg"),
-    }
+    play_pause_icon_spec(is_playing).svg
 }
 
 #[must_use]
 pub fn link_icon_svg() -> &'static str {
-    include_str!("../../../choreo_components/ui/icons/Link.svg")
+    link_icon_spec().svg
+}
+
+fn play_pause_icon_spec(is_playing: bool) -> ui_icons::UiIconSpec {
+    match play_pause_glyph(is_playing) {
+        PlayPauseGlyph::Play => ui_icons::icon(UiIconKey::AudioPlay),
+        PlayPauseGlyph::Pause => ui_icons::icon(UiIconKey::AudioPause),
+    }
+}
+
+fn link_icon_spec() -> ui_icons::UiIconSpec {
+    ui_icons::icon(UiIconKey::AudioLink)
 }
 
 #[must_use]

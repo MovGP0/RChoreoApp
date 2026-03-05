@@ -3,6 +3,8 @@ use super::state::ChoreoMainState;
 use super::state::InteractionMode;
 use super::state::InteractionStateMachineState;
 use super::state::MainContent;
+use crate::audio_player::actions::AudioPlayerAction;
+use crate::audio_player::reducer::AudioPlayerEffect;
 
 pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
     match action {
@@ -118,22 +120,7 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             select_scene_internal(state, index, false);
         }
         ChoreoMainAction::UpdateAudioPosition { seconds } => {
-            state.audio_position_seconds = seconds;
-            let target_scene = state
-                .scenes
-                .iter()
-                .enumerate()
-                .filter_map(|(index, scene)| {
-                    scene
-                        .timestamp_seconds
-                        .and_then(|timestamp| (timestamp <= seconds).then_some((index, timestamp)))
-                })
-                .max_by(|(_, left), (_, right)| left.total_cmp(right))
-                .map(|(index, _)| index);
-
-            if let Some(index) = target_scene {
-                select_scene_internal(state, index, true);
-            }
+            sync_audio_position_internal(state, seconds);
         }
         ChoreoMainAction::LinkSelectedSceneToAudioPosition => {
             let Some(selected_index) = state.selected_scene_index else {
@@ -146,6 +133,31 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             selected_scene.timestamp_seconds = Some(linked_timestamp);
             state.audio_position_seconds = linked_timestamp;
             state.floor_scene_name = Some(selected_scene.name.clone());
+        }
+        ChoreoMainAction::FloorAction(action) => {
+            crate::floor::reducer::reduce(&mut state.floor_state, action);
+        }
+        ChoreoMainAction::AudioPlayerAction(action) => {
+            let seek_position = match &action {
+                AudioPlayerAction::SeekToPosition { position }
+                | AudioPlayerAction::PositionDragCompleted { position } => Some(*position),
+                _ => None,
+            };
+
+            let effects =
+                crate::audio_player::reducer::reduce(&mut state.audio_player_state, action);
+
+            if let Some(position) = seek_position {
+                sync_audio_position_internal(state, position);
+            }
+
+            for effect in effects {
+                match effect {
+                    AudioPlayerEffect::PositionChangedPublished { position_seconds } => {
+                        sync_audio_position_internal(state, position_seconds);
+                    }
+                }
+            }
         }
         ChoreoMainAction::DancersAction(action) => {
             crate::dancers::reducer::reduce(&mut state.dancers_state, action);
@@ -215,6 +227,25 @@ fn select_scene_internal(state: &mut ChoreoMainState, index: usize, keep_audio_p
     state.floor_scene_name = Some(scene.name.clone());
     if !keep_audio_position && let Some(timestamp) = scene.timestamp_seconds {
         state.audio_position_seconds = timestamp;
+    }
+}
+
+fn sync_audio_position_internal(state: &mut ChoreoMainState, seconds: f64) {
+    state.audio_position_seconds = seconds;
+    let target_scene = state
+        .scenes
+        .iter()
+        .enumerate()
+        .filter_map(|(index, scene)| {
+            scene
+                .timestamp_seconds
+                .and_then(|timestamp| (timestamp <= seconds).then_some((index, timestamp)))
+        })
+        .max_by(|(_, left), (_, right)| left.total_cmp(right))
+        .map(|(index, _)| index);
+
+    if let Some(index) = target_scene {
+        select_scene_internal(state, index, true);
     }
 }
 

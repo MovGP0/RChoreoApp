@@ -14,7 +14,7 @@ fn dancers_pane_view_ui_spec() {
                 };
                 let dancer = dancers::dancer(1, lead, "Alice", "A", None);
 
-                let supporting = dancers::ui::dancer_supporting_text(&dancer);
+                let supporting = dancers::dancer_list_item_view::supporting_text(&dancer);
                 assert_eq!(supporting, "Lead (2)  [A]");
             },
         );
@@ -39,6 +39,27 @@ fn dancers_pane_view_ui_spec() {
 
             let selected_index = dancers::ui::selected_dancer_index(&state);
             assert_eq!(selected_index, Some(1));
+        });
+
+        spec.it("maps pane select action to dancers select action", |_| {
+            let action = dancers::ui::map_pane_action(
+                dancers::dancers_pane_view::ui::DancersPaneViewAction::SelectDancer { index: 3 },
+            );
+            assert_eq!(action, dancers::actions::DancersAction::SelectDancer { index: 3 });
+        });
+
+        spec.it("maps pane add action to dancers add action", |_| {
+            let action = dancers::ui::map_pane_action(
+                dancers::dancers_pane_view::ui::DancersPaneViewAction::AddDancer,
+            );
+            assert_eq!(action, dancers::actions::DancersAction::AddDancer);
+        });
+
+        spec.it("maps pane delete action to dancers delete action", |_| {
+            let action = dancers::ui::map_pane_action(
+                dancers::dancers_pane_view::ui::DancersPaneViewAction::DeleteDancer,
+            );
+            assert_eq!(action, dancers::actions::DancersAction::DeleteSelectedDancer);
         });
     });
 

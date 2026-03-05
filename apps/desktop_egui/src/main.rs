@@ -11,6 +11,8 @@ use choreo_components_egui::shell;
 use std::env;
 use std::sync::Once;
 
+mod app_icon;
+
 const APP_ID: &str = "rchoreo_desktop_egui";
 const APP_TITLE: &str = "ChoreoApp";
 
@@ -53,7 +55,8 @@ fn main() -> eframe::Result<()> {
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_app_id(APP_ID)
-            .with_title(APP_TITLE),
+            .with_title(APP_TITLE)
+            .with_icon(app_icon::load_window_icon().unwrap_or_default()),
         ..Default::default()
     };
 

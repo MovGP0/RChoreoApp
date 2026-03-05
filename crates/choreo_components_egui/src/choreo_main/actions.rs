@@ -1,6 +1,8 @@
 use super::state::InteractionMode;
 use super::state::SceneState;
+use crate::audio_player::actions::AudioPlayerAction;
 use crate::dancers::actions::DancersAction;
+use crate::floor::actions::FloorAction;
 use crate::observability::TraceContext;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -65,6 +67,8 @@ pub enum ChoreoMainAction {
         seconds: f64,
     },
     LinkSelectedSceneToAudioPosition,
+    FloorAction(FloorAction),
+    AudioPlayerAction(AudioPlayerAction),
     DancersAction(DancersAction),
     ClearOutgoingCommands,
 }

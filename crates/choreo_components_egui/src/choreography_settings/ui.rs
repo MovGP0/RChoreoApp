@@ -7,6 +7,10 @@ use egui_material3::MaterialSlider;
 use egui_material3::MaterialSwitch;
 
 use choreo_master_mobile_json::Color;
+use crate::choreo_info::messages::ChoreoInfoAction;
+use crate::choreo_info::state::ChoreoDate;
+use crate::choreo_info::state::ChoreoInfoState;
+use crate::choreo_info::ui::ChoreoInfoLabels;
 
 use super::actions::ChoreographySettingsAction;
 use super::actions::UpdateSelectedSceneAction;
@@ -17,13 +21,12 @@ const DEFAULT_LOCALE: &str = "en";
 
 #[must_use]
 pub fn choreo_date_text(year: i32, month: u8, day: u8) -> String {
-    format!("{year:04}-{month:02}-{day:02}")
+    crate::choreo_info::ui::choreo_date_text(year, month, day)
 }
 
 #[must_use]
 pub fn transparency_percentage_text(transparency: f64) -> String {
-    let percentage = (transparency.clamp(0.0, 1.0) * 100.0).round() as i32;
-    format!("Transparency: {percentage}%")
+    crate::choreo_info::ui::transparency_percentage_text(transparency)
 }
 
 pub fn draw(ui: &mut Ui, state: &ChoreographySettingsState) -> Vec<ChoreographySettingsAction> {
@@ -61,60 +64,19 @@ fn draw_choreography_section(
     actions: &mut Vec<ChoreographySettingsAction>,
 ) {
     ui.label(RichText::new(ChoreographySettingsTranslations::choreography(locale)).strong());
-
-    ui.label(ChoreographySettingsTranslations::comment(locale));
-    let mut comment = state.comment.clone();
-    if ui.text_edit_singleline(&mut comment).changed() {
-        actions.push(ChoreographySettingsAction::UpdateComment(comment));
-    }
-    ui.label(ChoreographySettingsTranslations::name(locale));
-    let mut name = state.name.clone();
-    if ui.text_edit_singleline(&mut name).changed() {
-        actions.push(ChoreographySettingsAction::UpdateName(name));
-    }
-    ui.label(ChoreographySettingsTranslations::subtitle(locale));
-    let mut subtitle = state.subtitle.clone();
-    if ui.text_edit_singleline(&mut subtitle).changed() {
-        actions.push(ChoreographySettingsAction::UpdateSubtitle(subtitle));
-    }
-
-    ui.label(ChoreographySettingsTranslations::date(locale));
-    ui.label(choreo_date_text(
-        state.date.year,
-        state.date.month,
-        state.date.day,
-    ));
-    let mut year = state.date.year;
-    let mut month = i32::from(state.date.month);
-    let mut day = i32::from(state.date.day);
-    let mut date_changed = false;
-    ui.horizontal(|ui| {
-        date_changed |= ui.add(DragValue::new(&mut year).range(1..=9999)).changed();
-        date_changed |= ui.add(DragValue::new(&mut month).range(1..=12)).changed();
-        date_changed |= ui.add(DragValue::new(&mut day).range(1..=31)).changed();
-    });
-    if date_changed {
-        actions.push(ChoreographySettingsAction::UpdateDate {
-            year,
-            month: month as u8,
-            day: day as u8,
-        });
-    }
-
-    ui.label(ChoreographySettingsTranslations::variation(locale));
-    let mut variation = state.variation.clone();
-    if ui.text_edit_singleline(&mut variation).changed() {
-        actions.push(ChoreographySettingsAction::UpdateVariation(variation));
-    }
-    ui.label(ChoreographySettingsTranslations::author(locale));
-    let mut author = state.author.clone();
-    if ui.text_edit_singleline(&mut author).changed() {
-        actions.push(ChoreographySettingsAction::UpdateAuthor(author));
-    }
-    ui.label(ChoreographySettingsTranslations::description(locale));
-    let mut description = state.description.clone();
-    if ui.text_edit_singleline(&mut description).changed() {
-        actions.push(ChoreographySettingsAction::UpdateDescription(description));
+    let component_state = to_choreo_info_state(state);
+    let labels = ChoreoInfoLabels {
+        comment: ChoreographySettingsTranslations::comment(locale),
+        name: ChoreographySettingsTranslations::name(locale),
+        subtitle: ChoreographySettingsTranslations::subtitle(locale),
+        date: ChoreographySettingsTranslations::date(locale),
+        variation: ChoreographySettingsTranslations::variation(locale),
+        author: ChoreographySettingsTranslations::author(locale),
+        description: ChoreographySettingsTranslations::description(locale),
+    };
+    let info_actions = crate::choreo_info::ui::draw(ui, &component_state, &labels);
+    for action in info_actions {
+        actions.push(map_choreo_info_action(action));
     }
 }
 
@@ -368,5 +330,40 @@ fn from_color32(color: Color32) -> Color {
         r: color.r(),
         g: color.g(),
         b: color.b(),
+    }
+}
+
+fn to_choreo_info_state(state: &ChoreographySettingsState) -> ChoreoInfoState {
+    ChoreoInfoState {
+        choreo_name: state.name.clone(),
+        choreo_subtitle: state.subtitle.clone(),
+        choreo_comment: state.comment.clone(),
+        choreo_date: ChoreoDate {
+            year: state.date.year,
+            month: state.date.month,
+            day: state.date.day,
+        },
+        choreo_variation: state.variation.clone(),
+        choreo_author: state.author.clone(),
+        choreo_description: state.description.clone(),
+        choreo_transparency: state.transparency,
+    }
+}
+
+fn map_choreo_info_action(action: ChoreoInfoAction) -> ChoreographySettingsAction {
+    match action {
+        ChoreoInfoAction::UpdateComment(value) => ChoreographySettingsAction::UpdateComment(value),
+        ChoreoInfoAction::UpdateName(value) => ChoreographySettingsAction::UpdateName(value),
+        ChoreoInfoAction::UpdateSubtitle(value) => ChoreographySettingsAction::UpdateSubtitle(value),
+        ChoreoInfoAction::UpdateDate { year, month, day } => {
+            ChoreographySettingsAction::UpdateDate { year, month, day }
+        }
+        ChoreoInfoAction::UpdateVariation(value) => {
+            ChoreographySettingsAction::UpdateVariation(value)
+        }
+        ChoreoInfoAction::UpdateAuthor(value) => ChoreographySettingsAction::UpdateAuthor(value),
+        ChoreoInfoAction::UpdateDescription(value) => {
+            ChoreographySettingsAction::UpdateDescription(value)
+        }
     }
 }

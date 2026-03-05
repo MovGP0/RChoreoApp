@@ -3,6 +3,10 @@ use egui::vec2;
 use egui_material3::MaterialIconButton;
 
 use crate::i18n::t;
+use crate::ui_style::typography;
+use crate::ui_style::typography::TypographyRole;
+use crate::ui_icons;
+use crate::ui_icons::UiIconKey;
 
 use super::actions::NavBarAction;
 use super::hamburger_toggle_button;
@@ -40,6 +44,11 @@ pub fn mode_label(mode: InteractionMode) -> &'static str {
     }
 }
 
+#[must_use]
+pub const fn mode_label_role() -> TypographyRole {
+    TypographyRole::LabelLarge
+}
+
 pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
     let locale = "en";
     let mut actions: Vec<NavBarAction> = Vec::new();
@@ -60,11 +69,21 @@ pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
 
         let mut selected_mode = state.selected_mode;
         ui.add_enabled_ui(state.is_mode_selection_enabled, |ui| {
-            egui::ComboBox::from_label(t(locale, "ModeLabel", "ModeLabel"))
-                .selected_text(mode_text(selected_mode, locale))
+            egui::ComboBox::from_label(typography::rich_text_for_role(
+                t(locale, "ModeLabel", "ModeLabel"),
+                mode_label_role(),
+            ))
+                .selected_text(typography::rich_text_for_role(
+                    mode_text(selected_mode, locale),
+                    mode_label_role(),
+                ))
                 .show_ui(ui, |ui| {
                     for mode in all_modes() {
-                        ui.selectable_value(&mut selected_mode, *mode, mode_text(*mode, locale));
+                        ui.selectable_value(
+                            &mut selected_mode,
+                            *mode,
+                            typography::rich_text_for_role(mode_text(*mode, locale), mode_label_role()),
+                        );
                     }
                 });
         });
@@ -76,9 +95,9 @@ pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
         }
 
         let (_, settings_action) = settings_button(state);
+        let settings_icon = ui_icons::icon(UiIconKey::NavSettings);
         let settings_response = ui.add(
-            MaterialIconButton::standard("edit")
-                .svg_data(include_str!("../../../choreo_components/ui/icons/Pen.svg")),
+            MaterialIconButton::standard(settings_icon.token).svg_data(settings_icon.svg),
         );
         if settings_response.clicked() {
             actions.push(settings_action);
@@ -89,18 +108,18 @@ pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
             "MainOpenSettingsTooltip",
         ));
 
+        let home_icon = ui_icons::icon(UiIconKey::FloorResetViewport);
         let home_response = ui.add(
-            MaterialIconButton::standard("home")
-                .svg_data(include_str!("../../../choreo_components/ui/icons/Home.svg")),
+            MaterialIconButton::standard(home_icon.token).svg_data(home_icon.svg),
         );
         if home_response.clicked() {
             actions.push(NavBarAction::ResetFloorViewport);
         }
         let _ = home_response.on_hover_text(t(locale, "MainHomeTooltip", "MainHomeTooltip"));
 
+        let image_icon = ui_icons::icon(UiIconKey::FloorOpenSvgOverlay);
         let image_response = ui.add(
-            MaterialIconButton::standard("image")
-                .svg_data(include_str!("../../../choreo_components/ui/icons/Svg.svg")),
+            MaterialIconButton::standard(image_icon.token).svg_data(image_icon.svg),
         );
         if image_response.clicked() {
             actions.push(NavBarAction::OpenImage);
@@ -108,9 +127,9 @@ pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
         let _ =
             image_response.on_hover_text(t(locale, "MainOpenImageTooltip", "MainOpenImageTooltip"));
 
-        let audio_response = ui.add(MaterialIconButton::standard("play_circle").svg_data(
-            include_str!("../../../choreo_components/ui/icons/PlayCircle.svg"),
-        ));
+        let audio_icon = ui_icons::icon(UiIconKey::AudioOpenPanel);
+        let audio_response =
+            ui.add(MaterialIconButton::standard(audio_icon.token).svg_data(audio_icon.svg));
         if audio_response.clicked() {
             actions.push(NavBarAction::OpenAudio);
         }

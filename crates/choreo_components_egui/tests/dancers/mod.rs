@@ -5,12 +5,15 @@ use choreo_master_mobile_json::Color;
 use rspec::{ConfigurationBuilder, Logger, Runner};
 
 pub use choreo_components_egui::dancers::actions;
+pub use choreo_components_egui::dancers::dancer_list_item_view;
 pub use choreo_components_egui::dancers::reducer;
 pub use choreo_components_egui::dancers::state;
 pub use choreo_components_egui::dancers::ui;
+pub use choreo_components_egui::dancers_pane_view;
 
 pub mod add_dancer_behavior_spec;
 pub mod cancel_dancer_settings_behavior_spec;
+pub mod dancer_settings_page_control_spec;
 pub mod dancer_list_item_view_spec;
 pub mod dancers_pane_view_ui_spec;
 pub mod delete_dancer_behavior_spec;

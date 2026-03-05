@@ -6,6 +6,15 @@ use super::state::{
 pub fn reduce(state: &mut DancersState, action: DancersAction) {
     match action {
         DancersAction::LoadFromGlobal | DancersAction::ReloadFromGlobal => load_from_global(state),
+        DancersAction::ToggleDancerList => {
+            state.is_dancer_list_open = !state.is_dancer_list_open;
+        }
+        DancersAction::OpenDancerList => {
+            state.is_dancer_list_open = true;
+        }
+        DancersAction::CloseDancerList => {
+            state.is_dancer_list_open = false;
+        }
         DancersAction::AddDancer => {
             add_dancer(state);
             refresh_selection_state(state);

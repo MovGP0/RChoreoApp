@@ -4,10 +4,12 @@ use crate::choreo_main::MainPageBinding;
 use crate::choreo_main::MainPageDependencies;
 use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::ui;
+use crate::ui_style::typography;
 
 pub struct AppShellViewModel {
     title: String,
     is_initialized: bool,
+    is_typography_initialized: bool,
     main_page_binding: Option<MainPageBinding>,
 }
 
@@ -23,6 +25,7 @@ impl AppShellViewModel {
         Self {
             title: title.into(),
             is_initialized: false,
+            is_typography_initialized: false,
             main_page_binding: Some(MainPageBinding::new(MainPageDependencies::default())),
         }
     }
@@ -33,6 +36,11 @@ impl AppShellViewModel {
     }
 
     pub fn ui(&mut self, context: &Context) {
+        if !self.is_typography_initialized {
+            typography::apply_to_context(context);
+            self.is_typography_initialized = true;
+        }
+
         if !self.is_initialized {
             if let Some(binding) = self.main_page_binding.as_ref() {
                 binding.dispatch(ChoreoMainAction::Initialize);

@@ -4,6 +4,9 @@ use choreo_master_mobile_json::Color;
 pub enum DancersAction {
     LoadFromGlobal,
     ReloadFromGlobal,
+    ToggleDancerList,
+    OpenDancerList,
+    CloseDancerList,
     AddDancer,
     DeleteSelectedDancer,
     SelectDancer { index: usize },

@@ -1,9 +1,9 @@
 use super::state::SceneItemState;
 use super::state::ScenesState;
-use super::ui::DeleteSceneDialogAction;
-use super::ui::build_delete_scene_dialog_view_model;
+use crate::delete_scene_dialog::ui::DeleteSceneDialogAction;
+use crate::delete_scene_dialog::ui::build_delete_scene_dialog_view_model;
 use super::ui::draw;
-use super::ui::draw_delete_scene_dialog;
+use crate::delete_scene_dialog::ui::draw_delete_scene_dialog;
 
 #[test]
 fn delete_scene_dialog_view_model_formats_message_with_scene_name() {

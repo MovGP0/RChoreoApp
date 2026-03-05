@@ -3,9 +3,16 @@ use egui::Ui;
 use egui_material3::MaterialIconButton;
 use egui_material3::MaterialSelect;
 
+use crate::audio_player;
+use crate::audio_player::actions::AudioPlayerAction;
 use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::state::ChoreoMainState;
 use crate::choreo_main::state::InteractionMode;
+use crate::floor;
+use crate::floor::actions::FloorAction;
+use crate::ui_icons;
+use crate::ui_icons::UiIconKey;
+use crate::ui_style::typography::TypographyRole;
 
 const TOP_BAR_HEIGHT_PX: f32 = 84.0;
 const DRAWER_WIDTH_LEFT_PX: f32 = 324.0;
@@ -26,7 +33,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
                 draw_scenes_drawer(ui, state, &mut actions);
             }
 
-            draw_floor_host(
+            actions.extend(draw_floor_host(
                 ui,
                 state,
                 if state.is_audio_player_open {
@@ -34,7 +41,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
                 } else {
                     0.0
                 },
-            );
+            ));
 
             if state.is_choreography_settings_open {
                 draw_settings_drawer(ui);
@@ -43,7 +50,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
 
         if state.is_audio_player_open {
             ui.separator();
-            draw_audio_host(ui);
+            actions.extend(draw_audio_host(ui, state));
         }
     });
 
@@ -157,7 +164,12 @@ fn draw_scenes_drawer(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<Ch
     );
 }
 
-fn draw_floor_host(ui: &mut Ui, state: &ChoreoMainState, audio_height_px: f32) {
+fn draw_floor_host(
+    ui: &mut Ui,
+    state: &ChoreoMainState,
+    audio_height_px: f32,
+) -> Vec<ChoreoMainAction> {
+    let mut actions: Vec<ChoreoMainAction> = Vec::new();
     let reserved_height = audio_height_px.max(0.0);
     ui.allocate_ui_with_layout(
         egui::vec2(
@@ -176,9 +188,12 @@ fn draw_floor_host(ui: &mut Ui, state: &ChoreoMainState, audio_height_px: f32) {
                     ui.available_width(),
                     ui.available_height().max(360.0),
                 ));
+                let floor_actions = floor::ui::draw(ui, &state.floor_state);
+                actions.extend(floor_actions.into_iter().map(map_floor_host_action));
             });
         },
     );
+    actions
 }
 
 fn draw_settings_drawer(ui: &mut Ui) {
@@ -194,10 +209,36 @@ fn draw_settings_drawer(ui: &mut Ui) {
     );
 }
 
-fn draw_audio_host(ui: &mut Ui) {
+fn draw_audio_host(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
+    let mut actions: Vec<ChoreoMainAction> = Vec::new();
     Frame::group(ui.style()).show(ui, |ui| {
         ui.set_min_height(AUDIO_PANEL_HEIGHT_PX);
+        for action in audio_player::ui::draw(ui, &state.audio_player_state) {
+            actions.extend(map_audio_host_action(action));
+        }
     });
+    actions
+}
+
+#[must_use]
+pub fn map_floor_host_action(action: FloorAction) -> ChoreoMainAction {
+    ChoreoMainAction::FloorAction(action)
+}
+
+#[must_use]
+pub fn map_audio_host_action(action: AudioPlayerAction) -> Vec<ChoreoMainAction> {
+    let mut mapped = vec![ChoreoMainAction::AudioPlayerAction(action.clone())];
+    match action {
+        AudioPlayerAction::SeekToPosition { position }
+        | AudioPlayerAction::PositionDragCompleted { position } => {
+            mapped.push(ChoreoMainAction::UpdateAudioPosition { seconds: position });
+        }
+        AudioPlayerAction::LinkSceneToPosition => {
+            mapped.push(ChoreoMainAction::LinkSelectedSceneToAudioPosition);
+        }
+        _ => {}
+    }
+    mapped
 }
 
 #[must_use]
@@ -220,60 +261,76 @@ pub fn top_bar_settings_action(is_settings_open: bool) -> ChoreoMainAction {
 
 #[must_use]
 pub fn nav_icon_name(is_nav_open: bool) -> &'static str {
-    if is_nav_open {
-        "close"
-    } else {
-        "menu"
-    }
+    nav_icon_spec(is_nav_open).token
 }
 
 #[must_use]
 pub fn top_bar_settings_icon_name() -> &'static str {
-    "edit"
+    top_bar_settings_icon_spec().token
 }
 
 #[must_use]
 pub fn home_icon_name() -> &'static str {
-    "home"
+    home_icon_spec().token
 }
 
 #[must_use]
 pub fn open_image_icon_name() -> &'static str {
-    "image"
+    open_image_icon_spec().token
 }
 
 #[must_use]
 pub fn open_audio_icon_name() -> &'static str {
-    "play_circle"
+    open_audio_icon_spec().token
 }
 
 #[must_use]
 pub fn nav_icon_svg(is_nav_open: bool) -> &'static str {
-    if is_nav_open {
-        include_str!("../../../choreo_components/ui/icons/Close.svg")
-    } else {
-        include_str!("../../../choreo_components/ui/icons/Menu.svg")
-    }
+    nav_icon_spec(is_nav_open).svg
 }
 
 #[must_use]
 pub fn top_bar_settings_icon_svg() -> &'static str {
-    include_str!("../../../choreo_components/ui/icons/Pen.svg")
+    top_bar_settings_icon_spec().svg
 }
 
 #[must_use]
 pub fn home_icon_svg() -> &'static str {
-    include_str!("../../../choreo_components/ui/icons/Home.svg")
+    home_icon_spec().svg
 }
 
 #[must_use]
 pub fn open_image_icon_svg() -> &'static str {
-    include_str!("../../../choreo_components/ui/icons/Svg.svg")
+    open_image_icon_spec().svg
 }
 
 #[must_use]
 pub fn open_audio_icon_svg() -> &'static str {
-    include_str!("../../../choreo_components/ui/icons/PlayCircle.svg")
+    open_audio_icon_spec().svg
+}
+
+fn nav_icon_spec(is_nav_open: bool) -> ui_icons::UiIconSpec {
+    if is_nav_open {
+        ui_icons::icon(UiIconKey::NavClose)
+    } else {
+        ui_icons::icon(UiIconKey::NavOpen)
+    }
+}
+
+fn top_bar_settings_icon_spec() -> ui_icons::UiIconSpec {
+    ui_icons::icon(UiIconKey::NavSettings)
+}
+
+fn home_icon_spec() -> ui_icons::UiIconSpec {
+    ui_icons::icon(UiIconKey::FloorResetViewport)
+}
+
+fn open_image_icon_spec() -> ui_icons::UiIconSpec {
+    ui_icons::icon(UiIconKey::FloorOpenSvgOverlay)
+}
+
+fn open_audio_icon_spec() -> ui_icons::UiIconSpec {
+    ui_icons::icon(UiIconKey::AudioOpenPanel)
 }
 
 #[must_use]
@@ -292,6 +349,11 @@ pub fn mode_label(mode_index: i32) -> &'static str {
 #[must_use]
 pub fn mode_count() -> i32 {
     6
+}
+
+#[must_use]
+pub const fn mode_label_role() -> TypographyRole {
+    TypographyRole::LabelLarge
 }
 
 fn effective_mode_index(state: &ChoreoMainState) -> i32 {

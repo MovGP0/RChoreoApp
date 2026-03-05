@@ -11,9 +11,9 @@ use crate::audio_player::audio_player_component::build_audio_player_behaviors;
 use crate::audio_player::audio_player_component::reducer::reduce;
 use crate::audio_player::audio_player_component::runtime::AudioPlayerRuntime;
 use crate::audio_player::audio_player_component::state::AudioPlayerState;
-use crate::global::GlobalStateActor;
-use crate::preferences::InMemoryPreferences;
-use crate::preferences::Preferences;
+use choreo_components_egui::global::GlobalStateActor;
+use choreo_components_egui::preferences::InMemoryPreferences;
+use choreo_components_egui::preferences::Preferences;
 
 #[test]
 fn open_audio_file_sets_stream_factory_flag_and_persists_last_opened_path() {

@@ -11,6 +11,10 @@ pub fn app_title() -> &'static str {
     "ChoreoApp"
 }
 
+pub fn app_icon_svg() -> &'static str {
+    include_str!("../../../choreo_components/ui/app_icon.svg")
+}
+
 pub fn create_shell_host() -> ShellHostViewModel {
     ShellHostViewModel::new(app_title())
 }

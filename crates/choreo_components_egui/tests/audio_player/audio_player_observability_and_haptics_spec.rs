@@ -17,9 +17,9 @@ use crate::audio_player::audio_player_component::audio_player_behaviors::reduce_
 use crate::audio_player::audio_player_component::build_audio_player_behaviors;
 use crate::audio_player::audio_player_component::messages::LinkSceneToPositionCommand;
 use crate::audio_player::audio_player_component::state::AudioPlayerState;
-use crate::global::GlobalStateActor;
+use choreo_components_egui::global::GlobalStateActor;
 use crate::observability::TraceContext;
-use crate::preferences::InMemoryPreferences;
+use choreo_components_egui::preferences::InMemoryPreferences;
 
 struct MockHaptic {
     click_count: Arc<AtomicUsize>,

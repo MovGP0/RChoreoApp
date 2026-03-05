@@ -9,9 +9,13 @@
 pub mod app_shell;
 pub mod audio_player;
 pub mod behavior;
+pub mod choreo_info;
 pub mod choreo_main;
 pub mod choreography_settings;
+pub mod dancer_settings_page;
 pub mod dancers;
+pub mod dancers_pane_view;
+pub mod delete_scene_dialog;
 pub mod dialog_host;
 pub mod drawer_host;
 pub mod floor;
@@ -34,5 +38,7 @@ pub mod splash_screen;
 pub mod splash_screen_host;
 pub mod time;
 pub mod timestamp_state_machine;
+pub mod ui_style;
+pub mod ui_icons;
 
 pub use app_shell::AppShellViewModel;
