@@ -141,13 +141,13 @@ fn ui_parity_spec() {
                 assert_eq!(drawer_state.right_drawer_width, 480.0);
                 assert_eq!(drawer_state.responsive_breakpoint, 900.0);
                 assert_eq!(drawer_state.open_mode, DrawerHostOpenMode::Standard);
-                assert_eq!(drawer_state.top_inset, 0.0);
+                assert_eq!(drawer_state.top_inset, 84.0);
                 assert!(drawer_state.is_left_open);
                 assert!(drawer_state.is_right_open);
             },
         );
 
-        spec.it("places the drawer host below the nav bar", |_| {
+        spec.it("keeps the drawer host shell-wide while reserving the nav bar as top inset", |_| {
             let page_rect =
                 egui::Rect::from_min_max(egui::pos2(20.0, 30.0), egui::pos2(1300.0, 750.0));
 
@@ -156,7 +156,7 @@ fn ui_parity_spec() {
 
             assert_eq!(top_bar.top(), 30.0);
             assert_eq!(top_bar.bottom(), 114.0);
-            assert_eq!(drawer_host.top(), 114.0);
+            assert_eq!(drawer_host.top(), 30.0);
             assert_eq!(drawer_host.left(), 20.0);
             assert_eq!(drawer_host.right(), 1300.0);
         });

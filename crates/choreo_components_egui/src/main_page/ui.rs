@@ -263,7 +263,7 @@ pub fn drawer_host_state(_viewport_size: egui::Vec2, state: &ChoreoMainState) ->
         right_drawer_width: DRAWER_WIDTH_RIGHT_PX,
         responsive_breakpoint: 900.0,
         open_mode: DrawerHostOpenMode::Standard,
-        top_inset: 0.0,
+        top_inset: TOP_BAR_HEIGHT_PX,
         inline_left: false,
         is_left_open: state.is_nav_open,
         is_right_open: state.is_choreography_settings_open,
@@ -278,7 +278,7 @@ pub fn top_bar_rect(page_rect: Rect) -> Rect {
 
 #[must_use]
 pub fn drawer_host_rect(page_rect: Rect, audio_panel_height: f32) -> Rect {
-    let host_top = (page_rect.min.y + TOP_BAR_HEIGHT_PX).min(page_rect.max.y);
+    let host_top = page_rect.min.y;
     let host_bottom = (page_rect.max.y - audio_panel_height).max(host_top);
     Rect::from_min_max(
         pos2(page_rect.min.x, host_top),
