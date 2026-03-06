@@ -107,23 +107,25 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
     let mut actions: Vec<ScenesAction> = Vec::new();
     let metrics = material_style_metrics();
     let strings = scenes_translations(DEFAULT_LOCALE);
+    let panel_width = ui.available_width().max(0.0);
 
     ui.spacing_mut().item_spacing = vec2(metrics.spacings.spacing_12, metrics.spacings.spacing_12);
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-        draw_fixed_height_section(ui, TOOLBAR_ROW_HEIGHT_PX, |ui| {
+        draw_fixed_height_section(ui, panel_width, TOOLBAR_ROW_HEIGHT_PX, |ui| {
             draw_navigation_toolbar_row(ui, state, &mut actions);
         });
-        draw_fixed_height_section(ui, TOOLBAR_ROW_HEIGHT_PX, |ui| {
+        draw_fixed_height_section(ui, panel_width, TOOLBAR_ROW_HEIGHT_PX, |ui| {
             draw_edit_toolbar_row(ui, state, &mut actions);
         });
-        draw_fixed_height_section(ui, SEARCH_BAR_HEIGHT_PX, |ui| {
-            draw_search_bar(ui, state, &mut actions, DEFAULT_LOCALE);
+        draw_fixed_height_section(ui, panel_width, SEARCH_BAR_HEIGHT_PX, |ui| {
+            draw_search_bar(ui, panel_width, state, &mut actions, DEFAULT_LOCALE);
         });
 
         ui.allocate_ui_with_layout(
-            vec2(ui.available_width(), ui.available_height().max(0.0)),
+            vec2(panel_width, ui.available_height().max(0.0)),
             egui::Layout::top_down(egui::Align::LEFT),
             |ui| {
+                ui.set_min_width(panel_width);
                 Frame::new()
                     .fill(ui.visuals().faint_bg_color)
                     .stroke(Stroke::new(
@@ -290,6 +292,24 @@ pub fn scene_list_panel_height(
 }
 
 #[must_use]
+pub fn scene_search_bar_text_edit_width(
+    available_width: f32,
+    spacing_px: f32,
+    icon_slot_width_px: f32,
+) -> f32 {
+    (available_width - (icon_slot_width_px * 2.0) - (spacing_px * 2.0)).max(0.0)
+}
+
+#[must_use]
+pub fn scene_search_bar_content_width(
+    panel_width: f32,
+    left_padding_px: f32,
+    right_padding_px: f32,
+) -> f32 {
+    (panel_width - left_padding_px - right_padding_px).max(0.0)
+}
+
+#[must_use]
 pub fn scene_list_item_layout(row_rect: Rect, show_timestamps: bool) -> SceneListItemLayout {
     let content_rect = row_rect.shrink2(vec2(0.0, SCENE_ROW_VERTICAL_GAP_PX));
     let swatch_rect = Rect::from_min_size(
@@ -352,13 +372,19 @@ pub fn scene_list_item_colors(visuals: &egui::Visuals, is_selected: bool) -> Sce
 
 fn draw_search_bar(
     ui: &mut Ui,
+    available_width: f32,
     state: &ScenesState,
     actions: &mut Vec<ScenesAction>,
     locale: &str,
 ) {
     let metrics = material_style_metrics();
+    let horizontal_spacing = metrics.spacings.spacing_12;
+    let left_padding = metrics.paddings.padding_10;
+    let right_padding = metrics.paddings.padding_4;
     let view_model = build_scene_search_bar_view_model(&state.search_text, locale);
     let clear_icon = clear_search_icon();
+    let content_width =
+        scene_search_bar_content_width(available_width, left_padding, right_padding);
 
     // Keep 44px to match the original Material search bar control geometry.
     Frame::new()
@@ -371,43 +397,64 @@ fn draw_search_bar(
             metrics.corner_radii.border_radius_12 as u8,
         ))
         .inner_margin(Margin {
-            left: metrics.paddings.padding_10 as i8,
-            right: metrics.paddings.padding_4 as i8,
+            left: left_padding as i8,
+            right: right_padding as i8,
             top: 0,
             bottom: 0,
         })
         .show(ui, |ui| {
-            ui.set_min_height(SEARCH_BAR_HEIGHT_PX);
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                let _ = ui.add(search_icon_image());
+            let text_edit_width = scene_search_bar_text_edit_width(
+                content_width,
+                horizontal_spacing,
+                SEARCH_BAR_ICON_BUTTON_SIZE_PX,
+            );
+            ui.spacing_mut().item_spacing.x = horizontal_spacing;
+            ui.allocate_ui_with_layout(
+                vec2(content_width, SEARCH_BAR_HEIGHT_PX),
+                egui::Layout::left_to_right(egui::Align::Center),
+                |ui| {
+                    ui.set_min_width(content_width);
+                    ui.set_min_height(SEARCH_BAR_HEIGHT_PX);
+                    let _ = ui.add_sized(
+                        vec2(
+                            SEARCH_BAR_ICON_BUTTON_SIZE_PX,
+                            SEARCH_BAR_ICON_BUTTON_SIZE_PX,
+                        ),
+                        search_icon_image(),
+                    );
 
-                let mut search = state.search_text.clone();
-                let text_edit_width = if view_model.show_clear_button {
-                    (ui.available_width() - SEARCH_BAR_ICON_BUTTON_SIZE_PX).max(0.0)
-                } else {
-                    ui.available_width()
-                };
-                let changed = ui
-                    .add_sized(
-                        vec2(text_edit_width, ui.spacing().interact_size.y),
-                        egui::TextEdit::singleline(&mut search)
-                            .frame(false)
-                            .hint_text(view_model.placeholder_text.as_str()),
-                    )
-                    .changed();
-                if changed {
-                    actions.push(ScenesAction::UpdateSearchText(search));
-                }
+                    let mut search = state.search_text.clone();
+                    let changed = ui
+                        .add_sized(
+                            vec2(text_edit_width, ui.spacing().interact_size.y),
+                            egui::TextEdit::singleline(&mut search)
+                                .frame(false)
+                                .hint_text(view_model.placeholder_text.as_str()),
+                        )
+                        .changed();
+                    if changed {
+                        actions.push(ScenesAction::UpdateSearchText(search));
+                    }
 
-                if view_model.show_clear_button
-                    && ui
-                        .add(search_bar_clear_button(clear_icon.0, clear_icon.1))
-                        .on_hover_text(view_model.clear_tooltip)
-                        .clicked()
-                {
-                    actions.push(ScenesAction::UpdateSearchText(String::new()));
-                }
-            });
+                    if view_model.show_clear_button {
+                        if ui
+                            .add(search_bar_clear_button(clear_icon.0, clear_icon.1))
+                            .on_hover_text(view_model.clear_tooltip)
+                            .clicked()
+                        {
+                            actions.push(ScenesAction::UpdateSearchText(String::new()));
+                        }
+                    } else {
+                        let _ = ui.allocate_exact_size(
+                            vec2(
+                                SEARCH_BAR_ICON_BUTTON_SIZE_PX,
+                                SEARCH_BAR_ICON_BUTTON_SIZE_PX,
+                            ),
+                            Sense::hover(),
+                        );
+                    }
+                },
+            );
         });
 }
 
@@ -601,11 +648,17 @@ fn scene_icon_uri(token: &str) -> String {
     format!("bytes://scenes/{token}.svg")
 }
 
-fn draw_fixed_height_section(ui: &mut Ui, height_px: f32, add_contents: impl FnOnce(&mut Ui)) {
+fn draw_fixed_height_section(
+    ui: &mut Ui,
+    width_px: f32,
+    height_px: f32,
+    add_contents: impl FnOnce(&mut Ui),
+) {
     ui.allocate_ui_with_layout(
-        vec2(ui.available_width(), height_px),
+        vec2(width_px, height_px),
         egui::Layout::top_down(egui::Align::LEFT),
         |ui| {
+            ui.set_min_width(width_px);
             add_contents(ui);
         },
     );

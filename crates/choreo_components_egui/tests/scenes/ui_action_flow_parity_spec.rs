@@ -6,10 +6,12 @@ use super::ui::open_choreography_icon;
 use super::ui::save_choreography_icon;
 use super::ui::scene_add_after_icon;
 use super::ui::scene_add_before_icon;
+use super::ui::scene_search_bar_content_width;
 use super::ui::scene_delete_icon;
 use super::ui::scene_list_panel_height;
 use super::ui::scene_pane_action_flow;
 use super::ui::scene_pane_controls_height;
+use super::ui::scene_search_bar_text_edit_width;
 
 #[test]
 fn scene_pane_action_flow_matches_original_controls_and_caps() {
@@ -66,4 +68,14 @@ fn scene_pane_layout_reserves_space_for_search_and_toolbar_rows() {
     assert_eq!(scene_pane_controls_height(12.0, 40.0), 160.0);
     assert_eq!(scene_list_panel_height(420.0, 12.0, 40.0), 260.0);
     assert_eq!(scene_list_panel_height(120.0, 12.0, 40.0), 0.0);
+}
+
+#[test]
+fn scene_search_bar_text_width_is_anchored_to_panel_width() {
+    assert_eq!(scene_search_bar_content_width(300.0, 10.0, 4.0), 286.0);
+    assert_eq!(scene_search_bar_text_edit_width(286.0, 12.0, 24.0), 214.0);
+    assert_eq!(scene_search_bar_content_width(180.0, 10.0, 4.0), 166.0);
+    assert_eq!(scene_search_bar_text_edit_width(166.0, 12.0, 24.0), 94.0);
+    assert_eq!(scene_search_bar_content_width(12.0, 10.0, 4.0), 0.0);
+    assert_eq!(scene_search_bar_text_edit_width(60.0, 12.0, 24.0), 0.0);
 }
