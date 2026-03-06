@@ -4,6 +4,7 @@ use crate::main_page::reducer::reduce;
 use crate::main_page::state::ChoreoMainState;
 use crate::main_page::state::InteractionMode;
 use crate::main_page::ui::drawer_host_state;
+use crate::main_page::ui::drawer_host_rect;
 use crate::main_page::ui::home_icon_name;
 use crate::main_page::ui::map_choreography_settings_action;
 use crate::main_page::ui::map_drawer_host_action;
@@ -16,11 +17,12 @@ use crate::main_page::ui::top_bar_action_count;
 use crate::main_page::ui::top_bar_action_icon_tokens;
 use crate::main_page::ui::top_bar_action_icon_uris;
 use crate::main_page::ui::top_bar_nav_action;
+use crate::main_page::ui::top_bar_rect;
 use crate::main_page::ui::top_bar_settings_action;
 use crate::main_page::ui::top_bar_settings_icon_name;
 use crate::main_page::ui::translated_mode_labels;
 use choreo_components_egui::choreography_settings::actions::ChoreographySettingsAction;
-use choreo_components_egui::main_page_drawer_host::actions::MainPageDrawerHostAction;
+use choreo_components_egui::drawer_host::actions::DrawerHostAction;
 use choreo_components_egui::nav_bar::translations::nav_bar_translations;
 
 #[test]
@@ -135,11 +137,24 @@ fn ui_parity_spec() {
 
                 assert_eq!(drawer_state.left_drawer_width, 324.0);
                 assert_eq!(drawer_state.right_drawer_width, 480.0);
-                assert_eq!(drawer_state.top_inset, 84.0);
+                assert_eq!(drawer_state.top_inset, 0.0);
                 assert!(drawer_state.is_left_open);
                 assert!(drawer_state.is_right_open);
             },
         );
+
+        spec.it("places the drawer host below the nav bar", |_| {
+            let page_rect = egui::Rect::from_min_max(egui::pos2(20.0, 30.0), egui::pos2(1300.0, 750.0));
+
+            let top_bar = top_bar_rect(page_rect);
+            let drawer_host = drawer_host_rect(page_rect, 0.0);
+
+            assert_eq!(top_bar.top(), 30.0);
+            assert_eq!(top_bar.bottom(), 114.0);
+            assert_eq!(drawer_host.top(), 114.0);
+            assert_eq!(drawer_host.left(), 20.0);
+            assert_eq!(drawer_host.right(), 1300.0);
+        });
 
         spec.it("maps overlay click-away to drawer close actions", |_| {
             let state = ChoreoMainState {
@@ -148,7 +163,7 @@ fn ui_parity_spec() {
                 ..ChoreoMainState::default()
             };
 
-            let actions = map_drawer_host_action(MainPageDrawerHostAction::OverlayClicked, &state);
+            let actions = map_drawer_host_action(DrawerHostAction::OverlayClicked, &state);
 
             assert_eq!(
                 actions,

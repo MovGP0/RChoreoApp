@@ -114,6 +114,7 @@ pub fn draw(ui: &mut Ui, state: &DrawerHostState) -> Vec<DrawerHostAction> {
 }
 
 #[must_use]
+#[allow(clippy::too_many_arguments)]
 pub fn draw_with_slots(
     ui: &mut Ui,
     id_source: &str,
@@ -124,14 +125,39 @@ pub fn draw_with_slots(
     draw_top_panel: impl FnOnce(&mut Ui),
     draw_bottom_panel: impl FnOnce(&mut Ui),
 ) -> Vec<DrawerHostAction> {
+    draw_with_slots_in_rect(
+        ui.ctx(),
+        ui.max_rect(),
+        id_source,
+        state,
+        draw_content,
+        draw_left_panel,
+        draw_right_panel,
+        draw_top_panel,
+        draw_bottom_panel,
+    )
+}
+
+#[must_use]
+#[allow(clippy::too_many_arguments)]
+pub fn draw_with_slots_in_rect(
+    context: &egui::Context,
+    host_rect: Rect,
+    id_source: &str,
+    state: &DrawerHostState,
+    draw_content: impl FnOnce(&mut Ui),
+    draw_left_panel: impl FnOnce(&mut Ui),
+    draw_right_panel: impl FnOnce(&mut Ui),
+    draw_top_panel: impl FnOnce(&mut Ui),
+    draw_bottom_panel: impl FnOnce(&mut Ui),
+) -> Vec<DrawerHostAction> {
     let mut actions: Vec<DrawerHostAction> = Vec::new();
-    let host_rect = ui.max_rect();
     let layout = compute_layout(host_rect, state);
 
     Area::new(Id::new((id_source, "content")))
         .order(Order::Middle)
         .fixed_pos(layout.content_rect.min)
-        .show(ui.ctx(), |ui| {
+        .show(context, |ui| {
             ui.set_min_size(layout.content_rect.size());
             draw_content(ui);
         });
@@ -140,7 +166,7 @@ pub fn draw_with_slots(
         let overlay_clicked = Area::new(Id::new((id_source, "overlay")))
             .order(Order::Foreground)
             .fixed_pos(layout.overlay_rect.min)
-            .show(ui.ctx(), |ui| {
+            .show(context, |ui| {
                 let overlay_rect =
                     Rect::from_min_size(egui::Pos2::ZERO, layout.overlay_rect.size());
                 let response = ui.allocate_rect(overlay_rect, Sense::click());
@@ -158,7 +184,7 @@ pub fn draw_with_slots(
         Area::new(Id::new((id_source, "left_panel")))
             .order(Order::Foreground)
             .fixed_pos(layout.left_panel_rect.min)
-            .show(ui.ctx(), |ui| {
+            .show(context, |ui| {
                 ui.set_min_size(layout.left_panel_rect.size());
                 ui.painter().rect_filled(
                     Rect::from_min_size(egui::Pos2::ZERO, layout.left_panel_rect.size()),
@@ -172,7 +198,7 @@ pub fn draw_with_slots(
         Area::new(Id::new((id_source, "right_panel")))
             .order(Order::Foreground)
             .fixed_pos(layout.right_panel_rect.min)
-            .show(ui.ctx(), |ui| {
+            .show(context, |ui| {
                 ui.set_min_size(layout.right_panel_rect.size());
                 ui.painter().rect_filled(
                     Rect::from_min_size(egui::Pos2::ZERO, layout.right_panel_rect.size()),
@@ -186,7 +212,7 @@ pub fn draw_with_slots(
         Area::new(Id::new((id_source, "top_panel")))
             .order(Order::Foreground)
             .fixed_pos(layout.top_panel_rect.min)
-            .show(ui.ctx(), |ui| {
+            .show(context, |ui| {
                 ui.set_min_size(layout.top_panel_rect.size());
                 ui.painter().rect_filled(
                     Rect::from_min_size(egui::Pos2::ZERO, layout.top_panel_rect.size()),
@@ -200,7 +226,7 @@ pub fn draw_with_slots(
         Area::new(Id::new((id_source, "bottom_panel")))
             .order(Order::Foreground)
             .fixed_pos(layout.bottom_panel_rect.min)
-            .show(ui.ctx(), |ui| {
+            .show(context, |ui| {
                 ui.set_min_size(layout.bottom_panel_rect.size());
                 ui.painter().rect_filled(
                     Rect::from_min_size(egui::Pos2::ZERO, layout.bottom_panel_rect.size()),

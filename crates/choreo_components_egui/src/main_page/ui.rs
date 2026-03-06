@@ -2,7 +2,6 @@ use egui::Frame;
 use egui::Layout;
 use egui::Rect;
 use egui::Ui;
-use egui::UiBuilder;
 use egui::pos2;
 use egui::vec2;
 
@@ -16,9 +15,9 @@ use crate::choreography_settings::actions::ChoreographySettingsAction;
 use crate::floor;
 use crate::floor::actions::FloorAction;
 use crate::hamburger_toggle_button;
-use crate::main_page_drawer_host::actions::MainPageDrawerHostAction;
-use crate::main_page_drawer_host::state::MainPageDrawerHostState;
-use crate::main_page_drawer_host::ui::draw_with_slots;
+use crate::drawer_host::actions::DrawerHostAction;
+use crate::drawer_host::state::DrawerHostState;
+use crate::drawer_host::ui::draw_with_slots_in_rect;
 use crate::material::components;
 use crate::nav_bar::translations::mode_text;
 use crate::nav_bar::translations::nav_bar_translations;
@@ -38,60 +37,70 @@ const MODE_SELECTOR_HEIGHT_PX: f32 = 56.0;
 pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     let mut actions: Vec<ChoreoMainAction> = Vec::new();
     ui.spacing_mut().item_spacing = vec2(GRID_12_PX, GRID_12_PX);
-    let page_rect = ui.max_rect();
+    let page_rect = shell_rect(ui.ctx());
     let audio_panel_height = audio_panel_height_px(state.is_audio_player_open);
-    let host_bottom = (page_rect.max.y - audio_panel_height).max(page_rect.min.y);
-
-    let top_bar_rect =
-        Rect::from_min_size(page_rect.min, vec2(page_rect.width(), TOP_BAR_HEIGHT_PX));
-    ui.scope_builder(UiBuilder::new().max_rect(top_bar_rect), |ui| {
-        ui.painter()
-            .rect_filled(ui.max_rect(), 0.0, ui.visuals().panel_fill);
-    });
+    let top_bar_rect = top_bar_rect(page_rect);
+    let drawer_host_rect = drawer_host_rect(page_rect, audio_panel_height);
+    let host_bottom = drawer_host_rect.max.y;
     egui::Area::new(egui::Id::new("main_page_top_bar"))
         .order(egui::Order::Foreground)
         .fixed_pos(top_bar_rect.min)
         .show(ui.ctx(), |ui| {
+            ui.painter().rect_filled(
+                Rect::from_min_size(egui::Pos2::ZERO, top_bar_rect.size()),
+                0.0,
+                ui.visuals().panel_fill,
+            );
             ui.set_width(top_bar_rect.width());
             ui.set_min_height(top_bar_rect.height());
             draw_top_bar(ui, state, &mut actions);
         });
 
-    let drawer_host_rect = Rect::from_min_max(page_rect.min, pos2(page_rect.max.x, host_bottom));
-    ui.scope_builder(UiBuilder::new().max_rect(drawer_host_rect), |ui| {
-        let drawer_state = drawer_host_state(drawer_host_rect.size(), state);
-        let slot_actions = std::cell::RefCell::new(Vec::new());
-        let drawer_host_actions = draw_with_slots(
-            ui,
-            "main_page",
-            &drawer_state,
-            |ui| {
-                slot_actions
-                    .borrow_mut()
-                    .extend(draw_floor_host_content(ui, &state.floor_state));
-            },
-            |ui| {
-                let mut slot_actions = slot_actions.borrow_mut();
-                draw_scenes_drawer(ui, state, &mut slot_actions);
-            },
-            |ui| {
-                slot_actions
-                    .borrow_mut()
-                    .extend(draw_settings_drawer(ui, state));
-            },
-        );
+    let drawer_state = drawer_host_state(drawer_host_rect.size(), state);
+    let slot_actions = std::cell::RefCell::new(Vec::new());
+    let drawer_host_actions = draw_with_slots_in_rect(
+        ui.ctx(),
+        drawer_host_rect,
+        "main_page",
+        &drawer_state,
+        |ui| {
+            slot_actions
+                .borrow_mut()
+                .extend(draw_floor_host_content(ui, &state.floor_state));
+        },
+        |ui| {
+            let mut slot_actions = slot_actions.borrow_mut();
+            draw_scenes_drawer(ui, state, &mut slot_actions);
+        },
+        |ui| {
+            slot_actions
+                .borrow_mut()
+                .extend(draw_settings_drawer(ui, state));
+        },
+        |_| {},
+        |_| {},
+    );
 
-        actions.extend(slot_actions.into_inner());
-        for action in drawer_host_actions {
-            actions.extend(map_drawer_host_action(action, state));
-        }
-    });
+    actions.extend(slot_actions.into_inner());
+    for action in drawer_host_actions {
+        actions.extend(map_drawer_host_action(action, state));
+    }
 
     if state.is_audio_player_open {
         let audio_rect = Rect::from_min_max(pos2(page_rect.min.x, host_bottom), page_rect.max);
-        ui.scope_builder(UiBuilder::new().max_rect(audio_rect), |ui| {
-            actions.extend(draw_audio_host(ui, state));
-        });
+        egui::Area::new(egui::Id::new("main_page_audio_host"))
+            .order(egui::Order::Foreground)
+            .fixed_pos(audio_rect.min)
+            .show(ui.ctx(), |ui| {
+                ui.set_width(audio_rect.width());
+                ui.set_min_height(audio_rect.height());
+                ui.painter().rect_filled(
+                    Rect::from_min_size(egui::Pos2::ZERO, audio_rect.size()),
+                    0.0,
+                    ui.visuals().panel_fill,
+                );
+                actions.extend(draw_audio_host(ui, state));
+            });
     }
 
     actions
@@ -252,29 +261,44 @@ fn draw_audio_host(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction
 
 #[must_use]
 pub fn drawer_host_state(
-    viewport_size: egui::Vec2,
+    _viewport_size: egui::Vec2,
     state: &ChoreoMainState,
-) -> MainPageDrawerHostState {
-    MainPageDrawerHostState {
+) -> DrawerHostState {
+    DrawerHostState {
         left_drawer_width: DRAWER_WIDTH_LEFT_PX,
         right_drawer_width: DRAWER_WIDTH_RIGHT_PX,
-        top_inset: TOP_BAR_HEIGHT_PX,
+        top_inset: 0.0,
         inline_left: false,
         is_left_open: state.is_nav_open,
         is_right_open: state.is_choreography_settings_open,
-        viewport_width: viewport_size.x.max(0.0),
-        viewport_height: viewport_size.y.max(0.0),
-        ..MainPageDrawerHostState::default()
+        ..DrawerHostState::default()
     }
 }
 
 #[must_use]
+pub fn top_bar_rect(page_rect: Rect) -> Rect {
+    Rect::from_min_size(page_rect.min, vec2(page_rect.width(), TOP_BAR_HEIGHT_PX))
+}
+
+#[must_use]
+pub fn drawer_host_rect(page_rect: Rect, audio_panel_height: f32) -> Rect {
+    let host_top = (page_rect.min.y + TOP_BAR_HEIGHT_PX).min(page_rect.max.y);
+    let host_bottom = (page_rect.max.y - audio_panel_height).max(host_top);
+    Rect::from_min_max(pos2(page_rect.min.x, host_top), pos2(page_rect.max.x, host_bottom))
+}
+
+#[must_use]
+pub fn shell_rect(context: &egui::Context) -> Rect {
+    context.available_rect()
+}
+
+#[must_use]
 pub fn map_drawer_host_action(
-    action: MainPageDrawerHostAction,
+    action: DrawerHostAction,
     state: &ChoreoMainState,
 ) -> Vec<ChoreoMainAction> {
     match action {
-        MainPageDrawerHostAction::OverlayClicked => {
+        DrawerHostAction::OverlayClicked => {
             let mut actions = Vec::new();
             if state.is_nav_open {
                 actions.push(ChoreoMainAction::CloseNav);
@@ -284,11 +308,6 @@ pub fn map_drawer_host_action(
             }
             actions
         }
-        MainPageDrawerHostAction::Initialize
-        | MainPageDrawerHostAction::SetInlineLeft { .. }
-        | MainPageDrawerHostAction::SetLeftOpen { .. }
-        | MainPageDrawerHostAction::SetRightOpen { .. }
-        | MainPageDrawerHostAction::SetTopInset { .. } => Vec::new(),
     }
 }
 

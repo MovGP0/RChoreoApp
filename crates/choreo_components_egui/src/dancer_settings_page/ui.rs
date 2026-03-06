@@ -21,10 +21,10 @@ use crate::dancers_pane_view::ui::DancersPaneViewAction;
 use crate::dialog_host::ui::DialogHostProps;
 use crate::dialog_host::ui::dialog_metrics_tokens;
 use crate::dialog_host::ui::draw_dialog_host_with_panel;
+use crate::drawer_host::actions::DrawerHostAction;
+use crate::drawer_host::state::DrawerHostState;
+use crate::drawer_host::ui::draw_with_slots;
 use crate::i18n::t;
-use crate::main_page_drawer_host::actions::MainPageDrawerHostAction;
-use crate::main_page_drawer_host::state::MainPageDrawerHostState;
-use crate::main_page_drawer_host::ui::draw_with_slots;
 use crate::nav_bar::hamburger_toggle_button;
 use crate::ui_style::material_style_metrics::material_style_metrics;
 use crate::ui_style::typography;
@@ -128,18 +128,11 @@ fn draw_main_content(
     actions: &mut Vec<DancersAction>,
     locale: &str,
 ) {
-    let drawer_state = MainPageDrawerHostState {
-        left_drawer_width: LIST_DRAWER_WIDTH_PX,
-        top_inset: 0.0,
-        inline_left: false,
-        is_left_open: state.is_dancer_list_open,
-        is_right_open: false,
-        left_close_on_click_away: true,
-        right_close_on_click_away: true,
-        overlay_color: ui.visuals().window_fill().linear_multiply(0.7),
-        drawer_background: ui.visuals().panel_fill,
-        ..MainPageDrawerHostState::default()
-    };
+    let drawer_state = drawer_host_state(
+        state,
+        ui.visuals().window_fill().linear_multiply(0.7),
+        ui.visuals().panel_fill,
+    );
 
     let mut content_actions: Vec<DancersAction> = Vec::new();
     let mut pane_actions: Vec<DancersAction> = Vec::new();
@@ -150,14 +143,40 @@ fn draw_main_content(
         |ui| draw_content(ui, state, &mut content_actions, locale),
         |ui| draw_dancers_pane(ui, state, &mut pane_actions, locale),
         |_| {},
+        |_| {},
+        |_| {},
     );
     actions.extend(pane_actions);
     actions.extend(content_actions);
 
     for drawer_action in drawer_actions {
-        if matches!(drawer_action, MainPageDrawerHostAction::OverlayClicked) {
+        if matches!(drawer_action, DrawerHostAction::OverlayClicked) {
             actions.push(DancersAction::CloseDancerList);
         }
+    }
+}
+
+#[must_use]
+pub fn drawer_host_state(
+    state: &DancersState,
+    overlay_color: Color32,
+    drawer_background: Color32,
+) -> DrawerHostState {
+    DrawerHostState {
+        left_drawer_width: LIST_DRAWER_WIDTH_PX,
+        top_inset: 0.0,
+        inline_left: false,
+        is_left_open: state.is_dancer_list_open,
+        is_right_open: false,
+        is_top_open: false,
+        is_bottom_open: false,
+        left_close_on_click_away: true,
+        right_close_on_click_away: true,
+        top_close_on_click_away: true,
+        bottom_close_on_click_away: true,
+        overlay_color,
+        drawer_background,
+        ..DrawerHostState::default()
     }
 }
 
@@ -493,9 +512,7 @@ pub fn draw_swap_dialog_panel(
     state: &DancersState,
     locale: &str,
 ) -> Option<SwapDialogAction> {
-    let Some(view_model) = build_swap_dialog_view_model(state, locale) else {
-        return None;
-    };
+    let view_model = build_swap_dialog_view_model(state, locale)?;
 
     let mut action = None;
     ui.set_min_width(360.0);
