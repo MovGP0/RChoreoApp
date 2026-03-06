@@ -12,12 +12,13 @@ use crate::choreo_main::state::ChoreoMainState;
 use crate::choreo_main::state::InteractionMode;
 use crate::choreography_settings;
 use crate::choreography_settings::actions::ChoreographySettingsAction;
+use crate::drawer_host::actions::DrawerHostAction;
+use crate::drawer_host::state::DrawerHostOpenMode;
+use crate::drawer_host::state::DrawerHostState;
+use crate::drawer_host::ui::draw_with_slots_in_rect;
 use crate::floor;
 use crate::floor::actions::FloorAction;
 use crate::hamburger_toggle_button;
-use crate::drawer_host::actions::DrawerHostAction;
-use crate::drawer_host::state::DrawerHostState;
-use crate::drawer_host::ui::draw_with_slots_in_rect;
 use crate::material::components;
 use crate::nav_bar::translations::mode_text;
 use crate::nav_bar::translations::nav_bar_translations;
@@ -37,7 +38,7 @@ const MODE_SELECTOR_HEIGHT_PX: f32 = 56.0;
 pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     let mut actions: Vec<ChoreoMainAction> = Vec::new();
     ui.spacing_mut().item_spacing = vec2(GRID_12_PX, GRID_12_PX);
-    let page_rect = shell_rect(ui.ctx());
+    let page_rect = shell_rect(ui);
     let audio_panel_height = audio_panel_height_px(state.is_audio_player_open);
     let top_bar_rect = top_bar_rect(page_rect);
     let drawer_host_rect = drawer_host_rect(page_rect, audio_panel_height);
@@ -106,11 +107,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     actions
 }
 
-fn draw_top_bar(
-    ui: &mut Ui,
-    state: &ChoreoMainState,
-    actions: &mut Vec<ChoreoMainAction>,
-) {
+fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMainAction>) {
     let strings = nav_bar_translations(DEFAULT_LOCALE);
     ui.spacing_mut().item_spacing = vec2(GRID_12_PX, GRID_12_PX);
     ui.with_layout(Layout::left_to_right(egui::Align::Center), |ui| {
@@ -260,13 +257,12 @@ fn draw_audio_host(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction
 }
 
 #[must_use]
-pub fn drawer_host_state(
-    _viewport_size: egui::Vec2,
-    state: &ChoreoMainState,
-) -> DrawerHostState {
+pub fn drawer_host_state(_viewport_size: egui::Vec2, state: &ChoreoMainState) -> DrawerHostState {
     DrawerHostState {
         left_drawer_width: DRAWER_WIDTH_LEFT_PX,
         right_drawer_width: DRAWER_WIDTH_RIGHT_PX,
+        responsive_breakpoint: 900.0,
+        open_mode: DrawerHostOpenMode::Standard,
         top_inset: 0.0,
         inline_left: false,
         is_left_open: state.is_nav_open,
@@ -284,12 +280,15 @@ pub fn top_bar_rect(page_rect: Rect) -> Rect {
 pub fn drawer_host_rect(page_rect: Rect, audio_panel_height: f32) -> Rect {
     let host_top = (page_rect.min.y + TOP_BAR_HEIGHT_PX).min(page_rect.max.y);
     let host_bottom = (page_rect.max.y - audio_panel_height).max(host_top);
-    Rect::from_min_max(pos2(page_rect.min.x, host_top), pos2(page_rect.max.x, host_bottom))
+    Rect::from_min_max(
+        pos2(page_rect.min.x, host_top),
+        pos2(page_rect.max.x, host_bottom),
+    )
 }
 
 #[must_use]
-pub fn shell_rect(context: &egui::Context) -> Rect {
-    context.available_rect()
+pub fn shell_rect(ui: &Ui) -> Rect {
+    ui.max_rect()
 }
 
 #[must_use]
@@ -298,12 +297,17 @@ pub fn map_drawer_host_action(
     state: &ChoreoMainState,
 ) -> Vec<ChoreoMainAction> {
     match action {
-        DrawerHostAction::OverlayClicked => {
+        DrawerHostAction::OverlayClicked {
+            close_left,
+            close_right,
+            close_top: _,
+            close_bottom: _,
+        } => {
             let mut actions = Vec::new();
-            if state.is_nav_open {
+            if close_left && state.is_nav_open {
                 actions.push(ChoreoMainAction::CloseNav);
             }
-            if state.is_choreography_settings_open {
+            if close_right && state.is_choreography_settings_open {
                 actions.push(ChoreoMainAction::CloseSettings);
             }
             actions

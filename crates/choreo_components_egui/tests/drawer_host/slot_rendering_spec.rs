@@ -1,13 +1,14 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::drawer_host::state::DrawerHostOpenMode;
 use crate::drawer_host::state::DrawerHostState;
 use crate::drawer_host::ui::draw_with_slots;
 
 #[test]
 fn drawer_host_slot_rendering_matches_open_panels() {
     let state = DrawerHostState {
-        inline_left: true,
+        open_mode: DrawerHostOpenMode::Standard,
         is_left_open: true,
         is_right_open: false,
         is_top_open: true,
@@ -38,5 +39,5 @@ fn drawer_host_slot_rendering_matches_open_panels() {
         });
     });
 
-    assert_eq!(calls.borrow().as_slice(), &["content", "left", "top"]);
+    assert_eq!(calls.borrow().as_slice(), &["content", "top", "left"]);
 }

@@ -22,8 +22,9 @@ use crate::dialog_host::ui::DialogHostProps;
 use crate::dialog_host::ui::dialog_metrics_tokens;
 use crate::dialog_host::ui::draw_dialog_host_with_panel;
 use crate::drawer_host::actions::DrawerHostAction;
+use crate::drawer_host::state::DrawerHostOpenMode;
 use crate::drawer_host::state::DrawerHostState;
-use crate::drawer_host::ui::draw_with_slots;
+use crate::drawer_host::ui::draw_with_slots_in_rect;
 use crate::i18n::t;
 use crate::nav_bar::hamburger_toggle_button;
 use crate::ui_style::material_style_metrics::material_style_metrics;
@@ -134,10 +135,12 @@ fn draw_main_content(
         ui.visuals().panel_fill,
     );
 
+    let host_rect = ui.available_rect_before_wrap();
     let mut content_actions: Vec<DancersAction> = Vec::new();
     let mut pane_actions: Vec<DancersAction> = Vec::new();
-    let drawer_actions = draw_with_slots(
-        ui,
+    let drawer_actions = draw_with_slots_in_rect(
+        ui.ctx(),
+        host_rect,
         "dancer_settings_page",
         &drawer_state,
         |ui| draw_content(ui, state, &mut content_actions, locale),
@@ -146,11 +149,13 @@ fn draw_main_content(
         |_| {},
         |_| {},
     );
+    let _ = ui.allocate_rect(host_rect, Sense::hover());
     actions.extend(pane_actions);
     actions.extend(content_actions);
 
     for drawer_action in drawer_actions {
-        if matches!(drawer_action, DrawerHostAction::OverlayClicked) {
+        let DrawerHostAction::OverlayClicked { close_left, .. } = drawer_action;
+        if close_left {
             actions.push(DancersAction::CloseDancerList);
         }
     }
@@ -164,6 +169,8 @@ pub fn drawer_host_state(
 ) -> DrawerHostState {
     DrawerHostState {
         left_drawer_width: LIST_DRAWER_WIDTH_PX,
+        responsive_breakpoint: 900.0,
+        open_mode: DrawerHostOpenMode::Modal,
         top_inset: 0.0,
         inline_left: false,
         is_left_open: state.is_dancer_list_open,

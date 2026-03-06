@@ -1,6 +1,7 @@
 use crate::dancers;
 use crate::dancers::Report;
 use egui::Color32;
+use choreo_components_egui::drawer_host::state::DrawerHostOpenMode;
 
 #[test]
 fn dancer_settings_page_control_spec() {
@@ -35,6 +36,8 @@ fn dancer_settings_page_control_spec() {
             );
 
             assert_eq!(drawer_state.left_drawer_width, 420.0);
+            assert_eq!(drawer_state.responsive_breakpoint, 900.0);
+            assert_eq!(drawer_state.open_mode, DrawerHostOpenMode::Modal);
             assert_eq!(drawer_state.top_inset, 0.0);
             assert!(drawer_state.is_left_open);
             assert!(!drawer_state.is_right_open);

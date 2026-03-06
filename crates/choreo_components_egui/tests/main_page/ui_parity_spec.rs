@@ -3,8 +3,8 @@ use crate::main_page::actions::ChoreoMainAction;
 use crate::main_page::reducer::reduce;
 use crate::main_page::state::ChoreoMainState;
 use crate::main_page::state::InteractionMode;
-use crate::main_page::ui::drawer_host_state;
 use crate::main_page::ui::drawer_host_rect;
+use crate::main_page::ui::drawer_host_state;
 use crate::main_page::ui::home_icon_name;
 use crate::main_page::ui::map_choreography_settings_action;
 use crate::main_page::ui::map_drawer_host_action;
@@ -13,6 +13,7 @@ use crate::main_page::ui::mode_label;
 use crate::main_page::ui::nav_icon_name;
 use crate::main_page::ui::open_audio_icon_name;
 use crate::main_page::ui::open_image_icon_name;
+use crate::main_page::ui::shell_rect;
 use crate::main_page::ui::top_bar_action_count;
 use crate::main_page::ui::top_bar_action_icon_tokens;
 use crate::main_page::ui::top_bar_action_icon_uris;
@@ -23,6 +24,7 @@ use crate::main_page::ui::top_bar_settings_icon_name;
 use crate::main_page::ui::translated_mode_labels;
 use choreo_components_egui::choreography_settings::actions::ChoreographySettingsAction;
 use choreo_components_egui::drawer_host::actions::DrawerHostAction;
+use choreo_components_egui::drawer_host::state::DrawerHostOpenMode;
 use choreo_components_egui::nav_bar::translations::nav_bar_translations;
 
 #[test]
@@ -137,6 +139,8 @@ fn ui_parity_spec() {
 
                 assert_eq!(drawer_state.left_drawer_width, 324.0);
                 assert_eq!(drawer_state.right_drawer_width, 480.0);
+                assert_eq!(drawer_state.responsive_breakpoint, 900.0);
+                assert_eq!(drawer_state.open_mode, DrawerHostOpenMode::Standard);
                 assert_eq!(drawer_state.top_inset, 0.0);
                 assert!(drawer_state.is_left_open);
                 assert!(drawer_state.is_right_open);
@@ -144,7 +148,8 @@ fn ui_parity_spec() {
         );
 
         spec.it("places the drawer host below the nav bar", |_| {
-            let page_rect = egui::Rect::from_min_max(egui::pos2(20.0, 30.0), egui::pos2(1300.0, 750.0));
+            let page_rect =
+                egui::Rect::from_min_max(egui::pos2(20.0, 30.0), egui::pos2(1300.0, 750.0));
 
             let top_bar = top_bar_rect(page_rect);
             let drawer_host = drawer_host_rect(page_rect, 0.0);
@@ -156,6 +161,29 @@ fn ui_parity_spec() {
             assert_eq!(drawer_host.right(), 1300.0);
         });
 
+        spec.it("anchors shell geometry to the current ui rect instead of the viewport", |_| {
+            let state = ChoreoMainState {
+                is_nav_open: true,
+                is_choreography_settings_open: true,
+                ..ChoreoMainState::default()
+            };
+            let context = egui::Context::default();
+            let scoped_rect =
+                egui::Rect::from_min_max(egui::pos2(120.0, 96.0), egui::pos2(1320.0, 780.0));
+            let mut observed_shell = None;
+
+            let _ = context.run(egui::RawInput::default(), |ctx| {
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    let _ = ui.scope_builder(egui::UiBuilder::new().max_rect(scoped_rect), |ui| {
+                        observed_shell = Some(shell_rect(ui));
+                        let _ = crate::main_page::ui::draw(ui, &state);
+                    });
+                });
+            });
+
+            assert_eq!(observed_shell, Some(scoped_rect));
+        });
+
         spec.it("maps overlay click-away to drawer close actions", |_| {
             let state = ChoreoMainState {
                 is_nav_open: true,
@@ -163,13 +191,44 @@ fn ui_parity_spec() {
                 ..ChoreoMainState::default()
             };
 
-            let actions = map_drawer_host_action(DrawerHostAction::OverlayClicked, &state);
+            let actions = map_drawer_host_action(
+                DrawerHostAction::OverlayClicked {
+                    close_left: true,
+                    close_right: true,
+                    close_top: false,
+                    close_bottom: false,
+                },
+                &state,
+            );
 
             assert_eq!(
                 actions,
                 vec![ChoreoMainAction::CloseNav, ChoreoMainAction::CloseSettings]
             );
         });
+
+        spec.it(
+            "keeps inline left nav open when only the right drawer is eligible for overlay closing",
+            |_| {
+                let state = ChoreoMainState {
+                    is_nav_open: true,
+                    is_choreography_settings_open: true,
+                    ..ChoreoMainState::default()
+                };
+
+                let actions = map_drawer_host_action(
+                    DrawerHostAction::OverlayClicked {
+                        close_left: false,
+                        close_right: true,
+                        close_top: false,
+                        close_bottom: false,
+                    },
+                    &state,
+                );
+
+                assert_eq!(actions, vec![ChoreoMainAction::CloseSettings]);
+            },
+        );
 
         spec.it(
             "maps choreography settings drawer actions into main actions",
