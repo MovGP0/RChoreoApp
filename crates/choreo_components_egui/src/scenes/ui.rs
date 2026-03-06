@@ -1,5 +1,7 @@
+use egui::Button;
 use egui::CornerRadius;
 use egui::Frame;
+use egui::Image;
 use egui::Margin;
 use egui::Pos2;
 use egui::Rect;
@@ -10,7 +12,6 @@ use egui::Stroke;
 use egui::Ui;
 use egui::pos2;
 use egui::vec2;
-use egui_material3::MaterialIconButton;
 
 use crate::delete_scene_dialog::ui::DeleteSceneDialogAction;
 use crate::delete_scene_dialog::ui::draw_delete_scene_dialog;
@@ -28,6 +29,9 @@ use super::ui_icons::UiIconKey;
 
 const DEFAULT_LOCALE: &str = "en";
 const SEARCH_BAR_HEIGHT_PX: f32 = 44.0;
+const SEARCH_BAR_ICON_BUTTON_SIZE_PX: f32 = 24.0;
+const TOOLBAR_ROW_HEIGHT_PX: f32 = 48.0;
+const TOOLBAR_ICON_GLYPH_SIZE_PX: f32 = 24.0;
 const SCENE_ROW_HEIGHT_PX: f32 = 50.0;
 const SCENE_ROW_HEIGHT_WITH_TIMESTAMPS_PX: f32 = 62.0;
 const SCENE_ROW_VERTICAL_GAP_PX: f32 = 4.0;
@@ -105,105 +109,47 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
     let strings = scenes_translations(DEFAULT_LOCALE);
 
     ui.spacing_mut().item_spacing = vec2(metrics.spacings.spacing_12, metrics.spacings.spacing_12);
-
-    Frame::new()
-        .fill(ui.visuals().faint_bg_color)
-        .stroke(Stroke::new(
-            metrics.strokes.outline,
-            ui.visuals().widgets.noninteractive.bg_stroke.color,
-        ))
-        .corner_radius(CornerRadius::same(
-            metrics.corner_radii.border_radius_12 as u8,
-        ))
-        .inner_margin(Margin::same(metrics.paddings.padding_12 as i8))
-        .show(ui, |ui| {
-            ScrollArea::vertical()
-                .auto_shrink([false, false])
-                .show(ui, |ui| {
-                    for (index, scene) in state.visible_scenes.iter().enumerate() {
-                        if draw_scene_list_item(ui, scene, state.show_timestamps).clicked() {
-                            actions.push(ScenesAction::SelectScene { index });
-                        }
-                    }
-                });
+    ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+        draw_fixed_height_section(ui, TOOLBAR_ROW_HEIGHT_PX, |ui| {
+            draw_navigation_toolbar_row(ui, state, &mut actions);
+        });
+        draw_fixed_height_section(ui, TOOLBAR_ROW_HEIGHT_PX, |ui| {
+            draw_edit_toolbar_row(ui, state, &mut actions);
+        });
+        draw_fixed_height_section(ui, SEARCH_BAR_HEIGHT_PX, |ui| {
+            draw_search_bar(ui, state, &mut actions, DEFAULT_LOCALE);
         });
 
-    draw_search_bar(ui, state, &mut actions, DEFAULT_LOCALE);
-
-    ui.horizontal(|ui| {
-        let add_before = scene_add_before_icon();
-        if ui
-            .add(MaterialIconButton::standard(add_before.token).svg_data(add_before.svg))
-            .on_hover_text(strings.add_before.as_str())
-            .clicked()
-        {
-            actions.push(ScenesAction::InsertScene {
-                insert_after: false,
-            });
-        }
-        let add_after = scene_add_after_icon();
-        if ui
-            .add(MaterialIconButton::standard(add_after.token).svg_data(add_after.svg))
-            .on_hover_text(strings.add_after.as_str())
-            .clicked()
-        {
-            actions.push(ScenesAction::InsertScene { insert_after: true });
-        }
-        let delete_scene = scene_delete_icon();
-        if ui
-            .add_enabled(
-                state.can_delete_scene,
-                MaterialIconButton::standard(delete_scene.token).svg_data(delete_scene.svg),
-            )
-            .on_hover_text(strings.delete_scene_title.as_str())
-            .clicked()
-        {
-            actions.push(ScenesAction::OpenDeleteSceneDialog);
-        }
-    });
-
-    ui.horizontal(|ui| {
-        let open = open_choreography_icon();
-        if ui
-            .add(MaterialIconButton::standard(open.token).svg_data(open.svg))
-            .on_hover_text(strings.open.as_str())
-            .clicked()
-        {
-            actions.push(ScenesAction::RequestOpenChoreography);
-        }
-        let save = save_choreography_icon();
-        if ui
-            .add_enabled(
-                state.can_save_choreo,
-                MaterialIconButton::standard(save.token).svg_data(save.svg),
-            )
-            .on_hover_text(strings.save.as_str())
-            .clicked()
-        {
-            actions.push(ScenesAction::RequestSaveChoreography);
-        }
-        let settings = navigate_settings_icon();
-        if ui
-            .add_enabled(
-                state.can_navigate_to_settings,
-                MaterialIconButton::standard(settings.token).svg_data(settings.svg),
-            )
-            .on_hover_text(strings.settings.as_str())
-            .clicked()
-        {
-            actions.push(ScenesAction::NavigateToSettings);
-        }
-        let dancers = navigate_dancers_icon();
-        if ui
-            .add_enabled(
-                state.can_navigate_to_dancer_settings,
-                MaterialIconButton::standard(dancers.token).svg_data(dancers.svg),
-            )
-            .on_hover_text(strings.dancers.as_str())
-            .clicked()
-        {
-            actions.push(ScenesAction::NavigateToDancerSettings);
-        }
+        ui.allocate_ui_with_layout(
+            vec2(ui.available_width(), ui.available_height().max(0.0)),
+            egui::Layout::top_down(egui::Align::LEFT),
+            |ui| {
+                Frame::new()
+                    .fill(ui.visuals().faint_bg_color)
+                    .stroke(Stroke::new(
+                        metrics.strokes.outline,
+                        ui.visuals().widgets.noninteractive.bg_stroke.color,
+                    ))
+                    .corner_radius(CornerRadius::same(
+                        metrics.corner_radii.border_radius_12 as u8,
+                    ))
+                    .inner_margin(Margin::same(metrics.paddings.padding_12 as i8))
+                    .show(ui, |ui| {
+                        ui.set_min_height(ui.available_height());
+                        ScrollArea::vertical()
+                            .auto_shrink([false, false])
+                            .show(ui, |ui| {
+                                for (index, scene) in state.visible_scenes.iter().enumerate() {
+                                    if draw_scene_list_item(ui, scene, state.show_timestamps)
+                                        .clicked()
+                                    {
+                                        actions.push(ScenesAction::SelectScene { index });
+                                    }
+                                }
+                            });
+                    });
+            },
+        );
     });
 
     if let Some(dialog_scene) = delete_scene_dialog_scene(state) {
@@ -330,6 +276,20 @@ pub fn scene_row_height_px(show_timestamps: bool) -> f32 {
 }
 
 #[must_use]
+pub fn scene_pane_controls_height(spacing_px: f32, toolbar_row_height_px: f32) -> f32 {
+    SEARCH_BAR_HEIGHT_PX + (toolbar_row_height_px * 2.0) + (spacing_px * 3.0)
+}
+
+#[must_use]
+pub fn scene_list_panel_height(
+    available_height: f32,
+    spacing_px: f32,
+    toolbar_row_height_px: f32,
+) -> f32 {
+    (available_height - scene_pane_controls_height(spacing_px, toolbar_row_height_px)).max(0.0)
+}
+
+#[must_use]
 pub fn scene_list_item_layout(row_rect: Rect, show_timestamps: bool) -> SceneListItemLayout {
     let content_rect = row_rect.shrink2(vec2(0.0, SCENE_ROW_VERTICAL_GAP_PX));
     let swatch_rect = Rect::from_min_size(
@@ -398,7 +358,6 @@ fn draw_search_bar(
 ) {
     let metrics = material_style_metrics();
     let view_model = build_scene_search_bar_view_model(&state.search_text, locale);
-    let search_icon = scene_search_icon();
     let clear_icon = clear_search_icon();
 
     // Keep 44px to match the original Material search bar control geometry.
@@ -419,21 +378,18 @@ fn draw_search_bar(
         })
         .show(ui, |ui| {
             ui.set_min_height(SEARCH_BAR_HEIGHT_PX);
-            ui.horizontal(|ui| {
-                let _ = ui.add_enabled(
-                    false,
-                    MaterialIconButton::standard(search_icon.0).svg_data(search_icon.1),
-                );
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                let _ = ui.add(search_icon_image());
 
                 let mut search = state.search_text.clone();
                 let text_edit_width = if view_model.show_clear_button {
-                    (ui.available_width() - metrics.sizes.size_40).max(0.0)
+                    (ui.available_width() - SEARCH_BAR_ICON_BUTTON_SIZE_PX).max(0.0)
                 } else {
                     ui.available_width()
                 };
                 let changed = ui
                     .add_sized(
-                        vec2(text_edit_width, SEARCH_BAR_HEIGHT_PX - metrics.sizes.size_2),
+                        vec2(text_edit_width, ui.spacing().interact_size.y),
                         egui::TextEdit::singleline(&mut search)
                             .frame(false)
                             .hint_text(view_model.placeholder_text.as_str()),
@@ -445,7 +401,7 @@ fn draw_search_bar(
 
                 if view_model.show_clear_button
                     && ui
-                        .add(MaterialIconButton::standard(clear_icon.0).svg_data(clear_icon.1))
+                        .add(search_bar_clear_button(clear_icon.0, clear_icon.1))
                         .on_hover_text(view_model.clear_tooltip)
                         .clicked()
                 {
@@ -453,6 +409,81 @@ fn draw_search_bar(
                 }
             });
         });
+}
+
+fn draw_edit_toolbar_row(ui: &mut Ui, state: &ScenesState, actions: &mut Vec<ScenesAction>) {
+    let strings = scenes_translations(DEFAULT_LOCALE);
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = material_style_metrics().spacings.spacing_12;
+        let add_before = scene_add_before_icon();
+        if ui
+            .add(scene_icon_button(add_before))
+            .on_hover_text(strings.add_before.as_str())
+            .clicked()
+        {
+            actions.push(ScenesAction::InsertScene {
+                insert_after: false,
+            });
+        }
+        let add_after = scene_add_after_icon();
+        if ui
+            .add(scene_icon_button(add_after))
+            .on_hover_text(strings.add_after.as_str())
+            .clicked()
+        {
+            actions.push(ScenesAction::InsertScene { insert_after: true });
+        }
+        let delete_scene = scene_delete_icon();
+        if ui
+            .add_enabled(state.can_delete_scene, scene_icon_button(delete_scene))
+            .on_hover_text(strings.delete_scene_title.as_str())
+            .clicked()
+        {
+            actions.push(ScenesAction::OpenDeleteSceneDialog);
+        }
+    });
+}
+
+fn draw_navigation_toolbar_row(ui: &mut Ui, state: &ScenesState, actions: &mut Vec<ScenesAction>) {
+    let strings = scenes_translations(DEFAULT_LOCALE);
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = material_style_metrics().spacings.spacing_12;
+        let open = open_choreography_icon();
+        if ui
+            .add(scene_icon_button(open))
+            .on_hover_text(strings.open.as_str())
+            .clicked()
+        {
+            actions.push(ScenesAction::RequestOpenChoreography);
+        }
+        let save = save_choreography_icon();
+        if ui
+            .add_enabled(state.can_save_choreo, scene_icon_button(save))
+            .on_hover_text(strings.save.as_str())
+            .clicked()
+        {
+            actions.push(ScenesAction::RequestSaveChoreography);
+        }
+        let settings = navigate_settings_icon();
+        if ui
+            .add_enabled(state.can_navigate_to_settings, scene_icon_button(settings))
+            .on_hover_text(strings.settings.as_str())
+            .clicked()
+        {
+            actions.push(ScenesAction::NavigateToSettings);
+        }
+        let dancers = navigate_dancers_icon();
+        if ui
+            .add_enabled(
+                state.can_navigate_to_dancer_settings,
+                scene_icon_button(dancers),
+            )
+            .on_hover_text(strings.dancers.as_str())
+            .clicked()
+        {
+            actions.push(ScenesAction::NavigateToDancerSettings);
+        }
+    });
 }
 
 fn draw_scene_list_item(ui: &mut Ui, scene: &SceneItemState, show_timestamps: bool) -> Response {
@@ -529,4 +560,53 @@ fn clear_search_icon() -> (&'static str, &'static str) {
         "close",
         include_str!("../../../choreo_components/ui/icons/Close.svg"),
     )
+}
+
+fn scene_icon_button(icon: ui_icons::UiIconSpec) -> Button<'static> {
+    scene_inline_icon_button(icon.token, icon.svg)
+}
+
+fn scene_inline_icon_button(token: &'static str, svg: &'static str) -> Button<'static> {
+    Button::image(
+        Image::from_bytes(scene_icon_uri(token), svg.as_bytes())
+            .fit_to_exact_size(vec2(TOOLBAR_ICON_GLYPH_SIZE_PX, TOOLBAR_ICON_GLYPH_SIZE_PX)),
+    )
+    .frame(true)
+    .frame_when_inactive(false)
+    .corner_radius(TOOLBAR_ROW_HEIGHT_PX / 2.0)
+    .min_size(vec2(TOOLBAR_ROW_HEIGHT_PX, TOOLBAR_ROW_HEIGHT_PX))
+    .image_tint_follows_text_color(true)
+}
+
+fn search_icon_image() -> Image<'static> {
+    let search_icon = scene_search_icon();
+    Image::from_bytes(scene_icon_uri(search_icon.0), search_icon.1.as_bytes())
+        .fit_to_exact_size(vec2(TOOLBAR_ICON_GLYPH_SIZE_PX, TOOLBAR_ICON_GLYPH_SIZE_PX))
+}
+
+fn search_bar_clear_button(token: &'static str, svg: &'static str) -> Button<'static> {
+    Button::image(
+        Image::from_bytes(scene_icon_uri(token), svg.as_bytes())
+            .fit_to_exact_size(vec2(TOOLBAR_ICON_GLYPH_SIZE_PX, TOOLBAR_ICON_GLYPH_SIZE_PX)),
+    )
+    .frame(false)
+    .min_size(vec2(
+        SEARCH_BAR_ICON_BUTTON_SIZE_PX,
+        SEARCH_BAR_ICON_BUTTON_SIZE_PX,
+    ))
+    .image_tint_follows_text_color(true)
+}
+
+fn scene_icon_uri(token: &str) -> String {
+    format!("bytes://scenes/{token}.svg")
+}
+
+fn draw_fixed_height_section(ui: &mut Ui, height_px: f32, add_contents: impl FnOnce(&mut Ui)) {
+    ui.allocate_ui_with_layout(
+        vec2(ui.available_width(), height_px),
+        egui::Layout::top_down(egui::Align::LEFT),
+        |ui| {
+            add_contents(ui);
+        },
+    );
 }

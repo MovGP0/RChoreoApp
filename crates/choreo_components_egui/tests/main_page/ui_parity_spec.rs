@@ -8,11 +8,13 @@ use crate::main_page::ui::drawer_host_state;
 use crate::main_page::ui::home_icon_name;
 use crate::main_page::ui::map_choreography_settings_action;
 use crate::main_page::ui::map_drawer_host_action;
+use crate::main_page::ui::map_scene_pane_action;
 use crate::main_page::ui::mode_count;
 use crate::main_page::ui::mode_label;
 use crate::main_page::ui::nav_icon_name;
 use crate::main_page::ui::open_audio_icon_name;
 use crate::main_page::ui::open_image_icon_name;
+use crate::main_page::ui::scene_pane_state;
 use crate::main_page::ui::shell_rect;
 use crate::main_page::ui::top_bar_action_count;
 use crate::main_page::ui::top_bar_action_icon_tokens;
@@ -22,10 +24,15 @@ use crate::main_page::ui::top_bar_rect;
 use crate::main_page::ui::top_bar_settings_action;
 use crate::main_page::ui::top_bar_settings_icon_name;
 use crate::main_page::ui::translated_mode_labels;
+use choreo_components_egui::choreo_main::actions::OpenChoreoRequested;
 use choreo_components_egui::choreography_settings::actions::ChoreographySettingsAction;
 use choreo_components_egui::drawer_host::actions::DrawerHostAction;
 use choreo_components_egui::drawer_host::state::DrawerHostOpenMode;
 use choreo_components_egui::nav_bar::translations::nav_bar_translations;
+use choreo_components_egui::scenes::actions::ScenesAction;
+use choreo_master_mobile_json::Color;
+use choreo_master_mobile_json::SceneId;
+use choreo_models::SceneModel;
 
 #[test]
 fn ui_parity_spec() {
@@ -147,42 +154,49 @@ fn ui_parity_spec() {
             },
         );
 
-        spec.it("keeps the drawer host shell-wide while reserving the nav bar as top inset", |_| {
-            let page_rect =
-                egui::Rect::from_min_max(egui::pos2(20.0, 30.0), egui::pos2(1300.0, 750.0));
+        spec.it(
+            "keeps the drawer host shell-wide while reserving the nav bar as top inset",
+            |_| {
+                let page_rect =
+                    egui::Rect::from_min_max(egui::pos2(20.0, 30.0), egui::pos2(1300.0, 750.0));
 
-            let top_bar = top_bar_rect(page_rect);
-            let drawer_host = drawer_host_rect(page_rect, 0.0);
+                let top_bar = top_bar_rect(page_rect);
+                let drawer_host = drawer_host_rect(page_rect, 0.0);
 
-            assert_eq!(top_bar.top(), 30.0);
-            assert_eq!(top_bar.bottom(), 114.0);
-            assert_eq!(drawer_host.top(), 30.0);
-            assert_eq!(drawer_host.left(), 20.0);
-            assert_eq!(drawer_host.right(), 1300.0);
-        });
+                assert_eq!(top_bar.top(), 30.0);
+                assert_eq!(top_bar.bottom(), 114.0);
+                assert_eq!(drawer_host.top(), 30.0);
+                assert_eq!(drawer_host.left(), 20.0);
+                assert_eq!(drawer_host.right(), 1300.0);
+            },
+        );
 
-        spec.it("anchors shell geometry to the current ui rect instead of the viewport", |_| {
-            let state = ChoreoMainState {
-                is_nav_open: true,
-                is_choreography_settings_open: true,
-                ..ChoreoMainState::default()
-            };
-            let context = egui::Context::default();
-            let scoped_rect =
-                egui::Rect::from_min_max(egui::pos2(120.0, 96.0), egui::pos2(1320.0, 780.0));
-            let mut observed_shell = None;
+        spec.it(
+            "anchors shell geometry to the current ui rect instead of the viewport",
+            |_| {
+                let state = ChoreoMainState {
+                    is_nav_open: true,
+                    is_choreography_settings_open: true,
+                    ..ChoreoMainState::default()
+                };
+                let context = egui::Context::default();
+                let scoped_rect =
+                    egui::Rect::from_min_max(egui::pos2(120.0, 96.0), egui::pos2(1320.0, 780.0));
+                let mut observed_shell = None;
 
-            let _ = context.run(egui::RawInput::default(), |ctx| {
-                egui::CentralPanel::default().show(ctx, |ui| {
-                    let _ = ui.scope_builder(egui::UiBuilder::new().max_rect(scoped_rect), |ui| {
-                        observed_shell = Some(shell_rect(ui));
-                        let _ = crate::main_page::ui::draw(ui, &state);
+                let _ = context.run(egui::RawInput::default(), |ctx| {
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        let _ =
+                            ui.scope_builder(egui::UiBuilder::new().max_rect(scoped_rect), |ui| {
+                                observed_shell = Some(shell_rect(ui));
+                                let _ = crate::main_page::ui::draw(ui, &state);
+                            });
                     });
                 });
-            });
 
-            assert_eq!(observed_shell, Some(scoped_rect));
-        });
+                assert_eq!(observed_shell, Some(scoped_rect));
+            },
+        );
 
         spec.it("maps overlay click-away to drawer close actions", |_| {
             let state = ChoreoMainState {
@@ -259,6 +273,120 @@ fn ui_parity_spec() {
                     });
                 });
                 assert!(!output.shapes.is_empty());
+            },
+        );
+
+        spec.it(
+            "renders main page with an open left drawer without panicking",
+            |_| {
+                let state = ChoreoMainState {
+                    is_nav_open: true,
+                    scenes: vec![crate::main_page::state::SceneState {
+                        name: "Intro".to_string(),
+                        timestamp_seconds: Some(1.0),
+                    }],
+                    selected_scene_index: Some(0),
+                    ..ChoreoMainState::default()
+                };
+                let context = egui::Context::default();
+
+                let output = context.run(egui::RawInput::default(), |ctx| {
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        let _ = crate::main_page::ui::draw(ui, &state);
+                    });
+                });
+                assert!(!output.shapes.is_empty());
+            },
+        );
+
+        spec.it(
+            "projects the shared scenes pane state for the left drawer",
+            |_| {
+                let mut state = ChoreoMainState {
+                    selected_scene_index: Some(1),
+                    ..ChoreoMainState::default()
+                };
+                state.scene_search_text = "sec".to_string();
+                state.choreography_settings_state.show_timestamps = true;
+                state.choreography_settings_state.choreography.scenes = vec![
+                    SceneModel {
+                        scene_id: SceneId(1),
+                        positions: Vec::new(),
+                        name: "Intro".to_string(),
+                        text: Some("opening".to_string()),
+                        fixed_positions: false,
+                        timestamp: Some("1.0".to_string()),
+                        variation_depth: 0,
+                        variations: Vec::new(),
+                        current_variation: Vec::new(),
+                        color: Color::transparent(),
+                    },
+                    SceneModel {
+                        scene_id: SceneId(2),
+                        positions: Vec::new(),
+                        name: "Second".to_string(),
+                        text: Some("middle".to_string()),
+                        fixed_positions: false,
+                        timestamp: Some("2.5".to_string()),
+                        variation_depth: 0,
+                        variations: Vec::new(),
+                        current_variation: Vec::new(),
+                        color: Color::transparent(),
+                    },
+                ];
+
+                let pane_state = scene_pane_state(&state);
+
+                assert_eq!(pane_state.search_text, "sec");
+                assert!(pane_state.show_timestamps);
+                assert_eq!(pane_state.scenes.len(), 2);
+                assert_eq!(pane_state.visible_scenes.len(), 1);
+                assert_eq!(pane_state.visible_scenes[0].name, "Second");
+                assert!(pane_state.visible_scenes[0].is_selected);
+                assert!(pane_state.choreography.scenes.is_empty());
+                assert!(pane_state.scenes[0].positions.is_empty());
+                assert!(pane_state.scenes[0].variations.is_empty());
+                assert!(pane_state.scenes[0].current_variation.is_empty());
+                assert!(pane_state.can_navigate_to_settings);
+                assert!(pane_state.can_navigate_to_dancer_settings);
+            },
+        );
+
+        spec.it(
+            "maps shared scenes pane actions into main page actions",
+            |_| {
+                assert_eq!(
+                    map_scene_pane_action(ScenesAction::SelectScene { index: 2 }),
+                    Some(ChoreoMainAction::SelectScene { index: 2 })
+                );
+                assert_eq!(
+                    map_scene_pane_action(ScenesAction::NavigateToSettings),
+                    Some(ChoreoMainAction::NavigateToSettings)
+                );
+                assert_eq!(
+                    map_scene_pane_action(ScenesAction::NavigateToDancerSettings),
+                    Some(ChoreoMainAction::NavigateToDancers)
+                );
+                assert_eq!(
+                    map_scene_pane_action(ScenesAction::RequestOpenChoreography),
+                    Some(ChoreoMainAction::RequestOpenChoreo(OpenChoreoRequested {
+                        file_path: None,
+                        file_name: None,
+                        contents: String::new(),
+                    }))
+                );
+                assert_eq!(
+                    map_scene_pane_action(ScenesAction::InsertScene {
+                        insert_after: false
+                    }),
+                    Some(ChoreoMainAction::InsertScene {
+                        insert_after: false
+                    })
+                );
+                assert_eq!(
+                    map_scene_pane_action(ScenesAction::OpenDeleteSceneDialog),
+                    Some(ChoreoMainAction::DeleteSelectedScene)
+                );
             },
         );
     });

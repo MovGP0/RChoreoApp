@@ -8,6 +8,7 @@ use egui::vec2;
 use crate::audio_player;
 use crate::audio_player::actions::AudioPlayerAction;
 use crate::choreo_main::actions::ChoreoMainAction;
+use crate::choreo_main::actions::OpenChoreoRequested;
 use crate::choreo_main::state::ChoreoMainState;
 use crate::choreo_main::state::InteractionMode;
 use crate::choreography_settings;
@@ -22,9 +23,17 @@ use crate::hamburger_toggle_button;
 use crate::material::components;
 use crate::nav_bar::translations::mode_text;
 use crate::nav_bar::translations::nav_bar_translations;
+use crate::scenes;
+use crate::scenes::actions::ScenesAction;
+use crate::scenes::state::SceneItemState;
+use crate::scenes::state::ScenesState;
+use crate::scenes::state::format_seconds;
+use crate::scenes::state::parse_timestamp_seconds;
 use crate::ui_icons;
 use crate::ui_icons::UiIconKey;
 use crate::ui_style::typography::TypographyRole;
+use choreo_master_mobile_json::Color;
+use choreo_master_mobile_json::SceneId;
 
 const TOP_BAR_HEIGHT_PX: f32 = 84.0;
 const DRAWER_WIDTH_LEFT_PX: f32 = 324.0;
@@ -191,24 +200,18 @@ fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMa
 }
 
 fn draw_scenes_drawer(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMainAction>) {
+    let pane_state = scene_pane_state(state);
     ui.allocate_ui_with_layout(
         egui::vec2(DRAWER_WIDTH_LEFT_PX, ui.available_height()),
         egui::Layout::top_down(egui::Align::LEFT),
         |ui| {
-            Frame::group(ui.style()).show(ui, |ui| {
-                ui.set_min_width(DRAWER_WIDTH_LEFT_PX);
-                for (index, scene) in state.scenes.iter().enumerate() {
-                    let is_selected = state.selected_scene_index == Some(index);
-                    let label = if let Some(timestamp) = scene.timestamp_seconds {
-                        format!("{} ({timestamp:.1}s)", scene.name)
-                    } else {
-                        scene.name.clone()
-                    };
-                    if ui.selectable_label(is_selected, label).clicked() {
-                        actions.push(ChoreoMainAction::SelectScene { index });
-                    }
+            ui.set_min_width(DRAWER_WIDTH_LEFT_PX);
+            ui.set_min_height(ui.available_height());
+            for action in scenes::ui::draw(ui, &pane_state) {
+                if let Some(mapped_action) = map_scene_pane_action(action) {
+                    actions.push(mapped_action);
                 }
-            });
+            }
         },
     );
 }
@@ -348,6 +351,150 @@ pub fn map_audio_host_action(action: AudioPlayerAction) -> Vec<ChoreoMainAction>
 #[must_use]
 pub fn map_choreography_settings_action(action: ChoreographySettingsAction) -> ChoreoMainAction {
     ChoreoMainAction::ChoreographySettingsAction(action)
+}
+
+#[must_use]
+pub fn scene_pane_state(state: &ChoreoMainState) -> ScenesState {
+    let scenes = if state
+        .choreography_settings_state
+        .choreography
+        .scenes
+        .is_empty()
+    {
+        state
+            .scenes
+            .iter()
+            .enumerate()
+            .map(|(index, scene)| SceneItemState {
+                scene_id: SceneId(index as i32 + 1),
+                name: scene.name.clone(),
+                text: String::new(),
+                fixed_positions: false,
+                timestamp: scene.timestamp_seconds,
+                is_selected: state.selected_scene_index == Some(index),
+                positions: Vec::new(),
+                variation_depth: 0,
+                variations: Vec::new(),
+                current_variation: Vec::new(),
+                color: Color::transparent(),
+            })
+            .collect::<Vec<_>>()
+    } else {
+        state
+            .choreography_settings_state
+            .choreography
+            .scenes
+            .iter()
+            .enumerate()
+            .map(|(index, scene)| project_scene_list_item(index, scene, state))
+            .collect::<Vec<_>>()
+    };
+    let visible_scenes = filter_scene_items(&scenes, &state.scene_search_text);
+    let selected_scene = state
+        .selected_scene_index
+        .and_then(|index| scenes.get(index).cloned());
+    let mut pane_state = ScenesState {
+        choreography: choreo_models::ChoreographyModel::default(),
+        scenes,
+        visible_scenes,
+        selected_scene: selected_scene.clone(),
+        search_text: state.scene_search_text.clone(),
+        show_timestamps: state.choreography_settings_state.show_timestamps
+            || state
+                .choreography_settings_state
+                .choreography
+                .settings
+                .show_timestamps,
+        is_place_mode: state.interaction_mode != InteractionMode::View,
+        can_save_choreo: false,
+        can_delete_scene: selected_scene.is_some(),
+        can_navigate_to_settings: true,
+        can_navigate_to_dancer_settings: true,
+        has_selected_scene: selected_scene.is_some(),
+        ..ScenesState::default()
+    };
+    if let Some(selected_scene) = selected_scene {
+        pane_state.selected_scene_name = selected_scene.name.clone();
+        pane_state.selected_scene_text = selected_scene.text.clone();
+        pane_state.selected_scene_fixed_positions = selected_scene.fixed_positions;
+        pane_state.selected_scene_timestamp_text = selected_scene
+            .timestamp
+            .map(format_seconds)
+            .unwrap_or_default();
+        pane_state.selected_scene_color = selected_scene.color;
+    }
+    pane_state
+}
+
+#[must_use]
+pub fn map_scene_pane_action(action: ScenesAction) -> Option<ChoreoMainAction> {
+    match action {
+        ScenesAction::RequestOpenChoreography => {
+            Some(ChoreoMainAction::RequestOpenChoreo(OpenChoreoRequested {
+                file_path: None,
+                file_name: None,
+                contents: String::new(),
+            }))
+        }
+        ScenesAction::NavigateToSettings => Some(ChoreoMainAction::NavigateToSettings),
+        ScenesAction::NavigateToDancerSettings => Some(ChoreoMainAction::NavigateToDancers),
+        ScenesAction::UpdateSearchText(value) => {
+            Some(ChoreoMainAction::UpdateSceneSearchText(value))
+        }
+        ScenesAction::InsertScene { insert_after } => {
+            Some(ChoreoMainAction::InsertScene { insert_after })
+        }
+        ScenesAction::OpenDeleteSceneDialog => Some(ChoreoMainAction::DeleteSelectedScene),
+        ScenesAction::SelectScene { index } => Some(ChoreoMainAction::SelectScene { index }),
+        ScenesAction::RequestSaveChoreography
+        | ScenesAction::LoadScenes { .. }
+        | ScenesAction::ReloadScenes
+        | ScenesAction::SelectSceneFromAudioPosition { .. }
+        | ScenesAction::ApplyPlacementModeForSelected
+        | ScenesAction::SyncShowTimestampsFromChoreography
+        | ScenesAction::UpdateShowTimestamps(_)
+        | ScenesAction::CancelDeleteSceneDialog
+        | ScenesAction::ConfirmDeleteSceneDialog
+        | ScenesAction::OpenCopyScenePositionsDialog
+        | ScenesAction::CancelCopyScenePositionsDialog
+        | ScenesAction::ConfirmCopyScenePositionsDialog { .. }
+        | ScenesAction::OpenChoreography { .. }
+        | ScenesAction::SaveChoreography
+        | ScenesAction::ClearEphemeralOutputs => None,
+    }
+}
+
+fn filter_scene_items(scenes: &[SceneItemState], search_text: &str) -> Vec<SceneItemState> {
+    if search_text.trim().is_empty() {
+        return scenes.to_vec();
+    }
+
+    let search_text = search_text.to_ascii_lowercase();
+    scenes
+        .iter()
+        .filter(|scene| scene.name.to_ascii_lowercase().contains(&search_text))
+        .cloned()
+        .collect()
+}
+
+fn project_scene_list_item(
+    index: usize,
+    scene: &choreo_models::SceneModel,
+    state: &ChoreoMainState,
+) -> SceneItemState {
+    SceneItemState {
+        scene_id: scene.scene_id,
+        name: scene.name.clone(),
+        text: scene.text.clone().unwrap_or_default(),
+        fixed_positions: scene.fixed_positions,
+        timestamp: scene.timestamp.as_deref().and_then(parse_timestamp_seconds),
+        is_selected: state.selected_scene_index == Some(index),
+        positions: Vec::new(),
+        variation_depth: 0,
+        variations: Vec::new(),
+        current_variation: Vec::new(),
+        color: scene.color.clone(),
+    }
 }
 
 #[must_use]

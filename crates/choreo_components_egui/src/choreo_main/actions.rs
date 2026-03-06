@@ -62,6 +62,11 @@ pub enum ChoreoMainAction {
     SetScenes {
         scenes: Vec<SceneState>,
     },
+    UpdateSceneSearchText(String),
+    InsertScene {
+        insert_after: bool,
+    },
+    DeleteSelectedScene,
     SelectScene {
         index: usize,
     },

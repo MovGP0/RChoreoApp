@@ -125,6 +125,17 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             }
             sync_choreography_settings_projection(state);
         }
+        ChoreoMainAction::UpdateSceneSearchText(value) => {
+            state.scene_search_text = value;
+        }
+        ChoreoMainAction::InsertScene { insert_after } => {
+            insert_scene_internal(state, insert_after);
+            sync_choreography_settings_projection(state);
+        }
+        ChoreoMainAction::DeleteSelectedScene => {
+            delete_selected_scene_internal(state);
+            sync_choreography_settings_projection(state);
+        }
         ChoreoMainAction::SelectScene { index } => {
             select_scene_internal(state, index, false);
             sync_choreography_settings_projection(state);
@@ -252,6 +263,41 @@ fn select_scene_internal(state: &mut ChoreoMainState, index: usize, keep_audio_p
     if !keep_audio_position && let Some(timestamp) = scene.timestamp_seconds {
         state.audio_position_seconds = timestamp;
     }
+}
+
+fn insert_scene_internal(state: &mut ChoreoMainState, insert_after: bool) {
+    let insert_index = match state.selected_scene_index {
+        Some(index) if insert_after => (index + 1).min(state.scenes.len()),
+        Some(index) => index.min(state.scenes.len()),
+        None => state.scenes.len(),
+    };
+    state.scenes.insert(
+        insert_index,
+        super::state::SceneState {
+            name: build_new_scene_name(&state.scenes),
+            timestamp_seconds: None,
+        },
+    );
+    select_scene_internal(state, insert_index, false);
+}
+
+fn delete_selected_scene_internal(state: &mut ChoreoMainState) {
+    let Some(index) = state.selected_scene_index else {
+        return;
+    };
+    if index >= state.scenes.len() {
+        return;
+    }
+
+    state.scenes.remove(index);
+    if state.scenes.is_empty() {
+        state.selected_scene_index = None;
+        state.floor_scene_name = None;
+        return;
+    }
+
+    let next_index = index.min(state.scenes.len() - 1);
+    select_scene_internal(state, next_index, false);
 }
 
 fn sync_audio_position_internal(state: &mut ChoreoMainState, seconds: f64) {
@@ -423,4 +469,20 @@ fn round_to_100_millis(seconds: f64) -> f64 {
     let milliseconds = seconds * 1000.0;
     let rounded = (milliseconds / 100.0).round() * 100.0;
     rounded / 1000.0
+}
+
+fn build_new_scene_name(scenes: &[super::state::SceneState]) -> String {
+    const BASE_NAME: &str = "New Scene";
+    if scenes.iter().all(|scene| scene.name != BASE_NAME) {
+        return BASE_NAME.to_string();
+    }
+
+    let mut suffix = 2;
+    loop {
+        let candidate = format!("{BASE_NAME} {suffix}");
+        if scenes.iter().all(|scene| scene.name != candidate) {
+            return candidate;
+        }
+        suffix += 1;
+    }
 }
