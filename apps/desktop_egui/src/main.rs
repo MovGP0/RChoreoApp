@@ -7,6 +7,7 @@
 #![deny(clippy::all)]
 
 use choreo_components_egui::AppShellViewModel;
+use choreo_components_egui::material;
 use choreo_components_egui::shell;
 use std::env;
 use std::sync::Once;
@@ -22,8 +23,9 @@ struct DesktopEguiApp {
 }
 
 impl DesktopEguiApp {
-    fn new(_creation_context: &eframe::CreationContext<'_>) -> Self {
-        apply_desktop_theme(&_creation_context.egui_ctx);
+    fn new(creation_context: &eframe::CreationContext<'_>) -> Self {
+        material::install_image_loaders(&creation_context.egui_ctx);
+        apply_desktop_theme(&creation_context.egui_ctx);
         Self {
             shell: shell::create_shell_host(),
         }

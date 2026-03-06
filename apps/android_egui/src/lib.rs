@@ -9,6 +9,8 @@
 #[cfg(target_os = "android")]
 use choreo_components_egui::AppShellViewModel;
 #[cfg(target_os = "android")]
+use choreo_components_egui::material;
+#[cfg(target_os = "android")]
 use choreo_components_egui::shell;
 
 #[cfg(target_os = "android")]
@@ -21,7 +23,8 @@ struct AndroidEguiApp {
 
 #[cfg(target_os = "android")]
 impl AndroidEguiApp {
-    fn new(_creation_context: &eframe::CreationContext<'_>) -> Self {
+    fn new(creation_context: &eframe::CreationContext<'_>) -> Self {
+        material::install_image_loaders(&creation_context.egui_ctx);
         Self {
             shell: shell::create_shell_host(),
         }

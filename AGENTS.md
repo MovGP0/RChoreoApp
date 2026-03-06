@@ -225,6 +225,7 @@ bd sync               # Sync with git
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
+- If `bd sync` fails with a stale `.git/rebase-merge` marker and `REBASE_HEAD` is absent, preserve any referenced `autostash`, remove `.git/rebase-merge`, and retry the sync/push flow.
 
 # Lessons Learned
 
