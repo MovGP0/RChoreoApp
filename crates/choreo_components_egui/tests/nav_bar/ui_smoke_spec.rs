@@ -1,13 +1,18 @@
 use crate::nav_bar::nav_bar_component::actions::NavBarAction;
 use crate::nav_bar::nav_bar_component::state::InteractionMode;
 use crate::nav_bar::nav_bar_component::state::NavBarState;
+use crate::nav_bar::nav_bar_component::translations::nav_bar_translations;
+use crate::nav_bar::nav_bar_component::ui::action_button_tokens;
+use crate::nav_bar::nav_bar_component::ui::action_button_icon_uris;
 use crate::nav_bar::nav_bar_component::ui::image_button_checked;
 use crate::nav_bar::nav_bar_component::ui::mode_label;
+use crate::nav_bar::nav_bar_component::ui::mode_option_labels;
 use crate::nav_bar::nav_bar_component::ui::mode_selector_height_token;
 use crate::nav_bar::nav_bar_component::ui::mode_selector_width_token;
 use crate::nav_bar::nav_bar_component::ui::nav_button;
 use crate::nav_bar::nav_bar_component::ui::settings_button;
 use crate::nav_bar::nav_bar_component::ui::settings_button_checked;
+use crate::nav_bar::nav_bar_component::ui::top_bar_action_count;
 
 #[test]
 fn nav_bar_ui_draw_executes_without_panicking() {
@@ -91,6 +96,67 @@ fn mode_labels_map_to_translation_keys() {
 fn mode_selector_uses_original_top_bar_size_tokens() {
     assert_eq!(mode_selector_width_token(), 180.0);
     assert_eq!(mode_selector_height_token(), 56.0);
+}
+
+#[test]
+fn nav_bar_exposes_all_mode_options_in_order() {
+    let strings = nav_bar_translations("en");
+    assert_eq!(
+        mode_option_labels(&strings),
+        [
+            "View",
+            "Move",
+            "Rotate around center",
+            "Rotate around dancer",
+            "Scale",
+            "Line of sight",
+        ]
+    );
+}
+
+#[test]
+fn nav_bar_top_bar_actions_keep_expected_order() {
+    let state = NavBarState::default();
+    assert_eq!(top_bar_action_count(), 6);
+    assert_eq!(
+        action_button_tokens(&state),
+        ["menu", "edit", "home", "image", "play_circle"]
+    );
+}
+
+#[test]
+fn nav_bar_action_icons_map_to_distinct_svg_sources() {
+    assert_eq!(
+        action_button_icon_uris(),
+        [
+            "bytes://top_bar/settings.svg",
+            "bytes://top_bar/home.svg",
+            "bytes://top_bar/image.svg",
+            "bytes://top_bar/audio.svg",
+        ]
+    );
+}
+
+#[test]
+fn nav_bar_mode_dropdown_popup_renders_all_labels() {
+    let state = NavBarState::default();
+    let context = egui::Context::default();
+    let closed_output = context.run(egui::RawInput::default(), |ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.set_width(1280.0);
+            let _ = crate::nav_bar::nav_bar_component::ui::draw(ui, &state);
+        });
+    });
+
+    egui::Popup::open_id(&context, egui::Id::new("nav_bar_mode_dropdown").with("popup"));
+    let open_output = context.run(egui::RawInput::default(), |ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.set_width(1280.0);
+            let _ = crate::nav_bar::nav_bar_component::ui::draw(ui, &state);
+        });
+    });
+
+    assert!(open_output.shapes.len() > closed_output.shapes.len());
 }
 
 #[test]

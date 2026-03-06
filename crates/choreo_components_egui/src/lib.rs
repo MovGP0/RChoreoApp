@@ -27,6 +27,7 @@ pub mod logging;
 pub mod main_page;
 pub mod main_page_drawer_host;
 pub mod main_root_view;
+pub mod material;
 pub mod nav_bar;
 pub mod number_picker;
 pub mod observability;

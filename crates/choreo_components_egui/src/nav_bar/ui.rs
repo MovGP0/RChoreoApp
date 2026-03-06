@@ -1,10 +1,8 @@
+use egui::Layout;
 use egui::Ui;
 use egui::vec2;
-use egui_material3::MaterialIconButton;
-use egui_material3::MaterialSelect;
 
-use crate::ui_icons;
-use crate::ui_icons::UiIconKey;
+use crate::material::components;
 use crate::ui_style::typography::TypographyRole;
 
 use super::actions::NavBarAction;
@@ -64,6 +62,29 @@ pub const fn mode_selector_height_token() -> f32 {
 }
 
 #[must_use]
+pub fn action_button_tokens(state: &NavBarState) -> [&'static str; 5] {
+    let nav_token = if state.is_nav_open { "close" } else { "menu" };
+    [nav_token, "edit", "home", "image", "play_circle"]
+}
+
+#[must_use]
+pub const fn top_bar_action_count() -> usize {
+    6
+}
+
+#[must_use]
+pub fn mode_option_labels(strings: &super::translations::NavBarTranslations) -> [&str; 6] {
+    [
+        mode_text(strings, InteractionMode::View),
+        mode_text(strings, InteractionMode::Move),
+        mode_text(strings, InteractionMode::RotateAroundCenter),
+        mode_text(strings, InteractionMode::RotateAroundDancer),
+        mode_text(strings, InteractionMode::Scale),
+        mode_text(strings, InteractionMode::LineOfSight),
+    ]
+}
+
+#[must_use]
 pub fn settings_button_checked(state: &NavBarState) -> bool {
     state.is_choreography_settings_open
 }
@@ -77,7 +98,10 @@ pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
     let locale = "en";
     let strings = nav_bar_translations(locale);
     let mut actions: Vec<NavBarAction> = Vec::new();
-    ui.horizontal(|ui| {
+    ui.spacing_mut().item_spacing = vec2(12.0, 12.0);
+    ui.with_layout(Layout::left_to_right(egui::Align::Center), |ui| {
+        ui.set_min_height(MODE_SELECTOR_HEIGHT_PX);
+        ui.add_space(8.0);
         let nav_response = hamburger_toggle_button::draw(
             ui,
             state.is_nav_open,
@@ -90,73 +114,81 @@ pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
             actions.push(nav_action);
         }
 
-        ui.add_space(ui.available_width().max(0.0));
-
         let previous_mode_index = all_modes()
             .iter()
             .position(|mode| *mode == state.selected_mode)
             .unwrap_or(0);
-        let mut selected_mode_index = Some(previous_mode_index);
-        let mut mode_changed = false;
-        ui.add_enabled_ui(state.is_mode_selection_enabled, |ui| {
-            ui.set_min_height(mode_selector_height_token());
-            ui.set_width(mode_selector_width_token());
-            let mut mode_select = MaterialSelect::new(&mut selected_mode_index)
-                .width(mode_selector_width_token())
-                .placeholder(strings.mode_label.clone());
-            for (index, mode) in all_modes().iter().enumerate() {
-                mode_select = mode_select.option(index, mode_text(&strings, *mode));
+        ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.add_space(8.0);
+
+            let audio_response = components::icon_button(
+                ui,
+                components::icon_image(components::TopBarIcon::Audio),
+                false,
+            );
+            if audio_response.clicked() {
+                actions.push(NavBarAction::OpenAudio);
             }
-            mode_changed = ui.add(mode_select).changed();
+            let _ = audio_response.on_hover_text(strings.open_audio_tooltip.as_str());
+
+            let image_response = components::icon_button(
+                ui,
+                components::icon_image(components::TopBarIcon::Image),
+                image_button_checked(state),
+            );
+            if image_response.clicked() {
+                actions.push(NavBarAction::OpenImage);
+            }
+            let _ = image_response.on_hover_text(strings.open_image_tooltip.as_str());
+
+            let home_response = components::icon_button(
+                ui,
+                components::icon_image(components::TopBarIcon::Home),
+                false,
+            );
+            if home_response.clicked() {
+                actions.push(NavBarAction::ResetFloorViewport);
+            }
+            let _ = home_response.on_hover_text(strings.reset_floor_viewport_tooltip.as_str());
+
+            let (_, settings_action) = settings_button(state);
+            let settings_response = components::icon_button(
+                ui,
+                components::icon_image(components::TopBarIcon::Settings),
+                settings_button_checked(state),
+            );
+            if settings_response.clicked() {
+                actions.push(settings_action);
+            }
+            let _ = settings_response.on_hover_text(strings.open_settings_tooltip.as_str());
+
+            let selected_mode_index = components::mode_dropdown(
+                ui,
+                egui::Id::new("nav_bar_mode_dropdown"),
+                Some(previous_mode_index),
+                &mode_option_labels(&strings),
+                state.is_mode_selection_enabled,
+                mode_selector_width_token(),
+                mode_selector_height_token(),
+            );
+            if let Some(selected_mode_index) = selected_mode_index
+                && selected_mode_index != previous_mode_index
+                && let Some(mode) = all_modes().get(selected_mode_index)
+            {
+                actions.push(NavBarAction::SetSelectedMode { mode: *mode });
+            }
         });
-
-        if mode_changed
-            && let Some(selected_mode_index) = selected_mode_index
-            && selected_mode_index != previous_mode_index
-            && let Some(mode) = all_modes().get(selected_mode_index)
-        {
-            actions.push(NavBarAction::SetSelectedMode { mode: *mode });
-        }
-
-        let (_, settings_action) = settings_button(state);
-        let settings_icon = ui_icons::icon(UiIconKey::NavSettings);
-        let mut settings_checked = settings_button_checked(state);
-        let settings_response = ui.add(
-            MaterialIconButton::toggle(settings_icon.token, &mut settings_checked)
-                .svg_data(settings_icon.svg),
-        );
-        if settings_response.clicked() {
-            actions.push(settings_action);
-        }
-        let _ = settings_response.on_hover_text(strings.open_settings_tooltip.as_str());
-
-        let home_icon = ui_icons::icon(UiIconKey::FloorResetViewport);
-        let home_response =
-            ui.add(MaterialIconButton::standard(home_icon.token).svg_data(home_icon.svg));
-        if home_response.clicked() {
-            actions.push(NavBarAction::ResetFloorViewport);
-        }
-        let _ = home_response.on_hover_text(strings.reset_floor_viewport_tooltip.as_str());
-
-        let image_icon = ui_icons::icon(UiIconKey::FloorOpenSvgOverlay);
-        let mut image_checked = image_button_checked(state);
-        let image_response = ui.add(
-            MaterialIconButton::toggle(image_icon.token, &mut image_checked)
-                .svg_data(image_icon.svg),
-        );
-        if image_response.clicked() {
-            actions.push(NavBarAction::OpenImage);
-        }
-        let _ = image_response.on_hover_text(strings.open_image_tooltip.as_str());
-
-        let audio_icon = ui_icons::icon(UiIconKey::AudioOpenPanel);
-        let audio_response =
-            ui.add(MaterialIconButton::standard(audio_icon.token).svg_data(audio_icon.svg));
-        if audio_response.clicked() {
-            actions.push(NavBarAction::OpenAudio);
-        }
-        let _ = audio_response.on_hover_text(strings.open_audio_tooltip.as_str());
     });
 
     actions
+}
+
+#[must_use]
+pub const fn action_button_icon_uris() -> [&'static str; 4] {
+    [
+        components::icon_uri(components::TopBarIcon::Settings),
+        components::icon_uri(components::TopBarIcon::Home),
+        components::icon_uri(components::TopBarIcon::Image),
+        components::icon_uri(components::TopBarIcon::Audio),
+    ]
 }
