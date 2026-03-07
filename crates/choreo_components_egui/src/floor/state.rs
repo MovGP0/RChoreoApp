@@ -119,7 +119,9 @@ pub struct AxisLabel {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LegendEntry {
-    pub label: String,
+    pub shortcut: String,
+    pub name: String,
+    pub position_text: String,
     pub color: [u8; 4],
 }
 
@@ -180,6 +182,34 @@ impl FloorPosition {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct SceneRenderPosition {
+    pub dancer_key: Option<String>,
+    pub dancer_name: String,
+    pub shortcut: String,
+    pub x: f64,
+    pub y: f64,
+    pub curve1_x: Option<f64>,
+    pub curve1_y: Option<f64>,
+    pub curve2_x: Option<f64>,
+    pub curve2_y: Option<f64>,
+    pub fill_color: [u8; 4],
+    pub border_color: [u8; 4],
+    pub text_color: [u8; 4],
+    pub has_dancer: bool,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct RenderedFloorPosition {
+    pub point: Point,
+    pub fill_color: [u8; 4],
+    pub border_color: [u8; 4],
+    pub text_color: [u8; 4],
+    pub shortcut: String,
+    pub is_selected: bool,
+    pub has_dancer: bool,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct FloorLayoutMetrics {
     pub header_bottom: f64,
@@ -235,6 +265,10 @@ pub struct FloorState {
     pub transformation_matrix: Matrix,
     pub interaction_mode: InteractionMode,
     pub positions: Vec<FloorPosition>,
+    pub source_positions: Vec<SceneRenderPosition>,
+    pub previous_source_positions: Vec<SceneRenderPosition>,
+    pub next_source_positions: Vec<SceneRenderPosition>,
+    pub rendered_positions: Vec<RenderedFloorPosition>,
     pub selected_positions: Vec<usize>,
     pub selection_rectangle: Option<(Point, Point)>,
     pub is_place_mode: bool,
@@ -258,6 +292,16 @@ pub struct FloorState {
     pub layout_width_px: f64,
     pub layout_height_px: f64,
     pub content_height_px: f64,
+    pub choreography_name: String,
+    pub scene_name: String,
+    pub show_grid_lines: bool,
+    pub positions_at_side: bool,
+    pub show_legend: bool,
+    pub draw_path_from: bool,
+    pub draw_path_to: bool,
+    pub floor_color: [u8; 4],
+    pub transparency: f64,
+    pub dancer_size: f64,
     pub floor_x: f64,
     pub floor_y: f64,
     pub floor_width: f64,
@@ -300,6 +344,10 @@ impl Default for FloorState {
             transformation_matrix: Matrix::identity(),
             interaction_mode: InteractionMode::None,
             positions: Vec::new(),
+            source_positions: Vec::new(),
+            previous_source_positions: Vec::new(),
+            next_source_positions: Vec::new(),
+            rendered_positions: Vec::new(),
             selected_positions: Vec::new(),
             selection_rectangle: None,
             is_place_mode: false,
@@ -323,6 +371,16 @@ impl Default for FloorState {
             layout_width_px: 960.0,
             layout_height_px: 720.0,
             content_height_px: 660.0,
+            choreography_name: String::new(),
+            scene_name: String::new(),
+            show_grid_lines: true,
+            positions_at_side: false,
+            show_legend: false,
+            draw_path_from: true,
+            draw_path_to: true,
+            floor_color: [240, 240, 240, 255],
+            transparency: 0.0,
+            dancer_size: 1.0,
             floor_x: 120.0,
             floor_y: 150.0,
             floor_width: 720.0,

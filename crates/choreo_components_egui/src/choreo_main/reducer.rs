@@ -9,10 +9,15 @@ use crate::choreography_settings::actions::ChoreographySettingsAction;
 use crate::choreography_settings::actions::UpdateSelectedSceneAction;
 use crate::choreography_settings::state::SelectedSceneState;
 use crate::dancers::actions::DancersAction;
+use crate::floor::state::FloorPosition;
+use crate::floor::state::SceneRenderPosition;
 use crate::settings::actions::SettingsAction;
 use choreo_master_mobile_json::Color;
 use choreo_master_mobile_json::SceneId;
+use choreo_models::DancerModel;
+use choreo_models::PositionModel;
 use choreo_models::SceneModel;
+use std::collections::HashMap;
 
 pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
     match action {
@@ -101,6 +106,7 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
                 state.svg_file_path = Some(normalized.clone());
                 state.last_opened_svg_preference = Some(normalized);
             }
+            refresh_floor_projection(state);
             state.draw_floor_request_count += 1;
         }
         ChoreoMainAction::RestoreLastOpenedSvg {
@@ -121,6 +127,7 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
 
             state.svg_file_path = Some(path.clone());
             state.last_opened_svg_preference = Some(path);
+            refresh_floor_projection(state);
             state.draw_floor_request_count += 1;
         }
         ChoreoMainAction::ApplyInteractionMode {
@@ -336,7 +343,10 @@ pub(crate) fn sync_audio_position_internal(state: &mut ChoreoMainState, seconds:
     if let Some(index) = target_scene {
         select_scene_internal(state, index, true);
         sync_choreography_settings_projection(state);
+        return;
     }
+
+    refresh_floor_projection(state);
 }
 
 fn sync_choreography_settings_projection(state: &mut ChoreoMainState) {
@@ -360,6 +370,8 @@ fn sync_choreography_settings_projection(state: &mut ChoreoMainState) {
             UpdateSelectedSceneAction::SyncFromSelected,
         ),
     );
+    state.scene_models = state.choreography_settings_state.choreography.scenes.clone();
+    refresh_floor_projection(state);
 }
 
 fn sync_main_state_from_choreography_settings(state: &mut ChoreoMainState) {
@@ -387,19 +399,336 @@ fn sync_main_state_from_choreography_settings(state: &mut ChoreoMainState) {
                 .position(|scene| scene.scene_id == selected_scene.scene_id)
         });
 
+    state.scene_models = state.choreography_settings_state.choreography.scenes.clone();
     state.floor_scene_name = state
         .selected_scene_index
-        .and_then(|index| state.scenes.get(index))
+        .and_then(|index| state.scene_models.get(index))
         .map(|scene| scene.name.clone());
+    refresh_floor_projection(state);
+    if state.choreography_settings_state.redraw_requested {
+        state.draw_floor_request_count += 1;
+    }
+}
 
+fn refresh_floor_projection(state: &mut ChoreoMainState) {
+    let choreography = &state.choreography_settings_state.choreography;
     state.floor_state.floor_front = state.choreography_settings_state.floor_front;
     state.floor_state.floor_back = state.choreography_settings_state.floor_back;
     state.floor_state.floor_left = state.choreography_settings_state.floor_left;
     state.floor_state.floor_right = state.choreography_settings_state.floor_right;
     state.floor_state.snap_to_grid = state.choreography_settings_state.snap_to_grid;
     state.floor_state.grid_resolution = state.choreography_settings_state.grid_resolution();
-    if state.choreography_settings_state.redraw_requested {
-        state.draw_floor_request_count += 1;
+    state.floor_state.choreography_name = choreography.name.clone();
+    state.floor_state.show_grid_lines = state.choreography_settings_state.grid_lines;
+    state.floor_state.positions_at_side = state.choreography_settings_state.positions_at_side;
+    state.floor_state.show_legend = state.choreography_settings_state.show_legend;
+    state.floor_state.draw_path_from = state.choreography_settings_state.draw_path_from;
+    state.floor_state.draw_path_to = state.choreography_settings_state.draw_path_to;
+    state.floor_state.floor_color = color_to_rgba(&state.choreography_settings_state.floor_color);
+    state.floor_state.transparency = state.choreography_settings_state.transparency;
+    state.floor_state.dancer_size = choreography.settings.dancer_size.max(1.0);
+    state.floor_state.svg_path = state.svg_file_path.clone();
+
+    let (previous_scene, current_scene, next_scene) = adjacent_scenes_for_audio_or_selected(
+        &state.scene_models,
+        state.selected_scene_index,
+        state.audio_position_seconds,
+    );
+
+    state.floor_state.scene_name = current_scene
+        .map(|scene| scene.name.clone())
+        .unwrap_or_default();
+    state.floor_state.source_positions = current_scene
+        .map(|scene| map_scene_render_positions(scene, state.floor_state.transparency))
+        .unwrap_or_default();
+    state.floor_state.previous_source_positions = previous_scene
+        .map(|scene| map_scene_render_positions(scene, state.floor_state.transparency))
+        .unwrap_or_default();
+    state.floor_state.next_source_positions = next_scene
+        .map(|scene| map_scene_render_positions(scene, state.floor_state.transparency))
+        .unwrap_or_default();
+    state.floor_state.positions = state
+        .floor_state
+        .source_positions
+        .iter()
+        .map(|position| FloorPosition {
+            x: position.x,
+            y: position.y,
+        })
+        .collect();
+    state.floor_state.interpolated_positions =
+        build_interpolated_positions(current_scene, next_scene, state.audio_position_seconds);
+
+    crate::floor::reducer::refresh_render_geometry(&mut state.floor_state);
+}
+
+fn adjacent_scenes_for_audio_or_selected(
+    scenes: &[SceneModel],
+    selected_index: Option<usize>,
+    audio_position_seconds: f64,
+) -> (Option<&SceneModel>, Option<&SceneModel>, Option<&SceneModel>) {
+    for (index, window) in scenes.windows(2).enumerate() {
+        let Some(current_timestamp) = parse_scene_timestamp(window[0].timestamp.as_deref()) else {
+            continue;
+        };
+        let Some(next_timestamp) = parse_scene_timestamp(window[1].timestamp.as_deref()) else {
+            continue;
+        };
+        if next_timestamp <= current_timestamp {
+            continue;
+        }
+        if audio_position_seconds >= current_timestamp && audio_position_seconds <= next_timestamp {
+            return (
+                index
+                    .checked_sub(1)
+                    .and_then(|previous_index| scenes.get(previous_index)),
+                scenes.get(index),
+                scenes.get(index + 1),
+            );
+        }
+    }
+
+    let Some(index) = selected_index.filter(|index| *index < scenes.len()) else {
+        return (None, None, None);
+    };
+    (
+        index
+            .checked_sub(1)
+            .and_then(|previous_index| scenes.get(previous_index)),
+        scenes.get(index),
+        scenes.get(index + 1),
+    )
+}
+
+fn map_scene_render_positions(scene: &SceneModel, transparency: f64) -> Vec<SceneRenderPosition> {
+    scene
+        .positions
+        .iter()
+        .map(|position| {
+            let (
+                dancer_key,
+                dancer_name,
+                shortcut,
+                fill_color,
+                border_color,
+                text_color,
+                has_dancer,
+            ) = if let Some(dancer) = position.dancer.as_ref() {
+                let fill_color =
+                    apply_transparency_rgba(color_to_rgba(&dancer.color), transparency);
+                let border_color =
+                    apply_transparency_rgba(color_to_rgba(&dancer.role.color), transparency);
+                (
+                    dancer_key(dancer),
+                    dancer.name.clone(),
+                    dancer.shortcut.clone(),
+                    fill_color,
+                    border_color,
+                    pick_black_or_white(fill_color),
+                    true,
+                )
+            } else {
+                let fill_color = apply_transparency_rgba([224, 224, 224, 255], transparency);
+                (
+                    None,
+                    String::new(),
+                    String::new(),
+                    fill_color,
+                    apply_transparency_rgba([120, 120, 120, 255], transparency),
+                    [0, 0, 0, 255],
+                    false,
+                )
+            };
+
+            SceneRenderPosition {
+                dancer_key,
+                dancer_name,
+                shortcut,
+                x: position.x,
+                y: position.y,
+                curve1_x: position.curve1_x,
+                curve1_y: position.curve1_y,
+                curve2_x: position.curve2_x,
+                curve2_y: position.curve2_y,
+                fill_color,
+                border_color,
+                text_color,
+                has_dancer,
+            }
+        })
+        .collect()
+}
+
+fn build_interpolated_positions(
+    current_scene: Option<&SceneModel>,
+    next_scene: Option<&SceneModel>,
+    audio_position_seconds: f64,
+) -> Vec<FloorPosition> {
+    let Some(current_scene) = current_scene else {
+        return Vec::new();
+    };
+    let Some(next_scene) = next_scene else {
+        return Vec::new();
+    };
+    let Some(current_timestamp) = parse_scene_timestamp(current_scene.timestamp.as_deref()) else {
+        return Vec::new();
+    };
+    let Some(next_timestamp) = parse_scene_timestamp(next_scene.timestamp.as_deref()) else {
+        return Vec::new();
+    };
+    let duration = next_timestamp - current_timestamp;
+    if duration <= 0.0 {
+        return Vec::new();
+    }
+    let progress = (audio_position_seconds - current_timestamp) / duration;
+    if !(0.0..=1.0).contains(&progress) {
+        return Vec::new();
+    }
+
+    let next_positions = build_positions_by_dancer_key(next_scene);
+    current_scene
+        .positions
+        .iter()
+        .map(|position| {
+            let Some(dancer) = position.dancer.as_ref() else {
+                return FloorPosition {
+                    x: position.x,
+                    y: position.y,
+                };
+            };
+            let Some(next_position) = get_position_by_dancer_key(&next_positions, dancer) else {
+                return FloorPosition {
+                    x: position.x,
+                    y: position.y,
+                };
+            };
+            let (x, y) = interpolate_position(position, next_position, progress);
+            FloorPosition { x, y }
+        })
+        .collect()
+}
+
+fn build_positions_by_dancer_key(scene: &SceneModel) -> HashMap<String, PositionModel> {
+    let mut lookup = HashMap::new();
+    for position in &scene.positions {
+        let Some(dancer) = position.dancer.as_ref() else {
+            continue;
+        };
+        if let Some(key) = dancer_key(dancer) {
+            lookup.insert(key, position.clone());
+        }
+    }
+    lookup
+}
+
+fn get_position_by_dancer_key<'a>(
+    lookup: &'a HashMap<String, PositionModel>,
+    dancer: &DancerModel,
+) -> Option<&'a PositionModel> {
+    let key = dancer_key(dancer)?;
+    lookup.get(&key)
+}
+
+fn dancer_key(dancer: &DancerModel) -> Option<String> {
+    if dancer.dancer_id.0 > 0 {
+        return Some(format!("id:{}", dancer.dancer_id.0));
+    }
+    if !dancer.shortcut.trim().is_empty() {
+        return Some(format!("shortcut:{}", dancer.shortcut));
+    }
+    if !dancer.name.trim().is_empty() {
+        return Some(format!("name:{}", dancer.name));
+    }
+    None
+}
+
+fn interpolate_position(
+    from_position: &PositionModel,
+    to_position: &PositionModel,
+    progress: f64,
+) -> (f64, f64) {
+    let Some(curve1_x) = from_position.curve1_x else {
+        return (
+            lerp(from_position.x, to_position.x, progress),
+            lerp(from_position.y, to_position.y, progress),
+        );
+    };
+    let Some(curve1_y) = from_position.curve1_y else {
+        return (
+            lerp(from_position.x, to_position.x, progress),
+            lerp(from_position.y, to_position.y, progress),
+        );
+    };
+
+    if let (Some(curve2_x), Some(curve2_y)) = (from_position.curve2_x, from_position.curve2_y) {
+        return (
+            cubic_bezier(from_position.x, curve1_x, curve2_x, to_position.x, progress),
+            cubic_bezier(from_position.y, curve1_y, curve2_y, to_position.y, progress),
+        );
+    }
+
+    (
+        quadratic_bezier(from_position.x, curve1_x, to_position.x, progress),
+        quadratic_bezier(from_position.y, curve1_y, to_position.y, progress),
+    )
+}
+
+fn lerp(start: f64, end: f64, progress: f64) -> f64 {
+    start + (end - start) * progress
+}
+
+fn quadratic_bezier(p0: f64, p1: f64, p2: f64, progress: f64) -> f64 {
+    let inverse = 1.0 - progress;
+    inverse * inverse * p0 + 2.0 * inverse * progress * p1 + progress * progress * p2
+}
+
+fn cubic_bezier(p0: f64, p1: f64, p2: f64, p3: f64, progress: f64) -> f64 {
+    let inverse = 1.0 - progress;
+    let inverse_squared = inverse * inverse;
+    let progress_squared = progress * progress;
+    inverse_squared * inverse * p0
+        + 3.0 * inverse_squared * progress * p1
+        + 3.0 * inverse * progress_squared * p2
+        + progress_squared * progress * p3
+}
+
+fn color_to_rgba(color: &Color) -> [u8; 4] {
+    [color.r, color.g, color.b, color.a]
+}
+
+fn apply_transparency_rgba(color: [u8; 4], transparency: f64) -> [u8; 4] {
+    let opacity = (1.0 - transparency.clamp(0.0, 1.0)).clamp(0.0, 1.0);
+    [
+        color[0],
+        color[1],
+        color[2],
+        (f64::from(color[3]) * opacity).round() as u8,
+    ]
+}
+
+fn pick_black_or_white(color: [u8; 4]) -> [u8; 4] {
+    let luminance = relative_luminance(color[0], color[1], color[2]);
+    let contrast_black = (luminance + 0.05) / 0.05;
+    let contrast_white = 1.05 / (luminance + 0.05);
+    if contrast_white > contrast_black {
+        [255, 255, 255, 255]
+    } else {
+        [0, 0, 0, 255]
+    }
+}
+
+fn relative_luminance(red: u8, green: u8, blue: u8) -> f64 {
+    let red = linearize_channel(f64::from(red) / 255.0);
+    let green = linearize_channel(f64::from(green) / 255.0);
+    let blue = linearize_channel(f64::from(blue) / 255.0);
+    0.2126 * red + 0.7152 * green + 0.0722 * blue
+}
+
+fn linearize_channel(channel: f64) -> f64 {
+    if channel <= 0.04045 {
+        channel / 12.92
+    } else {
+        ((channel + 0.055) / 1.055).powf(2.4)
     }
 }
 

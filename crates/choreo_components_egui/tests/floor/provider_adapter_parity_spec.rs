@@ -4,10 +4,33 @@ use crate::floor::floor_component::FloorAdapterInput;
 use crate::floor::floor_component::FloorPointerEventSenders;
 use crate::floor::floor_component::FloorProvider;
 use crate::floor::floor_component::FloorProviderDependencies;
+use crate::floor::floor_component::FloorRenderGate;
 use crate::floor::floor_component::FloorRenderGateImpl;
 use crate::floor::floor_component::state::FloorPosition;
 use crate::floor::floor_component::state::FloorState;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
+
+#[derive(Default)]
+struct CountingRenderGate {
+    rendered: AtomicBool,
+    marks: AtomicUsize,
+}
+
+impl FloorRenderGate for CountingRenderGate {
+    fn is_rendered(&self) -> bool {
+        self.rendered.load(Ordering::SeqCst)
+    }
+
+    fn mark_rendered(&self) {
+        self.rendered.store(true, Ordering::SeqCst);
+        self.marks.fetch_add(1, Ordering::SeqCst);
+    }
+
+    fn wait_for_first_render(&self) {}
+}
 
 #[test]
 fn adapter_maps_scene_overlay_and_audio_interpolation_into_state() {
@@ -86,6 +109,39 @@ fn provider_orchestrates_draw_and_redraw_with_render_gate() {
     assert!(provider.state().draw_count >= 2);
     provider.tick();
     assert!(provider.state().draw_count >= 2);
+
+    provider.deactivate();
+}
+
+#[test]
+fn provider_request_redraw_does_not_mark_render_gate_before_draw_floor_command() {
+    let render_gate = Arc::new(CountingRenderGate::default());
+    let mut provider = FloorProvider::new(FloorProviderDependencies {
+        state: FloorState::default(),
+        floor_adapter: FloorAdapter::new(),
+        floor_render_gate: render_gate.clone(),
+        view_model_behaviors: Vec::new(),
+        floor_event_senders: FloorPointerEventSenders {
+            pointer_pressed_senders: Vec::new(),
+            pointer_moved_senders: Vec::new(),
+            pointer_released_senders: Vec::new(),
+            pointer_wheel_changed_senders: Vec::new(),
+            touch_senders: Vec::new(),
+        },
+    });
+
+    provider.activate();
+    provider.floor_view_model().borrow().request_redraw();
+
+    assert!(!render_gate.is_rendered());
+    assert_eq!(render_gate.marks.load(Ordering::SeqCst), 0);
+    assert_eq!(provider.state().draw_count, 1);
+
+    provider.floor_view_model().borrow_mut().draw_floor();
+    provider.tick();
+
+    assert!(render_gate.is_rendered());
+    assert_eq!(render_gate.marks.load(Ordering::SeqCst), 1);
 
     provider.deactivate();
 }

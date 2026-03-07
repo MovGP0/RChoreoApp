@@ -4,12 +4,16 @@ use crate::floor::floor_component::state::FloorLayer;
 use crate::floor::floor_component::state::FloorPosition;
 use crate::floor::floor_component::state::FloorState;
 use crate::floor::floor_component::state::Point;
+use crate::floor::floor_component::state::SceneRenderPosition;
 use crate::floor::floor_component::state::TouchAction;
 use crate::floor::floor_component::state::TouchDeviceType;
 
 #[test]
 fn draw_floor_builds_expected_layer_order_and_primitives() {
-    let mut state = FloorState::default();
+    let mut state = FloorState {
+        show_legend: true,
+        ..FloorState::default()
+    };
 
     reduce(
         &mut state,
@@ -78,6 +82,7 @@ fn draw_floor_builds_expected_layer_order_and_primitives() {
     assert_eq!(state.center_mark_segments.len(), 2);
     assert_eq!(state.axis_labels.len(), 2);
     assert_eq!(state.legend_entries.len(), 1);
+    assert_eq!(state.legend_entries[0].name, "Couple A");
     assert_eq!(state.placement_remaining, Some(2));
 }
 
@@ -104,7 +109,10 @@ fn layout_reserves_header_and_binds_overlay_to_floor_coordinates() {
 
 #[test]
 fn legend_panel_uses_layout_metrics_and_sits_right_of_floor() {
-    let mut state = FloorState::default();
+    let mut state = FloorState {
+        show_legend: true,
+        ..FloorState::default()
+    };
 
     reduce(
         &mut state,
@@ -127,6 +135,97 @@ fn legend_panel_uses_layout_metrics_and_sits_right_of_floor() {
     assert!(legend.x >= state.floor_x + state.floor_width);
     assert!((legend.width - state.metrics.legend_panel_width).abs() < 0.001);
     assert!((legend.height - state.metrics.legend_panel_height).abs() < 0.001);
+}
+
+#[test]
+fn draw_floor_projects_scene_render_positions_into_labels_legend_and_paths() {
+    let mut state = FloorState {
+        choreography_name: "Viennese Waltz".to_string(),
+        scene_name: "Opening".to_string(),
+        positions_at_side: true,
+        show_legend: true,
+        source_positions: vec![
+            SceneRenderPosition {
+                dancer_key: Some("id:1".to_string()),
+                dancer_name: "Lead".to_string(),
+                shortcut: "L".to_string(),
+                x: -1.0,
+                y: 1.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [220, 20, 60, 255],
+                border_color: [128, 0, 0, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+            SceneRenderPosition {
+                dancer_key: Some("id:2".to_string()),
+                dancer_name: "Follow".to_string(),
+                shortcut: "F".to_string(),
+                x: 1.0,
+                y: -1.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [30, 144, 255, 255],
+                border_color: [0, 64, 128, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+        ],
+        next_source_positions: vec![
+            SceneRenderPosition {
+                dancer_key: Some("id:1".to_string()),
+                dancer_name: "Lead".to_string(),
+                shortcut: "L".to_string(),
+                x: 0.0,
+                y: 2.0,
+                curve1_x: Some(-0.5),
+                curve1_y: Some(1.5),
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [220, 20, 60, 255],
+                border_color: [128, 0, 0, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+            SceneRenderPosition {
+                dancer_key: Some("id:2".to_string()),
+                dancer_name: "Follow".to_string(),
+                shortcut: "F".to_string(),
+                x: 2.0,
+                y: 0.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [30, 144, 255, 255],
+                border_color: [0, 64, 128, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+        ],
+        ..FloorState::default()
+    };
+
+    reduce(
+        &mut state,
+        FloorAction::SetLayout {
+            width_px: 1200.0,
+            height_px: 900.0,
+        },
+    );
+    reduce(&mut state, FloorAction::DrawFloor);
+
+    assert_eq!(state.rendered_positions.len(), 2);
+    assert_eq!(state.position_labels[0].text, "L");
+    assert!(state.axis_labels.len() >= 4);
+    assert_eq!(state.legend_entries[0].shortcut, "F");
+    assert_eq!(state.legend_entries[0].position_text, "(1.00, -1.00)");
+    assert!(!state.path_segments.is_empty());
 }
 
 #[test]

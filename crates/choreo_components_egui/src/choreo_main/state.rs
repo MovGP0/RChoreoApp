@@ -7,6 +7,7 @@ use crate::choreography_settings::state::ChoreographySettingsState;
 use crate::dancers::state::DancersState;
 use crate::floor::state::FloorState;
 use crate::settings::state::SettingsState;
+use choreo_models::SceneModel;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum MainContent {
@@ -68,6 +69,7 @@ pub struct ChoreoMainState {
     pub last_opened_svg_preference: Option<String>,
     pub draw_floor_request_count: usize,
     pub scenes: Vec<SceneState>,
+    pub scene_models: Vec<SceneModel>,
     pub selected_scene_index: Option<usize>,
     pub scene_search_text: String,
     pub audio_position_seconds: f64,
@@ -102,6 +104,7 @@ impl Default for ChoreoMainState {
             last_opened_svg_preference: None,
             draw_floor_request_count: 0,
             scenes: Vec::new(),
+            scene_models: Vec::new(),
             selected_scene_index: None,
             scene_search_text: String::new(),
             audio_position_seconds: 0.0,

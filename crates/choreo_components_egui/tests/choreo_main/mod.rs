@@ -29,6 +29,7 @@ where
 pub mod apply_interaction_mode_behavior_spec;
 pub mod dialog_host_ui_spec;
 pub mod external_file_routing_spec;
+pub mod floor_projection_spec;
 pub mod hide_dialog_behavior_spec;
 pub mod main_page_host_forwarding_spec;
 pub mod navigate_dancers_to_main_spec;

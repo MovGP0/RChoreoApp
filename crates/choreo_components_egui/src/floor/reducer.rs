@@ -4,11 +4,14 @@ use super::state::FloorLayer;
 use super::state::FloorLayoutMetrics;
 use super::state::FloorPosition;
 use super::state::FloorState;
+use super::state::LegendEntry;
 use super::state::LabeledPoint;
 use super::state::LineSegment;
 use super::state::Point;
 use super::state::PointerButton;
 use super::state::RectPrimitive;
+use super::state::RenderedFloorPosition;
+use super::state::SceneRenderPosition;
 use super::state::TouchAction;
 use super::state::TouchDeviceType;
 
@@ -337,7 +340,12 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
         FloorAction::SetLegendEntries { entries } => {
             state.legend_entries = entries
                 .into_iter()
-                .map(|(label, color)| super::state::LegendEntry { label, color })
+                .map(|(label, color)| super::state::LegendEntry {
+                    shortcut: String::new(),
+                    name: label,
+                    position_text: String::new(),
+                    color,
+                })
                 .collect();
             recompute_geometry(state);
         }
@@ -379,6 +387,11 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
             recompute_geometry(state);
         }
     }
+}
+
+pub fn refresh_render_geometry(state: &mut FloorState) {
+    recompute_layout(state);
+    recompute_geometry(state);
 }
 
 fn point_in_rectangle(x: f64, y: f64, start: Point, end: Point) -> bool {
@@ -471,17 +484,24 @@ fn is_notched_wheel_delta(delta: f64) -> bool {
 fn recompute_layout(state: &mut FloorState) {
     let header_height = (60.0 * state.zoom).max(12.0);
     let content_height = (state.layout_height_px - header_height).max(12.0);
-    let aspect = (state.metrics.floor_width / state.metrics.floor_height).max(0.1);
-    let fit_by_height = content_height * aspect;
-    let base_floor_width = state.layout_width_px.min(fit_by_height);
-    let base_floor_height = base_floor_width / aspect;
-    let base_floor_x = (state.layout_width_px - base_floor_width) / 2.0;
-    let base_floor_y = header_height + ((content_height - base_floor_height) / 2.0);
+    let horizontal_meters = f64::from((state.floor_left + state.floor_right).max(1));
+    let vertical_meters = f64::from((state.floor_front + state.floor_back).max(1));
+    let padding = (46.0 * state.zoom).max(12.0);
+    let scale_x = ((state.layout_width_px - (padding * 2.0)).max(12.0) / horizontal_meters)
+        .max(0.1);
+    let scale_y = ((content_height - (padding * 2.0)).max(12.0) / vertical_meters).max(0.1);
+    let meters_to_px = scale_x.min(scale_y);
+    let base_floor_width = horizontal_meters * meters_to_px;
+    let base_floor_height = vertical_meters * meters_to_px;
+    let base_center_x = state.layout_width_px / 2.0;
+    let base_center_y = header_height + (content_height / 2.0);
+    let base_floor_x = base_center_x - f64::from(state.floor_left) * meters_to_px;
+    let base_floor_y = base_center_y - f64::from(state.floor_front) * meters_to_px;
     let user_scale = state.transformation_matrix.scale_x.max(0.1);
     let user_translate_x = state.transformation_matrix.trans_x;
     let user_translate_y = state.transformation_matrix.trans_y;
 
-    state.header_height_px = (header_height * user_scale).max(12.0);
+    state.header_height_px = header_height;
     state.content_height_px = content_height;
     state.floor_x = base_floor_x * user_scale + user_translate_x;
     state.floor_y = base_floor_y * user_scale + user_translate_y;
@@ -504,13 +524,12 @@ fn recompute_geometry(state: &mut FloorState) {
         state.floor_width,
         state.header_height_px,
     ));
-    state.legend_panel_rect = if state.legend_entries.is_empty() {
+    state.legend_panel_rect = if !state.show_legend || !has_legend_entries(state) {
         None
     } else {
-        let user_scale = state.transformation_matrix.scale_x.max(0.1);
-        let legend_margin = 60.0 * state.zoom * user_scale;
-        let legend_width = state.metrics.legend_panel_width * user_scale;
-        let legend_height = state.metrics.legend_panel_height * user_scale;
+        let legend_margin = 48.0 * state.zoom;
+        let legend_width = state.metrics.legend_panel_width;
+        let legend_height = state.metrics.legend_panel_height;
         let legend_x = (state.floor_x + state.floor_width + legend_margin)
             .min((state.layout_width_px - legend_width).max(12.0))
             .max(12.0);
@@ -535,63 +554,139 @@ fn recompute_geometry(state: &mut FloorState) {
     });
 
     state.grid_lines.clear();
-    let spacing = (48.0 * state.zoom).max(12.0);
-    let mut x = state.floor_x;
-    while x <= state.floor_x + state.floor_width {
-        state.grid_lines.push(LineSegment {
-            from: Point::new(x, state.floor_y),
-            to: Point::new(x, state.floor_y + state.floor_height),
-        });
-        x += spacing;
-    }
-    let mut y = state.floor_y;
-    while y <= state.floor_y + state.floor_height {
-        state.grid_lines.push(LineSegment {
-            from: Point::new(state.floor_x, y),
-            to: Point::new(state.floor_x + state.floor_width, y),
-        });
-        y += spacing;
+    if state.show_grid_lines {
+        let grid_step = 1.0 / f64::from(state.grid_resolution.max(1));
+        let max_horizontal = state.floor_left.max(state.floor_right);
+        let max_vertical = state.floor_front.max(state.floor_back);
+        let mut meter = grid_step;
+        while meter <= f64::from(max_horizontal) + 0.0001 {
+            if meter <= f64::from(state.floor_left) {
+                let x = map_floor_coordinate_to_canvas(state, -meter, 0.0).x;
+                state.grid_lines.push(LineSegment {
+                    from: Point::new(x, state.floor_y),
+                    to: Point::new(x, state.floor_y + state.floor_height),
+                });
+            }
+            if meter <= f64::from(state.floor_right) {
+                let x = map_floor_coordinate_to_canvas(state, meter, 0.0).x;
+                state.grid_lines.push(LineSegment {
+                    from: Point::new(x, state.floor_y),
+                    to: Point::new(x, state.floor_y + state.floor_height),
+                });
+            }
+            meter += grid_step;
+        }
+
+        meter = grid_step;
+        while meter <= f64::from(max_vertical) + 0.0001 {
+            if meter <= f64::from(state.floor_front) {
+                let y = map_floor_coordinate_to_canvas(state, 0.0, meter).y;
+                state.grid_lines.push(LineSegment {
+                    from: Point::new(state.floor_x, y),
+                    to: Point::new(state.floor_x + state.floor_width, y),
+                });
+            }
+            if meter <= f64::from(state.floor_back) {
+                let y = map_floor_coordinate_to_canvas(state, 0.0, -meter).y;
+                state.grid_lines.push(LineSegment {
+                    from: Point::new(state.floor_x, y),
+                    to: Point::new(state.floor_x + state.floor_width, y),
+                });
+            }
+            meter += grid_step;
+        }
     }
     state.center_mark_segments = vec![
         LineSegment {
-            from: Point::new(state.center_x - 12.0, state.center_y),
-            to: Point::new(state.center_x + 12.0, state.center_y),
+            from: Point::new(state.floor_x, state.center_y),
+            to: Point::new(state.floor_x + state.floor_width, state.center_y),
         },
         LineSegment {
-            from: Point::new(state.center_x, state.center_y - 12.0),
-            to: Point::new(state.center_x, state.center_y + 12.0),
+            from: Point::new(state.center_x, state.floor_y),
+            to: Point::new(state.center_x, state.floor_y + state.floor_height),
         },
     ];
 
-    let active_positions = if state.interpolated_positions.is_empty() {
-        state.positions.clone()
-    } else {
-        state.interpolated_positions.clone()
-    };
-
     state.path_segments.clear();
-    for window in active_positions.windows(2) {
-        let first = window[0];
-        let second = window[1];
-        state.path_segments.push(LineSegment {
-            from: transform_position(state, first),
-            to: transform_position(state, second),
-        });
-    }
+    state.dashed_path_segments.clear();
+    state.rendered_positions.clear();
+    if state.source_positions.is_empty() {
+        let active_positions = if state.interpolated_positions.is_empty() {
+            state.positions.clone()
+        } else {
+            state.interpolated_positions.clone()
+        };
 
-    state.dashed_path_segments = build_dashed_segments(&state.path_segments, 24.0 * state.zoom);
-    state.position_circles = active_positions
-        .iter()
-        .map(|position| transform_position(state, *position))
-        .collect();
-    state.position_labels = active_positions
-        .iter()
-        .enumerate()
-        .map(|(index, position)| LabeledPoint {
-            text: (index + 1).to_string(),
-            point: transform_position(state, *position),
-        })
-        .collect();
+        for window in active_positions.windows(2) {
+            let first = window[0];
+            let second = window[1];
+            state.path_segments.push(LineSegment {
+                from: transform_position(state, first),
+                to: transform_position(state, second),
+            });
+        }
+
+        state.dashed_path_segments = build_dashed_segments(&state.path_segments, 24.0 * state.zoom);
+        state.position_circles = active_positions
+            .iter()
+            .map(|position| transform_position(state, *position))
+            .collect();
+        state.position_labels = active_positions
+            .iter()
+            .enumerate()
+            .map(|(index, position)| LabeledPoint {
+                text: (index + 1).to_string(),
+                point: transform_position(state, *position),
+            })
+            .collect();
+    } else {
+        state.position_circles.clear();
+        state.position_labels.clear();
+        state.rendered_positions = build_rendered_positions(state);
+        state.position_circles = state
+            .rendered_positions
+            .iter()
+            .map(|position| position.point)
+            .collect();
+        state.position_labels = state
+            .rendered_positions
+            .iter()
+            .enumerate()
+            .map(|(index, position)| {
+                let label = if position.shortcut.trim().is_empty() {
+                    (index + 1).to_string()
+                } else {
+                    position.shortcut.clone()
+                };
+                LabeledPoint {
+                    text: label,
+                    point: position.point,
+                }
+            })
+            .collect();
+        if state.draw_path_to {
+            state.path_segments = build_scene_path_segments(
+                &state.source_positions,
+                &state.next_source_positions,
+                false,
+                state,
+            );
+        }
+        if state.draw_path_from {
+            state.dashed_path_segments = build_scene_path_segments(
+                &state.previous_source_positions,
+                &state.source_positions,
+                true,
+                state,
+            );
+        }
+        if state.positions_at_side {
+            state.axis_labels = build_side_axis_labels(state);
+        } else {
+            state.axis_labels.clear();
+        }
+        state.legend_entries = build_legend_entries(state);
+    }
 
     state.selection_segments.clear();
     if let Some((start, end)) = state.selection_rectangle {
@@ -621,7 +716,9 @@ fn recompute_geometry(state: &mut FloorState) {
         ];
     }
 
-    refresh_axis_label_positions(state);
+    if state.source_positions.is_empty() {
+        refresh_axis_label_positions(state);
+    }
 
     state.layer_order = vec![
         FloorLayer::Background,
@@ -644,6 +741,255 @@ fn transform_point(state: &FloorState, point: Point) -> Point {
         point.x * state.transformation_matrix.scale_x + state.transformation_matrix.trans_x,
         point.y * state.transformation_matrix.scale_y + state.transformation_matrix.trans_y,
     )
+}
+
+fn map_floor_coordinate_to_canvas(state: &FloorState, x: f64, y: f64) -> Point {
+    let width_meters = f64::from((state.floor_left + state.floor_right).max(1));
+    let height_meters = f64::from((state.floor_front + state.floor_back).max(1));
+    let scale_x = state.floor_width / width_meters;
+    let scale_y = state.floor_height / height_meters;
+    let scale = scale_x.min(scale_y);
+    Point::new(state.center_x + x * scale, state.center_y - y * scale)
+}
+
+fn build_rendered_positions(state: &FloorState) -> Vec<RenderedFloorPosition> {
+    state
+        .source_positions
+        .iter()
+        .enumerate()
+        .map(|(index, position)| {
+            let active = state.interpolated_positions.get(index).copied().unwrap_or(FloorPosition {
+                x: position.x,
+                y: position.y,
+            });
+            RenderedFloorPosition {
+                point: map_floor_coordinate_to_canvas(state, active.x, active.y),
+                fill_color: apply_transparency(position.fill_color, state.transparency),
+                border_color: apply_transparency(position.border_color, state.transparency),
+                text_color: position.text_color,
+                shortcut: position.shortcut.clone(),
+                is_selected: state.selected_positions.contains(&index),
+                has_dancer: position.has_dancer,
+            }
+        })
+        .collect()
+}
+
+fn build_side_axis_labels(state: &FloorState) -> Vec<AxisLabel> {
+    let mut x_values: Vec<f64> = state.source_positions.iter().map(|position| position.x).collect();
+    let mut y_values: Vec<f64> = state.source_positions.iter().map(|position| position.y).collect();
+    x_values.sort_by(|left, right| left.total_cmp(right));
+    y_values.sort_by(|left, right| left.total_cmp(right));
+    x_values.dedup_by(|left, right| (*left - *right).abs() < 0.001);
+    y_values.dedup_by(|left, right| (*left - *right).abs() < 0.001);
+
+    let mut labels = Vec::new();
+    for value in x_values {
+        let top_point = map_floor_coordinate_to_canvas(state, value, f64::from(state.floor_front));
+        let bottom_point =
+            map_floor_coordinate_to_canvas(state, value, -f64::from(state.floor_back));
+        labels.push(AxisLabel {
+            text: format_position_value(value),
+            position: Point::new(top_point.x, state.floor_y - state.metrics.top_label_vertical_gap),
+        });
+        labels.push(AxisLabel {
+            text: format_position_value(value),
+            position: Point::new(
+                bottom_point.x,
+                state.floor_y + state.floor_height + state.metrics.bottom_label_vertical_gap,
+            ),
+        });
+    }
+    for value in y_values {
+        let left_point = map_floor_coordinate_to_canvas(state, -f64::from(state.floor_left), value);
+        let right_point =
+            map_floor_coordinate_to_canvas(state, f64::from(state.floor_right), value);
+        labels.push(AxisLabel {
+            text: format_position_value(value),
+            position: Point::new(state.floor_x - state.metrics.side_label_left_gap, left_point.y),
+        });
+        labels.push(AxisLabel {
+            text: format_position_value(value),
+            position: Point::new(
+                state.floor_x + state.floor_width + state.metrics.side_label_right_gap,
+                right_point.y,
+            ),
+        });
+    }
+    labels
+}
+
+fn build_legend_entries(state: &FloorState) -> Vec<LegendEntry> {
+    let mut entries: Vec<LegendEntry> = state
+        .source_positions
+        .iter()
+        .enumerate()
+        .filter(|(_, position)| position.has_dancer)
+        .map(|(index, position)| {
+            let active = state.interpolated_positions.get(index).copied().unwrap_or(FloorPosition {
+                x: position.x,
+                y: position.y,
+            });
+            LegendEntry {
+                shortcut: position.shortcut.clone(),
+                name: position.dancer_name.clone(),
+                position_text: format_position_text(active.x, active.y),
+                color: apply_transparency(position.fill_color, state.transparency),
+            }
+        })
+        .collect();
+    entries.sort_by(|left, right| {
+        left.shortcut
+            .to_ascii_lowercase()
+            .cmp(&right.shortcut.to_ascii_lowercase())
+            .then(left.name.to_ascii_lowercase().cmp(&right.name.to_ascii_lowercase()))
+    });
+    entries
+}
+
+fn has_legend_entries(state: &FloorState) -> bool {
+    if state.source_positions.is_empty() {
+        !state.legend_entries.is_empty()
+    } else {
+        state.source_positions.iter().any(|position| position.has_dancer)
+    }
+}
+
+fn build_scene_path_segments(
+    from_positions: &[SceneRenderPosition],
+    to_positions: &[SceneRenderPosition],
+    use_darker_color: bool,
+    state: &FloorState,
+) -> Vec<LineSegment> {
+    let mut segments = Vec::new();
+    for to_position in to_positions {
+        let Some(dancer_key) = to_position.dancer_key.as_deref() else {
+            continue;
+        };
+        let Some(from_position) = from_positions
+            .iter()
+            .find(|candidate| candidate.dancer_key.as_deref() == Some(dancer_key))
+        else {
+            continue;
+        };
+
+        let curve_points = build_curve_points(from_position, to_position, 32);
+        let mapped_points: Vec<Point> = curve_points
+            .into_iter()
+            .map(|point| map_floor_coordinate_to_canvas(state, point.x, point.y))
+            .collect();
+        if use_darker_color {
+            segments.extend(build_dashed_segments_from_points(&mapped_points));
+        } else {
+            for window in mapped_points.windows(2) {
+                segments.push(LineSegment {
+                    from: window[0],
+                    to: window[1],
+                });
+            }
+        }
+    }
+    segments
+}
+
+fn build_curve_points(
+    from_position: &SceneRenderPosition,
+    to_position: &SceneRenderPosition,
+    steps: usize,
+) -> Vec<Point> {
+    let start = Point::new(from_position.x, from_position.y);
+    let end = Point::new(to_position.x, to_position.y);
+    let Some(control1_x) = from_position.curve1_x else {
+        return vec![start, end];
+    };
+    let Some(control1_y) = from_position.curve1_y else {
+        return vec![start, end];
+    };
+    let control1 = Point::new(control1_x, control1_y);
+    if let (Some(control2_x), Some(control2_y)) = (from_position.curve2_x, from_position.curve2_y)
+    {
+        return sample_cubic_curve(start, control1, Point::new(control2_x, control2_y), end, steps);
+    }
+    sample_quadratic_curve(start, control1, end, steps)
+}
+
+fn sample_quadratic_curve(start: Point, control: Point, end: Point, steps: usize) -> Vec<Point> {
+    (0..=steps)
+        .map(|index| {
+            let t = index as f64 / steps.max(1) as f64;
+            let u = 1.0 - t;
+            Point::new(
+                u * u * start.x + 2.0 * u * t * control.x + t * t * end.x,
+                u * u * start.y + 2.0 * u * t * control.y + t * t * end.y,
+            )
+        })
+        .collect()
+}
+
+fn sample_cubic_curve(
+    start: Point,
+    control1: Point,
+    control2: Point,
+    end: Point,
+    steps: usize,
+) -> Vec<Point> {
+    (0..=steps)
+        .map(|index| {
+            let t = index as f64 / steps.max(1) as f64;
+            let u = 1.0 - t;
+            let uu = u * u;
+            let tt = t * t;
+            Point::new(
+                uu * u * start.x
+                    + 3.0 * uu * t * control1.x
+                    + 3.0 * u * tt * control2.x
+                    + tt * t * end.x,
+                uu * u * start.y
+                    + 3.0 * uu * t * control1.y
+                    + 3.0 * u * tt * control2.y
+                    + tt * t * end.y,
+            )
+        })
+        .collect()
+}
+
+fn build_dashed_segments_from_points(points: &[Point]) -> Vec<LineSegment> {
+    let mut segments = Vec::new();
+    for window in points.windows(2) {
+        let partial = build_dashed_segments(
+            &[LineSegment {
+                from: window[0],
+                to: window[1],
+            }],
+            12.0,
+        );
+        segments.extend(partial);
+    }
+    segments
+}
+
+fn apply_transparency(color: [u8; 4], transparency: f64) -> [u8; 4] {
+    let opacity = (1.0 - transparency.clamp(0.0, 1.0)).clamp(0.0, 1.0);
+    [color[0], color[1], color[2], (f64::from(color[3]) * opacity).round() as u8]
+}
+
+fn format_position_value(value: f64) -> String {
+    let rounded = (value * 100.0).round() / 100.0;
+    let mut text = format!("{rounded:.2}");
+    while text.ends_with('0') {
+        text.pop();
+    }
+    if text.ends_with('.') {
+        text.pop();
+    }
+    if text.is_empty() {
+        text.push('0');
+    }
+    text
+}
+
+fn format_position_text(x: f64, y: f64) -> String {
+    format!("({x:.2}, {y:.2})")
 }
 
 fn refresh_axis_label_positions(state: &mut FloorState) {

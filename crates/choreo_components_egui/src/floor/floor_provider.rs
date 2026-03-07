@@ -92,12 +92,10 @@ impl FloorProvider {
 
         {
             let state = Rc::clone(&self.state);
-            let render_gate = Arc::clone(&self.floor_render_gate);
             self.floor_view_model
                 .borrow_mut()
                 .set_on_redraw(Some(Rc::new(move || {
                     reduce(&mut state.borrow_mut(), FloorAction::RedrawFloor);
-                    render_gate.mark_rendered();
                 })));
         }
 
