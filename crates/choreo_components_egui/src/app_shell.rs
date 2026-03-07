@@ -25,12 +25,20 @@ impl Default for AppShellViewModel {
 impl AppShellViewModel {
     #[must_use]
     pub fn new(title: impl Into<String>) -> Self {
+        Self::new_with_dependencies(title, MainPageDependencies::default())
+    }
+
+    #[must_use]
+    pub fn new_with_dependencies(
+        title: impl Into<String>,
+        main_page_dependencies: MainPageDependencies,
+    ) -> Self {
         Self {
             title: title.into(),
             is_initialized: false,
             is_typography_initialized: false,
             show_splash_screen: true,
-            main_page_binding: Some(MainPageBinding::new(MainPageDependencies::default())),
+            main_page_binding: Some(MainPageBinding::new(main_page_dependencies)),
             splash_screen_state: splash_screen_host::ui::SplashScreenUiState::default(),
         }
     }
@@ -84,7 +92,14 @@ impl AppShellViewModel {
 
 #[cfg(test)]
 mod app_shell_splash_spec {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
     use super::AppShellViewModel;
+    use crate::choreo_main::MainPageActionHandlers;
+    use crate::choreo_main::MainPageDependencies;
+    use crate::choreo_main::actions::ChoreoMainAction;
+    use crate::choreo_main::actions::OpenChoreoRequested;
 
     #[test]
     fn first_frame_shows_splash_then_hands_off_to_main_ui() {
@@ -104,5 +119,37 @@ mod app_shell_splash_spec {
         });
 
         assert!(!shell.show_splash_screen);
+    }
+
+    #[test]
+    fn injected_main_page_dependencies_route_open_choreo_requests() {
+        let routed_requests: Rc<RefCell<Vec<OpenChoreoRequested>>> = Rc::new(RefCell::new(Vec::new()));
+        let routed_requests_for_handler = Rc::clone(&routed_requests);
+        let shell = AppShellViewModel::new_with_dependencies(
+            "ChoreoApp",
+            MainPageDependencies {
+                action_handlers: MainPageActionHandlers {
+                    request_open_choreo: Some(Rc::new(move |request| {
+                        routed_requests_for_handler.borrow_mut().push(request);
+                    })),
+                    ..MainPageActionHandlers::default()
+                },
+                ..MainPageDependencies::default()
+            },
+        );
+
+        let binding = shell
+            .main_page_binding
+            .as_ref()
+            .expect("shell should create a main page binding");
+        binding.dispatch(ChoreoMainAction::RequestOpenChoreo(OpenChoreoRequested {
+            file_path: Some("C:/demo.choreo".to_string()),
+            file_name: Some("demo.choreo".to_string()),
+            contents: "demo".to_string(),
+        }));
+
+        let routed_requests = routed_requests.borrow();
+        assert_eq!(routed_requests.len(), 1);
+        assert_eq!(routed_requests[0].file_name.as_deref(), Some("demo.choreo"));
     }
 }

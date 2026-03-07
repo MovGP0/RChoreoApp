@@ -1,15 +1,19 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use choreo_master_mobile_json::export;
 use choreo_components_egui::choreo_main::MainPageActionHandlers;
 use choreo_components_egui::choreo_main::MainPageBinding;
 use choreo_components_egui::choreo_main::MainPageDependencies;
 use choreo_components_egui::choreo_main::OpenAudioRequested;
+use choreo_components_egui::choreo_main::actions::OpenChoreoRequested;
 use choreo_components_egui::choreo_main::OpenImageRequested;
 use choreo_components_egui::choreo_main::ShowDialogCommand;
 use choreo_components_egui::choreo_main::actions::ChoreoMainAction;
 use choreo_components_egui::choreo_main::state::InteractionMode;
 use choreo_components_egui::observability::TraceContext;
+use choreo_models::ChoreographyModel;
+use choreo_models::ChoreographyModelMapper;
 
 #[test]
 fn binding_forwards_open_audio_request_with_typed_trace_context() {
@@ -77,4 +81,55 @@ fn binding_updates_dialog_and_interaction_mode_state() {
     assert!(state.state().is_dialog_open);
     assert_eq!(state.state().dialog_content.as_deref(), Some("Confirm"));
     assert_eq!(state.state().interaction_mode, InteractionMode::LineOfSight);
+}
+
+#[test]
+fn binding_uses_pick_choreo_handler_to_load_selected_file() {
+    let mut choreography = ChoreographyModel {
+        name: "Loaded choreo".to_string(),
+        ..ChoreographyModel::default()
+    };
+    choreography.scenes = vec![choreo_models::SceneModel {
+        scene_id: choreo_master_mobile_json::SceneId(1),
+        positions: Vec::new(),
+        name: "Intro".to_string(),
+        text: None,
+        fixed_positions: false,
+        timestamp: Some("00:01.500".to_string()),
+        variation_depth: 0,
+        variations: Vec::new(),
+        current_variation: Vec::new(),
+        color: choreo_master_mobile_json::Color::transparent(),
+    }];
+    let mapper = ChoreographyModelMapper;
+    let contents = export(&mapper.map_to_json(&choreography))
+        .expect("test choreography should serialize to json");
+
+    let binding = MainPageBinding::new(MainPageDependencies {
+        action_handlers: MainPageActionHandlers {
+            pick_choreo_file: Some(Rc::new(move || {
+                Some(OpenChoreoRequested {
+                    file_path: Some("C:/demo.choreo".to_string()),
+                    file_name: Some("demo.choreo".to_string()),
+                    contents: contents.clone(),
+                })
+            })),
+            ..MainPageActionHandlers::default()
+        },
+        ..MainPageDependencies::default()
+    });
+
+    binding.dispatch(ChoreoMainAction::RequestOpenChoreo(OpenChoreoRequested {
+        file_path: None,
+        file_name: None,
+        contents: String::new(),
+    }));
+
+    let view_model = binding.view_model();
+    let state = view_model.borrow();
+    assert_eq!(state.state().scenes.len(), 1);
+    assert_eq!(state.state().scenes[0].name, "Intro");
+    assert_eq!(state.state().selected_scene_index, Some(0));
+    assert_eq!(state.state().floor_scene_name.as_deref(), Some("Intro"));
+    assert_eq!(state.state().choreography_settings_state.name, "Loaded choreo");
 }

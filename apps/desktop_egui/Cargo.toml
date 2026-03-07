@@ -10,6 +10,7 @@ egui-material3 = "0.0.7"
 choreo_components_egui = { path = "../../crates/choreo_components_egui" }
 env_logger = "0.11"
 log = "0.4"
+rfd = "0.17.2"
 resvg = "0.45.1"
 tiny-skia = "0.11.4"
 usvg = "0.45.1"

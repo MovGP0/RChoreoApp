@@ -5982,6 +5982,7 @@ dependencies = [
  "env_logger",
  "log",
  "resvg 0.45.1",
+ "rfd",
  "tiny-skia",
  "usvg 0.45.1",
 ]

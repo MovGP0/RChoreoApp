@@ -7,10 +7,16 @@
 #![deny(clippy::all)]
 
 use choreo_components_egui::AppShellViewModel;
+use choreo_components_egui::choreo_main::MainPageActionHandlers;
+use choreo_components_egui::choreo_main::MainPageDependencies;
+use choreo_components_egui::choreo_main::actions::OpenChoreoRequested;
 use choreo_components_egui::material;
 use choreo_components_egui::shell;
+use rfd::FileDialog;
 use std::env;
+use std::path::Path;
 use std::sync::Once;
+use std::rc::Rc;
 
 mod app_icon;
 
@@ -27,7 +33,7 @@ impl DesktopEguiApp {
         material::install_image_loaders(&creation_context.egui_ctx);
         apply_desktop_theme(&creation_context.egui_ctx);
         Self {
-            shell: shell::create_shell_host(),
+            shell: create_desktop_shell_host(),
         }
     }
 }
@@ -81,10 +87,109 @@ fn apply_desktop_theme(context: &egui::Context) {
     context.set_visuals(egui::Visuals::light());
 }
 
+fn create_desktop_shell_host() -> AppShellViewModel {
+    shell::create_shell_host_with_dependencies(desktop_main_page_dependencies())
+}
+
+fn desktop_main_page_dependencies() -> MainPageDependencies {
+    MainPageDependencies {
+        action_handlers: MainPageActionHandlers {
+            pick_choreo_file: Some(Rc::new(pick_choreo_file)),
+            pick_audio_path: Some(Rc::new(pick_audio_path)),
+            pick_image_path: Some(Rc::new(pick_image_path)),
+            ..MainPageActionHandlers::default()
+        },
+        ..MainPageDependencies::default()
+    }
+}
+
+fn pick_audio_path() -> Option<String> {
+    FileDialog::new()
+        .set_title("Open audio file")
+        .add_filter("Audio", &["mp3"])
+        .add_filter("All files", &["*"])
+        .pick_file()
+        .map(|path| path.to_string_lossy().into_owned())
+}
+
+fn pick_image_path() -> Option<String> {
+    FileDialog::new()
+        .set_title("Open floor plan")
+        .add_filter("SVG", &["svg"])
+        .add_filter("All files", &["*"])
+        .pick_file()
+        .map(|path| path.to_string_lossy().into_owned())
+}
+
+fn pick_choreo_file() -> Option<OpenChoreoRequested> {
+    let path = FileDialog::new()
+        .set_title("Open choreography file")
+        .add_filter("Choreo", &["choreo"])
+        .add_filter("All files", &["*"])
+        .pick_file()?;
+    load_open_choreo_request_from_path(&path)
+}
+
+fn load_open_choreo_request_from_path(path: &Path) -> Option<OpenChoreoRequested> {
+    let contents = std::fs::read_to_string(path).ok()?;
+    let file_name = path.file_name().map(|name| name.to_string_lossy().into_owned());
+    let file_path = Some(path.to_string_lossy().into_owned());
+    Some(OpenChoreoRequested {
+        file_path,
+        file_name,
+        contents,
+    })
+}
+
 fn init_logging() {
     static INIT: Once = Once::new();
     INIT.call_once(|| {
         let _ = env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
             .try_init();
     });
+}
+
+#[cfg(test)]
+mod desktop_open_choreo_spec {
+    use std::fs;
+    use std::path::PathBuf;
+    use std::time::SystemTime;
+    use std::time::UNIX_EPOCH;
+
+    use super::desktop_main_page_dependencies;
+    use super::load_open_choreo_request_from_path;
+
+    #[test]
+    fn desktop_host_wires_open_choreo_handler() {
+        let dependencies = desktop_main_page_dependencies();
+        assert!(dependencies.action_handlers.pick_choreo_file.is_some());
+    }
+
+    #[test]
+    fn load_open_choreo_request_reads_contents_and_metadata() {
+        let path = unique_temp_file("choreo");
+        fs::write(&path, "demo choreography").expect("test should write .choreo file");
+
+        let request = load_open_choreo_request_from_path(&path)
+            .expect("existing .choreo file should load into open request");
+
+        assert_eq!(request.file_path.as_deref(), Some(path.to_string_lossy().as_ref()));
+        assert_eq!(
+            request.file_name.as_deref(),
+            path.file_name().and_then(|value| value.to_str())
+        );
+        assert_eq!(request.contents, "demo choreography");
+
+        let _ = fs::remove_file(path);
+    }
+
+    fn unique_temp_file(extension: &str) -> PathBuf {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system time should be after unix epoch")
+            .as_nanos();
+        let mut path = std::env::temp_dir();
+        path.push(format!("rchoreo_desktop_egui_{nanos}.{extension}"));
+        path
+    }
 }

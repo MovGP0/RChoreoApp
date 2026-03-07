@@ -6,6 +6,7 @@ pub use material_scheme_applier::ShellMaterialSchemeApplier;
 pub use material_scheme_applier::ShellMaterialSchemeHost;
 
 use crate::shell_host::ShellHostViewModel;
+use crate::choreo_main::MainPageDependencies;
 
 pub fn app_title() -> &'static str {
     "ChoreoApp"
@@ -21,4 +22,10 @@ pub fn app_icon_svg() -> &'static str {
 
 pub fn create_shell_host() -> ShellHostViewModel {
     ShellHostViewModel::new(app_title())
+}
+
+pub fn create_shell_host_with_dependencies(
+    main_page_dependencies: MainPageDependencies,
+) -> ShellHostViewModel {
+    ShellHostViewModel::new_with_dependencies(app_title(), main_page_dependencies)
 }

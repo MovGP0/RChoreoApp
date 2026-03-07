@@ -24,6 +24,7 @@ use super::runtime::enqueue_open_image_request;
 
 #[derive(Clone, Default)]
 pub struct MainPageActionHandlers {
+    pub pick_choreo_file: Option<Rc<dyn Fn() -> Option<OpenChoreoRequested>>>,
     pub pick_audio_path: Option<Rc<dyn Fn() -> Option<String>>>,
     pub pick_image_path: Option<Rc<dyn Fn() -> Option<String>>>,
     pub request_open_choreo: Option<Rc<dyn Fn(OpenChoreoRequested)>>,

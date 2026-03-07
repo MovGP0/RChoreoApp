@@ -1,3 +1,16 @@
+use std::path::Path;
+
+use choreo_master_mobile_json::import;
+use choreo_models::ChoreographyModel;
+use choreo_models::ChoreographyModelMapper;
+
+use crate::audio_player::actions::AudioPlayerAction;
+use crate::audio_player::state::AudioPlayerChoreographyScene;
+use crate::audio_player::state::AudioPlayerScene;
+use crate::choreography_settings::actions::ChoreographySettingsAction;
+use crate::choreography_settings::state::SelectedSceneState;
+use crate::scenes::state::parse_timestamp_seconds;
+
 use super::actions::ChoreoMainAction;
 use super::actions::OpenAudioRequested;
 use super::actions::OpenChoreoRequested;
@@ -17,23 +30,11 @@ pub(crate) fn consume_outgoing_commands(
     let open_svg_commands = view_model.state().outgoing_open_svg_commands.clone();
 
     for request in choreo_requests {
-        route_open_choreo_request(request, handlers);
+        route_open_choreo_request(view_model, request, handlers, behavior_pipeline);
     }
 
     for request in audio_requests {
-        if let Some(behavior) = behavior_pipeline.open_audio_behavior.as_ref() {
-            behavior.apply(request.clone());
-        }
-
-        if let Some(request_open_audio) = handlers.request_open_audio.as_ref() {
-            request_open_audio(request);
-            continue;
-        }
-
-        // Host fallback: support direct file-open integration when no typed handler is wired.
-        if let Some(pick_audio_path) = handlers.pick_audio_path.as_ref() {
-            let _ = pick_audio_path();
-        }
+        route_open_audio_request(request, handlers, behavior_pipeline, true);
     }
 
     for command in open_svg_commands {
@@ -43,9 +44,74 @@ pub(crate) fn consume_outgoing_commands(
     view_model.dispatch(ChoreoMainAction::ClearOutgoingCommands);
 }
 
-fn route_open_choreo_request(request: OpenChoreoRequested, handlers: &MainPageActionHandlers) {
+fn route_open_choreo_request(
+    view_model: &mut MainViewModel,
+    request: OpenChoreoRequested,
+    handlers: &MainPageActionHandlers,
+    behavior_pipeline: &MainBehaviorPipeline,
+) {
+    let resolved_request = if request.contents.trim().is_empty() {
+        handlers
+            .pick_choreo_file
+            .as_ref()
+            .and_then(|pick_choreo_file| pick_choreo_file())
+    } else {
+        Some(request)
+    };
+
+    let Some(resolved_request) = resolved_request else {
+        return;
+    };
+
     if let Some(request_open_choreo) = handlers.request_open_choreo.as_ref() {
-        request_open_choreo(request);
+        request_open_choreo(resolved_request.clone());
+    }
+
+    apply_open_choreo_request(view_model, resolved_request, handlers, behavior_pipeline);
+}
+
+fn apply_open_choreo_request(
+    view_model: &mut MainViewModel,
+    request: OpenChoreoRequested,
+    handlers: &MainPageActionHandlers,
+    behavior_pipeline: &MainBehaviorPipeline,
+) {
+    let Ok(json_model) = import(&request.contents) else {
+        return;
+    };
+
+    let mapper = ChoreographyModelMapper;
+    let choreography = mapper.map_to_model(&json_model);
+    let selected_scene = choreography.scenes.first().map(map_selected_scene_state);
+    let audio_request =
+        resolve_audio_request(&choreography, request.file_path.as_deref()).map(|file_path| {
+            OpenAudioRequested {
+                file_path,
+                trace_context: None,
+            }
+        });
+
+    view_model.dispatch(ChoreoMainAction::UpdateSceneSearchText(String::new()));
+    view_model.dispatch(ChoreoMainAction::ChoreographySettingsAction(
+        ChoreographySettingsAction::LoadChoreography {
+            choreography: Box::new(choreography.clone()),
+            selected_scene,
+        },
+    ));
+    view_model.dispatch(ChoreoMainAction::AudioPlayerAction(
+        AudioPlayerAction::SetScenes {
+            scenes: map_audio_player_scenes(&choreography),
+            selected_scene_id: choreography.scenes.first().map(|scene| scene.scene_id.0),
+            choreography_scenes: map_audio_player_choreography_scenes(&choreography),
+        },
+    ));
+    view_model.dispatch(ChoreoMainAction::AudioPlayerAction(
+        AudioPlayerAction::UpdateTicksAndLinkState,
+    ));
+    view_model.state_mut().draw_floor_request_count += 1;
+
+    if let Some(audio_request) = audio_request {
+        route_open_audio_request(audio_request, handlers, behavior_pipeline, false);
     }
 }
 
@@ -69,6 +135,86 @@ fn route_open_svg_command(
     if let Some(pick_image_path) = handlers.pick_image_path.as_ref() {
         let _ = pick_image_path();
     }
+}
+
+fn route_open_audio_request(
+    request: OpenAudioRequested,
+    handlers: &MainPageActionHandlers,
+    behavior_pipeline: &MainBehaviorPipeline,
+    allow_picker_fallback: bool,
+) {
+    if let Some(behavior) = behavior_pipeline.open_audio_behavior.as_ref() {
+        behavior.apply(request.clone());
+    }
+
+    if let Some(request_open_audio) = handlers.request_open_audio.as_ref() {
+        request_open_audio(request);
+        return;
+    }
+
+    // Host fallback: support direct file-open integration when no typed handler is wired.
+    if allow_picker_fallback
+        && let Some(pick_audio_path) = handlers.pick_audio_path.as_ref()
+    {
+        let _ = pick_audio_path();
+    }
+}
+
+fn map_selected_scene_state(scene: &choreo_models::SceneModel) -> SelectedSceneState {
+    SelectedSceneState {
+        scene_id: scene.scene_id,
+        name: scene.name.clone(),
+        text: scene.text.clone().unwrap_or_default(),
+        fixed_positions: scene.fixed_positions,
+        timestamp: scene.timestamp.as_deref().and_then(parse_timestamp_seconds),
+        color: scene.color.clone(),
+    }
+}
+
+fn map_audio_player_scenes(choreography: &ChoreographyModel) -> Vec<AudioPlayerScene> {
+    choreography
+        .scenes
+        .iter()
+        .map(|scene| AudioPlayerScene {
+            scene_id: scene.scene_id.0,
+            name: scene.name.clone(),
+            timestamp: scene.timestamp.as_deref().and_then(parse_timestamp_seconds),
+        })
+        .collect()
+}
+
+fn map_audio_player_choreography_scenes(
+    choreography: &ChoreographyModel,
+) -> Vec<AudioPlayerChoreographyScene> {
+    choreography
+        .scenes
+        .iter()
+        .map(|scene| AudioPlayerChoreographyScene {
+            scene_id: scene.scene_id.0,
+            timestamp: scene.timestamp.clone(),
+        })
+        .collect()
+}
+
+fn resolve_audio_request(
+    choreography: &ChoreographyModel,
+    choreography_file_path: Option<&str>,
+) -> Option<String> {
+    if let Some(path) = choreography.settings.music_path_absolute.as_ref()
+        && !path.trim().is_empty()
+    {
+        return Some(path.clone());
+    }
+
+    if let Some(relative) = choreography.settings.music_path_relative.as_ref()
+        && !relative.trim().is_empty()
+        && let Some(file_path) = choreography_file_path
+    {
+        let base_dir = Path::new(file_path).parent().unwrap_or_else(|| Path::new(""));
+        return Some(base_dir.join(relative).to_string_lossy().into_owned());
+    }
+
+    None
 }
 
 pub(crate) fn enqueue_open_audio_request(
