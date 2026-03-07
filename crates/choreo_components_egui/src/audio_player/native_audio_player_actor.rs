@@ -247,6 +247,20 @@ impl Engine {
         }
     }
 
+    fn try_seek(&self, position: Duration) -> bool {
+        match self {
+            Self::Rodio { player, .. } => player.try_seek(position).is_ok(),
+            Self::Silent => false,
+        }
+    }
+
+    fn position(&self) -> Option<f64> {
+        match self {
+            Self::Rodio { player, .. } => Some(player.get_pos().as_secs_f64()),
+            Self::Silent => None,
+        }
+    }
+
     fn is_empty(&self) -> bool {
         match self {
             Self::Rodio { player, .. } => player.empty(),
@@ -310,12 +324,21 @@ impl NativeRuntime {
                 self.position = 0.0;
                 self.is_playing = false;
                 self.last_started_at = None;
-                self.rebuild_sink(0.0, false);
+                if self.engine.try_seek(Duration::ZERO) {
+                    self.engine.pause();
+                } else {
+                    self.rebuild_sink(0.0, false);
+                }
             }
             AudioCommand::Seek(position) => {
                 self.sync_position();
                 self.position = clamp_position(position, self.duration);
-                self.rebuild_sink(self.position, self.is_playing);
+                if !self
+                    .engine
+                    .try_seek(Duration::from_secs_f64(self.position.max(0.0)))
+                {
+                    self.rebuild_sink(self.position, self.is_playing);
+                }
                 self.last_started_at = if self.is_playing {
                     Some(Instant::now())
                 } else {
@@ -326,7 +349,14 @@ impl NativeRuntime {
                 self.sync_position();
                 self.position = clamp_position(position, self.duration);
                 self.is_playing = true;
-                self.rebuild_sink(self.position, true);
+                if !self
+                    .engine
+                    .try_seek(Duration::from_secs_f64(self.position.max(0.0)))
+                {
+                    self.rebuild_sink(self.position, true);
+                } else {
+                    self.engine.play();
+                }
                 self.last_started_at = Some(Instant::now());
             }
             AudioCommand::SetSpeed(speed) => {
@@ -370,7 +400,11 @@ impl NativeRuntime {
 
         if self.loop_enabled {
             self.position = 0.0;
-            self.rebuild_sink(0.0, true);
+            if !self.engine.try_seek(Duration::ZERO) {
+                self.rebuild_sink(0.0, true);
+            } else {
+                self.engine.play();
+            }
             self.last_started_at = Some(Instant::now());
             return;
         }
@@ -396,6 +430,14 @@ impl NativeRuntime {
     }
 
     fn sync_position(&mut self) {
+        if let Some(position) = self.engine.position() {
+            self.position = clamp_position(position, self.duration);
+            if self.is_playing {
+                self.last_started_at = Some(Instant::now());
+            }
+            return;
+        }
+
         if !self.is_playing {
             return;
         }

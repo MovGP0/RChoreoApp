@@ -2,8 +2,8 @@ use crate::nav_bar::nav_bar_component::actions::NavBarAction;
 use crate::nav_bar::nav_bar_component::state::InteractionMode;
 use crate::nav_bar::nav_bar_component::state::NavBarState;
 use crate::nav_bar::nav_bar_component::translations::nav_bar_translations;
-use crate::nav_bar::nav_bar_component::ui::action_button_tokens;
 use crate::nav_bar::nav_bar_component::ui::action_button_icon_uris;
+use crate::nav_bar::nav_bar_component::ui::action_button_tokens;
 use crate::nav_bar::nav_bar_component::ui::image_button_checked;
 use crate::nav_bar::nav_bar_component::ui::mode_label;
 use crate::nav_bar::nav_bar_component::ui::mode_option_labels;
@@ -148,7 +148,10 @@ fn nav_bar_mode_dropdown_popup_renders_all_labels() {
         });
     });
 
-    egui::Popup::open_id(&context, egui::Id::new("nav_bar_mode_dropdown").with("popup"));
+    egui::Popup::open_id(
+        &context,
+        egui::Id::new("nav_bar_mode_dropdown").with("popup"),
+    );
     let open_output = context.run(egui::RawInput::default(), |ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.set_width(1280.0);

@@ -17,7 +17,10 @@ fn absolute_origin_spec() {
     let layout = compute_layout(host_rect, &state);
     assert_eq!(layout.content_rect.min, host_rect.min);
     assert_eq!(layout.left_panel_rect.min, host_rect.min);
-    assert_eq!(layout.right_panel_rect.min.x, host_rect.max.x - state.right_drawer_width);
+    assert_eq!(
+        layout.right_panel_rect.min.x,
+        host_rect.max.x - state.right_drawer_width
+    );
     assert_eq!(layout.right_panel_rect.min.y, host_rect.min.y);
 
     let context = egui::Context::default();

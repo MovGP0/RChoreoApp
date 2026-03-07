@@ -1,6 +1,8 @@
-use egui::Ui;
+use egui::Align;
 use egui::Image;
-use egui_material3::MaterialIconButton;
+use egui::Layout;
+use egui::Ui;
+use egui::vec2;
 use egui_material3::MaterialSlider;
 
 use crate::material::components;
@@ -17,100 +19,106 @@ use super::state::PlayPauseGlyph;
 use super::state::play_pause_glyph;
 
 const GRID_12_PX: f32 = 12.0;
+const ICON_BUTTON_SIZE_PX: f32 = 48.0;
+const SPEED_SLIDER_WIDTH_PX: f32 = 240.0;
 const SPEED_LABEL_WIDTH_PX: f32 = 48.0;
 const DURATION_LABEL_WIDTH_PX: f32 = 72.0;
+const MIN_POSITION_SLIDER_WIDTH_PX: f32 = 120.0;
+const TRANSPORT_CLUSTER_GAP_COUNT: f32 = 2.0;
+const SPEED_CLUSTER_GAP_COUNT: f32 = 1.0;
+const INTER_CLUSTER_GAP_COUNT: f32 = 2.0;
 
 pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
     let mut actions: Vec<AudioPlayerAction> = Vec::new();
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = GRID_12_PX;
+    let row_width = ui.available_width();
+    let row_height = ui.available_height().max(ICON_BUTTON_SIZE_PX);
+    let position_slider_width = position_slider_width_for_panel_width(row_width);
 
-        let mut normalized_speed =
-            normalize_speed_to_slider_value(state.speed, state.minimum_speed, state.maximum_speed)
-                as f32;
-        let speed_response = ui.add(
-            MaterialSlider::new(&mut normalized_speed, 0.0..=100.0)
-                .enabled(state.can_set_speed)
-                .show_value(false)
-                .width(240.0),
-        );
-        if speed_response.changed() {
-            actions.push(AudioPlayerAction::SpeedChanged {
-                speed: denormalize_speed_from_slider_value(
-                    f64::from(normalized_speed),
-                    state.minimum_speed,
-                    state.maximum_speed,
-                ),
-            });
-        }
-        ui.add_sized(
-            [SPEED_LABEL_WIDTH_PX, 0.0],
-            egui::Label::new(typography::rich_text_for_role(
-                &state.speed_label,
-                speed_label_role(),
-            ))
-            .truncate(),
-        );
+    ui.spacing_mut().item_spacing.x = GRID_12_PX;
+    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+        draw_position_slider(ui, state, position_slider_width, &mut actions);
 
-        let position = state.pending_seek_position.unwrap_or(state.position);
-        let interactions = crate::slider_with_ticks::ui::draw(
-            ui,
-            SliderWithTicksUiState {
-                enabled: state.can_seek,
-                minimum: 0.0,
-                maximum: state.duration.max(0.0),
-                value: position,
-                tick_values: &state.tick_values,
-                tick_color: Some(ui.visuals().selection.bg_fill),
-                width: 240.0,
+        ui.allocate_ui_with_layout(
+            vec2(transport_cluster_width_px(), row_height),
+            Layout::right_to_left(Align::Center),
+            |ui| {
+                ui.spacing_mut().item_spacing.x = GRID_12_PX;
+
+                let play_pause_response =
+                    components::icon_button(ui, play_pause_image(state.is_playing), false);
+                if play_pause_response.clicked() {
+                    actions.push(AudioPlayerAction::TogglePlayPause);
+                }
+
+                let link_response = ui
+                    .add_enabled_ui(state.can_link_scene_to_position, |ui| {
+                        components::icon_button(ui, link_image(), false)
+                    })
+                    .inner;
+                if link_response.clicked() {
+                    actions.push(AudioPlayerAction::LinkSceneToPosition);
+                }
+
+                ui.add_sized(
+                    [DURATION_LABEL_WIDTH_PX, ICON_BUTTON_SIZE_PX],
+                    egui::Label::new(typography::rich_text_for_role(
+                        &state.duration_label,
+                        duration_label_role(),
+                    ))
+                    .truncate(),
+                );
             },
         );
 
-        for interaction in interactions {
-            match interaction {
-                SliderWithTicksInteraction::DragStarted => {
-                    actions.push(AudioPlayerAction::PositionDragStarted);
-                }
-                SliderWithTicksInteraction::ValueChanged { value, is_dragging } => {
-                    if is_dragging {
-                        actions.push(AudioPlayerAction::PositionPreviewChanged { position: value });
-                    } else {
-                        actions.push(AudioPlayerAction::SeekToPosition { position: value });
-                    }
-                }
-                SliderWithTicksInteraction::DragCompleted { value } => {
-                    actions.push(AudioPlayerAction::PositionDragCompleted { position: value });
-                }
-            }
-        }
+        ui.allocate_ui_with_layout(
+            vec2(speed_cluster_width_px(), row_height),
+            Layout::right_to_left(Align::Center),
+            |ui| {
+                ui.spacing_mut().item_spacing.x = GRID_12_PX;
 
-        ui.add_sized(
-            [DURATION_LABEL_WIDTH_PX, 0.0],
-            egui::Label::new(typography::rich_text_for_role(
-                &state.duration_label,
-                duration_label_role(),
-            ))
-            .truncate(),
+                ui.add_sized(
+                    [SPEED_LABEL_WIDTH_PX, ICON_BUTTON_SIZE_PX],
+                    egui::Label::new(typography::rich_text_for_role(
+                        &state.speed_label,
+                        speed_label_role(),
+                    ))
+                    .truncate(),
+                );
+
+                let mut normalized_speed = normalize_speed_to_slider_value(
+                    state.speed,
+                    state.minimum_speed,
+                    state.maximum_speed,
+                ) as f32;
+                let speed_response = ui.add(
+                    MaterialSlider::new(&mut normalized_speed, 0.0..=100.0)
+                        .enabled(state.can_set_speed)
+                        .show_value(false)
+                        .width(SPEED_SLIDER_WIDTH_PX),
+                );
+                if speed_response.changed() {
+                    actions.push(AudioPlayerAction::SpeedChanged {
+                        speed: denormalize_speed_from_slider_value(
+                            f64::from(normalized_speed),
+                            state.minimum_speed,
+                            state.maximum_speed,
+                        ),
+                    });
+                }
+            },
         );
-
-        if ui
-            .add(
-                MaterialIconButton::standard(link_icon_name())
-                    .svg_data(link_icon_svg())
-                    .enabled(state.can_link_scene_to_position),
-            )
-            .clicked()
-        {
-            actions.push(AudioPlayerAction::LinkSceneToPosition);
-        }
-
-        let play_pause_response =
-            components::icon_button(ui, play_pause_image(state.is_playing), false);
-        if play_pause_response.clicked() {
-            actions.push(AudioPlayerAction::TogglePlayPause);
-        }
     });
     actions
+}
+
+#[must_use]
+pub fn position_slider_width_for_panel_width(panel_width: f32) -> f32 {
+    (panel_width - audio_player_fixed_controls_width_px()).max(MIN_POSITION_SLIDER_WIDTH_PX)
+}
+
+#[must_use]
+pub fn audio_player_fixed_controls_width_px() -> f32 {
+    transport_cluster_width_px() + speed_cluster_width_px() + (INTER_CLUSTER_GAP_COUNT * GRID_12_PX)
 }
 
 #[must_use]
@@ -157,17 +165,66 @@ fn play_pause_icon_spec(is_playing: bool) -> ui_icons::UiIconSpec {
 
 fn play_pause_image(is_playing: bool) -> Image<'static> {
     match play_pause_glyph(is_playing) {
-        PlayPauseGlyph::Play => {
-            Image::new(egui::include_image!("../../assets/icons/Play.svg"))
-        }
-        PlayPauseGlyph::Pause => {
-            Image::new(egui::include_image!("../../assets/icons/Pause.svg"))
-        }
+        PlayPauseGlyph::Play => Image::new(egui::include_image!("../../assets/icons/Play.svg")),
+        PlayPauseGlyph::Pause => Image::new(egui::include_image!("../../assets/icons/Pause.svg")),
     }
+}
+
+fn link_image() -> Image<'static> {
+    Image::new(egui::include_image!("../../assets/icons/Link.svg"))
 }
 
 fn link_icon_spec() -> ui_icons::UiIconSpec {
     ui_icons::icon(UiIconKey::AudioLink)
+}
+
+fn draw_position_slider(
+    ui: &mut Ui,
+    state: &AudioPlayerState,
+    position_slider_width: f32,
+    actions: &mut Vec<AudioPlayerAction>,
+) {
+    let position = state.pending_seek_position.unwrap_or(state.position);
+    let interactions = crate::slider_with_ticks::ui::draw(
+        ui,
+        SliderWithTicksUiState {
+            enabled: state.can_seek,
+            minimum: 0.0,
+            maximum: state.duration.max(0.0),
+            value: position,
+            tick_values: &state.tick_values,
+            tick_color: Some(ui.visuals().selection.bg_fill),
+            width: position_slider_width,
+        },
+    );
+
+    for interaction in interactions {
+        match interaction {
+            SliderWithTicksInteraction::DragStarted => {
+                actions.push(AudioPlayerAction::PositionDragStarted);
+            }
+            SliderWithTicksInteraction::ValueChanged { value, is_dragging } => {
+                if is_dragging {
+                    actions.push(AudioPlayerAction::PositionPreviewChanged { position: value });
+                } else {
+                    actions.push(AudioPlayerAction::SeekToPosition { position: value });
+                }
+            }
+            SliderWithTicksInteraction::DragCompleted { value } => {
+                actions.push(AudioPlayerAction::PositionDragCompleted { position: value });
+            }
+        }
+    }
+}
+
+fn transport_cluster_width_px() -> f32 {
+    DURATION_LABEL_WIDTH_PX
+        + (2.0 * ICON_BUTTON_SIZE_PX)
+        + (TRANSPORT_CLUSTER_GAP_COUNT * GRID_12_PX)
+}
+
+fn speed_cluster_width_px() -> f32 {
+    SPEED_SLIDER_WIDTH_PX + SPEED_LABEL_WIDTH_PX + (SPEED_CLUSTER_GAP_COUNT * GRID_12_PX)
 }
 
 #[must_use]

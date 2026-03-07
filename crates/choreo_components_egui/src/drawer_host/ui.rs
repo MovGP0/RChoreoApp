@@ -217,11 +217,8 @@ pub fn draw_with_slots_in_rect(
             }
 
             if state.is_top_open {
-                ui.painter().rect_filled(
-                    local_layout.top_panel_rect,
-                    0.0,
-                    state.drawer_background,
-                );
+                ui.painter()
+                    .rect_filled(local_layout.top_panel_rect, 0.0, state.drawer_background);
                 let _ = ui.scope_builder(
                     UiBuilder::new()
                         .id_salt((id_source, "top_panel"))
@@ -294,10 +291,7 @@ fn pointer_not_in_open_panel(
     let Some(pointer_pos) = pointer_pos else {
         return false;
     };
-    let local_pointer_pos = pos2(
-        pointer_pos.x - host_origin.x,
-        pointer_pos.y - host_origin.y,
-    );
+    let local_pointer_pos = pos2(pointer_pos.x - host_origin.x, pointer_pos.y - host_origin.y);
 
     if state.is_left_open && layout.left_panel_rect.contains(local_pointer_pos) {
         return false;

@@ -1,7 +1,7 @@
 use crate::dancers;
 use crate::dancers::Report;
-use egui::Color32;
 use choreo_components_egui::drawer_host::state::DrawerHostOpenMode;
+use egui::Color32;
 
 #[test]
 fn dancer_settings_page_control_spec() {

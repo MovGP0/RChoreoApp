@@ -38,13 +38,21 @@ pub fn icon_image(icon: TopBarIcon) -> Image<'static> {
 
 #[must_use]
 pub fn icon_button(ui: &mut Ui, image: Image<'static>, checked: bool) -> Response {
-    let button =
-        Button::image(image.fit_to_exact_size(vec2(ICON_GLYPH_SIZE_PX, ICON_GLYPH_SIZE_PX)))
-            .selected(checked)
-            .frame(true)
-            .frame_when_inactive(false)
-            .corner_radius(ICON_BUTTON_SIZE_PX / 2.0)
-            .min_size(vec2(ICON_BUTTON_SIZE_PX, ICON_BUTTON_SIZE_PX))
-            .image_tint_follows_text_color(true);
+    let tint = if checked {
+        ui.visuals().selection.stroke.color
+    } else {
+        ui.visuals().widgets.inactive.fg_stroke.color
+    };
+    let button = Button::image(
+        image
+            .fit_to_exact_size(vec2(ICON_GLYPH_SIZE_PX, ICON_GLYPH_SIZE_PX))
+            .tint(tint),
+    )
+    .selected(checked)
+    .frame(true)
+    .frame_when_inactive(false)
+    .corner_radius(ICON_BUTTON_SIZE_PX / 2.0)
+    .min_size(vec2(ICON_BUTTON_SIZE_PX, ICON_BUTTON_SIZE_PX))
+    .image_tint_follows_text_color(false);
     ui.add(button)
 }

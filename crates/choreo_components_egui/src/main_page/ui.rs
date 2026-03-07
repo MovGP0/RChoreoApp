@@ -100,7 +100,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     if state.is_audio_player_open {
         let audio_rect = Rect::from_min_max(pos2(page_rect.min.x, host_bottom), page_rect.max);
         egui::Area::new(egui::Id::new("main_page_audio_host"))
-            .order(egui::Order::Foreground)
+            .order(egui::Order::Middle)
             .fixed_pos(audio_rect.min)
             .show(ui.ctx(), |ui| {
                 ui.set_width(audio_rect.width());
@@ -251,12 +251,19 @@ fn draw_settings_drawer(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainA
 
 fn draw_audio_host(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     let mut actions: Vec<ChoreoMainAction> = Vec::new();
-    Frame::group(ui.style()).show(ui, |ui| {
-        ui.set_min_height(AUDIO_PANEL_HEIGHT_PX);
-        for action in audio_player::ui::draw(ui, &state.audio_player_state) {
-            actions.extend(map_audio_host_action(action));
-        }
-    });
+    let host_width = ui.available_width();
+    ui.allocate_ui_with_layout(
+        vec2(host_width, AUDIO_PANEL_HEIGHT_PX),
+        Layout::left_to_right(egui::Align::Center),
+        |ui| {
+            ui.set_width(host_width);
+            ui.set_min_width(host_width);
+            ui.set_min_height(AUDIO_PANEL_HEIGHT_PX);
+            for action in audio_player::ui::draw(ui, &state.audio_player_state) {
+                actions.extend(map_audio_host_action(action));
+            }
+        },
+    );
     actions
 }
 
