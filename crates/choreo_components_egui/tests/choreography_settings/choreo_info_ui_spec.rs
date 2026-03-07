@@ -1,6 +1,10 @@
 use crate::choreography_settings::create_state;
 use crate::choreography_settings::ui::choreo_date_text;
 use crate::choreography_settings::ui::transparency_percentage_text;
+use choreo_components_egui::choreo_info::state::ChoreoDate;
+use choreo_components_egui::choreo_info::ui::picker_date_value;
+use choreo_components_egui::choreo_info::ui::uses_calendar_date_picker;
+use choreo_components_egui::material::components::DatePickerValue;
 
 #[test]
 fn choreo_info_date_text_is_zero_padded_iso_like() {
@@ -13,6 +17,29 @@ fn transparency_percentage_text_rounds_like_slint_math_round() {
     assert_eq!(transparency_percentage_text(0.0), "Transparency: 0%");
     assert_eq!(transparency_percentage_text(0.245), "Transparency: 25%");
     assert_eq!(transparency_percentage_text(0.999), "Transparency: 100%");
+}
+
+#[test]
+fn choreography_settings_uses_calendar_date_picker() {
+    assert!(uses_calendar_date_picker());
+}
+
+#[test]
+fn picker_date_value_falls_back_for_invalid_parts() {
+    let value = picker_date_value(ChoreoDate {
+        year: 2026,
+        month: 2,
+        day: 31,
+    });
+
+    assert_ne!(
+        value,
+        DatePickerValue {
+            year: 2026,
+            month: 2,
+            day: 31,
+        }
+    );
 }
 
 #[test]

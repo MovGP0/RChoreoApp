@@ -1,8 +1,12 @@
-use egui::DragValue;
 use egui::Ui;
 use egui_material3::MaterialSlider;
 
+use crate::material::components::DatePickerStrings;
+use crate::material::components::DatePickerValue;
+use crate::material::components::date_picker;
+
 use super::messages::ChoreoInfoAction;
+use super::state::ChoreoDate;
 use super::state::ChoreoInfoState;
 
 pub struct ChoreoInfoLabels {
@@ -34,6 +38,20 @@ pub fn transparency_percentage_suffix(transparency: f64) -> String {
     format!("{percentage}%")
 }
 
+#[must_use]
+pub const fn uses_calendar_date_picker() -> bool {
+    true
+}
+
+#[must_use]
+pub fn picker_date_value(date: ChoreoDate) -> DatePickerValue {
+    crate::material::components::date_picker::normalize_date_value(DatePickerValue {
+        year: date.year,
+        month: date.month,
+        day: date.day,
+    })
+}
+
 pub fn draw(
     ui: &mut Ui,
     state: &ChoreoInfoState,
@@ -60,25 +78,20 @@ pub fn draw(
     }
 
     ui.label(&labels.date);
-    ui.label(choreo_date_text(
-        state.choreo_date.year,
-        state.choreo_date.month,
-        state.choreo_date.day,
-    ));
-    let mut year = state.choreo_date.year;
-    let mut month = i32::from(state.choreo_date.month);
-    let mut day = i32::from(state.choreo_date.day);
-    let mut date_changed = false;
-    ui.horizontal(|ui| {
-        date_changed |= ui.add(DragValue::new(&mut year).range(1..=9999)).changed();
-        date_changed |= ui.add(DragValue::new(&mut month).range(1..=12)).changed();
-        date_changed |= ui.add(DragValue::new(&mut day).range(1..=31)).changed();
-    });
-    if date_changed {
+    if let Some(selected_date) = date_picker(
+        ui,
+        "choreo_info_date_picker",
+        picker_date_value(state.choreo_date),
+        DatePickerStrings {
+            title: &labels.date,
+            cancel_text: "Cancel",
+            ok_text: "Ok",
+        },
+    ) {
         actions.push(ChoreoInfoAction::UpdateDate {
-            year,
-            month: month as u8,
-            day: day as u8,
+            year: selected_date.year,
+            month: selected_date.month,
+            day: selected_date.day,
         });
     }
 

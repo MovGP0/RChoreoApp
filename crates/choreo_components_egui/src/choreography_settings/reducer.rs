@@ -84,9 +84,11 @@ pub fn reduce(state: &mut ChoreographySettingsState, action: ChoreographySetting
             state.redraw_requested = true;
         }
         ChoreographySettingsAction::UpdateDate { year, month, day } => {
-            state.date = DateParts { year, month, day };
-            state.choreography.date = build_date(year, month, day);
-            state.redraw_requested = true;
+            if let Some(date) = build_date(year, month, day) {
+                state.date = DateParts { year, month, day };
+                state.choreography.date = Some(date);
+                state.redraw_requested = true;
+            }
         }
         ChoreographySettingsAction::UpdateVariation(value) => {
             state.choreography.variation = normalize_text(&value);

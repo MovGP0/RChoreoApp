@@ -27,3 +27,32 @@ fn update_date_updates_state_date_parts_and_redraw() {
     );
     assert!(state.redraw_requested);
 }
+
+#[test]
+fn update_date_ignores_invalid_calendar_dates() {
+    let mut state = create_state();
+    let original_date = state.date;
+    let original_model_date = state
+        .choreography
+        .date
+        .map(|date| (date.year(), date.month() as u8, date.day()));
+
+    reduce(
+        &mut state,
+        ChoreographySettingsAction::UpdateDate {
+            year: 2026,
+            month: 2,
+            day: 31,
+        },
+    );
+
+    assert_eq!(state.date, original_date);
+    assert_eq!(
+        state
+            .choreography
+            .date
+            .map(|date| (date.year(), date.month() as u8, date.day())),
+        original_model_date,
+    );
+    assert!(!state.redraw_requested);
+}
