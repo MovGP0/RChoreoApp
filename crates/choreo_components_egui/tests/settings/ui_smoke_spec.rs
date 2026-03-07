@@ -2,7 +2,9 @@ use crate::settings::state::AudioPlayerBackend;
 use crate::settings::state::SettingsState;
 use crate::settings::translations::settings_translations;
 use crate::settings::ui::audio_backend_label;
+use crate::settings::ui::color_picker_state_from_argb_hex;
 use crate::settings::ui::content_spacing_token;
+use crate::settings::ui::format_argb_hex;
 use crate::settings::ui::navigate_back_icon_name;
 use crate::settings::ui::navigate_back_icon_svg;
 use crate::settings::ui::parse_argb_hex;
@@ -45,6 +47,26 @@ fn parse_argb_hex_handles_valid_and_invalid_values() {
     assert!(parse_argb_hex("#FF112233").is_some());
     assert!(parse_argb_hex("#112233").is_none());
     assert!(parse_argb_hex("#GG112233").is_none());
+}
+
+#[test]
+fn format_argb_hex_round_trips_with_parse_helper() {
+    let color = egui::Color32::from_rgb(0x11, 0x22, 0x33);
+
+    let formatted = format_argb_hex(color);
+
+    assert_eq!(formatted, "#FF112233");
+    assert_eq!(parse_argb_hex(&formatted), Some(color));
+}
+
+#[test]
+fn color_picker_state_uses_parsed_argb_value() {
+    let picker_state = color_picker_state_from_argb_hex("#FF336699");
+
+    assert_eq!(
+        picker_state.selected_color,
+        egui::Color32::from_rgba_unmultiplied(0x33, 0x66, 0x99, 0xFF)
+    );
 }
 
 #[test]

@@ -2,6 +2,8 @@ use egui::Color32;
 use egui::Ui;
 use egui_material3::MaterialIconButton;
 
+use crate::color_picker::state::ColorPickerState;
+use crate::color_picker::ui as color_picker_ui;
 use crate::ui_style::material_style_metrics::material_style_metrics;
 use crate::ui_style::typography;
 use crate::ui_style::typography::TypographyRole;
@@ -122,7 +124,6 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
                 color_hex: &state.primary_color_hex,
                 toggle_action: update_use_primary_color_action,
                 color_action: update_primary_color_hex_action,
-                argb_hint: strings.argb_hint.as_str(),
             },
             &mut actions,
         );
@@ -136,7 +137,6 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
                 color_hex: &state.secondary_color_hex,
                 toggle_action: update_use_secondary_color_action,
                 color_action: update_secondary_color_hex_action,
-                argb_hint: strings.argb_hint.as_str(),
             },
             &mut actions,
         );
@@ -150,7 +150,6 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
                 color_hex: &state.tertiary_color_hex,
                 toggle_action: update_use_tertiary_color_action,
                 color_action: update_tertiary_color_hex_action,
-                argb_hint: strings.argb_hint.as_str(),
             },
             &mut actions,
         );
@@ -189,7 +188,6 @@ struct ColorControlSpec<'a> {
     enabled: bool,
     can_enable: bool,
     color_hex: &'a str,
-    argb_hint: &'a str,
     toggle_action: fn(bool) -> SettingsAction,
     color_action: fn(String) -> SettingsAction,
 }
@@ -232,16 +230,13 @@ fn draw_color_controls(ui: &mut Ui, spec: ColorControlSpec<'_>, actions: &mut Ve
         } else {
             ui.label("■");
         }
+    });
 
-        let mut edit_value = spec.color_hex.to_string();
-        let response = ui.add_enabled(
-            spec.enabled,
-            egui::TextEdit::singleline(&mut edit_value)
-                .hint_text(spec.argb_hint)
-                .desired_width(156.0),
-        );
-        if response.changed() {
-            actions.push((spec.color_action)(edit_value));
+    ui.add_enabled_ui(spec.enabled, |ui| {
+        if let Some(color) =
+            color_picker_ui::draw_bound(ui, color_picker_state_from_argb_hex(spec.color_hex))
+        {
+            actions.push((spec.color_action)(format_argb_hex(color)));
         }
     });
 }
@@ -270,4 +265,21 @@ pub fn parse_argb_hex(value: &str) -> Option<Color32> {
     let green = u8::from_str_radix(&trimmed[5..7], 16).ok()?;
     let blue = u8::from_str_radix(&trimmed[7..9], 16).ok()?;
     Some(Color32::from_rgba_unmultiplied(red, green, blue, alpha))
+}
+
+#[must_use]
+pub fn color_picker_state_from_argb_hex(value: &str) -> ColorPickerState {
+    color_picker_ui::state_for_color(parse_argb_hex(value).unwrap_or(Color32::BLACK))
+}
+
+#[must_use]
+pub fn format_argb_hex(color: Color32) -> String {
+    let [red, green, blue, alpha] = color.to_srgba_unmultiplied();
+    format!(
+        "#{alpha:02X}{red:02X}{green:02X}{blue:02X}",
+        alpha = alpha,
+        red = red,
+        green = green,
+        blue = blue,
+    )
 }

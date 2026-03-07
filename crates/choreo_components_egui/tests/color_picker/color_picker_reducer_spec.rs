@@ -1,19 +1,13 @@
 use egui::Color32;
-#[path = "../../src/color_picker/actions.rs"]
-mod actions;
-#[path = "../../src/color_picker/reducer.rs"]
-mod reducer;
-#[path = "../../src/color_picker/state.rs"]
-mod state;
-#[path = "../../src/color_picker/ui.rs"]
-mod ui;
 
-use actions::ColorPickerAction;
-use reducer::reduce;
-use state::ColorPickerDock;
-use state::ColorPickerState;
-use state::Hsb;
 use std::f64::consts::FRAC_1_SQRT_2;
+
+use super::actions::ColorPickerAction;
+use super::reducer::reduce;
+use super::state::ColorPickerDock;
+use super::state::ColorPickerState;
+use super::state::Hsb;
+use super::ui;
 
 #[test]
 fn color_picker_defaults_match_source_component() {

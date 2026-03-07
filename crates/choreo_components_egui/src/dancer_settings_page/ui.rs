@@ -30,6 +30,8 @@ use crate::drawer_host::state::DrawerHostState;
 use crate::drawer_host::ui::draw_with_slots_in_rect;
 use crate::i18n::t;
 use crate::nav_bar::hamburger_toggle_button;
+use crate::color_picker::state::ColorPickerState;
+use crate::color_picker::ui as color_picker_ui;
 use crate::ui_style::material_style_metrics::material_style_metrics;
 use crate::ui_style::typography;
 use crate::ui_style::typography::TypographyRole;
@@ -76,6 +78,17 @@ pub const fn footer_height_token() -> f32 {
 #[must_use]
 pub const fn uses_scrollable_content_shell() -> bool {
     true
+}
+
+#[must_use]
+pub fn selected_dancer_color_picker_state(state: &DancersState) -> ColorPickerState {
+    let selected_color = state
+        .selected_dancer
+        .as_ref()
+        .map(|dancer| color_to_egui(&dancer.color))
+        .unwrap_or(Color32::TRANSPARENT);
+
+    color_picker_ui::state_for_color(selected_color)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -487,21 +500,18 @@ fn draw_dancer_card(
             }
 
             ui.label(t(locale, "DancerColorLabel", "Color"));
-            let mut color = state
-                .selected_dancer
-                .as_ref()
-                .map(|dancer| dancer.color.clone())
-                .unwrap_or_else(crate::dancers::state::transparent_color);
             ui.add_enabled_ui(state.has_selected_dancer, |ui| {
-                let mut color32 = color_to_egui(&color);
-                if ui.color_edit_button_srgba(&mut color32).changed() {
-                    color = Color {
+                if let Some(color32) =
+                    color_picker_ui::draw_bound(ui, selected_dancer_color_picker_state(state))
+                {
+                    actions.push(DancersAction::UpdateDancerColor {
+                        value: Color {
                         r: color32.r(),
                         g: color32.g(),
                         b: color32.b(),
                         a: color32.a(),
-                    };
-                    actions.push(DancersAction::UpdateDancerColor { value: color });
+                        },
+                    });
                 }
             });
         });

@@ -5,6 +5,7 @@ pub use choreo_components_egui::choreography_settings::state;
 pub use choreo_components_egui::choreography_settings::ui;
 
 pub mod choreo_info_ui_spec;
+pub mod color_picker_integration_spec;
 pub mod command_mapping_spec;
 pub mod load_choreography_settings_behavior_spec;
 pub mod load_settings_preferences_behavior_spec;

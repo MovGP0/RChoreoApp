@@ -12,6 +12,8 @@ use crate::choreo_info::messages::ChoreoInfoAction;
 use crate::choreo_info::state::ChoreoDate;
 use crate::choreo_info::state::ChoreoInfoState;
 use crate::choreo_info::ui::ChoreoInfoLabels;
+use crate::color_picker::state::ColorPickerState;
+use crate::color_picker::ui as color_picker_ui;
 use crate::number_picker::ui::NumberPickerUiState;
 use crate::ui_style::material_style_metrics::material_style_metrics;
 use crate::ui_style::typography;
@@ -92,6 +94,16 @@ pub fn scene_timestamp_controls_enabled(state: &ChoreographySettingsState) -> bo
 #[must_use]
 pub fn floor_size_maximum(state: &ChoreographySettingsState) -> i32 {
     state.floor_size_options.last().copied().unwrap_or(100)
+}
+
+#[must_use]
+pub fn floor_color_picker_state(state: &ChoreographySettingsState) -> ColorPickerState {
+    color_picker_ui::state_for_color(to_color32(&state.floor_color))
+}
+
+#[must_use]
+pub fn selected_scene_color_picker_state(state: &ChoreographySettingsState) -> ColorPickerState {
+    color_picker_ui::state_for_color(to_color32(&state.scene_color))
 }
 
 fn draw_choreography_section(
@@ -220,8 +232,7 @@ fn draw_floor_section(
     }
 
     ui.label(ChoreographySettingsTranslations::floor_color(locale));
-    let mut floor_color = to_color32(&state.floor_color);
-    if ui.color_edit_button_srgba(&mut floor_color).changed() {
+    if let Some(floor_color) = color_picker_ui::draw_bound(ui, floor_color_picker_state(state)) {
         actions.push(ChoreographySettingsAction::UpdateFloorColor(from_color32(
             floor_color,
         )));
@@ -378,8 +389,9 @@ fn draw_selected_scene_section(
         });
 
         ui.label(ChoreographySettingsTranslations::scene_color(locale));
-        let mut scene_color = to_color32(&state.scene_color);
-        if ui.color_edit_button_srgba(&mut scene_color).changed() {
+        if let Some(scene_color) =
+            color_picker_ui::draw_bound(ui, selected_scene_color_picker_state(state))
+        {
             actions.push(ChoreographySettingsAction::UpdateSelectedScene(
                 UpdateSelectedSceneAction::SceneColor(from_color32(scene_color)),
             ));

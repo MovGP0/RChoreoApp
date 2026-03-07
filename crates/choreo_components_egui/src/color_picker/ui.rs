@@ -4,12 +4,12 @@ use egui::Sense;
 use egui::Shape;
 use egui::Stroke;
 use egui::Ui;
+use egui::Vec2;
 use egui::ecolor::Hsva;
 use egui::epaint::Mesh;
 use egui::epaint::Vertex;
 use egui::pos2;
 use egui::vec2;
-use egui_material3::MaterialButton;
 use egui_material3::MaterialSlider;
 
 use super::actions::ColorPickerAction;
@@ -23,59 +23,51 @@ const SLIDER_RIGHT_INSET_PX: f32 = 14.0;
 
 pub fn draw(ui: &mut Ui, state: &ColorPickerState) -> Vec<ColorPickerAction> {
     let mut actions: Vec<ColorPickerAction> = Vec::new();
-
     let mut brightness = state.hsb.brightness;
-    draw_dock_layout(ui, state, &mut brightness, &mut actions);
-
-    ui.horizontal(|ui| {
-        ui.label("Value slider:");
-
-        let left_label = if matches!(state.value_slider_position, ColorPickerDock::Left) {
-            "Left*"
-        } else {
-            "Left"
-        };
-        if ui.add(MaterialButton::new(left_label)).clicked() {
-            actions.push(ColorPickerAction::SetValueSliderPosition {
-                position: ColorPickerDock::Left,
-            });
-        }
-
-        let top_label = if matches!(state.value_slider_position, ColorPickerDock::Top) {
-            "Top*"
-        } else {
-            "Top"
-        };
-        if ui.add(MaterialButton::new(top_label)).clicked() {
-            actions.push(ColorPickerAction::SetValueSliderPosition {
-                position: ColorPickerDock::Top,
-            });
-        }
-
-        let right_label = if matches!(state.value_slider_position, ColorPickerDock::Right) {
-            "Right*"
-        } else {
-            "Right"
-        };
-        if ui.add(MaterialButton::new(right_label)).clicked() {
-            actions.push(ColorPickerAction::SetValueSliderPosition {
-                position: ColorPickerDock::Right,
-            });
-        }
-
-        let bottom_label = if matches!(state.value_slider_position, ColorPickerDock::Bottom) {
-            "Bottom*"
-        } else {
-            "Bottom"
-        };
-        if ui.add(MaterialButton::new(bottom_label)).clicked() {
-            actions.push(ColorPickerAction::SetValueSliderPosition {
-                position: ColorPickerDock::Bottom,
-            });
-        }
+    let picker_size = min_size_for_state(state);
+    ui.allocate_ui(picker_size, |ui| {
+        draw_dock_layout(ui, state, &mut brightness, &mut actions);
     });
 
     actions
+}
+
+#[must_use]
+pub fn state_for_color(selected_color: Color32) -> ColorPickerState {
+    let mut state = ColorPickerState::new();
+    let _ = super::reducer::reduce(
+        &mut state,
+        ColorPickerAction::SetColor {
+            color: selected_color,
+        },
+    );
+    state
+}
+
+pub fn draw_bound(ui: &mut Ui, state: ColorPickerState) -> Option<Color32> {
+    let mut local_state = state;
+    let actions = draw(ui, &local_state);
+    let mut last_color = None;
+    for action in actions {
+        if let Some(event) = super::reducer::reduce(&mut local_state, action) {
+            last_color = Some(event.new_color);
+        }
+    }
+    last_color
+}
+
+#[must_use]
+pub fn min_size_for_state(state: &ColorPickerState) -> Vec2 {
+    match state.value_slider_position {
+        ColorPickerDock::Top | ColorPickerDock::Bottom => vec2(
+            state.wheel_minimum_width,
+            state.wheel_minimum_height + SLIDER_EXTENT_PX + SLIDER_SPACING_PX,
+        ),
+        ColorPickerDock::Left | ColorPickerDock::Right => vec2(
+            state.wheel_minimum_width + SLIDER_EXTENT_PX + SLIDER_SPACING_PX,
+            state.wheel_minimum_height,
+        ),
+    }
 }
 
 fn draw_dock_layout(
@@ -86,14 +78,14 @@ fn draw_dock_layout(
 ) {
     match state.value_slider_position {
         ColorPickerDock::Top => {
-            draw_horizontal_brightness_slider(ui, brightness, actions);
+            draw_horizontal_brightness_slider(ui, state, brightness, actions);
             ui.add_space(SLIDER_SPACING_PX);
             draw_wheel(ui, state, actions);
         }
         ColorPickerDock::Bottom => {
             draw_wheel(ui, state, actions);
             ui.add_space(SLIDER_SPACING_PX);
-            draw_horizontal_brightness_slider(ui, brightness, actions);
+            draw_horizontal_brightness_slider(ui, state, brightness, actions);
         }
         ColorPickerDock::Left => {
             ui.horizontal(|ui| {
@@ -114,12 +106,13 @@ fn draw_dock_layout(
 
 fn draw_horizontal_brightness_slider(
     ui: &mut Ui,
+    state: &ColorPickerState,
     brightness: &mut f64,
     actions: &mut Vec<ColorPickerAction>,
 ) {
     let slider_width =
-        (ui.available_width() - SLIDER_LEFT_INSET_PX - SLIDER_RIGHT_INSET_PX).max(0.0);
-    ui.allocate_ui(vec2(ui.available_width(), SLIDER_EXTENT_PX), |ui| {
+        (state.wheel_minimum_width - SLIDER_LEFT_INSET_PX - SLIDER_RIGHT_INSET_PX).max(0.0);
+    ui.allocate_ui(vec2(state.wheel_minimum_width, SLIDER_EXTENT_PX), |ui| {
         ui.horizontal(|ui| {
             ui.add_space(SLIDER_LEFT_INSET_PX);
             let mut slider_value = *brightness as f32;
@@ -164,7 +157,7 @@ fn draw_vertical_brightness_slider(
 }
 
 #[must_use]
-pub(crate) fn slider_value_from_brightness(brightness: f64, invert_direction: bool) -> f64 {
+pub fn slider_value_from_brightness(brightness: f64, invert_direction: bool) -> f64 {
     if invert_direction {
         1.0 - brightness
     } else {
@@ -173,7 +166,7 @@ pub(crate) fn slider_value_from_brightness(brightness: f64, invert_direction: bo
 }
 
 #[must_use]
-pub(crate) fn brightness_from_slider_value(slider_value: f64, invert_direction: bool) -> f64 {
+pub fn brightness_from_slider_value(slider_value: f64, invert_direction: bool) -> f64 {
     if invert_direction {
         1.0 - slider_value
     } else {
@@ -183,7 +176,7 @@ pub(crate) fn brightness_from_slider_value(slider_value: f64, invert_direction: 
 
 fn draw_wheel(ui: &mut Ui, state: &ColorPickerState, actions: &mut Vec<ColorPickerAction>) {
     let minimum_size = vec2(state.wheel_minimum_width, state.wheel_minimum_height);
-    let (alloc_rect, response) = ui.allocate_at_least(minimum_size, Sense::click_and_drag());
+    let (alloc_rect, response) = ui.allocate_exact_size(minimum_size, Sense::click_and_drag());
     let wheel_size = alloc_rect.width().min(alloc_rect.height());
     let wheel_rect = Rect::from_center_size(alloc_rect.center(), vec2(wheel_size, wheel_size));
     let wheel_center = wheel_rect.center();

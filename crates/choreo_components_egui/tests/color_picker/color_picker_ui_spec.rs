@@ -1,11 +1,48 @@
-#[path = "../../src/color_picker/actions.rs"]
-mod actions;
-#[path = "../../src/color_picker/state.rs"]
-mod state;
-#[path = "../../src/color_picker/ui.rs"]
-mod ui;
-
 use egui::Color32;
+
+use super::state;
+use super::ui;
+
+#[test]
+fn state_for_color_keeps_selected_color_and_syncs_hsb() {
+    let selected_color = Color32::from_rgb(12, 128, 200);
+
+    let state = ui::state_for_color(selected_color);
+
+    assert_eq!(state.selected_color, selected_color);
+    assert_eq!(state.hsb, state::Hsb::from_color(selected_color));
+}
+
+#[test]
+fn min_size_for_bottom_dock_matches_shared_component_contract() {
+    let state = state::ColorPickerState::new();
+
+    let min_size = ui::min_size_for_state(&state);
+
+    assert_eq!(
+        min_size,
+        egui::vec2(
+            state.wheel_minimum_width,
+            state.wheel_minimum_height + 64.0 + 8.0,
+        )
+    );
+}
+
+#[test]
+fn min_size_for_side_dock_matches_shared_component_contract() {
+    let mut state = state::ColorPickerState::new();
+    state.value_slider_position = state::ColorPickerDock::Left;
+
+    let min_size = ui::min_size_for_state(&state);
+
+    assert_eq!(
+        min_size,
+        egui::vec2(
+            state.wheel_minimum_width + 64.0 + 8.0,
+            state.wheel_minimum_height,
+        )
+    );
+}
 
 #[test]
 fn draw_uses_selection_thumb_size_and_stroke_settings() {
