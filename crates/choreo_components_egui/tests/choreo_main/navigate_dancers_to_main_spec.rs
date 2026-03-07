@@ -3,6 +3,7 @@ use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::reducer::reduce;
 use crate::choreo_main::state::ChoreoMainState;
 use crate::choreo_main::state::MainContent;
+use choreo_components_egui::dancers::actions::DancersAction;
 
 #[test]
 fn navigate_dancers_to_main_spec() {
@@ -12,7 +13,10 @@ fn navigate_dancers_to_main_spec() {
             |_| {
                 let mut state = ChoreoMainState::default();
                 reduce(&mut state, ChoreoMainAction::NavigateToDancers);
-                reduce(&mut state, ChoreoMainAction::NavigateToMain);
+                reduce(
+                    &mut state,
+                    ChoreoMainAction::DancersAction(DancersAction::Cancel),
+                );
 
                 assert_eq!(state.content, MainContent::Main);
             },

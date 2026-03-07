@@ -5,11 +5,14 @@ use egui::CornerRadius;
 use egui::Frame;
 use egui::Layout;
 use egui::Margin;
+use egui::Rect;
 use egui::RichText;
 use egui::ScrollArea;
 use egui::Sense;
 use egui::Stroke;
 use egui::Ui;
+use egui::UiBuilder;
+use egui::pos2;
 use egui::vec2;
 use egui_material3::MaterialButton;
 
@@ -34,6 +37,10 @@ use crate::ui_style::typography::TypographyRole;
 const TOP_BAR_HEIGHT_PX: f32 = 64.0;
 // Slint source control uses 420px for the drawer width.
 const LIST_DRAWER_WIDTH_PX: f32 = 420.0;
+const CONTENT_MAX_WIDTH_PX: f32 = 720.0;
+const CONTENT_OUTER_MARGIN_PX: f32 = 16.0;
+const FOOTER_HEIGHT_PX: f32 = 56.0;
+const FOOTER_PADDING_PX: i8 = 8;
 const SWAP_DANCERS_DIALOG_ID: &str = "swap_dancers";
 
 #[must_use]
@@ -44,6 +51,31 @@ pub const fn content_spacing_token() -> f32 {
 #[must_use]
 pub const fn card_corner_radius_token() -> f32 {
     material_style_metrics().corner_radii.border_radius_12
+}
+
+#[must_use]
+pub const fn top_bar_height_token() -> f32 {
+    TOP_BAR_HEIGHT_PX
+}
+
+#[must_use]
+pub const fn content_max_width_token() -> f32 {
+    CONTENT_MAX_WIDTH_PX
+}
+
+#[must_use]
+pub const fn content_outer_margin_token() -> f32 {
+    CONTENT_OUTER_MARGIN_PX
+}
+
+#[must_use]
+pub const fn footer_height_token() -> f32 {
+    FOOTER_HEIGHT_PX
+}
+
+#[must_use]
+pub const fn uses_scrollable_content_shell() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -76,7 +108,6 @@ pub fn draw(ui: &mut Ui, state: &DancersState) -> Vec<DancersAction> {
     let mut page_actions: Vec<DancersAction> = Vec::new();
     let mut dialog_action = None;
     let locale = "en";
-    let spacing = content_spacing_token();
     let dialog_metrics = dialog_metrics_tokens();
 
     let close_requested = draw_dialog_host_with_panel(
@@ -94,9 +125,19 @@ pub fn draw(ui: &mut Ui, state: &DancersState) -> Vec<DancersAction> {
             dialog_content: state.dialog_content.as_deref().unwrap_or_default(),
         },
         |ui| {
-            draw_top_bar(ui, state, &mut page_actions, locale);
-            ui.add_space(spacing);
-            draw_main_content(ui, state, &mut page_actions, locale);
+            let page_rect = ui.available_rect_before_wrap();
+            let top_bar_rect =
+                Rect::from_min_size(page_rect.min, vec2(page_rect.width(), top_bar_height_token()));
+            let content_rect =
+                Rect::from_min_max(pos2(page_rect.left(), top_bar_rect.bottom()), page_rect.max);
+
+            let _ = ui.scope_builder(UiBuilder::new().max_rect(top_bar_rect), |ui| {
+                draw_top_bar(ui, state, &mut page_actions, locale);
+            });
+            let _ = ui.scope_builder(UiBuilder::new().max_rect(content_rect), |ui| {
+                draw_main_content(ui, content_rect, state, &mut page_actions, locale);
+            });
+            let _ = ui.allocate_rect(page_rect, Sense::hover());
         },
         |ui| {
             dialog_action = draw_dialog_panel(ui, state, locale);
@@ -125,6 +166,7 @@ fn draw_dialog_panel(ui: &mut Ui, state: &DancersState, locale: &str) -> Option<
 
 fn draw_main_content(
     ui: &mut Ui,
+    content_rect: Rect,
     state: &DancersState,
     actions: &mut Vec<DancersAction>,
     locale: &str,
@@ -135,12 +177,11 @@ fn draw_main_content(
         ui.visuals().panel_fill,
     );
 
-    let host_rect = ui.available_rect_before_wrap();
     let mut content_actions: Vec<DancersAction> = Vec::new();
     let mut pane_actions: Vec<DancersAction> = Vec::new();
     let drawer_actions = draw_with_slots_in_rect(
         ui.ctx(),
-        host_rect,
+        content_rect,
         "dancer_settings_page",
         &drawer_state,
         |ui| draw_content(ui, state, &mut content_actions, locale),
@@ -149,7 +190,7 @@ fn draw_main_content(
         |_| {},
         |_| {},
     );
-    let _ = ui.allocate_rect(host_rect, Sense::hover());
+    let _ = ui.allocate_rect(content_rect, Sense::hover());
     actions.extend(pane_actions);
     actions.extend(content_actions);
 
@@ -278,33 +319,64 @@ fn draw_dancers_pane(
 }
 
 fn draw_content(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersAction>, locale: &str) {
-    Frame::new()
-        .fill(ui.visuals().faint_bg_color)
-        .inner_margin(Margin::same(content_spacing_token() as i8))
-        .show(ui, |ui| {
-            ui.with_layout(Layout::bottom_up(Align::RIGHT), |ui| {
-                ui.horizontal(|ui| {
-                    if ui
-                        .add(MaterialButton::new(t(locale, "CommonCancel", "Cancel")))
-                        .clicked()
-                    {
-                        actions.push(DancersAction::Cancel);
-                    }
+    let surface_rect = ui.max_rect();
+    ui.painter()
+        .rect_filled(surface_rect, CornerRadius::ZERO, ui.visuals().faint_bg_color);
+
+    let footer_rect = Rect::from_min_max(
+        pos2(surface_rect.left(), surface_rect.bottom() - footer_height_token()),
+        surface_rect.right_bottom(),
+    );
+    let scroll_rect = Rect::from_min_max(
+        pos2(
+            surface_rect.left() + content_outer_margin_token(),
+            surface_rect.top() + content_outer_margin_token(),
+        ),
+        pos2(
+            (surface_rect.left() + content_outer_margin_token() + content_max_width_token())
+                .min(surface_rect.right() - content_outer_margin_token()),
+            footer_rect.top() - content_outer_margin_token(),
+        ),
+    );
+
+    let _ = ui.scope_builder(UiBuilder::new().max_rect(scroll_rect), |ui| {
+        ScrollArea::vertical()
+            .id_salt("dancer_settings_page_scroll")
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                ui.set_width(scroll_rect.width());
+                draw_dancer_card(ui, state, actions, locale);
+                ui.add_space(content_spacing_token());
+                draw_swap_card(ui, state, actions, locale);
+            });
+    });
+
+    let _ = ui.scope_builder(UiBuilder::new().max_rect(footer_rect), |ui| {
+        Frame::new()
+            .fill(ui.visuals().window_fill)
+            .stroke(Stroke::new(
+                material_style_metrics().strokes.outline,
+                ui.visuals().widgets.noninteractive.bg_stroke.color,
+            ))
+            .inner_margin(Margin::same(FOOTER_PADDING_PX))
+            .show(ui, |ui| {
+                ui.set_min_height(footer_height_token());
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     if ui
                         .add(MaterialButton::new(t(locale, "CommonOk", "OK")))
                         .clicked()
                     {
                         actions.push(DancersAction::SaveToGlobal);
                     }
-                });
-                ui.separator();
-                ScrollArea::vertical().show(ui, |ui| {
-                    draw_dancer_card(ui, state, actions, locale);
-                    ui.add_space(content_spacing_token());
-                    draw_swap_card(ui, state, actions, locale);
+                    if ui
+                        .add(MaterialButton::new(t(locale, "CommonCancel", "Cancel")))
+                        .clicked()
+                    {
+                        actions.push(DancersAction::Cancel);
+                    }
                 });
             });
-        });
+    });
 }
 
 fn draw_dancer_card(

@@ -8,6 +8,7 @@ use crate::audio_player::reducer::AudioPlayerEffect;
 use crate::choreography_settings::actions::ChoreographySettingsAction;
 use crate::choreography_settings::actions::UpdateSelectedSceneAction;
 use crate::choreography_settings::state::SelectedSceneState;
+use crate::dancers::actions::DancersAction;
 use crate::settings::actions::SettingsAction;
 use choreo_master_mobile_json::Color;
 use choreo_master_mobile_json::SceneId;
@@ -208,6 +209,10 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             }
         }
         ChoreoMainAction::DancersAction(action) => {
+            if matches!(action, DancersAction::Cancel) {
+                state.content = MainContent::Main;
+                return;
+            }
             crate::dancers::reducer::reduce(&mut state.dancers_state, action);
         }
         ChoreoMainAction::ClearOutgoingCommands => {
