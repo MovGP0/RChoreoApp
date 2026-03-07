@@ -347,8 +347,32 @@ fn ui_parity_spec() {
                 assert!(pane_state.scenes[0].positions.is_empty());
                 assert!(pane_state.scenes[0].variations.is_empty());
                 assert!(pane_state.scenes[0].current_variation.is_empty());
+                assert!(!pane_state.can_save_choreo);
                 assert!(pane_state.can_navigate_to_settings);
                 assert!(pane_state.can_navigate_to_dancer_settings);
+            },
+        );
+
+        spec.it(
+            "enables shared scenes save when a choreography file path exists",
+            |_| {
+                let temp_root = std::env::temp_dir().join("rchoreo_main_page_save_enablement_spec");
+                std::fs::create_dir_all(&temp_root).expect("temp dir should be created");
+                let file_path = temp_root.join("demo.choreo");
+                std::fs::write(&file_path, "{}").expect("temp file should be created");
+
+                let mut state = ChoreoMainState {
+                    ..ChoreoMainState::default()
+                };
+                state.last_opened_choreo_file = Some(file_path.to_string_lossy().into_owned());
+                state.choreography_settings_state.choreography.name = "Demo".to_string();
+
+                let pane_state = scene_pane_state(&state);
+
+                assert!(pane_state.can_save_choreo);
+
+                let _ = std::fs::remove_file(file_path);
+                let _ = std::fs::remove_dir(temp_root);
             },
         );
 
@@ -374,6 +398,10 @@ fn ui_parity_spec() {
                         file_name: None,
                         contents: String::new(),
                     }))
+                );
+                assert_eq!(
+                    map_scene_pane_action(ScenesAction::RequestSaveChoreography),
+                    Some(ChoreoMainAction::RequestSaveChoreo)
                 );
                 assert_eq!(
                     map_scene_pane_action(ScenesAction::InsertScene {

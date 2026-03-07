@@ -1,6 +1,7 @@
 use super::actions::OpenAudioRequested;
 use super::actions::OpenChoreoRequested;
 use super::actions::OpenSvgFileCommand;
+use super::actions::SaveChoreoRequested;
 use crate::audio_player::state::AudioPlayerState;
 use crate::choreography_settings::state::ChoreographySettingsState;
 use crate::dancers::state::DancersState;
@@ -59,8 +60,10 @@ pub struct ChoreoMainState {
     pub interaction_state_machine: InteractionStateMachineState,
     pub selected_positions_count: usize,
     pub outgoing_open_choreo_requests: Vec<OpenChoreoRequested>,
+    pub outgoing_save_choreo_requests: Vec<SaveChoreoRequested>,
     pub outgoing_audio_requests: Vec<OpenAudioRequested>,
     pub outgoing_open_svg_commands: Vec<OpenSvgFileCommand>,
+    pub last_opened_choreo_file: Option<String>,
     pub svg_file_path: Option<String>,
     pub last_opened_svg_preference: Option<String>,
     pub draw_floor_request_count: usize,
@@ -91,8 +94,10 @@ impl Default for ChoreoMainState {
             interaction_state_machine: InteractionStateMachineState::Idle,
             selected_positions_count: 0,
             outgoing_open_choreo_requests: Vec::new(),
+            outgoing_save_choreo_requests: Vec::new(),
             outgoing_audio_requests: Vec::new(),
             outgoing_open_svg_commands: Vec::new(),
+            last_opened_choreo_file: None,
             svg_file_path: None,
             last_opened_svg_preference: None,
             draw_floor_request_count: 0,

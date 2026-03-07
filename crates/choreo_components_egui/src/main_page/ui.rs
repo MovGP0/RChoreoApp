@@ -406,7 +406,7 @@ pub fn scene_pane_state(state: &ChoreoMainState) -> ScenesState {
                 .settings
                 .show_timestamps,
         is_place_mode: state.interaction_mode != InteractionMode::View,
-        can_save_choreo: false,
+        can_save_choreo: can_save_choreo(state),
         can_delete_scene: selected_scene.is_some(),
         can_navigate_to_settings: true,
         can_navigate_to_dancer_settings: true,
@@ -436,6 +436,7 @@ pub fn map_scene_pane_action(action: ScenesAction) -> Option<ChoreoMainAction> {
                 contents: String::new(),
             }))
         }
+        ScenesAction::RequestSaveChoreography => Some(ChoreoMainAction::RequestSaveChoreo),
         ScenesAction::NavigateToSettings => Some(ChoreoMainAction::NavigateToSettings),
         ScenesAction::NavigateToDancerSettings => Some(ChoreoMainAction::NavigateToDancers),
         ScenesAction::UpdateSearchText(value) => {
@@ -446,8 +447,7 @@ pub fn map_scene_pane_action(action: ScenesAction) -> Option<ChoreoMainAction> {
         }
         ScenesAction::OpenDeleteSceneDialog => Some(ChoreoMainAction::DeleteSelectedScene),
         ScenesAction::SelectScene { index } => Some(ChoreoMainAction::SelectScene { index }),
-        ScenesAction::RequestSaveChoreography
-        | ScenesAction::LoadScenes { .. }
+        ScenesAction::LoadScenes { .. }
         | ScenesAction::ReloadScenes
         | ScenesAction::SelectSceneFromAudioPosition { .. }
         | ScenesAction::ApplyPlacementModeForSelected
@@ -462,6 +462,16 @@ pub fn map_scene_pane_action(action: ScenesAction) -> Option<ChoreoMainAction> {
         | ScenesAction::SaveChoreography
         | ScenesAction::ClearEphemeralOutputs => None,
     }
+}
+
+fn can_save_choreo(state: &ChoreoMainState) -> bool {
+    let has_file = state
+        .last_opened_choreo_file
+        .as_ref()
+        .is_some_and(|path| !path.trim().is_empty() && std::path::Path::new(path).exists());
+    let choreography = &state.choreography_settings_state.choreography;
+    let has_choreo = !choreography.name.is_empty() || !choreography.scenes.is_empty();
+    has_file && has_choreo
 }
 
 fn filter_scene_items(scenes: &[SceneItemState], search_text: &str) -> Vec<SceneItemState> {

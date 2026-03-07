@@ -69,6 +69,19 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
         ChoreoMainAction::RequestOpenChoreo(request) => {
             state.outgoing_open_choreo_requests.push(request);
         }
+        ChoreoMainAction::RequestSaveChoreo => {
+            if let Some(file_path) = state
+                .last_opened_choreo_file
+                .as_ref()
+                .filter(|path| !path.trim().is_empty() && std::path::Path::new(path.as_str()).exists())
+            {
+                state.outgoing_save_choreo_requests.push(
+                    super::actions::SaveChoreoRequested {
+                        file_path: file_path.clone(),
+                    },
+                );
+            }
+        }
         ChoreoMainAction::RequestOpenAudio(request) => {
             state.outgoing_audio_requests.push(request);
         }
@@ -199,6 +212,7 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
         }
         ChoreoMainAction::ClearOutgoingCommands => {
             state.outgoing_open_choreo_requests.clear();
+            state.outgoing_save_choreo_requests.clear();
             state.outgoing_audio_requests.clear();
             state.outgoing_open_svg_commands.clear();
         }

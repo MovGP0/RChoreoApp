@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use choreo_master_mobile_json::export_to_file;
 use choreo_master_mobile_json::import;
 use choreo_models::ChoreographyModel;
 use choreo_models::ChoreographyModelMapper;
@@ -27,6 +28,7 @@ pub(crate) fn consume_outgoing_commands(
 ) {
     let audio_requests = view_model.state().outgoing_audio_requests.clone();
     let choreo_requests = view_model.state().outgoing_open_choreo_requests.clone();
+    let save_requests = view_model.state().outgoing_save_choreo_requests.clone();
     let open_svg_commands = view_model.state().outgoing_open_svg_commands.clone();
 
     for request in choreo_requests {
@@ -35,6 +37,10 @@ pub(crate) fn consume_outgoing_commands(
 
     for request in audio_requests {
         route_open_audio_request(request, handlers, behavior_pipeline, true);
+    }
+
+    for request in save_requests {
+        apply_save_choreo_request(view_model, request.file_path.as_str());
     }
 
     for command in open_svg_commands {
@@ -108,7 +114,10 @@ fn apply_open_choreo_request(
     view_model.dispatch(ChoreoMainAction::AudioPlayerAction(
         AudioPlayerAction::UpdateTicksAndLinkState,
     ));
-    view_model.state_mut().draw_floor_request_count += 1;
+    let last_opened_choreo_file = request.file_path.clone().or(request.file_name.clone());
+    let state = view_model.state_mut();
+    state.last_opened_choreo_file = last_opened_choreo_file;
+    state.draw_floor_request_count += 1;
 
     if let Some(audio_request) = audio_request {
         route_open_audio_request(audio_request, handlers, behavior_pipeline, false);
@@ -215,6 +224,28 @@ fn resolve_audio_request(
     }
 
     None
+}
+
+fn apply_save_choreo_request(view_model: &mut MainViewModel, file_path: &str) {
+    if file_path.trim().is_empty() {
+        return;
+    }
+
+    let path = Path::new(file_path);
+    if !path.exists() {
+        return;
+    }
+
+    let mut choreography = view_model.state().choreography_settings_state.choreography.clone();
+    choreography.last_save_date = crate::time::SystemClock::now_utc();
+    let mapper = ChoreographyModelMapper;
+    let json_model = mapper.map_to_json(&choreography);
+    if export_to_file(path, &json_model).is_err() {
+        return;
+    }
+
+    view_model.state_mut().choreography_settings_state.choreography.last_save_date =
+        choreography.last_save_date;
 }
 
 pub(crate) fn enqueue_open_audio_request(

@@ -14,6 +14,11 @@ pub struct OpenChoreoRequested {
     pub contents: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SaveChoreoRequested {
+    pub file_path: String,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct OpenAudioRequested {
     pub file_path: String,
@@ -46,6 +51,7 @@ pub enum ChoreoMainAction {
     },
     HideDialog,
     RequestOpenChoreo(OpenChoreoRequested),
+    RequestSaveChoreo,
     RequestOpenAudio(OpenAudioRequested),
     RequestOpenImage {
         file_path: String,

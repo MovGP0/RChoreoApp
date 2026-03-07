@@ -1,7 +1,12 @@
 use std::cell::RefCell;
+use std::fs;
+use std::path::PathBuf;
 use std::rc::Rc;
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 use choreo_master_mobile_json::export;
+use choreo_master_mobile_json::import;
 use choreo_components_egui::choreo_main::MainPageActionHandlers;
 use choreo_components_egui::choreo_main::MainPageBinding;
 use choreo_components_egui::choreo_main::MainPageDependencies;
@@ -11,6 +16,8 @@ use choreo_components_egui::choreo_main::OpenImageRequested;
 use choreo_components_egui::choreo_main::ShowDialogCommand;
 use choreo_components_egui::choreo_main::actions::ChoreoMainAction;
 use choreo_components_egui::choreo_main::state::InteractionMode;
+use choreo_components_egui::choreography_settings::actions::ChoreographySettingsAction;
+use choreo_components_egui::choreography_settings::actions::UpdateSelectedSceneAction;
 use choreo_components_egui::observability::TraceContext;
 use choreo_models::ChoreographyModel;
 use choreo_models::ChoreographyModelMapper;
@@ -132,4 +139,88 @@ fn binding_uses_pick_choreo_handler_to_load_selected_file() {
     assert_eq!(state.state().selected_scene_index, Some(0));
     assert_eq!(state.state().floor_scene_name.as_deref(), Some("Intro"));
     assert_eq!(state.state().choreography_settings_state.name, "Loaded choreo");
+}
+
+#[test]
+fn binding_saves_current_choreography_back_to_last_opened_file() {
+    let temp_file = unique_temp_file("choreo");
+    let mut choreography = ChoreographyModel {
+        name: "Before save".to_string(),
+        ..ChoreographyModel::default()
+    };
+    choreography.scenes = vec![choreo_models::SceneModel {
+        scene_id: choreo_master_mobile_json::SceneId(1),
+        positions: Vec::new(),
+        name: "Intro".to_string(),
+        text: None,
+        fixed_positions: false,
+        timestamp: Some("1".to_string()),
+        variation_depth: 0,
+        variations: Vec::new(),
+        current_variation: Vec::new(),
+        color: choreo_master_mobile_json::Color::transparent(),
+    }];
+    let mapper = ChoreographyModelMapper;
+    let contents = export(&mapper.map_to_json(&choreography))
+        .expect("test choreography should serialize to json");
+    fs::write(&temp_file, &contents).expect("temp .choreo file should be created");
+
+    let file_path = temp_file.to_string_lossy().into_owned();
+    let file_name = temp_file
+        .file_name()
+        .and_then(|value| value.to_str())
+        .expect("temp file should have a name")
+        .to_string();
+    let contents_for_picker = contents.clone();
+    let file_path_for_picker = file_path.clone();
+    let file_name_for_picker = file_name.clone();
+
+    let binding = MainPageBinding::new(MainPageDependencies {
+        action_handlers: MainPageActionHandlers {
+            pick_choreo_file: Some(Rc::new(move || {
+                Some(OpenChoreoRequested {
+                    file_path: Some(file_path_for_picker.clone()),
+                    file_name: Some(file_name_for_picker.clone()),
+                    contents: contents_for_picker.clone(),
+                })
+            })),
+            ..MainPageActionHandlers::default()
+        },
+        ..MainPageDependencies::default()
+    });
+
+    binding.dispatch(ChoreoMainAction::RequestOpenChoreo(OpenChoreoRequested {
+        file_path: None,
+        file_name: None,
+        contents: String::new(),
+    }));
+    binding.dispatch(ChoreoMainAction::ChoreographySettingsAction(
+        ChoreographySettingsAction::UpdateName("Saved choreo".to_string()),
+    ));
+    binding.dispatch(ChoreoMainAction::ChoreographySettingsAction(
+        ChoreographySettingsAction::UpdateSelectedScene(UpdateSelectedSceneAction::SceneName(
+            "Saved intro".to_string(),
+        )),
+    ));
+    binding.dispatch(ChoreoMainAction::RequestSaveChoreo);
+
+    let saved_contents =
+        fs::read_to_string(&temp_file).expect("saved .choreo file should be readable");
+    let saved_json = import(&saved_contents).expect("saved .choreo contents should import");
+
+    assert_eq!(saved_json.name, "Saved choreo");
+    assert_eq!(saved_json.scenes.len(), 1);
+    assert_eq!(saved_json.scenes[0].name, "Saved intro");
+
+    let _ = fs::remove_file(temp_file);
+}
+
+fn unique_temp_file(extension: &str) -> PathBuf {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system time should be after unix epoch")
+        .as_nanos();
+    let mut path = std::env::temp_dir();
+    path.push(format!("rchoreo_main_binding_{nanos}.{extension}"));
+    path
 }
