@@ -314,7 +314,7 @@ fn delete_selected_scene_internal(state: &mut ChoreoMainState) {
     select_scene_internal(state, next_index, false);
 }
 
-fn sync_audio_position_internal(state: &mut ChoreoMainState, seconds: f64) {
+pub(crate) fn sync_audio_position_internal(state: &mut ChoreoMainState, seconds: f64) {
     state.audio_position_seconds = seconds;
     let target_scene = state
         .scenes

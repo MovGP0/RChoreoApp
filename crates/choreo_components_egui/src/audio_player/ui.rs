@@ -1,7 +1,9 @@
 use egui::Ui;
+use egui::Image;
 use egui_material3::MaterialIconButton;
 use egui_material3::MaterialSlider;
 
+use crate::material::components;
 use crate::slider_with_ticks::ui::SliderWithTicksInteraction;
 use crate::slider_with_ticks::ui::SliderWithTicksUiState;
 use crate::ui_icons;
@@ -102,13 +104,9 @@ pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
             actions.push(AudioPlayerAction::LinkSceneToPosition);
         }
 
-        if ui
-            .add(
-                MaterialIconButton::standard(play_pause_icon_name(state.is_playing))
-                    .svg_data(play_pause_icon_svg(state.is_playing)),
-            )
-            .clicked()
-        {
+        let play_pause_response =
+            components::icon_button(ui, play_pause_image(state.is_playing), false);
+        if play_pause_response.clicked() {
             actions.push(AudioPlayerAction::TogglePlayPause);
         }
     });
@@ -154,6 +152,17 @@ fn play_pause_icon_spec(is_playing: bool) -> ui_icons::UiIconSpec {
     match play_pause_glyph(is_playing) {
         PlayPauseGlyph::Play => ui_icons::icon(UiIconKey::AudioPlay),
         PlayPauseGlyph::Pause => ui_icons::icon(UiIconKey::AudioPause),
+    }
+}
+
+fn play_pause_image(is_playing: bool) -> Image<'static> {
+    match play_pause_glyph(is_playing) {
+        PlayPauseGlyph::Play => {
+            Image::new(egui::include_image!("../../assets/icons/Play.svg"))
+        }
+        PlayPauseGlyph::Pause => {
+            Image::new(egui::include_image!("../../assets/icons/Pause.svg"))
+        }
     }
 }
 

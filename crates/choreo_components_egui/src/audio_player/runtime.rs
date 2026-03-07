@@ -56,6 +56,12 @@ impl AudioPlayerRuntime {
         }
     }
 
+    pub fn pause(&mut self) {
+        if let Some(player) = self.player.as_mut() {
+            player.pause();
+        }
+    }
+
     pub fn stop(&mut self) {
         if let Some(player) = self.player.as_mut() {
             player.stop();
@@ -100,11 +106,25 @@ impl AudioPlayerRuntime {
 }
 
 pub fn apply_player_sample(state: &mut AudioPlayerState, sample: AudioPlayerSample) {
+    apply_player_sample_inner(state, sample, true);
+}
+
+pub fn apply_player_sample_without_position(state: &mut AudioPlayerState, sample: AudioPlayerSample) {
+    apply_player_sample_inner(state, sample, false);
+}
+
+fn apply_player_sample_inner(
+    state: &mut AudioPlayerState,
+    sample: AudioPlayerSample,
+    include_position: bool,
+) {
     state.is_playing = sample.is_playing;
     state.can_seek = sample.can_seek;
     state.can_set_speed = sample.can_set_speed;
     state.duration = sample.duration;
-    state.position = sample.position;
+    if include_position {
+        state.position = sample.position;
+    }
     state.speed = sample.speed;
     state.volume = sample.volume;
     state.balance = sample.balance;

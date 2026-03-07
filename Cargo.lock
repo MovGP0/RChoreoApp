@@ -1259,10 +1259,12 @@ dependencies = [
  "material-color-utilities",
  "nject",
  "opentelemetry",
+ "rodio",
  "rspec",
  "serde",
  "serde_json",
  "serial_test",
+ "symphonia",
  "time 0.3.47",
  "web-sys",
 ]

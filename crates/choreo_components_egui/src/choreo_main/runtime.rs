@@ -6,6 +6,8 @@ use choreo_models::ChoreographyModel;
 use choreo_models::ChoreographyModelMapper;
 
 use crate::audio_player::actions::AudioPlayerAction;
+use crate::audio_player::runtime::AudioPlayerRuntime;
+use crate::audio_player::runtime::apply_player_sample_without_position;
 use crate::audio_player::state::AudioPlayerChoreographyScene;
 use crate::audio_player::state::AudioPlayerScene;
 use crate::choreography_settings::actions::ChoreographySettingsAction;
@@ -20,11 +22,13 @@ use super::behavior_pipeline::MainBehaviorPipeline;
 use super::main_page_binding::MainPageActionHandlers;
 use super::main_view_model::MainViewModel;
 use super::messages::OpenImageRequested;
+use super::reducer::sync_audio_position_internal;
 
 pub(crate) fn consume_outgoing_commands(
     view_model: &mut MainViewModel,
     handlers: &MainPageActionHandlers,
     behavior_pipeline: &MainBehaviorPipeline,
+    audio_runtime: &mut AudioPlayerRuntime,
 ) {
     let audio_requests = view_model.state().outgoing_audio_requests.clone();
     let choreo_requests = view_model.state().outgoing_open_choreo_requests.clone();
@@ -32,11 +36,18 @@ pub(crate) fn consume_outgoing_commands(
     let open_svg_commands = view_model.state().outgoing_open_svg_commands.clone();
 
     for request in choreo_requests {
-        route_open_choreo_request(view_model, request, handlers, behavior_pipeline);
+        route_open_choreo_request(view_model, request, handlers, behavior_pipeline, audio_runtime);
     }
 
     for request in audio_requests {
-        route_open_audio_request(view_model, request, handlers, behavior_pipeline, true);
+        route_open_audio_request(
+            view_model,
+            audio_runtime,
+            request,
+            handlers,
+            behavior_pipeline,
+            true,
+        );
     }
 
     for request in save_requests {
@@ -55,6 +66,7 @@ fn route_open_choreo_request(
     request: OpenChoreoRequested,
     handlers: &MainPageActionHandlers,
     behavior_pipeline: &MainBehaviorPipeline,
+    audio_runtime: &mut AudioPlayerRuntime,
 ) {
     let resolved_request = if request.contents.trim().is_empty() {
         handlers
@@ -73,7 +85,13 @@ fn route_open_choreo_request(
         request_open_choreo(resolved_request.clone());
     }
 
-    apply_open_choreo_request(view_model, resolved_request, handlers, behavior_pipeline);
+    apply_open_choreo_request(
+        view_model,
+        resolved_request,
+        handlers,
+        behavior_pipeline,
+        audio_runtime,
+    );
 }
 
 fn apply_open_choreo_request(
@@ -81,6 +99,7 @@ fn apply_open_choreo_request(
     request: OpenChoreoRequested,
     handlers: &MainPageActionHandlers,
     behavior_pipeline: &MainBehaviorPipeline,
+    audio_runtime: &mut AudioPlayerRuntime,
 ) {
     let Ok(json_model) = import(&request.contents) else {
         return;
@@ -120,7 +139,14 @@ fn apply_open_choreo_request(
     state.draw_floor_request_count += 1;
 
     if let Some(audio_request) = audio_request {
-        route_open_audio_request(view_model, audio_request, handlers, behavior_pipeline, false);
+        route_open_audio_request(
+            view_model,
+            audio_runtime,
+            audio_request,
+            handlers,
+            behavior_pipeline,
+            false,
+        );
     }
 }
 
@@ -148,6 +174,7 @@ fn route_open_svg_command(
 
 fn route_open_audio_request(
     view_model: &mut MainViewModel,
+    audio_runtime: &mut AudioPlayerRuntime,
     request: OpenAudioRequested,
     handlers: &MainPageActionHandlers,
     behavior_pipeline: &MainBehaviorPipeline,
@@ -157,6 +184,7 @@ fn route_open_audio_request(
         if let Some(behavior) = behavior_pipeline.open_audio_behavior.as_ref() {
             behavior.apply(request.clone());
         }
+        apply_open_audio_request(view_model, audio_runtime, request.file_path.as_str());
         if let Some(request_open_audio) = handlers.request_open_audio.as_ref() {
             request_open_audio(request);
         }
@@ -174,15 +202,126 @@ fn route_open_audio_request(
         && let Some(pick_audio_path) = handlers.pick_audio_path.as_ref()
         && let Some(file_path) = pick_audio_path()
     {
-        let request = OpenAudioRequested {
-            file_path,
-            trace_context: request.trace_context,
-        };
-        if let Some(behavior) = behavior_pipeline.open_audio_behavior.as_ref() {
-            behavior.apply(request);
-        }
-        view_model.dispatch(ChoreoMainAction::OpenAudioPanel);
+        route_open_audio_request(
+            view_model,
+            audio_runtime,
+            OpenAudioRequested {
+                file_path,
+                trace_context: request.trace_context,
+            },
+            handlers,
+            behavior_pipeline,
+            false,
+        );
     }
+}
+
+fn apply_open_audio_request(
+    view_model: &mut MainViewModel,
+    audio_runtime: &mut AudioPlayerRuntime,
+    file_path: &str,
+) {
+    if file_path.trim().is_empty() {
+        return;
+    }
+
+    let file_exists = Path::new(file_path).is_file();
+    audio_runtime.set_backend(view_model.state().settings_state.audio_player_backend);
+    if file_exists {
+        audio_runtime.open_file(file_path.to_string());
+    } else {
+        audio_runtime.close();
+    }
+
+    view_model.dispatch(ChoreoMainAction::AudioPlayerAction(
+        AudioPlayerAction::OpenAudioFile {
+            file_path: file_path.to_string(),
+            file_exists,
+        },
+    ));
+
+    if file_exists
+        && let Some(sample) = audio_runtime.sample()
+    {
+        crate::audio_player::runtime::apply_player_sample(
+            &mut view_model.state_mut().audio_player_state,
+            sample,
+        );
+    }
+}
+
+pub(crate) fn apply_audio_action_side_effects(
+    view_model: &mut MainViewModel,
+    audio_runtime: &mut AudioPlayerRuntime,
+    action: &ChoreoMainAction,
+) {
+    match action {
+        ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::TogglePlayPause) => {
+            audio_runtime.toggle_play_pause();
+        }
+        ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::Stop) => {
+            audio_runtime.stop();
+        }
+        ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::SeekToPosition { position }) => {
+            audio_runtime.seek(*position);
+        }
+        ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::PositionDragStarted) => {
+            if view_model.state().audio_player_state.was_playing_before_drag {
+                audio_runtime.pause();
+            }
+        }
+        ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::PositionDragCompleted {
+            position,
+        }) => {
+            if view_model.state().audio_player_state.is_playing {
+                audio_runtime.seek_and_play(*position);
+            } else {
+                audio_runtime.seek(*position);
+            }
+        }
+        ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::SpeedChanged { speed }) => {
+            audio_runtime.set_speed(*speed);
+        }
+        _ => {}
+    }
+}
+
+pub(crate) fn poll_audio_runtime(
+    view_model: &mut MainViewModel,
+    audio_runtime: &mut AudioPlayerRuntime,
+) -> bool {
+    let Some(sample) = audio_runtime.sample() else {
+        return false;
+    };
+
+    let state = view_model.state_mut();
+    apply_player_sample_without_position(&mut state.audio_player_state, sample);
+
+    let effects = crate::audio_player::reducer::reduce(
+        &mut state.audio_player_state,
+        AudioPlayerAction::PlayerPositionSampled {
+            position: sample.position,
+        },
+    );
+    debug_assert!(effects.is_empty());
+
+    let effects = crate::audio_player::reducer::reduce(
+        &mut state.audio_player_state,
+        AudioPlayerAction::PublishPositionIfChanged,
+    );
+    for effect in effects {
+        match effect {
+            crate::audio_player::reducer::AudioPlayerEffect::PositionChangedPublished {
+                position_seconds,
+            } => {
+                sync_audio_position_internal(state, position_seconds);
+            }
+        }
+    }
+
+    state.audio_player_state.has_player
+        && (state.audio_player_state.is_playing
+            || state.audio_player_state.pending_seek_position.is_some())
 }
 
 fn map_selected_scene_state(scene: &choreo_models::SceneModel) -> SelectedSceneState {

@@ -1,4 +1,5 @@
 use egui::Context;
+use std::time::Duration;
 
 use crate::choreo_main::MainPageBinding;
 use crate::choreo_main::MainPageDependencies;
@@ -70,6 +71,11 @@ impl AppShellViewModel {
             return;
         }
 
+        let mut request_audio_repaint = false;
+        if let Some(binding) = self.main_page_binding.as_ref() {
+            request_audio_repaint = binding.tick_audio_runtime();
+        }
+
         egui::CentralPanel::default().show(context, |ui| {
             if let Some(binding) = self.main_page_binding.as_ref() {
                 let state = {
@@ -81,6 +87,13 @@ impl AppShellViewModel {
                 }
             }
         });
+
+        if let Some(binding) = self.main_page_binding.as_ref() {
+            request_audio_repaint |= binding.audio_runtime_is_active();
+        }
+        if request_audio_repaint {
+            context.request_repaint_after(Duration::from_millis(16));
+        }
     }
 
     pub fn route_external_file_path(&self, file_path: &str) {

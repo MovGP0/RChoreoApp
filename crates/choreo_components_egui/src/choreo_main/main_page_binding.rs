@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
 
+use crate::audio_player::runtime::AudioPlayerRuntime;
 use crate::behavior::Behavior;
 
 use super::HideDialogBehavior;
@@ -18,9 +19,11 @@ use super::messages::CloseDialogCommand;
 use super::messages::OpenImageRequested;
 use super::messages::OpenSvgFileCommand;
 use super::messages::ShowDialogCommand;
+use super::runtime::apply_audio_action_side_effects;
 use super::runtime::consume_outgoing_commands;
 use super::runtime::enqueue_open_audio_request;
 use super::runtime::enqueue_open_image_request;
+use super::runtime::poll_audio_runtime;
 
 #[derive(Clone, Default)]
 pub struct MainPageActionHandlers {
@@ -43,6 +46,7 @@ pub struct MainPageBinding {
     view_model: Rc<RefCell<MainViewModel>>,
     action_handlers: MainPageActionHandlers,
     behavior_pipeline: MainBehaviorPipeline,
+    audio_runtime: RefCell<AudioPlayerRuntime>,
 }
 
 impl MainPageBinding {
@@ -56,15 +60,19 @@ impl MainPageBinding {
             behaviors,
             behavior_dependencies,
         });
+        let view_model = provider.main_view_model();
+        let audio_backend = view_model.borrow().state().settings_state.audio_player_backend;
         Self {
-            view_model: provider.main_view_model(),
+            view_model,
             action_handlers,
             behavior_pipeline: provider.behavior_pipeline().clone(),
+            audio_runtime: RefCell::new(AudioPlayerRuntime::new(audio_backend)),
         }
     }
 
     pub fn dispatch(&self, action: ChoreoMainAction) {
         let mut view_model = self.view_model.borrow_mut();
+        let mut audio_runtime = self.audio_runtime.borrow_mut();
         let should_apply_interaction_mode = matches!(
             action,
             ChoreoMainAction::ApplyInteractionMode { .. } | ChoreoMainAction::SelectMode { .. }
@@ -75,7 +83,8 @@ impl MainPageBinding {
             _ => None,
         };
 
-        view_model.dispatch(action);
+        view_model.dispatch(action.clone());
+        apply_audio_action_side_effects(&mut view_model, &mut audio_runtime, &action);
 
         if should_apply_interaction_mode
             && let Some(behavior) = self
@@ -95,7 +104,23 @@ impl MainPageBinding {
             &mut view_model,
             &self.action_handlers,
             &self.behavior_pipeline,
+            &mut audio_runtime,
         );
+    }
+
+    #[must_use]
+    pub fn tick_audio_runtime(&self) -> bool {
+        let mut view_model = self.view_model.borrow_mut();
+        let mut audio_runtime = self.audio_runtime.borrow_mut();
+        poll_audio_runtime(&mut view_model, &mut audio_runtime)
+    }
+
+    #[must_use]
+    pub fn audio_runtime_is_active(&self) -> bool {
+        let view_model = self.view_model.borrow();
+        let audio_state = &view_model.state().audio_player_state;
+        audio_state.has_player
+            && (audio_state.is_playing || audio_state.pending_seek_position.is_some())
     }
 
     pub fn show_dialog(&self, command: ShowDialogCommand) {
@@ -110,21 +135,25 @@ impl MainPageBinding {
 
     pub fn request_open_audio(&self, request: OpenAudioRequested) {
         let mut view_model = self.view_model.borrow_mut();
+        let mut audio_runtime = self.audio_runtime.borrow_mut();
         enqueue_open_audio_request(&mut view_model, request);
         consume_outgoing_commands(
             &mut view_model,
             &self.action_handlers,
             &self.behavior_pipeline,
+            &mut audio_runtime,
         );
     }
 
     pub fn request_open_image(&self, request: OpenImageRequested) {
         let mut view_model = self.view_model.borrow_mut();
+        let mut audio_runtime = self.audio_runtime.borrow_mut();
         enqueue_open_image_request(&mut view_model, request, &self.behavior_pipeline);
         consume_outgoing_commands(
             &mut view_model,
             &self.action_handlers,
             &self.behavior_pipeline,
+            &mut audio_runtime,
         );
     }
 
@@ -162,11 +191,13 @@ impl MainPageBinding {
                 contents,
             };
             let mut view_model = self.view_model.borrow_mut();
+            let mut audio_runtime = self.audio_runtime.borrow_mut();
             view_model.dispatch(ChoreoMainAction::RequestOpenChoreo(command));
             consume_outgoing_commands(
                 &mut view_model,
                 &self.action_handlers,
                 &self.behavior_pipeline,
+                &mut audio_runtime,
             );
             return;
         }

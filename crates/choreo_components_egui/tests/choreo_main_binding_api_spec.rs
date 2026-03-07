@@ -1,7 +1,10 @@
 use std::cell::RefCell;
 use std::fs;
+use std::path::Path;
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::thread;
+use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
@@ -16,6 +19,7 @@ use choreo_components_egui::choreo_main::OpenAudioRequested;
 use choreo_components_egui::choreo_main::actions::OpenChoreoRequested;
 use choreo_components_egui::choreo_main::OpenImageRequested;
 use choreo_components_egui::choreo_main::ShowDialogCommand;
+use choreo_components_egui::audio_player::actions::AudioPlayerAction;
 use choreo_components_egui::choreo_main::actions::ChoreoMainAction;
 use choreo_components_egui::choreo_main::state::InteractionMode;
 use choreo_components_egui::choreography_settings::actions::ChoreographySettingsAction;
@@ -245,6 +249,106 @@ fn binding_uses_pick_audio_handler_to_open_selected_file_and_show_audio_panel() 
     assert!(binding.view_model().borrow().state().is_audio_player_open);
 }
 
+#[test]
+fn binding_opens_audio_file_and_toggles_play_pause_from_main_audio_actions() {
+    let temp_file = unique_temp_file("wav");
+    write_test_wav(&temp_file);
+    let file_path = temp_file.to_string_lossy().into_owned();
+
+    let binding = MainPageBinding::new(MainPageDependencies::default());
+
+    binding.request_open_audio(OpenAudioRequested {
+        file_path: file_path.clone(),
+        trace_context: None,
+    });
+
+    {
+        let view_model = binding.view_model();
+        let state = view_model.borrow();
+        let state = state.state();
+        assert_eq!(
+            state.audio_player_state.last_opened_audio_file_path.as_deref(),
+            Some(file_path.as_str())
+        );
+        assert!(state.audio_player_state.has_player);
+        assert!(state.is_audio_player_open);
+        assert!(!state.audio_player_state.is_playing);
+    }
+
+    binding.dispatch(ChoreoMainAction::AudioPlayerAction(
+        AudioPlayerAction::TogglePlayPause,
+    ));
+    let became_playing = wait_until(
+        Duration::from_millis(400),
+        Duration::from_millis(20),
+        || {
+            let _ = binding.tick_audio_runtime();
+            binding
+                .view_model()
+                .borrow()
+                .state()
+                .audio_player_state
+                .is_playing
+        },
+    );
+
+    let view_model = binding.view_model();
+    let state = view_model.borrow();
+    let state = state.state();
+    assert!(state.audio_player_state.has_player);
+    assert!(became_playing);
+    assert!(state.audio_player_state.is_playing);
+
+    let _ = fs::remove_file(temp_file);
+}
+
+#[test]
+fn binding_tick_clears_pending_seek_only_after_runtime_acknowledges_position() {
+    let temp_file = unique_temp_file("wav");
+    write_test_wav(&temp_file);
+    let binding = MainPageBinding::new(MainPageDependencies::default());
+
+    binding.request_open_audio(OpenAudioRequested {
+        file_path: temp_file.to_string_lossy().into_owned(),
+        trace_context: None,
+    });
+    binding.dispatch(ChoreoMainAction::AudioPlayerAction(
+        AudioPlayerAction::PositionDragStarted,
+    ));
+    binding.dispatch(ChoreoMainAction::AudioPlayerAction(
+        AudioPlayerAction::PositionDragCompleted { position: 0.25 },
+    ));
+
+    {
+        let view_model = binding.view_model();
+        let state = view_model.borrow();
+        assert_eq!(state.state().audio_player_state.pending_seek_position, Some(0.25));
+    }
+
+    let acknowledged = wait_until(
+        Duration::from_millis(400),
+        Duration::from_millis(20),
+        || {
+            let _ = binding.tick_audio_runtime();
+            binding
+                .view_model()
+                .borrow()
+                .state()
+                .audio_player_state
+                .pending_seek_position
+                .is_none()
+        },
+    );
+
+    let view_model = binding.view_model();
+    let state = view_model.borrow();
+    assert!(acknowledged);
+    assert!(state.state().audio_player_state.pending_seek_position.is_none());
+    assert_eq!(state.state().audio_player_state.position, 0.25);
+
+    let _ = fs::remove_file(temp_file);
+}
+
 fn unique_temp_file(extension: &str) -> PathBuf {
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -253,4 +357,44 @@ fn unique_temp_file(extension: &str) -> PathBuf {
     let mut path = std::env::temp_dir();
     path.push(format!("rchoreo_main_binding_{nanos}.{extension}"));
     path
+}
+
+fn write_test_wav(path: &Path) {
+    let sample_rate = 8_000_u32;
+    let sample_count = 8_000_usize;
+    let data_size = (sample_count * std::mem::size_of::<i16>()) as u32;
+    let mut bytes = Vec::with_capacity(44 + data_size as usize);
+    bytes.extend_from_slice(b"RIFF");
+    bytes.extend_from_slice(&(36 + data_size).to_le_bytes());
+    bytes.extend_from_slice(b"WAVE");
+    bytes.extend_from_slice(b"fmt ");
+    bytes.extend_from_slice(&16_u32.to_le_bytes());
+    bytes.extend_from_slice(&1_u16.to_le_bytes());
+    bytes.extend_from_slice(&1_u16.to_le_bytes());
+    bytes.extend_from_slice(&sample_rate.to_le_bytes());
+    bytes.extend_from_slice(&(sample_rate * 2).to_le_bytes());
+    bytes.extend_from_slice(&2_u16.to_le_bytes());
+    bytes.extend_from_slice(&16_u16.to_le_bytes());
+    bytes.extend_from_slice(b"data");
+    bytes.extend_from_slice(&data_size.to_le_bytes());
+    for index in 0..sample_count {
+        let sample = if index % 32 < 16 {
+            i16::MAX / 6
+        } else {
+            -(i16::MAX / 6)
+        };
+        bytes.extend_from_slice(&sample.to_le_bytes());
+    }
+    fs::write(path, bytes).expect("test wav file should be written");
+}
+
+fn wait_until(timeout: Duration, interval: Duration, mut predicate: impl FnMut() -> bool) -> bool {
+    let start = std::time::Instant::now();
+    while start.elapsed() < timeout {
+        if predicate() {
+            return true;
+        }
+        thread::sleep(interval);
+    }
+    predicate()
 }
