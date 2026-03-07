@@ -36,7 +36,7 @@ pub(crate) fn consume_outgoing_commands(
     }
 
     for request in audio_requests {
-        route_open_audio_request(request, handlers, behavior_pipeline, true);
+        route_open_audio_request(view_model, request, handlers, behavior_pipeline, true);
     }
 
     for request in save_requests {
@@ -120,7 +120,7 @@ fn apply_open_choreo_request(
     state.draw_floor_request_count += 1;
 
     if let Some(audio_request) = audio_request {
-        route_open_audio_request(audio_request, handlers, behavior_pipeline, false);
+        route_open_audio_request(view_model, audio_request, handlers, behavior_pipeline, false);
     }
 }
 
@@ -147,25 +147,41 @@ fn route_open_svg_command(
 }
 
 fn route_open_audio_request(
+    view_model: &mut MainViewModel,
     request: OpenAudioRequested,
     handlers: &MainPageActionHandlers,
     behavior_pipeline: &MainBehaviorPipeline,
     allow_picker_fallback: bool,
 ) {
-    if let Some(behavior) = behavior_pipeline.open_audio_behavior.as_ref() {
-        behavior.apply(request.clone());
+    if !request.file_path.trim().is_empty() {
+        if let Some(behavior) = behavior_pipeline.open_audio_behavior.as_ref() {
+            behavior.apply(request.clone());
+        }
+        if let Some(request_open_audio) = handlers.request_open_audio.as_ref() {
+            request_open_audio(request);
+        }
+        view_model.dispatch(ChoreoMainAction::OpenAudioPanel);
+        return;
     }
 
     if let Some(request_open_audio) = handlers.request_open_audio.as_ref() {
         request_open_audio(request);
+        view_model.dispatch(ChoreoMainAction::OpenAudioPanel);
         return;
     }
 
-    // Host fallback: support direct file-open integration when no typed handler is wired.
     if allow_picker_fallback
         && let Some(pick_audio_path) = handlers.pick_audio_path.as_ref()
+        && let Some(file_path) = pick_audio_path()
     {
-        let _ = pick_audio_path();
+        let request = OpenAudioRequested {
+            file_path,
+            trace_context: request.trace_context,
+        };
+        if let Some(behavior) = behavior_pipeline.open_audio_behavior.as_ref() {
+            behavior.apply(request);
+        }
+        view_model.dispatch(ChoreoMainAction::OpenAudioPanel);
     }
 }
 

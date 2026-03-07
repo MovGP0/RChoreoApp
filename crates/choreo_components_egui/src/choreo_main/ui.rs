@@ -89,5 +89,6 @@ pub use crate::main_page::ui::nav_icon_name;
 pub use crate::main_page::ui::open_audio_icon_name;
 pub use crate::main_page::ui::open_image_icon_name;
 pub use crate::main_page::ui::top_bar_nav_action;
+pub use crate::main_page::ui::top_bar_open_audio_action;
 pub use crate::main_page::ui::top_bar_settings_action;
 pub use crate::main_page::ui::top_bar_settings_icon_name;

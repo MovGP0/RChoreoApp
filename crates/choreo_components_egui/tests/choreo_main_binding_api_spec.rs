@@ -7,6 +7,8 @@ use std::time::UNIX_EPOCH;
 
 use choreo_master_mobile_json::export;
 use choreo_master_mobile_json::import;
+use choreo_components_egui::audio_player::OpenAudioFileCommand;
+use choreo_components_egui::choreo_main::MainBehaviorDependencies;
 use choreo_components_egui::choreo_main::MainPageActionHandlers;
 use choreo_components_egui::choreo_main::MainPageBinding;
 use choreo_components_egui::choreo_main::MainPageDependencies;
@@ -21,6 +23,7 @@ use choreo_components_egui::choreography_settings::actions::UpdateSelectedSceneA
 use choreo_components_egui::observability::TraceContext;
 use choreo_models::ChoreographyModel;
 use choreo_models::ChoreographyModelMapper;
+use crossbeam_channel::bounded;
 
 #[test]
 fn binding_forwards_open_audio_request_with_typed_trace_context() {
@@ -213,6 +216,33 @@ fn binding_saves_current_choreography_back_to_last_opened_file() {
     assert_eq!(saved_json.scenes[0].name, "Saved intro");
 
     let _ = fs::remove_file(temp_file);
+}
+
+#[test]
+fn binding_uses_pick_audio_handler_to_open_selected_file_and_show_audio_panel() {
+    let (open_audio_sender, open_audio_receiver) = bounded::<OpenAudioFileCommand>(8);
+    let binding = MainPageBinding::new(MainPageDependencies {
+        action_handlers: MainPageActionHandlers {
+            pick_audio_path: Some(Rc::new(|| Some("C:/music.mp3".to_string()))),
+            ..MainPageActionHandlers::default()
+        },
+        behavior_dependencies: MainBehaviorDependencies {
+            open_audio_sender: Some(open_audio_sender),
+            ..MainBehaviorDependencies::default()
+        },
+        ..MainPageDependencies::default()
+    });
+
+    binding.dispatch(ChoreoMainAction::RequestOpenAudio(OpenAudioRequested {
+        file_path: String::new(),
+        trace_context: None,
+    }));
+
+    let forwarded = open_audio_receiver
+        .try_recv()
+        .expect("picker fallback should forward selected audio file");
+    assert_eq!(forwarded.file_path, "C:/music.mp3");
+    assert!(binding.view_model().borrow().state().is_audio_player_open);
 }
 
 fn unique_temp_file(extension: &str) -> PathBuf {

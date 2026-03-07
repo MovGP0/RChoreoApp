@@ -20,10 +20,12 @@ use crate::main_page::ui::top_bar_action_count;
 use crate::main_page::ui::top_bar_action_icon_tokens;
 use crate::main_page::ui::top_bar_action_icon_uris;
 use crate::main_page::ui::top_bar_nav_action;
+use crate::main_page::ui::top_bar_open_audio_action;
 use crate::main_page::ui::top_bar_rect;
 use crate::main_page::ui::top_bar_settings_action;
 use crate::main_page::ui::top_bar_settings_icon_name;
 use crate::main_page::ui::translated_mode_labels;
+use choreo_components_egui::choreo_main::actions::OpenAudioRequested;
 use choreo_components_egui::choreo_main::actions::OpenChoreoRequested;
 use choreo_components_egui::choreography_settings::actions::ChoreographySettingsAction;
 use choreo_components_egui::drawer_host::actions::DrawerHostAction;
@@ -59,7 +61,7 @@ fn ui_parity_spec() {
         });
 
         spec.it(
-            "maps top bar toggles to nav/settings open-close actions",
+            "maps top bar toggles and audio open to parity actions",
             |_| {
                 assert_eq!(top_bar_nav_action(false), ChoreoMainAction::ToggleNav);
                 assert_eq!(top_bar_nav_action(true), ChoreoMainAction::CloseNav);
@@ -70,6 +72,13 @@ fn ui_parity_spec() {
                 assert_eq!(
                     top_bar_settings_action(true),
                     ChoreoMainAction::CloseSettings
+                );
+                assert_eq!(
+                    top_bar_open_audio_action(),
+                    ChoreoMainAction::RequestOpenAudio(OpenAudioRequested {
+                        file_path: String::new(),
+                        trace_context: None,
+                    })
                 );
             },
         );

@@ -11,10 +11,12 @@ use crate::choreo_main::ui::nav_icon_name;
 use crate::choreo_main::ui::open_audio_icon_name;
 use crate::choreo_main::ui::open_image_icon_name;
 use crate::choreo_main::ui::top_bar_nav_action;
+use crate::choreo_main::ui::top_bar_open_audio_action;
 use crate::choreo_main::ui::top_bar_settings_action;
 use crate::choreo_main::ui::top_bar_settings_icon_name;
 use choreo_components_egui::choreography_settings::actions::ChoreographySettingsAction;
 use choreo_components_egui::choreography_settings::actions::UpdateSelectedSceneAction;
+use choreo_components_egui::choreo_main::actions::OpenAudioRequested;
 use choreo_components_egui::dancers::actions::DancersAction;
 use choreo_components_egui::dancers::state::DancerState;
 use choreo_components_egui::dancers::state::RoleState;
@@ -47,7 +49,7 @@ fn ui_main_page_spec() {
         });
 
         spec.it(
-            "maps top bar toggles to nav/settings open-close actions",
+            "maps top bar toggles and audio open to parity actions",
             |_| {
                 assert_eq!(top_bar_nav_action(false), ChoreoMainAction::ToggleNav);
                 assert_eq!(top_bar_nav_action(true), ChoreoMainAction::CloseNav);
@@ -58,6 +60,13 @@ fn ui_main_page_spec() {
                 assert_eq!(
                     top_bar_settings_action(true),
                     ChoreoMainAction::CloseSettings
+                );
+                assert_eq!(
+                    top_bar_open_audio_action(),
+                    ChoreoMainAction::RequestOpenAudio(OpenAudioRequested {
+                        file_path: String::new(),
+                        trace_context: None,
+                    })
                 );
             },
         );
@@ -167,8 +176,10 @@ fn ui_main_page_spec() {
         spec.it(
             "routes dancers content through dancers pane and dispatches dancer actions",
             |_| {
-                let mut state = ChoreoMainState::default();
-                state.content = MainContent::Dancers;
+                let mut state = ChoreoMainState {
+                    content: MainContent::Dancers,
+                    ..ChoreoMainState::default()
+                };
                 state.dancers_state.dancers = vec![DancerState {
                     dancer_id: 1,
                     role: RoleState {
@@ -196,8 +207,10 @@ fn ui_main_page_spec() {
         spec.it(
             "routes settings content through settings actions and returns to the main page",
             |_| {
-                let mut state = ChoreoMainState::default();
-                state.content = MainContent::Settings;
+                let mut state = ChoreoMainState {
+                    content: MainContent::Settings,
+                    ..ChoreoMainState::default()
+                };
 
                 reduce(
                     &mut state,

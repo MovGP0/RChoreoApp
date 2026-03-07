@@ -8,6 +8,7 @@ use egui::vec2;
 use crate::audio_player;
 use crate::audio_player::actions::AudioPlayerAction;
 use crate::choreo_main::actions::ChoreoMainAction;
+use crate::choreo_main::actions::OpenAudioRequested;
 use crate::choreo_main::actions::OpenChoreoRequested;
 use crate::choreo_main::state::ChoreoMainState;
 use crate::choreo_main::state::InteractionMode;
@@ -141,7 +142,7 @@ fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMa
                 false,
             );
             if open_audio_response.clicked() {
-                actions.push(ChoreoMainAction::OpenAudioPanel);
+                actions.push(top_bar_open_audio_action());
             }
             let _ = open_audio_response.on_hover_text(strings.open_audio_tooltip.as_str());
 
@@ -523,6 +524,14 @@ pub fn top_bar_settings_action(is_settings_open: bool) -> ChoreoMainAction {
     } else {
         ChoreoMainAction::OpenSettings
     }
+}
+
+#[must_use]
+pub fn top_bar_open_audio_action() -> ChoreoMainAction {
+    ChoreoMainAction::RequestOpenAudio(OpenAudioRequested {
+        file_path: String::new(),
+        trace_context: None,
+    })
 }
 
 #[must_use]
