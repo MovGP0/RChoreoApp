@@ -1,5 +1,9 @@
 use egui::Color32;
-use egui::RichText;
+use egui::CornerRadius;
+use egui::Frame;
+use egui::Margin;
+use egui::ScrollArea;
+use egui::Stroke;
 use egui::Ui;
 use egui_material3::MaterialSelect;
 use egui_material3::MaterialSwitch;
@@ -9,6 +13,9 @@ use crate::choreo_info::state::ChoreoDate;
 use crate::choreo_info::state::ChoreoInfoState;
 use crate::choreo_info::ui::ChoreoInfoLabels;
 use crate::number_picker::ui::NumberPickerUiState;
+use crate::ui_style::material_style_metrics::material_style_metrics;
+use crate::ui_style::typography;
+use crate::ui_style::typography::TypographyRole;
 use choreo_master_mobile_json::Color;
 
 use super::actions::ChoreographySettingsAction;
@@ -31,19 +38,45 @@ pub fn transparency_percentage_text(transparency: f64) -> String {
 pub fn draw(ui: &mut Ui, state: &ChoreographySettingsState) -> Vec<ChoreographySettingsAction> {
     let mut actions: Vec<ChoreographySettingsAction> = Vec::new();
     let locale = DEFAULT_LOCALE;
+    let section_titles = settings_section_titles(locale);
 
-    ui.heading(ChoreographySettingsTranslations::title(locale));
-    ui.separator();
-
-    draw_choreography_section(ui, state, locale, &mut actions);
-    ui.separator();
-    draw_floor_section(ui, state, locale, &mut actions);
-    ui.separator();
-    draw_display_section(ui, state, locale, &mut actions);
-    ui.separator();
-    draw_selected_scene_section(ui, state, locale, &mut actions);
+    ScrollArea::vertical()
+        .auto_shrink([false, false])
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            draw_settings_card(ui, &section_titles[0], |ui| {
+                draw_selected_scene_section(ui, state, locale, &mut actions);
+            });
+            ui.add_space(card_spacing_token());
+            draw_settings_card(ui, &section_titles[1], |ui| {
+                draw_display_section(ui, state, locale, &mut actions);
+            });
+            ui.add_space(card_spacing_token());
+            draw_settings_card(ui, &section_titles[2], |ui| {
+                draw_choreography_section(ui, state, locale, &mut actions);
+            });
+            ui.add_space(card_spacing_token());
+            draw_settings_card(ui, &section_titles[3], |ui| {
+                draw_floor_section(ui, state, locale, &mut actions);
+            });
+        });
 
     actions
+}
+
+#[must_use]
+pub const fn uses_vertical_scroll_container() -> bool {
+    true
+}
+
+#[must_use]
+pub fn settings_section_titles(locale: &str) -> [String; 4] {
+    [
+        ChoreographySettingsTranslations::selected_scene(locale),
+        ChoreographySettingsTranslations::display(locale),
+        ChoreographySettingsTranslations::choreography(locale),
+        ChoreographySettingsTranslations::floor(locale),
+    ]
 }
 
 #[must_use]
@@ -67,7 +100,6 @@ fn draw_choreography_section(
     locale: &str,
     actions: &mut Vec<ChoreographySettingsAction>,
 ) {
-    ui.label(RichText::new(ChoreographySettingsTranslations::choreography(locale)).strong());
     let component_state = to_choreo_info_state(state);
     let labels = ChoreoInfoLabels {
         comment: ChoreographySettingsTranslations::comment(locale),
@@ -90,7 +122,6 @@ fn draw_floor_section(
     locale: &str,
     actions: &mut Vec<ChoreographySettingsAction>,
 ) {
-    ui.label(RichText::new(ChoreographySettingsTranslations::floor(locale)).strong());
     let floor_maximum = floor_size_maximum(state);
     if let Some(front) = crate::number_picker::ui::draw(
         ui,
@@ -145,23 +176,6 @@ fn draw_floor_section(
         actions.push(ChoreographySettingsAction::UpdateFloorRight(right));
     }
 
-    ui.label(ChoreographySettingsTranslations::floor_color(locale));
-    let mut floor_color = to_color32(&state.floor_color);
-    if ui.color_edit_button_srgba(&mut floor_color).changed() {
-        actions.push(ChoreographySettingsAction::UpdateFloorColor(from_color32(
-            floor_color,
-        )));
-    }
-}
-
-fn draw_display_section(
-    ui: &mut Ui,
-    state: &ChoreographySettingsState,
-    locale: &str,
-    actions: &mut Vec<ChoreographySettingsAction>,
-) {
-    ui.label(RichText::new(ChoreographySettingsTranslations::display(locale)).strong());
-
     let mut selected_grid_index = state
         .grid_size_options
         .iter()
@@ -182,14 +196,6 @@ fn draw_display_section(
         ));
     }
 
-    if let Some(action) = crate::choreo_info::ui::draw_transparency(
-        ui,
-        state.transparency,
-        &ChoreographySettingsTranslations::transparency(locale),
-    ) {
-        actions.push(map_choreo_info_action(action));
-    }
-
     render_toggle_switch(
         ui,
         state.grid_lines,
@@ -199,16 +205,47 @@ fn draw_display_section(
     );
     render_toggle_switch(
         ui,
-        state.show_legend,
-        ChoreographySettingsTranslations::show_legend(locale),
-        ChoreographySettingsAction::UpdateShowLegend,
+        state.snap_to_grid,
+        ChoreographySettingsTranslations::snap_to_grid(locale),
+        ChoreographySettingsAction::UpdateSnapToGrid,
+        actions,
+    );
+
+    if let Some(action) = crate::choreo_info::ui::draw_transparency(
+        ui,
+        state.transparency,
+        &ChoreographySettingsTranslations::transparency(locale),
+    ) {
+        actions.push(map_choreo_info_action(action));
+    }
+
+    ui.label(ChoreographySettingsTranslations::floor_color(locale));
+    let mut floor_color = to_color32(&state.floor_color);
+    if ui.color_edit_button_srgba(&mut floor_color).changed() {
+        actions.push(ChoreographySettingsAction::UpdateFloorColor(from_color32(
+            floor_color,
+        )));
+    }
+}
+
+fn draw_display_section(
+    ui: &mut Ui,
+    state: &ChoreographySettingsState,
+    locale: &str,
+    actions: &mut Vec<ChoreographySettingsAction>,
+) {
+    render_toggle_switch(
+        ui,
+        state.draw_path_from,
+        ChoreographySettingsTranslations::draw_path_from(locale),
+        ChoreographySettingsAction::UpdateDrawPathFrom,
         actions,
     );
     render_toggle_switch(
         ui,
-        state.snap_to_grid,
-        ChoreographySettingsTranslations::snap_to_grid(locale),
-        ChoreographySettingsAction::UpdateSnapToGrid,
+        state.draw_path_to,
+        ChoreographySettingsTranslations::draw_path_to(locale),
+        ChoreographySettingsAction::UpdateDrawPathTo,
         actions,
     );
     render_toggle_switch(
@@ -227,16 +264,9 @@ fn draw_display_section(
     );
     render_toggle_switch(
         ui,
-        state.draw_path_from,
-        ChoreographySettingsTranslations::draw_path_from(locale),
-        ChoreographySettingsAction::UpdateDrawPathFrom,
-        actions,
-    );
-    render_toggle_switch(
-        ui,
-        state.draw_path_to,
-        ChoreographySettingsTranslations::draw_path_to(locale),
-        ChoreographySettingsAction::UpdateDrawPathTo,
+        state.show_legend,
+        ChoreographySettingsTranslations::show_legend(locale),
+        ChoreographySettingsAction::UpdateShowLegend,
         actions,
     );
 }
@@ -247,7 +277,6 @@ fn draw_selected_scene_section(
     locale: &str,
     actions: &mut Vec<ChoreographySettingsAction>,
 ) {
-    ui.label(RichText::new(ChoreographySettingsTranslations::selected_scene(locale)).strong());
     ui.add_enabled_ui(selected_scene_controls_enabled(state), |ui| {
         ui.label(ChoreographySettingsTranslations::scene_name(locale));
         let mut scene_name = state.scene_name.clone();
@@ -356,6 +385,39 @@ fn draw_selected_scene_section(
             ));
         }
     });
+}
+
+fn draw_settings_card(ui: &mut Ui, title: &str, add_contents: impl FnOnce(&mut Ui)) {
+    let metrics = material_style_metrics();
+    Frame::new()
+        .fill(ui.visuals().window_fill)
+        .stroke(Stroke::new(
+            metrics.strokes.outline,
+            ui.visuals().widgets.noninteractive.bg_stroke.color,
+        ))
+        .corner_radius(CornerRadius::same(
+            metrics.corner_radii.border_radius_8 as u8,
+        ))
+        .inner_margin(Margin::same(metrics.paddings.padding_12 as i8))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.spacing_mut().item_spacing.y = metrics.spacings.spacing_8;
+            ui.label(typography::rich_text_for_role(
+                title,
+                settings_card_title_role(),
+            ));
+            add_contents(ui);
+        });
+}
+
+#[must_use]
+pub fn card_spacing_token() -> f32 {
+    material_style_metrics().spacings.spacing_12
+}
+
+#[must_use]
+pub const fn settings_card_title_role() -> TypographyRole {
+    TypographyRole::TitleLarge
 }
 
 fn render_toggle_switch<F>(

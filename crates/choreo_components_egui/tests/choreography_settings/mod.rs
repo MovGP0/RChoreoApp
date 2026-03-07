@@ -8,6 +8,7 @@ pub mod choreo_info_ui_spec;
 pub mod command_mapping_spec;
 pub mod load_choreography_settings_behavior_spec;
 pub mod load_settings_preferences_behavior_spec;
+pub mod panel_shell_parity_spec;
 pub mod translation_spec;
 pub mod update_author_behavior_spec;
 pub mod update_comment_behavior_spec;
