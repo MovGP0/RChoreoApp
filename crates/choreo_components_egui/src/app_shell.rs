@@ -136,7 +136,8 @@ mod app_shell_splash_spec {
 
     #[test]
     fn injected_main_page_dependencies_route_open_choreo_requests() {
-        let routed_requests: Rc<RefCell<Vec<OpenChoreoRequested>>> = Rc::new(RefCell::new(Vec::new()));
+        let routed_requests: Rc<RefCell<Vec<OpenChoreoRequested>>> =
+            Rc::new(RefCell::new(Vec::new()));
         let routed_requests_for_handler = Rc::clone(&routed_requests);
         let shell = AppShellViewModel::new_with_dependencies(
             "ChoreoApp",

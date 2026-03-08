@@ -36,7 +36,13 @@ pub(crate) fn consume_outgoing_commands(
     let open_svg_commands = view_model.state().outgoing_open_svg_commands.clone();
 
     for request in choreo_requests {
-        route_open_choreo_request(view_model, request, handlers, behavior_pipeline, audio_runtime);
+        route_open_choreo_request(
+            view_model,
+            request,
+            handlers,
+            behavior_pipeline,
+            audio_runtime,
+        );
     }
 
     for request in audio_requests {
@@ -240,9 +246,7 @@ fn apply_open_audio_request(
         },
     ));
 
-    if file_exists
-        && let Some(sample) = audio_runtime.sample()
-    {
+    if file_exists && let Some(sample) = audio_runtime.sample() {
         crate::audio_player::runtime::apply_player_sample(
             &mut view_model.state_mut().audio_player_state,
             sample,
@@ -266,7 +270,11 @@ pub(crate) fn apply_audio_action_side_effects(
             audio_runtime.seek(*position);
         }
         ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::PositionDragStarted) => {
-            if view_model.state().audio_player_state.was_playing_before_drag {
+            if view_model
+                .state()
+                .audio_player_state
+                .was_playing_before_drag
+            {
                 audio_runtime.pause();
             }
         }
@@ -374,7 +382,9 @@ fn resolve_audio_request(
         && !relative.trim().is_empty()
         && let Some(file_path) = choreography_file_path
     {
-        let base_dir = Path::new(file_path).parent().unwrap_or_else(|| Path::new(""));
+        let base_dir = Path::new(file_path)
+            .parent()
+            .unwrap_or_else(|| Path::new(""));
         return Some(base_dir.join(relative).to_string_lossy().into_owned());
     }
 
@@ -391,7 +401,11 @@ fn apply_save_choreo_request(view_model: &mut MainViewModel, file_path: &str) {
         return;
     }
 
-    let mut choreography = view_model.state().choreography_settings_state.choreography.clone();
+    let mut choreography = view_model
+        .state()
+        .choreography_settings_state
+        .choreography
+        .clone();
     choreography.last_save_date = crate::time::SystemClock::now_utc();
     let mapper = ChoreographyModelMapper;
     let json_model = mapper.map_to_json(&choreography);
@@ -399,8 +413,11 @@ fn apply_save_choreo_request(view_model: &mut MainViewModel, file_path: &str) {
         return;
     }
 
-    view_model.state_mut().choreography_settings_state.choreography.last_save_date =
-        choreography.last_save_date;
+    view_model
+        .state_mut()
+        .choreography_settings_state
+        .choreography
+        .last_save_date = choreography.last_save_date;
 }
 
 pub(crate) fn enqueue_open_audio_request(

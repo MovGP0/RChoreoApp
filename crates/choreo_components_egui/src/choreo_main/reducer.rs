@@ -76,16 +76,14 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             state.outgoing_open_choreo_requests.push(request);
         }
         ChoreoMainAction::RequestSaveChoreo => {
-            if let Some(file_path) = state
-                .last_opened_choreo_file
-                .as_ref()
-                .filter(|path| !path.trim().is_empty() && std::path::Path::new(path.as_str()).exists())
-            {
-                state.outgoing_save_choreo_requests.push(
-                    super::actions::SaveChoreoRequested {
+            if let Some(file_path) = state.last_opened_choreo_file.as_ref().filter(|path| {
+                !path.trim().is_empty() && std::path::Path::new(path.as_str()).exists()
+            }) {
+                state
+                    .outgoing_save_choreo_requests
+                    .push(super::actions::SaveChoreoRequested {
                         file_path: file_path.clone(),
-                    },
-                );
+                    });
             }
         }
         ChoreoMainAction::RequestOpenAudio(request) => {
@@ -370,7 +368,11 @@ fn sync_choreography_settings_projection(state: &mut ChoreoMainState) {
             UpdateSelectedSceneAction::SyncFromSelected,
         ),
     );
-    state.scene_models = state.choreography_settings_state.choreography.scenes.clone();
+    state.scene_models = state
+        .choreography_settings_state
+        .choreography
+        .scenes
+        .clone();
     refresh_floor_projection(state);
 }
 
@@ -399,7 +401,11 @@ fn sync_main_state_from_choreography_settings(state: &mut ChoreoMainState) {
                 .position(|scene| scene.scene_id == selected_scene.scene_id)
         });
 
-    state.scene_models = state.choreography_settings_state.choreography.scenes.clone();
+    state.scene_models = state
+        .choreography_settings_state
+        .choreography
+        .scenes
+        .clone();
     state.floor_scene_name = state
         .selected_scene_index
         .and_then(|index| state.scene_models.get(index))
@@ -466,7 +472,11 @@ fn adjacent_scenes_for_audio_or_selected(
     scenes: &[SceneModel],
     selected_index: Option<usize>,
     audio_position_seconds: f64,
-) -> (Option<&SceneModel>, Option<&SceneModel>, Option<&SceneModel>) {
+) -> (
+    Option<&SceneModel>,
+    Option<&SceneModel>,
+    Option<&SceneModel>,
+) {
     for (index, window) in scenes.windows(2).enumerate() {
         let Some(current_timestamp) = parse_scene_timestamp(window[0].timestamp.as_deref()) else {
             continue;

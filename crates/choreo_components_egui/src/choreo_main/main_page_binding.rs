@@ -61,7 +61,11 @@ impl MainPageBinding {
             behavior_dependencies,
         });
         let view_model = provider.main_view_model();
-        let audio_backend = view_model.borrow().state().settings_state.audio_player_backend;
+        let audio_backend = view_model
+            .borrow()
+            .state()
+            .settings_state
+            .audio_player_backend;
         Self {
             view_model,
             action_handlers,

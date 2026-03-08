@@ -6,11 +6,11 @@ use super::ui::open_choreography_icon;
 use super::ui::save_choreography_icon;
 use super::ui::scene_add_after_icon;
 use super::ui::scene_add_before_icon;
-use super::ui::scene_search_bar_content_width;
 use super::ui::scene_delete_icon;
 use super::ui::scene_list_panel_height;
 use super::ui::scene_pane_action_flow;
 use super::ui::scene_pane_controls_height;
+use super::ui::scene_search_bar_content_width;
 use super::ui::scene_search_bar_text_edit_width;
 
 #[test]

@@ -16,6 +16,8 @@ use egui::pos2;
 use egui::vec2;
 use egui_material3::MaterialButton;
 
+use crate::color_picker::state::ColorPickerState;
+use crate::color_picker::ui as color_picker_ui;
 use crate::dancers::actions::DancersAction;
 use crate::dancers::state::DancerState;
 use crate::dancers::state::DancersState;
@@ -30,8 +32,6 @@ use crate::drawer_host::state::DrawerHostState;
 use crate::drawer_host::ui::draw_with_slots_in_rect;
 use crate::i18n::t;
 use crate::nav_bar::hamburger_toggle_button;
-use crate::color_picker::state::ColorPickerState;
-use crate::color_picker::ui as color_picker_ui;
 use crate::ui_style::material_style_metrics::material_style_metrics;
 use crate::ui_style::typography;
 use crate::ui_style::typography::TypographyRole;
@@ -139,8 +139,10 @@ pub fn draw(ui: &mut Ui, state: &DancersState) -> Vec<DancersAction> {
         },
         |ui| {
             let page_rect = ui.available_rect_before_wrap();
-            let top_bar_rect =
-                Rect::from_min_size(page_rect.min, vec2(page_rect.width(), top_bar_height_token()));
+            let top_bar_rect = Rect::from_min_size(
+                page_rect.min,
+                vec2(page_rect.width(), top_bar_height_token()),
+            );
             let content_rect =
                 Rect::from_min_max(pos2(page_rect.left(), top_bar_rect.bottom()), page_rect.max);
 
@@ -333,11 +335,17 @@ fn draw_dancers_pane(
 
 fn draw_content(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersAction>, locale: &str) {
     let surface_rect = ui.max_rect();
-    ui.painter()
-        .rect_filled(surface_rect, CornerRadius::ZERO, ui.visuals().faint_bg_color);
+    ui.painter().rect_filled(
+        surface_rect,
+        CornerRadius::ZERO,
+        ui.visuals().faint_bg_color,
+    );
 
     let footer_rect = Rect::from_min_max(
-        pos2(surface_rect.left(), surface_rect.bottom() - footer_height_token()),
+        pos2(
+            surface_rect.left(),
+            surface_rect.bottom() - footer_height_token(),
+        ),
         surface_rect.right_bottom(),
     );
     let scroll_rect = Rect::from_min_max(
@@ -506,10 +514,10 @@ fn draw_dancer_card(
                 {
                     actions.push(DancersAction::UpdateDancerColor {
                         value: Color {
-                        r: color32.r(),
-                        g: color32.g(),
-                        b: color32.b(),
-                        a: color32.a(),
+                            r: color32.r(),
+                            g: color32.g(),
+                            b: color32.b(),
+                            a: color32.a(),
                         },
                     });
                 }

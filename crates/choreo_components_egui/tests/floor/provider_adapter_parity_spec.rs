@@ -8,10 +8,10 @@ use crate::floor::floor_component::FloorRenderGate;
 use crate::floor::floor_component::FloorRenderGateImpl;
 use crate::floor::floor_component::state::FloorPosition;
 use crate::floor::floor_component::state::FloorState;
+use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
-use std::sync::Arc;
 
 #[derive(Default)]
 struct CountingRenderGate {

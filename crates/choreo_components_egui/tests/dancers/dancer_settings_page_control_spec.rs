@@ -45,13 +45,16 @@ fn dancer_settings_page_control_spec() {
             assert!(!drawer_state.is_bottom_open);
         });
 
-        spec.it("exposes slint shell metrics for top bar content and footer", |_| {
-            assert_eq!(dancers::ui::top_bar_height_token(), 64.0);
-            assert_eq!(dancers::ui::content_max_width_token(), 720.0);
-            assert_eq!(dancers::ui::content_outer_margin_token(), 16.0);
-            assert_eq!(dancers::ui::footer_height_token(), 56.0);
-            assert!(dancers::ui::uses_scrollable_content_shell());
-        });
+        spec.it(
+            "exposes slint shell metrics for top bar content and footer",
+            |_| {
+                assert_eq!(dancers::ui::top_bar_height_token(), 64.0);
+                assert_eq!(dancers::ui::content_max_width_token(), 720.0);
+                assert_eq!(dancers::ui::content_outer_margin_token(), 16.0);
+                assert_eq!(dancers::ui::footer_height_token(), 56.0);
+                assert!(dancers::ui::uses_scrollable_content_shell());
+            },
+        );
     });
 
     let report = dancers::run_suite(&suite);

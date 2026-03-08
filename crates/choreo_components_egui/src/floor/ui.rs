@@ -50,7 +50,12 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
         );
         painter.rect_filled(fill_rect, 0.0, ui.visuals().extreme_bg_color);
     }
-    let floor_rect = to_screen_rect(state.floor_x, state.floor_y, state.floor_width, state.floor_height);
+    let floor_rect = to_screen_rect(
+        state.floor_x,
+        state.floor_y,
+        state.floor_width,
+        state.floor_height,
+    );
     painter.rect_filled(floor_rect, 0.0, floor_fill);
 
     for segment in &state.grid_lines {
@@ -70,12 +75,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
         4.0,
         ui.visuals().selection.bg_fill,
     );
-    painter.rect_stroke(
-        floor_rect,
-        0.0,
-        floor_stroke,
-        egui::StrokeKind::Middle,
-    );
+    painter.rect_stroke(floor_rect, 0.0, floor_stroke, egui::StrokeKind::Middle);
 
     if let Some(bounds) = state.svg_overlay_bounds {
         painter.rect_stroke(
@@ -216,11 +216,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
         for (index, entry) in state.legend_entries.iter().enumerate() {
             let y = start_y + index as f32 * row_height;
             let color = color32_from_rgba(entry.color);
-            painter.circle_filled(
-                egui::pos2(square_x, y + 6.0),
-                6.0,
-                color,
-            );
+            painter.circle_filled(egui::pos2(square_x, y + 6.0), 6.0, color);
             if !entry.shortcut.trim().is_empty() {
                 painter.text(
                     egui::pos2(shortcut_x, y),

@@ -4,8 +4,8 @@ use super::state::FloorLayer;
 use super::state::FloorLayoutMetrics;
 use super::state::FloorPosition;
 use super::state::FloorState;
-use super::state::LegendEntry;
 use super::state::LabeledPoint;
+use super::state::LegendEntry;
 use super::state::LineSegment;
 use super::state::Point;
 use super::state::PointerButton;
@@ -487,8 +487,8 @@ fn recompute_layout(state: &mut FloorState) {
     let horizontal_meters = f64::from((state.floor_left + state.floor_right).max(1));
     let vertical_meters = f64::from((state.floor_front + state.floor_back).max(1));
     let padding = (46.0 * state.zoom).max(12.0);
-    let scale_x = ((state.layout_width_px - (padding * 2.0)).max(12.0) / horizontal_meters)
-        .max(0.1);
+    let scale_x =
+        ((state.layout_width_px - (padding * 2.0)).max(12.0) / horizontal_meters).max(0.1);
     let scale_y = ((content_height - (padding * 2.0)).max(12.0) / vertical_meters).max(0.1);
     let meters_to_px = scale_x.min(scale_y);
     let base_floor_width = horizontal_meters * meters_to_px;
@@ -758,10 +758,15 @@ fn build_rendered_positions(state: &FloorState) -> Vec<RenderedFloorPosition> {
         .iter()
         .enumerate()
         .map(|(index, position)| {
-            let active = state.interpolated_positions.get(index).copied().unwrap_or(FloorPosition {
-                x: position.x,
-                y: position.y,
-            });
+            let active =
+                state
+                    .interpolated_positions
+                    .get(index)
+                    .copied()
+                    .unwrap_or(FloorPosition {
+                        x: position.x,
+                        y: position.y,
+                    });
             RenderedFloorPosition {
                 point: map_floor_coordinate_to_canvas(state, active.x, active.y),
                 fill_color: apply_transparency(position.fill_color, state.transparency),
@@ -776,8 +781,16 @@ fn build_rendered_positions(state: &FloorState) -> Vec<RenderedFloorPosition> {
 }
 
 fn build_side_axis_labels(state: &FloorState) -> Vec<AxisLabel> {
-    let mut x_values: Vec<f64> = state.source_positions.iter().map(|position| position.x).collect();
-    let mut y_values: Vec<f64> = state.source_positions.iter().map(|position| position.y).collect();
+    let mut x_values: Vec<f64> = state
+        .source_positions
+        .iter()
+        .map(|position| position.x)
+        .collect();
+    let mut y_values: Vec<f64> = state
+        .source_positions
+        .iter()
+        .map(|position| position.y)
+        .collect();
     x_values.sort_by(|left, right| left.total_cmp(right));
     y_values.sort_by(|left, right| left.total_cmp(right));
     x_values.dedup_by(|left, right| (*left - *right).abs() < 0.001);
@@ -790,7 +803,10 @@ fn build_side_axis_labels(state: &FloorState) -> Vec<AxisLabel> {
             map_floor_coordinate_to_canvas(state, value, -f64::from(state.floor_back));
         labels.push(AxisLabel {
             text: format_position_value(value),
-            position: Point::new(top_point.x, state.floor_y - state.metrics.top_label_vertical_gap),
+            position: Point::new(
+                top_point.x,
+                state.floor_y - state.metrics.top_label_vertical_gap,
+            ),
         });
         labels.push(AxisLabel {
             text: format_position_value(value),
@@ -806,7 +822,10 @@ fn build_side_axis_labels(state: &FloorState) -> Vec<AxisLabel> {
             map_floor_coordinate_to_canvas(state, f64::from(state.floor_right), value);
         labels.push(AxisLabel {
             text: format_position_value(value),
-            position: Point::new(state.floor_x - state.metrics.side_label_left_gap, left_point.y),
+            position: Point::new(
+                state.floor_x - state.metrics.side_label_left_gap,
+                left_point.y,
+            ),
         });
         labels.push(AxisLabel {
             text: format_position_value(value),
@@ -826,10 +845,15 @@ fn build_legend_entries(state: &FloorState) -> Vec<LegendEntry> {
         .enumerate()
         .filter(|(_, position)| position.has_dancer)
         .map(|(index, position)| {
-            let active = state.interpolated_positions.get(index).copied().unwrap_or(FloorPosition {
-                x: position.x,
-                y: position.y,
-            });
+            let active =
+                state
+                    .interpolated_positions
+                    .get(index)
+                    .copied()
+                    .unwrap_or(FloorPosition {
+                        x: position.x,
+                        y: position.y,
+                    });
             LegendEntry {
                 shortcut: position.shortcut.clone(),
                 name: position.dancer_name.clone(),
@@ -842,7 +866,11 @@ fn build_legend_entries(state: &FloorState) -> Vec<LegendEntry> {
         left.shortcut
             .to_ascii_lowercase()
             .cmp(&right.shortcut.to_ascii_lowercase())
-            .then(left.name.to_ascii_lowercase().cmp(&right.name.to_ascii_lowercase()))
+            .then(
+                left.name
+                    .to_ascii_lowercase()
+                    .cmp(&right.name.to_ascii_lowercase()),
+            )
     });
     entries
 }
@@ -851,7 +879,10 @@ fn has_legend_entries(state: &FloorState) -> bool {
     if state.source_positions.is_empty() {
         !state.legend_entries.is_empty()
     } else {
-        state.source_positions.iter().any(|position| position.has_dancer)
+        state
+            .source_positions
+            .iter()
+            .any(|position| position.has_dancer)
     }
 }
 
@@ -906,9 +937,14 @@ fn build_curve_points(
         return vec![start, end];
     };
     let control1 = Point::new(control1_x, control1_y);
-    if let (Some(control2_x), Some(control2_y)) = (from_position.curve2_x, from_position.curve2_y)
-    {
-        return sample_cubic_curve(start, control1, Point::new(control2_x, control2_y), end, steps);
+    if let (Some(control2_x), Some(control2_y)) = (from_position.curve2_x, from_position.curve2_y) {
+        return sample_cubic_curve(
+            start,
+            control1,
+            Point::new(control2_x, control2_y),
+            end,
+            steps,
+        );
     }
     sample_quadratic_curve(start, control1, end, steps)
 }
@@ -970,7 +1006,12 @@ fn build_dashed_segments_from_points(points: &[Point]) -> Vec<LineSegment> {
 
 fn apply_transparency(color: [u8; 4], transparency: f64) -> [u8; 4] {
     let opacity = (1.0 - transparency.clamp(0.0, 1.0)).clamp(0.0, 1.0);
-    [color[0], color[1], color[2], (f64::from(color[3]) * opacity).round() as u8]
+    [
+        color[0],
+        color[1],
+        color[2],
+        (f64::from(color[3]) * opacity).round() as u8,
+    ]
 }
 
 fn format_position_value(value: f64) -> String {

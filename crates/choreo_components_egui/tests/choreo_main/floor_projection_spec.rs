@@ -153,17 +153,19 @@ fn load_choreography_projects_floor_renderer_state_from_scene_models() {
     let mut state = ChoreoMainState::default();
     reduce(
         &mut state,
-        ChoreoMainAction::ChoreographySettingsAction(ChoreographySettingsAction::LoadChoreography {
-            choreography: Box::new(choreography),
-            selected_scene: Some(SelectedSceneState {
-                scene_id: opening.scene_id,
-                name: opening.name.clone(),
-                text: String::new(),
-                fixed_positions: false,
-                timestamp: Some(1.0),
-                color: Color::transparent(),
-            }),
-        }),
+        ChoreoMainAction::ChoreographySettingsAction(
+            ChoreographySettingsAction::LoadChoreography {
+                choreography: Box::new(choreography),
+                selected_scene: Some(SelectedSceneState {
+                    scene_id: opening.scene_id,
+                    name: opening.name.clone(),
+                    text: String::new(),
+                    fixed_positions: false,
+                    timestamp: Some(1.0),
+                    color: Color::transparent(),
+                }),
+            },
+        ),
     );
     reduce(
         &mut state,

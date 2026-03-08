@@ -8,23 +8,23 @@ use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-use choreo_master_mobile_json::export;
-use choreo_master_mobile_json::import;
 use choreo_components_egui::audio_player::OpenAudioFileCommand;
+use choreo_components_egui::audio_player::actions::AudioPlayerAction;
 use choreo_components_egui::choreo_main::MainBehaviorDependencies;
 use choreo_components_egui::choreo_main::MainPageActionHandlers;
 use choreo_components_egui::choreo_main::MainPageBinding;
 use choreo_components_egui::choreo_main::MainPageDependencies;
 use choreo_components_egui::choreo_main::OpenAudioRequested;
-use choreo_components_egui::choreo_main::actions::OpenChoreoRequested;
 use choreo_components_egui::choreo_main::OpenImageRequested;
 use choreo_components_egui::choreo_main::ShowDialogCommand;
-use choreo_components_egui::audio_player::actions::AudioPlayerAction;
 use choreo_components_egui::choreo_main::actions::ChoreoMainAction;
+use choreo_components_egui::choreo_main::actions::OpenChoreoRequested;
 use choreo_components_egui::choreo_main::state::InteractionMode;
 use choreo_components_egui::choreography_settings::actions::ChoreographySettingsAction;
 use choreo_components_egui::choreography_settings::actions::UpdateSelectedSceneAction;
 use choreo_components_egui::observability::TraceContext;
+use choreo_master_mobile_json::export;
+use choreo_master_mobile_json::import;
 use choreo_models::ChoreographyModel;
 use choreo_models::ChoreographyModelMapper;
 use crossbeam_channel::bounded;
@@ -145,7 +145,10 @@ fn binding_uses_pick_choreo_handler_to_load_selected_file() {
     assert_eq!(state.state().scenes[0].name, "Intro");
     assert_eq!(state.state().selected_scene_index, Some(0));
     assert_eq!(state.state().floor_scene_name.as_deref(), Some("Intro"));
-    assert_eq!(state.state().choreography_settings_state.name, "Loaded choreo");
+    assert_eq!(
+        state.state().choreography_settings_state.name,
+        "Loaded choreo"
+    );
 }
 
 #[test]
@@ -267,7 +270,10 @@ fn binding_opens_audio_file_and_toggles_play_pause_from_main_audio_actions() {
         let state = view_model.borrow();
         let state = state.state();
         assert_eq!(
-            state.audio_player_state.last_opened_audio_file_path.as_deref(),
+            state
+                .audio_player_state
+                .last_opened_audio_file_path
+                .as_deref(),
             Some(file_path.as_str())
         );
         assert!(state.audio_player_state.has_player);
@@ -322,7 +328,10 @@ fn binding_tick_clears_pending_seek_only_after_runtime_acknowledges_position() {
     {
         let view_model = binding.view_model();
         let state = view_model.borrow();
-        assert_eq!(state.state().audio_player_state.pending_seek_position, Some(0.25));
+        assert_eq!(
+            state.state().audio_player_state.pending_seek_position,
+            Some(0.25)
+        );
     }
 
     let acknowledged = wait_until(
@@ -343,7 +352,13 @@ fn binding_tick_clears_pending_seek_only_after_runtime_acknowledges_position() {
     let view_model = binding.view_model();
     let state = view_model.borrow();
     assert!(acknowledged);
-    assert!(state.state().audio_player_state.pending_seek_position.is_none());
+    assert!(
+        state
+            .state()
+            .audio_player_state
+            .pending_seek_position
+            .is_none()
+    );
     assert_eq!(state.state().audio_player_state.position, 0.25);
 
     let _ = fs::remove_file(temp_file);

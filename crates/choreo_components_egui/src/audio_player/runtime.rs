@@ -109,7 +109,10 @@ pub fn apply_player_sample(state: &mut AudioPlayerState, sample: AudioPlayerSamp
     apply_player_sample_inner(state, sample, true);
 }
 
-pub fn apply_player_sample_without_position(state: &mut AudioPlayerState, sample: AudioPlayerSample) {
+pub fn apply_player_sample_without_position(
+    state: &mut AudioPlayerState,
+    sample: AudioPlayerSample,
+) {
     apply_player_sample_inner(state, sample, false);
 }
 

@@ -28,31 +28,47 @@ fn runtime_sample_syncs_audio_state_from_player() {
     write_test_wav(&path);
     runtime.open_file(path.to_string_lossy().into_owned());
     runtime.seek_and_play(0.5);
-    let is_playing = wait_until(Duration::from_millis(400), Duration::from_millis(20), || {
-        runtime.sample().is_some_and(|sample| sample.is_playing)
-    });
+    let is_playing = wait_until(
+        Duration::from_millis(400),
+        Duration::from_millis(20),
+        || runtime.sample().is_some_and(|sample| sample.is_playing),
+    );
     runtime.set_speed(1.05);
-    let speed_applied = wait_until(Duration::from_millis(400), Duration::from_millis(20), || {
-        runtime
-            .sample()
-            .is_some_and(|sample| (sample.speed - 1.05).abs() < 0.0001)
-    });
+    let speed_applied = wait_until(
+        Duration::from_millis(400),
+        Duration::from_millis(20),
+        || {
+            runtime
+                .sample()
+                .is_some_and(|sample| (sample.speed - 1.05).abs() < 0.0001)
+        },
+    );
     runtime.set_volume(0.8);
-    let volume_applied = wait_until(Duration::from_millis(400), Duration::from_millis(20), || {
-        runtime
-            .sample()
-            .is_some_and(|sample| (sample.volume - 0.8).abs() < 0.0001)
-    });
+    let volume_applied = wait_until(
+        Duration::from_millis(400),
+        Duration::from_millis(20),
+        || {
+            runtime
+                .sample()
+                .is_some_and(|sample| (sample.volume - 0.8).abs() < 0.0001)
+        },
+    );
     runtime.set_balance(-0.2);
-    let balance_applied = wait_until(Duration::from_millis(400), Duration::from_millis(20), || {
-        runtime
-            .sample()
-            .is_some_and(|sample| (sample.balance - (-0.2)).abs() < 0.0001)
-    });
+    let balance_applied = wait_until(
+        Duration::from_millis(400),
+        Duration::from_millis(20),
+        || {
+            runtime
+                .sample()
+                .is_some_and(|sample| (sample.balance - (-0.2)).abs() < 0.0001)
+        },
+    );
     runtime.set_loop(true);
-    let loop_applied = wait_until(Duration::from_millis(400), Duration::from_millis(20), || {
-        runtime.sample().is_some_and(|sample| sample.loop_enabled)
-    });
+    let loop_applied = wait_until(
+        Duration::from_millis(400),
+        Duration::from_millis(20),
+        || runtime.sample().is_some_and(|sample| sample.loop_enabled),
+    );
 
     let sample = runtime.sample().expect("runtime should have a sample");
     let mut state = AudioPlayerState::default();

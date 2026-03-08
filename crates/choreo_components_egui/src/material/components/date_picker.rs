@@ -43,18 +43,7 @@ const MONTH_NAMES: [&str; 12] = [
     "December",
 ];
 const MONTH_NAMES_SHORT: [&str; 12] = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 const WEEKDAY_NAMES_SHORT: [&str; 7] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -267,15 +256,22 @@ fn draw_calendar_grid(ui: &mut Ui, popup_state: &mut DatePickerPopupState) {
             }
             ui.end_row();
 
-            let days_in_month =
-                month_day_count(popup_state.display_date.month, popup_state.display_date.year);
-            let start_column =
-                month_offset(popup_state.display_date.month, popup_state.display_date.year);
+            let days_in_month = month_day_count(
+                popup_state.display_date.month,
+                popup_state.display_date.year,
+            );
+            let start_column = month_offset(
+                popup_state.display_date.month,
+                popup_state.display_date.year,
+            );
 
             for cell_index in 0_i32..42 {
                 let day_number = cell_index - start_column as i32 + 1;
                 if day_number <= 0 || day_number > i32::from(days_in_month) {
-                    ui.allocate_exact_size(vec2(DAY_CELL_SIZE_PX, DAY_CELL_SIZE_PX), egui::Sense::hover());
+                    ui.allocate_exact_size(
+                        vec2(DAY_CELL_SIZE_PX, DAY_CELL_SIZE_PX),
+                        egui::Sense::hover(),
+                    );
                 } else {
                     let value = DatePickerValue {
                         year: popup_state.display_date.year,
@@ -379,10 +375,7 @@ fn build_date(value: DatePickerValue) -> Option<Date> {
 }
 
 fn display_date_for(value: DatePickerValue) -> DatePickerValue {
-    DatePickerValue {
-        day: 1,
-        ..value
-    }
+    DatePickerValue { day: 1, ..value }
 }
 
 fn today_value() -> DatePickerValue {
@@ -422,7 +415,11 @@ fn format_date_text(value: DatePickerValue) -> String {
 }
 
 fn month_year_text(month: u8, year: i32) -> String {
-    format!("{} {}", MONTH_NAMES[usize::from(month.saturating_sub(1))], year)
+    format!(
+        "{} {}",
+        MONTH_NAMES[usize::from(month.saturating_sub(1))],
+        year
+    )
 }
 
 fn calendar_icon() -> Image<'static> {
@@ -432,11 +429,15 @@ fn calendar_icon() -> Image<'static> {
 }
 
 fn previous_month_icon() -> Image<'static> {
-    Image::new(egui::include_image!("../../../assets/icons/ChevronLeft.svg"))
+    Image::new(egui::include_image!(
+        "../../../assets/icons/ChevronLeft.svg"
+    ))
 }
 
 fn next_month_icon() -> Image<'static> {
-    Image::new(egui::include_image!("../../../assets/icons/ChevronRight.svg"))
+    Image::new(egui::include_image!(
+        "../../../assets/icons/ChevronRight.svg"
+    ))
 }
 
 const fn month_from_u8(month: u8) -> Month {
