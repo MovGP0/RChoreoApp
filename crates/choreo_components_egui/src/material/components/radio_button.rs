@@ -45,7 +45,7 @@ impl RadioButton {
         state_style.enabled = self.enabled;
         state_style.tooltip = self.tooltip.as_str();
         paint_state_layer_for_response(ui, &response, state_style);
-        let response = apply_tooltip(response, state_style);
+        let response = apply_tooltip(ui, response, state_style);
 
         let border_rect =
             egui::Rect::from_center_size(rect.center(), vec2(metrics.sizes.size_20, metrics.sizes.size_20));

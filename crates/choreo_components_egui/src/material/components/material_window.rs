@@ -14,7 +14,7 @@ pub struct MaterialWindow {
 }
 
 impl MaterialWindow {
-    pub fn show<R>(self, ctx: &Context, add_contents: impl FnOnce() -> R) -> R {
+    pub fn show<R>(self, _ctx: &Context, add_contents: impl FnOnce() -> R) -> R {
         let previous = DISABLE_HOVER.swap(self.disable_hover, Ordering::Relaxed);
         let result = add_contents();
         DISABLE_HOVER.store(previous, Ordering::Relaxed);

@@ -12,7 +12,7 @@ use egui::Ui;
 use egui::pos2;
 use egui::vec2;
 
-use crate::ui_style::material_style_metrics::material_style_metrics;
+use crate::material::styling::material_style_metrics::material_style_metrics;
 
 #[cfg_attr(test, allow(dead_code))]
 #[derive(Debug, Clone, Copy, PartialEq)]

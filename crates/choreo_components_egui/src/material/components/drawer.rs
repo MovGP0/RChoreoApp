@@ -203,7 +203,11 @@ impl Default for ModalDrawer<'_> {
 
 #[cfg(test)]
 mod tests {
+    use std::borrow::Cow;
+
     use egui::Context;
+    use egui::pos2;
+    use egui::vec2;
 
     use super::Drawer;
     use super::DrawerHeader;

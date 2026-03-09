@@ -10,8 +10,8 @@ use egui::Vec2;
 use egui::pos2;
 use egui::vec2;
 
-use crate::ui_style::typography;
-use crate::ui_style::typography::TypographyRole;
+use crate::material::styling::material_typography as typography;
+use crate::material::styling::material_typography::TypographyRole;
 
 use super::state::DancerState;
 

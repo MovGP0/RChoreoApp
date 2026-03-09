@@ -137,6 +137,13 @@ impl TypographyStyle {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FontWeightEmphasis {
+    Regular,
+    Medium,
+    Semibold,
+}
+
 pub const FONT_WEIGHT_REGULAR: i32 = 300;
 pub const FONT_WEIGHT_MEDIUM: i32 = 600;
 pub const FONT_WEIGHT_SEMIBOLD: i32 = 900;
@@ -203,11 +210,27 @@ pub fn font_id_for_role(role: TypographyRole) -> FontId {
 #[must_use]
 pub fn rich_text_for_role(text: impl Into<String>, role: TypographyRole) -> RichText {
     let text_style = text_style_for_role(role);
-    let rich_text = RichText::new(text).font(font_id_for_role(role));
-    if text_style.font_weight >= FONT_WEIGHT_SEMIBOLD {
-        return rich_text.strong();
+    apply_font_weight_to_rich_text(RichText::new(text).font(font_id_for_role(role)), text_style)
+}
+
+#[must_use]
+pub const fn font_weight_emphasis(font_weight: i32) -> FontWeightEmphasis {
+    if font_weight >= FONT_WEIGHT_SEMIBOLD {
+        FontWeightEmphasis::Semibold
+    } else if font_weight >= FONT_WEIGHT_MEDIUM {
+        FontWeightEmphasis::Medium
+    } else {
+        FontWeightEmphasis::Regular
     }
-    rich_text
+}
+
+#[must_use]
+pub fn apply_font_weight_to_rich_text(rich_text: RichText, style: TextStyle) -> RichText {
+    match font_weight_emphasis(style.font_weight) {
+        FontWeightEmphasis::Regular => rich_text,
+        FontWeightEmphasis::Medium => rich_text.extra_letter_spacing(0.2),
+        FontWeightEmphasis::Semibold => rich_text.strong(),
+    }
 }
 
 #[must_use]
@@ -242,4 +265,28 @@ pub fn apply_text_styles(style: &Style) -> Style {
 pub fn apply_to_context(context: &Context) {
     let style = apply_text_styles(context.style().as_ref());
     context.set_style(style);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::FONT_WEIGHT_MEDIUM;
+    use super::FONT_WEIGHT_REGULAR;
+    use super::FONT_WEIGHT_SEMIBOLD;
+    use super::FontWeightEmphasis;
+    use super::TextStyle;
+    use super::apply_font_weight_to_rich_text;
+    use super::font_weight_emphasis;
+
+    #[test]
+    fn medium_weight_maps_to_distinct_emphasis() {
+        assert_eq!(font_weight_emphasis(FONT_WEIGHT_REGULAR), FontWeightEmphasis::Regular);
+        assert_eq!(font_weight_emphasis(FONT_WEIGHT_MEDIUM), FontWeightEmphasis::Medium);
+        assert_eq!(font_weight_emphasis(FONT_WEIGHT_SEMIBOLD), FontWeightEmphasis::Semibold);
+    }
+
+    #[test]
+    fn medium_weight_text_still_builds_rich_text() {
+        let style = TextStyle::new(14.0, FONT_WEIGHT_MEDIUM);
+        let _ = apply_font_weight_to_rich_text(egui::RichText::new("medium"), style);
+    }
 }

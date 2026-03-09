@@ -8,10 +8,10 @@ use egui_material3::MaterialSlider;
 use crate::material::components;
 use crate::slider_with_ticks::ui::SliderWithTicksInteraction;
 use crate::slider_with_ticks::ui::SliderWithTicksUiState;
-use crate::ui_icons;
-use crate::ui_icons::UiIconKey;
-use crate::ui_style::typography;
-use crate::ui_style::typography::TypographyRole;
+use crate::material::icons as ui_icons;
+use crate::material::icons::UiIconKey;
+use crate::material::styling::material_typography as typography;
+use crate::material::styling::material_typography::TypographyRole;
 
 use super::actions::AudioPlayerAction;
 use super::state::AudioPlayerState;
@@ -45,14 +45,14 @@ pub fn draw(ui: &mut Ui, state: &AudioPlayerState) -> Vec<AudioPlayerAction> {
                 ui.spacing_mut().item_spacing.x = GRID_12_PX;
 
                 let play_pause_response =
-                    components::icon_button(ui, play_pause_image(state.is_playing), false);
+                    components::top_bar_icon_button(ui, play_pause_image(state.is_playing), false);
                 if play_pause_response.clicked() {
                     actions.push(AudioPlayerAction::TogglePlayPause);
                 }
 
                 let link_response = ui
                     .add_enabled_ui(state.can_link_scene_to_position, |ui| {
-                        components::icon_button(ui, link_image(), false)
+                        components::top_bar_icon_button(ui, link_image(), false)
                     })
                     .inner;
                 if link_response.clicked() {

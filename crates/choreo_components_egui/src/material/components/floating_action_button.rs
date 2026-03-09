@@ -82,8 +82,8 @@ impl<'a> FloatingActionButton<'a> {
             .corner_radius(CornerRadius::same(radius.round() as u8))
             .min_size(vec2(size, size));
         let response = ui.add(button);
-        if response.rect.width() > size {
-            response.on_hover_text(self.tooltip.into_owned())
+        if self.tooltip.is_empty() {
+            response
         } else {
             response.on_hover_text(self.tooltip.into_owned())
         }

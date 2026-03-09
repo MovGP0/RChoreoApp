@@ -6,7 +6,7 @@ use crate::choreo_main::MainPageDependencies;
 use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::ui;
 use crate::splash_screen_host;
-use crate::ui_style::typography;
+use crate::material::styling::material_typography as typography;
 
 pub struct AppShellViewModel {
     title: String,

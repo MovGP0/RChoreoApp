@@ -4,17 +4,17 @@ use egui_material3::MaterialIconButton;
 
 use crate::color_picker::state::ColorPickerState;
 use crate::color_picker::ui as color_picker_ui;
-use crate::ui_style::material_style_metrics::material_style_metrics;
-use crate::ui_style::typography;
-use crate::ui_style::typography::TypographyRole;
+use crate::material::styling::material_style_metrics::material_style_metrics;
+use crate::material::styling::material_typography as typography;
+use crate::material::styling::material_typography::TypographyRole;
 
 use super::actions::SettingsAction;
 use super::state::AudioPlayerBackend;
 use super::state::SettingsState;
 use super::state::ThemeMode;
 use super::translations::settings_translations;
-use crate::ui_icons;
-use crate::ui_icons::UiIconKey;
+use crate::material::icons as ui_icons;
+use crate::material::icons::UiIconKey;
 
 #[must_use]
 pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {

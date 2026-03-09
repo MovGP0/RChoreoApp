@@ -3,7 +3,7 @@ use egui::Ui;
 use egui::vec2;
 
 use crate::material::components;
-use crate::ui_style::typography::TypographyRole;
+use crate::material::styling::material_typography::TypographyRole;
 
 use super::actions::NavBarAction;
 use super::hamburger_toggle_button;
@@ -121,7 +121,7 @@ pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
         ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
             ui.add_space(8.0);
 
-            let audio_response = components::icon_button(
+            let audio_response = components::top_bar_icon_button(
                 ui,
                 components::icon_image(components::TopBarIcon::Audio),
                 false,
@@ -131,7 +131,7 @@ pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
             }
             let _ = audio_response.on_hover_text(strings.open_audio_tooltip.as_str());
 
-            let image_response = components::icon_button(
+            let image_response = components::top_bar_icon_button(
                 ui,
                 components::icon_image(components::TopBarIcon::Image),
                 image_button_checked(state),
@@ -141,7 +141,7 @@ pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
             }
             let _ = image_response.on_hover_text(strings.open_image_tooltip.as_str());
 
-            let home_response = components::icon_button(
+            let home_response = components::top_bar_icon_button(
                 ui,
                 components::icon_image(components::TopBarIcon::Home),
                 false,
@@ -152,7 +152,7 @@ pub fn draw(ui: &mut Ui, state: &NavBarState) -> Vec<NavBarAction> {
             let _ = home_response.on_hover_text(strings.reset_floor_viewport_tooltip.as_str());
 
             let (_, settings_action) = settings_button(state);
-            let settings_response = components::icon_button(
+            let settings_response = components::top_bar_icon_button(
                 ui,
                 components::icon_image(components::TopBarIcon::Settings),
                 settings_button_checked(state),

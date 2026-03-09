@@ -30,9 +30,9 @@ use crate::scenes::state::SceneItemState;
 use crate::scenes::state::ScenesState;
 use crate::scenes::state::format_seconds;
 use crate::scenes::state::parse_timestamp_seconds;
-use crate::ui_icons;
-use crate::ui_icons::UiIconKey;
-use crate::ui_style::typography::TypographyRole;
+use crate::material::icons as ui_icons;
+use crate::material::icons::UiIconKey;
+use crate::material::styling::material_typography::TypographyRole;
 use choreo_master_mobile_json::Color;
 use choreo_master_mobile_json::SceneId;
 
@@ -136,7 +136,7 @@ fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMa
         ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
             ui.add_space(8.0);
 
-            let open_audio_response = components::icon_button(
+            let open_audio_response = components::top_bar_icon_button(
                 ui,
                 components::icon_image(components::TopBarIcon::Audio),
                 false,
@@ -146,7 +146,7 @@ fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMa
             }
             let _ = open_audio_response.on_hover_text(strings.open_audio_tooltip.as_str());
 
-            let open_image_response = components::icon_button(
+            let open_image_response = components::top_bar_icon_button(
                 ui,
                 components::icon_image(components::TopBarIcon::Image),
                 state.floor_state.svg_path.is_some(),
@@ -158,7 +158,7 @@ fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMa
             }
             let _ = open_image_response.on_hover_text(strings.open_image_tooltip.as_str());
 
-            let home_response = components::icon_button(
+            let home_response = components::top_bar_icon_button(
                 ui,
                 components::icon_image(components::TopBarIcon::Home),
                 false,
@@ -168,7 +168,7 @@ fn draw_top_bar(ui: &mut Ui, state: &ChoreoMainState, actions: &mut Vec<ChoreoMa
             }
             let _ = home_response.on_hover_text(strings.reset_floor_viewport_tooltip.as_str());
 
-            let settings_response = components::icon_button(
+            let settings_response = components::top_bar_icon_button(
                 ui,
                 components::icon_image(components::TopBarIcon::Settings),
                 state.is_choreography_settings_open,

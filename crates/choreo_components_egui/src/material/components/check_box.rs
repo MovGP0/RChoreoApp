@@ -83,7 +83,7 @@ impl CheckBox {
         state_style.display_background = self.enabled;
         state_style.tooltip = self.tooltip.as_str();
         paint_state_layer_for_response(ui, &response, state_style);
-        let response = apply_tooltip(response, state_style);
+        let response = apply_tooltip(ui, response, state_style);
 
         let box_size = vec2(metrics.sizes.size_18, metrics.sizes.size_18);
         let box_rect = egui::Rect::from_center_size(rect.center(), box_size);

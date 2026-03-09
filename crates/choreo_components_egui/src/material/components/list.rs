@@ -143,7 +143,7 @@ impl<'a> ListTile<'a> {
             state_style.display_background = false;
         }
         paint_state_layer_for_response(ui, &response, state_style);
-        response = apply_tooltip(response, state_style);
+        response = apply_tooltip(ui, response, state_style);
         response
     }
 }

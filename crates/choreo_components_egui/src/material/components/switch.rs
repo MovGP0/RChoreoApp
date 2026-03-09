@@ -162,7 +162,7 @@ impl<'a> Switch<'a> {
         state_style.enabled = self.enabled;
         state_style.tooltip = self.tooltip.as_ref();
         paint_state_layer_for_response(ui, &response, state_style);
-        let response = apply_tooltip(response, state_style);
+        let response = apply_tooltip(ui, response, state_style);
 
         SwitchResponse {
             response,

@@ -9,10 +9,10 @@ use egui::Ui;
 use egui::Vec2;
 use egui::vec2;
 
-use crate::ui_style::material_animations::MaterialAnimation;
-use crate::ui_style::material_animations::MaterialAnimationSpec;
-use crate::ui_style::material_animations::MaterialAnimations;
-use crate::ui_style::material_style_metrics::material_style_metrics;
+use crate::material::styling::material_animations::MaterialAnimation;
+use crate::material::styling::material_animations::MaterialAnimationSpec;
+use crate::material::styling::material_animations::MaterialAnimations;
+use crate::material::styling::material_style_metrics::material_style_metrics;
 
 const CHECKED_ROTATION_DEGREES: f32 = 35.0;
 

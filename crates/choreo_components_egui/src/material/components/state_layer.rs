@@ -4,7 +4,10 @@ use egui::Painter;
 use egui::Pos2;
 use egui::Rect;
 use egui::Response;
+use egui::vec2;
 use std::f32::consts::SQRT_2;
+
+use crate::material::components::tooltip::ToolTip;
 use crate::material::styling::material_palette::MaterialPalette;
 use crate::material::styling::material_palette::material_palette_for_visuals;
 
@@ -82,20 +85,34 @@ pub fn paint_state_layer(painter: &Painter, rect: Rect, style: StateLayerStyle<'
 
     if style.enabled && style.pressed_or_enter() {
         let ripple_radius = rect.width().max(rect.height()) * SQRT_2;
-        painter.circle_filled(
-            style.pressed_position,
-            ripple_radius,
-            style.color.gamma_multiply(palette.state_layer_opacity_press),
-        );
+        if style.clip_ripple {
+            painter.with_clip_rect(rect).circle_filled(
+                style.pressed_position,
+                ripple_radius,
+                style.color.gamma_multiply(palette.state_layer_opacity_press),
+            );
+        } else {
+            painter.circle_filled(
+                style.pressed_position,
+                ripple_radius,
+                style.color.gamma_multiply(palette.state_layer_opacity_press),
+            );
+        }
     }
 }
 
 #[must_use]
-pub fn apply_tooltip(response: Response, style: StateLayerStyle<'_>) -> Response {
-    if style.tooltip.is_empty() || style.disable_hover {
+pub fn tooltip_anchor_for_response(response: &Response, style: StateLayerStyle<'_>) -> Pos2 {
+    response.rect.left_bottom() + vec2(0.0, style.tooltip_offset)
+}
+
+pub fn apply_tooltip(ui: &mut egui::Ui, response: Response, style: StateLayerStyle<'_>) -> Response {
+    if style.tooltip.is_empty() || style.disable_hover || style.pressed_or_enter() || !response.hovered() {
         return response;
     }
-    response.on_hover_text(style.tooltip)
+    let anchor = tooltip_anchor_for_response(&response, style);
+    let _ = ToolTip::new(style.tooltip).show(ui, anchor);
+    response
 }
 
 pub fn paint_state_layer_for_response(
@@ -130,10 +147,12 @@ impl StateLayerStyle<'_> {
 mod tests {
     use egui::Color32;
     use egui::Context;
+    use egui::Pos2;
 
     use super::StateLayerStyle;
     use super::apply_tooltip;
     use super::state_layer_opacity;
+    use super::tooltip_anchor_for_response;
     use crate::material::styling::material_palette::MaterialPalette;
 
     #[test]
@@ -165,9 +184,26 @@ mod tests {
                 style.tooltip = "blocked";
                 opacity = state_layer_opacity(style, palette);
                 let response = ui.label("hover");
-                let _ = apply_tooltip(response, style);
+                let _ = apply_tooltip(ui, response, style);
             });
         });
         assert_eq!(opacity, 0.0);
+    }
+
+    #[test]
+    fn tooltip_anchor_applies_vertical_offset() {
+        let context = Context::default();
+        let mut anchor = Pos2::ZERO;
+        let mut bottom = 0.0;
+        let _ = context.run(egui::RawInput::default(), |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                let response = ui.label("hover");
+                let mut style = StateLayerStyle::for_ui(ui);
+                style.tooltip_offset = 24.0;
+                bottom = response.rect.bottom();
+                anchor = tooltip_anchor_for_response(&response, style);
+            });
+        });
+        assert_eq!(anchor.y - bottom, 24.0);
     }
 }

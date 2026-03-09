@@ -15,9 +15,9 @@ use crate::choreo_info::ui::ChoreoInfoLabels;
 use crate::color_picker::state::ColorPickerState;
 use crate::color_picker::ui as color_picker_ui;
 use crate::number_picker::ui::NumberPickerUiState;
-use crate::ui_style::material_style_metrics::material_style_metrics;
-use crate::ui_style::typography;
-use crate::ui_style::typography::TypographyRole;
+use crate::material::styling::material_style_metrics::material_style_metrics;
+use crate::material::styling::material_typography as typography;
+use crate::material::styling::material_typography::TypographyRole;
 use choreo_master_mobile_json::Color;
 
 use super::actions::ChoreographySettingsAction;

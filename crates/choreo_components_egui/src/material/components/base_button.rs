@@ -109,7 +109,7 @@ impl<'a> BaseButton<'a> {
         state_style.enabled = self.enabled;
         state_style.tooltip = self.tooltip.as_ref();
         paint_state_layer_for_response(ui, &response, state_style);
-        let response = apply_tooltip(response, state_style);
+        let response = apply_tooltip(ui, response, state_style);
 
         let inner = ui
             .scope_builder(UiBuilder::new().max_rect(rect), |ui| self.paint_contents(ui, rect, add_children))

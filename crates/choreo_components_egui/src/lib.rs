@@ -42,7 +42,5 @@ pub mod splash_screen;
 pub mod splash_screen_host;
 pub mod time;
 pub mod timestamp_state_machine;
-pub mod ui_icons;
-pub mod ui_style;
 
 pub use app_shell::AppShellViewModel;

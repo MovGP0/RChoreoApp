@@ -15,9 +15,9 @@ use egui::vec2;
 
 use crate::delete_scene_dialog::ui::DeleteSceneDialogAction;
 use crate::delete_scene_dialog::ui::draw_delete_scene_dialog;
-use crate::ui_style::material_style_metrics::material_style_metrics;
-use crate::ui_style::typography;
-use crate::ui_style::typography::TypographyRole;
+use crate::material::styling::material_style_metrics::material_style_metrics;
+use crate::material::styling::material_typography as typography;
+use crate::material::styling::material_typography::TypographyRole;
 
 use super::actions::ScenesAction;
 use super::state::SceneItemState;

@@ -10,9 +10,9 @@ use egui::TextWrapMode;
 use egui::Ui;
 
 use crate::material::styling::material_palette::material_palette_for_visuals;
-use crate::material::styling::material_typography::FONT_WEIGHT_SEMIBOLD;
 use crate::material::styling::material_typography::MATERIAL_TYPOGRAPHY;
 use crate::material::styling::material_typography::TextStyle;
+use crate::material::styling::material_typography::apply_font_weight_to_rich_text;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MaterialTextOverflow {
@@ -80,10 +80,7 @@ impl<'a> MaterialText<'a> {
                 FontFamily::Proportional,
             ))
             .color(self.style.color);
-        if self.style.style.font_weight >= FONT_WEIGHT_SEMIBOLD {
-            return rich_text.strong();
-        }
-        rich_text
+        apply_font_weight_to_rich_text(rich_text, self.style.style)
     }
 
     pub fn show(self, ui: &mut Ui) -> Response {

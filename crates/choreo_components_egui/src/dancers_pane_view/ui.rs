@@ -8,11 +8,11 @@ use egui_material3::MaterialIconButton;
 
 use crate::dancers::dancer_list_item_view;
 use crate::dancers::state::DancerState;
-use crate::ui_icons;
-use crate::ui_icons::UiIconKey;
-use crate::ui_style::material_style_metrics::material_style_metrics;
-use crate::ui_style::typography;
-use crate::ui_style::typography::TypographyRole;
+use crate::material::icons as ui_icons;
+use crate::material::icons::UiIconKey;
+use crate::material::styling::material_style_metrics::material_style_metrics;
+use crate::material::styling::material_typography as typography;
+use crate::material::styling::material_typography::TypographyRole;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DancersPaneViewUiState<'a> {
