@@ -21,7 +21,6 @@ use super::actions::OpenSvgFileCommand;
 use super::behavior_pipeline::MainBehaviorPipeline;
 use super::main_page_binding::MainPageActionHandlers;
 use super::main_view_model::MainViewModel;
-use super::messages::OpenImageRequested;
 use super::reducer::sync_audio_position_internal;
 
 pub(crate) fn consume_outgoing_commands(
@@ -427,18 +426,3 @@ pub(crate) fn enqueue_open_audio_request(
     view_model.request_open_audio(request);
 }
 
-pub(crate) fn enqueue_open_image_request(
-    view_model: &mut MainViewModel,
-    request: OpenImageRequested,
-    behavior_pipeline: &MainBehaviorPipeline,
-) {
-    if let Some(behavior) = behavior_pipeline.open_image_behavior.as_ref() {
-        let command = behavior.apply(request);
-        view_model.dispatch(ChoreoMainAction::RequestOpenImage {
-            file_path: command.file_path,
-        });
-        return;
-    }
-
-    view_model.request_open_image(request);
-}

@@ -1,3 +1,4 @@
+use choreo_components_egui::i18n::t;
 use choreo_components_egui::i18n::slint_key_to_i18n_key;
 use choreo_components_egui::i18n::t_slint;
 use choreo_components_egui::i18n::translate_slint;
@@ -14,6 +15,8 @@ fn slint_keys_normalize_to_generated_i18n_catalog_keys() {
 
 #[test]
 fn slint_translation_bridge_resolves_open_port_strings_from_catalog() {
+    assert_eq!(t("en", "AppTitle"), "Choreography Viewer");
+    assert_eq!(t_slint("en", "app_title"), "Choreography Viewer");
     assert_eq!(
         translate_slint("en", "app_title"),
         Some("Choreography Viewer")
@@ -30,9 +33,7 @@ fn slint_translation_bridge_resolves_open_port_strings_from_catalog() {
 }
 
 #[test]
-fn slint_translation_bridge_uses_fallback_when_catalog_key_is_missing() {
-    assert_eq!(
-        t_slint("en", "missing_shell_host_label", "Shell host"),
-        "Shell host"
-    );
+#[should_panic(expected = "Missing translation")]
+fn slint_translation_bridge_panics_when_catalog_key_is_missing() {
+    let _ = t_slint("en", "missing_shell_host_label");
 }

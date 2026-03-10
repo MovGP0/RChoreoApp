@@ -20,7 +20,11 @@ fn save_choreo_maps_scene_view_state_back_to_model() {
         },
     );
 
-    state.last_opened_choreo_file = Some("C:/tmp/saved.choreo".to_string());
+    let temp_root = std::env::temp_dir().join("rchoreo_scenes_save_map_back_spec");
+    fs::create_dir_all(&temp_root).expect("temp dir should be created");
+    let existing_path = temp_root.join("saved.choreo");
+    fs::write(&existing_path, "{}").expect("temp file should be created");
+    state.last_opened_choreo_file = Some(existing_path.to_string_lossy().into_owned());
     state.scenes[0].text = "  details  ".to_string();
     state.scenes[0].timestamp = Some(12.0);
 
@@ -36,6 +40,9 @@ fn save_choreo_maps_scene_view_state_back_to_model() {
         Some("details")
     );
     assert!(state.can_save_choreo);
+
+    let _ = fs::remove_file(existing_path);
+    let _ = fs::remove_dir(temp_root);
 }
 
 #[test]

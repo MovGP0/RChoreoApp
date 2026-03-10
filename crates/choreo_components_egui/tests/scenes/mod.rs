@@ -11,7 +11,7 @@ pub mod translations;
 #[path = "../../src/scenes/ui.rs"]
 pub mod ui;
 
-pub use choreo_components_egui::ui_icons;
+pub use choreo_components_egui::material::icons as ui_icons;
 pub use rspec::report::Report;
 
 pub mod action_surface_parity_spec;

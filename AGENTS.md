@@ -54,6 +54,13 @@ Key rules:
 - Use a dedicated translation module in the egui layer for all UI strings.
 - Bind labels/text in egui from centralized translation lookups.
 - ViewModels must not contain UI strings or translation keys.
+- Translation keys must use the same `PascalCase` key names as the `choreo_i18n` TOML catalog (for example `SettingsAudioBackendLabel`).
+- Use `crates/choreo_components_egui/src/i18n.rs::t(locale, key)` for direct lookups. It is fail-fast: missing catalog keys must be treated as errors, not masked by per-call fallback strings.
+- Keep key normalization logic limited to the Slint bridge helpers in `crates/choreo_components_egui/src/i18n.rs` (for example when mapping `snake_case` Slint/global property names to catalog keys). Do not duplicate key-conversion helpers in per-feature translation modules.
+- When adding a new translation:
+  - add the catalog entry to `choreo_i18n`
+  - reference it from egui using the exact `PascalCase` catalog key
+  - add or update a spec that verifies the translated value resolves correctly through the egui translation module
 
 ## UI Colors and Styling
 

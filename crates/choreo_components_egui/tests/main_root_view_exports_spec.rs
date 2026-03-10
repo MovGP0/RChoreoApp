@@ -51,7 +51,9 @@ fn main_root_view_exports_spec() {
         position: choreo_components_egui::floor::state::Point::new(0.0, 1.0),
     };
     let legend_entry = LegendEntry {
-        label: "Lead".to_string(),
+        shortcut: "L".to_string(),
+        name: "Lead".to_string(),
+        position_text: "1".to_string(),
         color: [255, 0, 0, 255],
     };
     let _legend_entries: FloorLegendEntries = vec![legend_entry];

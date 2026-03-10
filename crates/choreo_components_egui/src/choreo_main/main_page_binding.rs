@@ -22,7 +22,6 @@ use super::messages::ShowDialogCommand;
 use super::runtime::apply_audio_action_side_effects;
 use super::runtime::consume_outgoing_commands;
 use super::runtime::enqueue_open_audio_request;
-use super::runtime::enqueue_open_image_request;
 use super::runtime::poll_audio_runtime;
 
 #[derive(Clone, Default)]
@@ -151,14 +150,28 @@ impl MainPageBinding {
 
     pub fn request_open_image(&self, request: OpenImageRequested) {
         let mut view_model = self.view_model.borrow_mut();
-        let mut audio_runtime = self.audio_runtime.borrow_mut();
-        enqueue_open_image_request(&mut view_model, request, &self.behavior_pipeline);
-        consume_outgoing_commands(
-            &mut view_model,
-            &self.action_handlers,
-            &self.behavior_pipeline,
-            &mut audio_runtime,
-        );
+        let command = if let Some(behavior) = self.behavior_pipeline.open_image_behavior.as_ref() {
+            behavior.apply(request)
+        } else {
+            OpenSvgFileCommand {
+                file_path: request.file_path,
+            }
+        };
+
+        if let Some(behavior) = self.behavior_pipeline.open_svg_file_behavior.as_ref() {
+            behavior.apply(&mut view_model, command.clone());
+        } else {
+            view_model.open_svg_file(command.clone());
+        }
+
+        if let Some(request_open_image) = self.action_handlers.request_open_image.as_ref() {
+            request_open_image(command.file_path);
+            return;
+        }
+
+        if let Some(pick_image_path) = self.action_handlers.pick_image_path.as_ref() {
+            let _ = pick_image_path();
+        }
     }
 
     pub fn open_svg_file(&self, command: OpenSvgFileCommand) {

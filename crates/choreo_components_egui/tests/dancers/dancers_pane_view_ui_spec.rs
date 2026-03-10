@@ -1,6 +1,6 @@
 use crate::dancers;
 use crate::dancers::Report;
-use choreo_components_egui::ui_style::typography::TypographyRole;
+use choreo_components_egui::material::styling::material_typography::TypographyRole;
 
 #[test]
 fn dancers_pane_view_ui_spec() {

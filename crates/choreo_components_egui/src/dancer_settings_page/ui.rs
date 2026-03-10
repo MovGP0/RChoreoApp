@@ -244,7 +244,7 @@ pub fn drawer_host_state(
 }
 
 fn draw_top_bar(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersAction>, locale: &str) {
-    let title = t(locale, "DancersTitle", "Dancers");
+    let title = t(locale, "DancersTitle");
     Frame::new()
         .fill(ui.visuals().faint_bg_color)
         .stroke(Stroke::new(
@@ -289,11 +289,10 @@ pub fn build_swap_dialog_view_model(
     let message_template = t(
         locale,
         "DancerSwapDialogMessage",
-        "Swap dancers \"{0}\" and \"{1}\"?",
     );
 
     Some(SwapDialogViewModel {
-        title_text: t(locale, "DancerSwapDialogTitle", "Swap dancers"),
+        title_text: t(locale, "DancerSwapDialogTitle"),
         first_dancer_name: first_name.clone(),
         second_dancer_name: second_name.clone(),
         first_dancer_color: state
@@ -309,8 +308,8 @@ pub fn build_swap_dialog_view_model(
         message_text: message_template
             .replace("{0}", &first_name)
             .replace("{1}", &second_name),
-        cancel_text: t(locale, "DancerSwapDialogCancel", "Cancel"),
-        confirm_text: t(locale, "DancerSwapDialogConfirm", "Swap"),
+        cancel_text: t(locale, "DancerSwapDialogCancel"),
+        confirm_text: t(locale, "DancerSwapDialogConfirm"),
     })
 }
 
@@ -320,7 +319,7 @@ fn draw_dancers_pane(
     actions: &mut Vec<DancersAction>,
     locale: &str,
 ) {
-    let pane_title = t(locale, "DancersTitle", "Dancers");
+    let pane_title = t(locale, "DancersTitle");
     let pane_actions = dancers_pane_view::draw(
         ui,
         dancers_pane_view::DancersPaneViewUiState {
@@ -384,13 +383,13 @@ fn draw_content(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersActi
                 ui.set_min_height(footer_height_token());
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     if ui
-                        .add(MaterialButton::new(t(locale, "CommonOk", "OK")))
+                        .add(MaterialButton::new(t(locale, "CommonOk")))
                         .clicked()
                     {
                         actions.push(DancersAction::SaveToGlobal);
                     }
                     if ui
-                        .add(MaterialButton::new(t(locale, "CommonCancel", "Cancel")))
+                        .add(MaterialButton::new(t(locale, "CommonCancel")))
                         .clicked()
                     {
                         actions.push(DancersAction::Cancel);
@@ -415,8 +414,8 @@ fn draw_dancer_card(
         .corner_radius(CornerRadius::same(card_corner_radius_token() as u8))
         .inner_margin(Margin::same(content_spacing_token() as i8))
         .show(ui, |ui| {
-            ui.heading(t(locale, "DancerTitle", "Dancer"));
-            ui.label(t(locale, "DancerRoleLabel", "Role"));
+            ui.heading(t(locale, "DancerTitle"));
+            ui.label(t(locale, "DancerRoleLabel"));
 
             let selected_role = selected_role_index(state).unwrap_or(0);
             let mut selected_role_mut = selected_role;
@@ -450,7 +449,6 @@ fn draw_dancer_card(
                     egui::TextEdit::singleline(&mut name).hint_text(t(
                         locale,
                         "DancerNameLabel",
-                        "Name",
                     )),
                 )
                 .changed()
@@ -469,7 +467,6 @@ fn draw_dancer_card(
                     egui::TextEdit::singleline(&mut shortcut).hint_text(t(
                         locale,
                         "DancerShortcutLabel",
-                        "Shortcut",
                     )),
                 )
                 .changed()
@@ -477,7 +474,7 @@ fn draw_dancer_card(
                 actions.push(DancersAction::UpdateDancerShortcut { value: shortcut });
             }
 
-            ui.label(t(locale, "DancerIconLabel", "Icon"));
+            ui.label(t(locale, "DancerIconLabel"));
             let mut selected_icon = selected_icon_index(state).unwrap_or(0);
             let selected_icon_label = state
                 .icon_options
@@ -507,7 +504,7 @@ fn draw_dancer_card(
                 });
             }
 
-            ui.label(t(locale, "DancerColorLabel", "Color"));
+            ui.label(t(locale, "DancerColorLabel"));
             ui.add_enabled_ui(state.has_selected_dancer, |ui| {
                 if let Some(color32) =
                     color_picker_ui::draw_bound(ui, selected_dancer_color_picker_state(state))
@@ -540,8 +537,8 @@ fn draw_swap_card(
         .corner_radius(CornerRadius::same(card_corner_radius_token() as u8))
         .inner_margin(Margin::same(content_spacing_token() as i8))
         .show(ui, |ui| {
-            ui.heading(t(locale, "DancerSwapSectionTitle", "Swap dancers"));
-            ui.label(t(locale, "DancerSwapFromLabel", "Swap from"));
+            ui.heading(t(locale, "DancerSwapSectionTitle"));
+            ui.label(t(locale, "DancerSwapFromLabel"));
 
             let from_index = state
                 .swap_from_dancer
@@ -567,7 +564,7 @@ fn draw_swap_card(
                 });
             }
 
-            ui.label(t(locale, "DancerSwapToLabel", "Swap to"));
+            ui.label(t(locale, "DancerSwapToLabel"));
             let to_index = state
                 .swap_to_dancer
                 .as_ref()
@@ -595,7 +592,7 @@ fn draw_swap_card(
             if ui
                 .add_enabled(
                     state.can_swap_dancers,
-                    MaterialButton::new(t(locale, "DancerSwapButton", "Swap")),
+                    MaterialButton::new(t(locale, "DancerSwapButton")),
                 )
                 .clicked()
             {

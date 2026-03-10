@@ -21,18 +21,18 @@ pub struct NavBarTranslations {
 #[must_use]
 pub fn nav_bar_translations(locale: &str) -> NavBarTranslations {
     NavBarTranslations {
-        toggle_navigation_tooltip: t(locale, "MainToggleNavTooltip", "Toggle navigation"),
-        open_settings_tooltip: t(locale, "MainOpenSettingsTooltip", "Choreography Settings"),
-        reset_floor_viewport_tooltip: t(locale, "MainHomeTooltip", "Reset floor viewport"),
-        open_image_tooltip: t(locale, "MainOpenImageTooltip", "Open floor SVG"),
-        open_audio_tooltip: t(locale, "MainOpenAudioTooltip", "Open audio file"),
-        mode_label: t(locale, "ModeLabel", "Mode"),
-        mode_view: t(locale, "ModeView", "View"),
-        mode_move: t(locale, "ModeMove", "Move"),
-        mode_rotate_around_center: t(locale, "ModeRotateAroundCenter", "Rotate around center"),
-        mode_rotate_around_dancer: t(locale, "ModeRotateAroundDancer", "Rotate around dancer"),
-        mode_scale: t(locale, "ModeScale", "Scale"),
-        mode_line_of_sight: t(locale, "ModeLineOfSight", "Line of sight"),
+        toggle_navigation_tooltip: t(locale, "MainToggleNavTooltip"),
+        open_settings_tooltip: t(locale, "MainOpenSettingsTooltip"),
+        reset_floor_viewport_tooltip: t(locale, "MainHomeTooltip"),
+        open_image_tooltip: t(locale, "MainOpenImageTooltip"),
+        open_audio_tooltip: t(locale, "MainOpenAudioTooltip"),
+        mode_label: t(locale, "ModeLabel"),
+        mode_view: t(locale, "ModeView"),
+        mode_move: t(locale, "ModeMove"),
+        mode_rotate_around_center: t(locale, "ModeRotateAroundCenter"),
+        mode_rotate_around_dancer: t(locale, "ModeRotateAroundDancer"),
+        mode_scale: t(locale, "ModeScale"),
+        mode_line_of_sight: t(locale, "ModeLineOfSight"),
     }
 }
 

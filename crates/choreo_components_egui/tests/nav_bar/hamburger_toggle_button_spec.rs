@@ -10,9 +10,9 @@ use crate::nav_bar::nav_bar_component::hamburger_toggle_button::geometry_for_rec
 use crate::nav_bar::nav_bar_component::hamburger_toggle_button::minimum_button_size_token;
 use crate::nav_bar::nav_bar_component::hamburger_toggle_button::state_layer_animation_spec;
 use crate::nav_bar::nav_bar_component::hamburger_toggle_button::toggled_state_after_click;
-use choreo_components_egui::ui_style::material_animations::MaterialAnimation;
-use choreo_components_egui::ui_style::material_animations::MaterialAnimations;
-use choreo_components_egui::ui_style::material_style_metrics::material_style_metrics;
+use choreo_components_egui::material::styling::material_animations::MaterialAnimation;
+use choreo_components_egui::material::styling::material_animations::MaterialAnimations;
+use choreo_components_egui::material::styling::material_style_metrics::material_style_metrics;
 
 #[test]
 fn unchecked_geometry_keeps_three_parallel_bars() {

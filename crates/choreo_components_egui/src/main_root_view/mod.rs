@@ -27,7 +27,7 @@ pub struct Translations;
 impl Translations {
     #[must_use]
     pub fn text(locale: &str, key: &str) -> Option<&'static str> {
-        let normalized_key = slint_key_to_i18n_key(key);
+        let normalized_key = crate::i18n::slint_key_to_i18n_key(key);
         choreo_i18n::translation_with_fallback(locale, normalized_key.as_str())
     }
 
@@ -35,19 +35,6 @@ impl Translations {
     pub fn app_title(locale: &str) -> &'static str {
         Self::text(locale, "app_title").unwrap_or(crate::shell::app_title())
     }
-}
-
-fn slint_key_to_i18n_key(key: &str) -> String {
-    let mut normalized = String::with_capacity(key.len());
-    for segment in key.split('_').filter(|segment| !segment.is_empty()) {
-        let mut chars = segment.chars();
-        if let Some(first) = chars.next() {
-            normalized.push(first.to_ascii_uppercase());
-            normalized.extend(chars);
-        }
-    }
-
-    normalized
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

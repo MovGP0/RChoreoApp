@@ -4,150 +4,138 @@ pub struct ChoreographySettingsTranslations;
 
 impl ChoreographySettingsTranslations {
     pub fn comment(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.comment", "Comment")
+        i18n::t(locale, "ChoreographyCommentPlaceholder")
     }
 
     pub fn name(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.name", "Name")
+        i18n::t(locale, "ChoreographyNamePlaceholder")
     }
 
     pub fn subtitle(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.subtitle", "Subtitle")
+        i18n::t(locale, "ChoreographySubtitlePlaceholder")
     }
 
     pub fn date(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.date", "Date")
+        i18n::t(locale, "ChoreographyDateLabel")
     }
 
     pub fn variation(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.variation", "Variation")
+        i18n::t(locale, "ChoreographyVariationPlaceholder")
     }
 
     pub fn author(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.author", "Author")
+        i18n::t(locale, "ChoreographyAuthorPlaceholder")
     }
 
     pub fn description(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.description", "Description")
+        i18n::t(locale, "ChoreographyDescriptionPlaceholder")
     }
 
     pub fn title(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.title", "Choreography Settings")
+        i18n::t(locale, "ChoreographyDisplayTitle")
     }
 
     pub fn choreography(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.choreography", "Choreography")
+        i18n::t(locale, "ChoreographySectionTitle")
     }
 
     pub fn selected_scene(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.selected_scene", "Selected Scene")
+        i18n::t(locale, "SceneSectionTitle")
     }
 
     pub fn floor(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.floor", "Floor")
+        i18n::t(locale, "ChoreographyFloorTitle")
     }
 
     pub fn display(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.display", "Display")
+        i18n::t(locale, "ChoreographyDisplayTitle")
     }
 
     pub fn scene_name(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.scene_name", "Scene name")
+        i18n::t(locale, "SceneNameLabel")
     }
 
     pub fn scene_text(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.scene_text", "Scene text")
+        i18n::t(locale, "SceneTextLabel")
     }
 
     pub fn floor_front(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.floor_front", "Front")
+        i18n::t(locale, "ChoreographyFloorFrontLabel")
     }
 
     pub fn floor_back(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.floor_back", "Back")
+        i18n::t(locale, "ChoreographyFloorBackLabel")
     }
 
     pub fn floor_left(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.floor_left", "Left")
+        i18n::t(locale, "ChoreographyFloorLeftLabel")
     }
 
     pub fn floor_right(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.floor_right", "Right")
+        i18n::t(locale, "ChoreographyFloorRightLabel")
     }
 
     pub fn floor_color(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.floor_color", "Floor color")
+        i18n::t(locale, "ChoreographyFloorColorLabel")
     }
 
     pub fn grid_resolution(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.grid_resolution", "Grid resolution")
+        i18n::t(locale, "ChoreographyGridSizeLabel")
     }
 
     pub fn grid_lines(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.grid_lines", "Grid lines")
+        i18n::t(locale, "ChoreographyGridLinesLabel")
     }
 
     pub fn show_legend(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.show_legend", "Show legend")
+        i18n::t(locale, "ChoreographyShowLegendLabel")
     }
 
     pub fn snap_to_grid(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.snap_to_grid", "Snap to grid")
+        i18n::t(locale, "ChoreographySnapToGridLabel")
     }
 
     pub fn show_timestamps(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.show_timestamps", "Show timestamps")
+        i18n::t(locale, "ChoreographyShowTimestampsLabel")
     }
 
     pub fn positions_at_side(locale: &str) -> String {
-        i18n::t(
-            locale,
-            "choreo.settings.positions_at_side",
-            "Positions at side",
-        )
+        i18n::t(locale, "ChoreographyPositionsAtSideLabel")
     }
 
     pub fn draw_path_from(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.draw_path_from", "Draw path from")
+        i18n::t(locale, "ChoreographyDrawPathFromLabel")
     }
 
     pub fn draw_path_to(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.draw_path_to", "Draw path to")
+        i18n::t(locale, "ChoreographyDrawPathToLabel")
     }
 
     pub fn transparency(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.transparency", "Transparency")
+        i18n::t(locale, "ChoreographyTransparencyLabel")
     }
 
     pub fn scene_fixed_positions(locale: &str) -> String {
-        i18n::t(
-            locale,
-            "choreo.settings.scene_fixed_positions",
-            "Fixed positions",
-        )
+        i18n::t(locale, "SceneFixedPositionsLabel")
     }
 
     pub fn scene_has_timestamp(locale: &str) -> String {
-        i18n::t(
-            locale,
-            "choreo.settings.scene_has_timestamp",
-            "Has timestamp",
-        )
+        i18n::t(locale, "SceneTimestampLabel")
     }
 
     pub fn timestamp_minutes(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.timestamp_minutes", "Minutes")
+        i18n::t(locale, "SceneTimestampMinutesLabel")
     }
 
     pub fn timestamp_seconds(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.timestamp_seconds", "Seconds")
+        i18n::t(locale, "SceneTimestampSecondsLabel")
     }
 
     pub fn timestamp_millis(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.timestamp_millis", "Milliseconds")
+        i18n::t(locale, "SceneTimestampMillisecondsLabel")
     }
 
     pub fn scene_color(locale: &str) -> String {
-        i18n::t(locale, "choreo.settings.scene_color", "Scene color")
+        i18n::t(locale, "SceneColorLabel")
     }
 }

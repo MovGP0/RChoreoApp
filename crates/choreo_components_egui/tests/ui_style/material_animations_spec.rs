@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use choreo_components_egui::ui_style::material_animations::MaterialAnimation;
-use choreo_components_egui::ui_style::material_animations::MaterialAnimations;
+use choreo_components_egui::material::styling::material_animations::MaterialAnimation;
+use choreo_components_egui::material::styling::material_animations::MaterialAnimations;
 
 #[test]
 fn material_animation_durations_match_slint_contract() {

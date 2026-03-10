@@ -1,4 +1,4 @@
-use choreo_i18n::translation_with_fallback;
+use crate::i18n::t;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScenesTranslations {
@@ -25,41 +25,23 @@ pub struct ScenesTranslations {
 #[must_use]
 pub fn scenes_translations(locale: &str) -> ScenesTranslations {
     ScenesTranslations {
-        search_placeholder: t(locale, "SearchPlaceholder", "Search"),
-        add_before: t(locale, "ScenesAddBefore", "Add before"),
-        add_after: t(locale, "ScenesAddAfter", "Add after"),
-        delete_scene_title: t(locale, "DeleteSceneDialogTitle", "Delete scene"),
-        open: t(locale, "ScenesOpen", "Open"),
-        save: t(locale, "ScenesSave", "Save"),
-        settings: t(locale, "SettingsTitle", "Settings"),
-        dancers: t(locale, "DancersTitle", "Dancers"),
-        delete_scene_dialog_title: t(locale, "DeleteSceneDialogTitle", "Delete scene"),
-        delete_scene_dialog_message: t(locale, "DeleteSceneDialogMessage", "Delete scene \"{0}\"?"),
-        delete_scene_dialog_default_name: t(locale, "DeleteSceneDialogDefaultName", "this scene"),
-        delete_scene_dialog_yes: t(locale, "DeleteSceneDialogYes", "Yes"),
-        delete_scene_dialog_no: t(locale, "DeleteSceneDialogNo", "No"),
-        copy_scene_positions_dialog_title: t(
-            locale,
-            "CopyScenePositionsDialogTitle",
-            "Copy positions",
-        ),
-        copy_scene_positions_dialog_message: t(
-            locale,
-            "CopyScenePositionsDialogMessage",
-            "Copy dancer positions from \"{0}\" to the new scene?",
-        ),
-        copy_scene_positions_dialog_confirm: t(locale, "CopyScenePositionsDialogConfirm", "Copy"),
-        copy_scene_positions_dialog_cancel: t(
-            locale,
-            "CopyScenePositionsDialogCancel",
-            "Don't copy",
-        ),
-        common_cancel: t(locale, "CommonCancel", "Cancel"),
+        search_placeholder: t(locale, "SearchPlaceholder"),
+        add_before: t(locale, "ScenesAddBefore"),
+        add_after: t(locale, "ScenesAddAfter"),
+        delete_scene_title: t(locale, "DeleteSceneDialogTitle"),
+        open: t(locale, "ScenesOpen"),
+        save: t(locale, "ScenesSave"),
+        settings: t(locale, "SettingsTitle"),
+        dancers: t(locale, "DancersTitle"),
+        delete_scene_dialog_title: t(locale, "DeleteSceneDialogTitle"),
+        delete_scene_dialog_message: t(locale, "DeleteSceneDialogMessage"),
+        delete_scene_dialog_default_name: t(locale, "DeleteSceneDialogDefaultName"),
+        delete_scene_dialog_yes: t(locale, "DeleteSceneDialogYes"),
+        delete_scene_dialog_no: t(locale, "DeleteSceneDialogNo"),
+        copy_scene_positions_dialog_title: t(locale, "CopyScenePositionsDialogTitle"),
+        copy_scene_positions_dialog_message: t(locale, "CopyScenePositionsDialogMessage"),
+        copy_scene_positions_dialog_confirm: t(locale, "CopyScenePositionsDialogConfirm"),
+        copy_scene_positions_dialog_cancel: t(locale, "CopyScenePositionsDialogCancel"),
+        common_cancel: t(locale, "CommonCancel"),
     }
-}
-
-fn t(locale: &str, key: &str, fallback: &'static str) -> String {
-    translation_with_fallback(locale, key)
-        .unwrap_or(fallback)
-        .to_string()
 }

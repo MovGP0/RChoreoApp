@@ -30774,7 +30774,7 @@ mod tests {
                 UiIconKey::SettingsNavigateBack,
                 "arrow_back",
                 "ArrowLeft",
-                "ArrowLeft",
+                "ArrowLeftThick",
             ),
             (
                 UiIconKey::DancersAdd,

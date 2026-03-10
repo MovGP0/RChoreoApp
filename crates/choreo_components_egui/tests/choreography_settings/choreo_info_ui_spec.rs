@@ -4,6 +4,7 @@ use crate::choreography_settings::ui::transparency_percentage_text;
 use choreo_components_egui::choreo_info::state::ChoreoDate;
 use choreo_components_egui::choreo_info::ui::picker_date_value;
 use choreo_components_egui::choreo_info::ui::uses_calendar_date_picker;
+use choreo_components_egui::choreography_settings::translations::ChoreographySettingsTranslations;
 use choreo_components_egui::material::components::DatePickerValue;
 
 #[test]
@@ -76,9 +77,10 @@ fn selected_scene_section_renders_even_without_selected_scene() {
         });
     });
 
+    let expected_heading = ChoreographySettingsTranslations::selected_scene("en");
     let mut found_selected_scene_heading = false;
     for clipped in output.shapes {
-        if format!("{:?}", clipped.shape).contains("Selected Scene") {
+        if format!("{:?}", clipped.shape).contains(expected_heading.as_str()) {
             found_selected_scene_heading = true;
             break;
         }

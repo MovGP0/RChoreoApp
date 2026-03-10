@@ -70,6 +70,7 @@ fn non_ui_behavior_parity_spec() {
 
                 let state = binding.view_model();
                 assert_eq!(state.borrow().state().svg_file_path.as_deref(), Some("C:/floor.svg"));
+                global_state_store.drain();
                 let global_svg = global_state_store
                     .try_with_state(|state| state.svg_file_path.clone())
                     .expect("global state should be readable");
