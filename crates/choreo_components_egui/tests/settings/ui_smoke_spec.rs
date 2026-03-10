@@ -2,13 +2,21 @@ use crate::settings::state::AudioPlayerBackend;
 use crate::settings::state::SettingsState;
 use crate::settings::translations::settings_translations;
 use crate::settings::ui::audio_backend_label;
+use crate::settings::ui::card_corner_radius_token;
+use crate::settings::ui::card_padding_token;
+use crate::settings::ui::card_spacing_token;
 use crate::settings::ui::color_picker_state_from_argb_hex;
+use crate::settings::ui::color_picker_wheel_size_token;
+use crate::settings::ui::color_swatch_height_token;
+use crate::settings::ui::color_swatch_width_token;
+use crate::settings::ui::content_max_width_token;
 use crate::settings::ui::content_spacing_token;
+use crate::settings::ui::dropdown_height_token;
 use crate::settings::ui::format_argb_hex;
 use crate::settings::ui::navigate_back_icon_name;
 use crate::settings::ui::navigate_back_icon_svg;
 use crate::settings::ui::parse_argb_hex;
-use choreo_components_egui::ui_style::material_style_metrics::material_style_metrics;
+use choreo_components_egui::material::styling::material_style_metrics::material_style_metrics;
 
 #[test]
 fn settings_ui_draw_executes_without_panicking() {
@@ -67,6 +75,18 @@ fn color_picker_state_uses_parsed_argb_value() {
         picker_state.selected_color,
         egui::Color32::from_rgba_unmultiplied(0x33, 0x66, 0x99, 0xFF)
     );
+    assert_eq!(
+        picker_state.value_slider_position,
+        choreo_components_egui::color_picker::state::ColorPickerDock::Bottom
+    );
+    assert_eq!(
+        picker_state.wheel_minimum_width,
+        color_picker_wheel_size_token()
+    );
+    assert_eq!(
+        picker_state.wheel_minimum_height,
+        color_picker_wheel_size_token()
+    );
 }
 
 #[test]
@@ -81,4 +101,21 @@ fn settings_spacing_uses_shared_material_metrics_token() {
         content_spacing_token(),
         material_style_metrics().spacings.spacing_12
     );
+}
+
+#[test]
+fn settings_layout_tokens_match_slint_card_structure() {
+    let metrics = material_style_metrics();
+
+    assert_eq!(card_spacing_token(), metrics.spacings.spacing_12);
+    assert_eq!(card_padding_token(), metrics.paddings.padding_12);
+    assert_eq!(
+        card_corner_radius_token(),
+        metrics.corner_radii.border_radius_8
+    );
+    assert_eq!(content_max_width_token(), 720.0);
+    assert_eq!(dropdown_height_token(), metrics.sizes.size_56);
+    assert_eq!(color_swatch_width_token(), 108.0);
+    assert_eq!(color_swatch_height_token(), 36.0);
+    assert_eq!(color_picker_wheel_size_token(), 168.0);
 }

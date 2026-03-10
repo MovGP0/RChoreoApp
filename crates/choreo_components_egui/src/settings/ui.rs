@@ -1,9 +1,24 @@
+use std::borrow::Cow;
+
 use egui::Color32;
+use egui::CornerRadius;
+use egui::Frame;
+use egui::Layout;
+use egui::Margin;
+use egui::ScrollArea;
+use egui::Sense;
+use egui::Stroke;
 use egui::Ui;
+use egui::vec2;
 use egui_material3::MaterialIconButton;
 
+use crate::color_picker::state::ColorPickerDock;
 use crate::color_picker::state::ColorPickerState;
 use crate::color_picker::ui as color_picker_ui;
+use crate::material::components;
+use crate::material::icons as ui_icons;
+use crate::material::icons::UiIconKey;
+use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
@@ -13,147 +28,79 @@ use super::state::AudioPlayerBackend;
 use super::state::SettingsState;
 use super::state::ThemeMode;
 use super::translations::settings_translations;
-use crate::material::icons as ui_icons;
-use crate::material::icons::UiIconKey;
+
+const DEFAULT_LOCALE: &str = "en";
 
 #[must_use]
 pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
     let mut actions: Vec<SettingsAction> = Vec::new();
-    let strings = settings_translations("en");
+    let strings = settings_translations(DEFAULT_LOCALE);
 
-    let spacing = content_spacing_token();
-    ui.spacing_mut().item_spacing = egui::vec2(spacing, spacing);
-    ui.horizontal(|ui| {
-        if ui
-            .add(
-                MaterialIconButton::standard(navigate_back_icon_name())
-                    .svg_data(navigate_back_icon_svg()),
-            )
-            .on_hover_text(strings.navigate_back.as_str())
-            .clicked()
-        {
-            actions.push(SettingsAction::NavigateBack);
-        }
-        ui.label(typography::rich_text_for_role(
-            strings.title.as_str(),
-            page_title_role(),
-        ));
-    });
+    ui.spacing_mut().item_spacing = vec2(content_spacing_token(), content_spacing_token());
 
-    ui.group(|ui| {
-        ui.set_min_width(300.0);
-        ui.label(typography::rich_text_for_role(
-            strings.theme.as_str(),
-            section_label_role(),
-        ));
+    let content_width = ui.available_width().min(content_max_width_token());
 
-        let mut use_system_theme = state.use_system_theme;
-        ui.add_enabled_ui(state.can_use_system_theme, |ui| {
-            if ui
-                .checkbox(&mut use_system_theme, strings.use_system_theme.as_str())
-                .changed()
-            {
-                actions.push(SettingsAction::UpdateUseSystemTheme {
-                    enabled: use_system_theme,
-                });
-            }
-        });
+    ScrollArea::vertical()
+        .id_salt("settings_page_scroll")
+        .auto_shrink([false, false])
+        .show(ui, |ui| {
+            draw_centered_content_column(ui, content_width, |ui| {
+                draw_header(
+                    ui,
+                    strings.navigate_back.as_str(),
+                    &strings.title,
+                    &mut actions,
+                );
+                ui.add_space(card_spacing_token());
 
-        let mut is_dark_mode = matches!(state.theme_mode, ThemeMode::Dark);
-        let can_toggle_dark_mode = if state.can_use_system_theme {
-            !use_system_theme
-        } else {
-            true
-        };
-        ui.add_enabled_ui(can_toggle_dark_mode, |ui| {
-            if ui
-                .checkbox(&mut is_dark_mode, strings.dark_mode.as_str())
-                .changed()
-            {
-                actions.push(SettingsAction::UpdateIsDarkMode {
-                    enabled: is_dark_mode,
-                });
-            }
-        });
-    });
-
-    ui.group(|ui| {
-        ui.set_min_width(300.0);
-        ui.label(typography::rich_text_for_role(
-            strings.audio_backend.as_str(),
-            section_label_role(),
-        ));
-
-        let mut selected_backend = state.audio_player_backend;
-        egui::ComboBox::from_label(strings.audio_backend.as_str())
-            .selected_text(audio_backend_label(selected_backend, &strings))
-            .show_ui(ui, |ui| {
-                for backend in [
-                    AudioPlayerBackend::Rodio,
-                    AudioPlayerBackend::Awedio,
-                    AudioPlayerBackend::Browser,
-                ] {
-                    ui.selectable_value(
-                        &mut selected_backend,
-                        backend,
-                        audio_backend_label(backend, &strings),
-                    );
+                if state.can_use_system_theme {
+                    draw_settings_card(ui, |ui| {
+                        draw_toggle_row(
+                            ui,
+                            strings.use_system_theme.as_str(),
+                            state.use_system_theme,
+                            true,
+                            update_use_system_theme_action,
+                            &mut actions,
+                        );
+                    });
+                    ui.add_space(card_spacing_token());
                 }
+
+                draw_audio_backend_card(ui, state, &strings, &mut actions);
+                ui.add_space(card_spacing_token());
+
+                draw_theme_and_primary_color_card(ui, state, &strings, &mut actions);
+                ui.add_space(card_spacing_token());
+
+                draw_color_card(
+                    ui,
+                    ColorCardSpec {
+                        label: strings.secondary_color.as_str(),
+                        switch_enabled: state.use_primary_color,
+                        enabled: state.use_secondary_color,
+                        color_hex: &state.secondary_color_hex,
+                        toggle_action: update_use_secondary_color_action,
+                        color_action: update_secondary_color_hex_action,
+                    },
+                    &mut actions,
+                );
+                ui.add_space(card_spacing_token());
+
+                draw_color_card(
+                    ui,
+                    ColorCardSpec {
+                        label: strings.tertiary_color.as_str(),
+                        switch_enabled: state.use_secondary_color,
+                        enabled: state.use_tertiary_color,
+                        color_hex: &state.tertiary_color_hex,
+                        toggle_action: update_use_tertiary_color_action,
+                        color_action: update_tertiary_color_hex_action,
+                    },
+                    &mut actions,
+                );
             });
-
-        if selected_backend != state.audio_player_backend {
-            actions.push(SettingsAction::UpdateAudioPlayerBackend {
-                backend: selected_backend,
-            });
-        }
-    });
-
-    ui.group(|ui| {
-        ui.set_min_width(300.0);
-        ui.label(typography::rich_text_for_role(
-            strings.colors.as_str(),
-            section_label_role(),
-        ));
-
-        draw_color_controls(
-            ui,
-            ColorControlSpec {
-                label: strings.primary_color.as_str(),
-                enabled: state.use_primary_color,
-                can_enable: true,
-                color_hex: &state.primary_color_hex,
-                toggle_action: update_use_primary_color_action,
-                color_action: update_primary_color_hex_action,
-            },
-            &mut actions,
-        );
-
-        draw_color_controls(
-            ui,
-            ColorControlSpec {
-                label: strings.secondary_color.as_str(),
-                enabled: state.use_secondary_color,
-                can_enable: state.use_primary_color,
-                color_hex: &state.secondary_color_hex,
-                toggle_action: update_use_secondary_color_action,
-                color_action: update_secondary_color_hex_action,
-            },
-            &mut actions,
-        );
-
-        draw_color_controls(
-            ui,
-            ColorControlSpec {
-                label: strings.tertiary_color.as_str(),
-                enabled: state.use_tertiary_color,
-                can_enable: state.use_secondary_color,
-                color_hex: &state.tertiary_color_hex,
-                toggle_action: update_use_tertiary_color_action,
-                color_action: update_tertiary_color_hex_action,
-            },
-            &mut actions,
-        );
-    });
+        });
 
     actions
 }
@@ -169,8 +116,68 @@ pub const fn content_spacing_token() -> f32 {
 }
 
 #[must_use]
+pub const fn content_max_width_token() -> f32 {
+    720.0
+}
+
+#[must_use]
+pub const fn header_row_height_token() -> f32 {
+    material_style_metrics().sizes.size_40
+}
+
+#[must_use]
 pub const fn section_label_role() -> TypographyRole {
     TypographyRole::TitleSmall
+}
+
+#[must_use]
+pub const fn toggle_label_role() -> TypographyRole {
+    TypographyRole::BodyMedium
+}
+
+#[must_use]
+pub const fn card_spacing_token() -> f32 {
+    material_style_metrics().spacings.spacing_12
+}
+
+#[must_use]
+pub const fn card_padding_token() -> f32 {
+    material_style_metrics().paddings.padding_12
+}
+
+#[must_use]
+pub const fn card_corner_radius_token() -> f32 {
+    material_style_metrics().corner_radii.border_radius_8
+}
+
+#[must_use]
+pub const fn row_spacing_token() -> f32 {
+    material_style_metrics().spacings.spacing_8
+}
+
+#[must_use]
+pub const fn dropdown_height_token() -> f32 {
+    material_style_metrics().sizes.size_56
+}
+
+#[must_use]
+pub const fn toggle_row_height_token() -> f32 {
+    material_style_metrics().sizes.size_48
+}
+
+#[must_use]
+pub const fn color_swatch_width_token() -> f32 {
+    108.0
+}
+
+#[must_use]
+pub const fn color_swatch_height_token() -> f32 {
+    36.0
+}
+
+#[must_use]
+pub const fn color_picker_wheel_size_token() -> f32 {
+    168.0
 }
 
 #[must_use]
@@ -183,13 +190,21 @@ pub fn navigate_back_icon_svg() -> &'static str {
     ui_icons::icon(UiIconKey::SettingsNavigateBack).svg
 }
 
-struct ColorControlSpec<'a> {
+struct ColorCardSpec<'a> {
     label: &'a str,
+    switch_enabled: bool,
     enabled: bool,
-    can_enable: bool,
     color_hex: &'a str,
     toggle_action: fn(bool) -> SettingsAction,
     color_action: fn(String) -> SettingsAction,
+}
+
+fn update_use_system_theme_action(enabled: bool) -> SettingsAction {
+    SettingsAction::UpdateUseSystemTheme { enabled }
+}
+
+fn update_is_dark_mode_action(enabled: bool) -> SettingsAction {
+    SettingsAction::UpdateIsDarkMode { enabled }
 }
 
 fn update_use_primary_color_action(enabled: bool) -> SettingsAction {
@@ -216,28 +231,226 @@ fn update_tertiary_color_hex_action(value: String) -> SettingsAction {
     SettingsAction::UpdateTertiaryColorHex { value }
 }
 
-fn draw_color_controls(ui: &mut Ui, spec: ColorControlSpec<'_>, actions: &mut Vec<SettingsAction>) {
-    let mut use_color = spec.enabled;
-    ui.add_enabled_ui(spec.can_enable, |ui| {
-        if ui.checkbox(&mut use_color, spec.label).changed() {
-            actions.push((spec.toggle_action)(use_color));
+fn draw_header(
+    ui: &mut Ui,
+    navigate_back_text: &str,
+    title: &str,
+    actions: &mut Vec<SettingsAction>,
+) {
+    ui.set_min_height(header_row_height_token());
+    ui.horizontal(|ui| {
+        if ui
+            .add(
+                MaterialIconButton::standard(navigate_back_icon_name())
+                    .svg_data(navigate_back_icon_svg()),
+            )
+            .on_hover_text(navigate_back_text)
+            .clicked()
+        {
+            actions.push(SettingsAction::NavigateBack);
+        }
+
+        ui.label(typography::rich_text_for_role(title, page_title_role()));
+    });
+}
+
+fn draw_audio_backend_card(
+    ui: &mut Ui,
+    state: &SettingsState,
+    strings: &super::translations::SettingsTranslations,
+    actions: &mut Vec<SettingsAction>,
+) {
+    draw_settings_card(ui, |ui| {
+        ui.label(typography::rich_text_for_role(
+            strings.audio_backend.as_str(),
+            toggle_label_role(),
+        ));
+
+        let options = audio_backend_options();
+        let selected_index = audio_backend_index(state.audio_player_backend);
+        let labels = [
+            audio_backend_label(options[0], strings),
+            audio_backend_label(options[1], strings),
+            audio_backend_label(options[2], strings),
+        ];
+        let response = components::mode_dropdown(
+            ui,
+            egui::Id::new("settings_audio_backend_dropdown"),
+            Some(selected_index),
+            &labels,
+            true,
+            ui.available_width(),
+            dropdown_height_token(),
+        );
+
+        if let Some(next_index) = response
+            && next_index != selected_index
+            && let Some(backend) = options.get(next_index)
+        {
+            actions.push(SettingsAction::UpdateAudioPlayerBackend { backend: *backend });
         }
     });
+}
+
+fn draw_theme_and_primary_color_card(
+    ui: &mut Ui,
+    state: &SettingsState,
+    strings: &super::translations::SettingsTranslations,
+    actions: &mut Vec<SettingsAction>,
+) {
+    let can_toggle_dark_mode = if state.can_use_system_theme {
+        !state.use_system_theme
+    } else {
+        true
+    };
+
+    draw_settings_card(ui, |ui| {
+        draw_toggle_row(
+            ui,
+            strings.dark_mode.as_str(),
+            matches!(state.theme_mode, ThemeMode::Dark),
+            can_toggle_dark_mode,
+            update_is_dark_mode_action,
+            actions,
+        );
+
+        ui.add_space(row_spacing_token());
+
+        draw_toggle_row(
+            ui,
+            strings.primary_color.as_str(),
+            state.use_primary_color,
+            true,
+            update_use_primary_color_action,
+            actions,
+        );
+
+        ui.add_space(row_spacing_token());
+
+        draw_color_picker_row(
+            ui,
+            state.primary_color_hex.as_str(),
+            state.use_primary_color,
+            update_primary_color_hex_action,
+            actions,
+        );
+    });
+}
+
+fn draw_color_card(ui: &mut Ui, spec: ColorCardSpec<'_>, actions: &mut Vec<SettingsAction>) {
+    draw_settings_card(ui, |ui| {
+        draw_toggle_row(
+            ui,
+            spec.label,
+            spec.enabled,
+            spec.switch_enabled,
+            spec.toggle_action,
+            actions,
+        );
+
+        ui.add_space(row_spacing_token());
+
+        draw_color_picker_row(ui, spec.color_hex, spec.enabled, spec.color_action, actions);
+    });
+}
+
+fn draw_settings_card(ui: &mut Ui, add_contents: impl FnOnce(&mut Ui)) {
+    let palette = material_palette_for_visuals(ui.visuals());
+    let metrics = material_style_metrics();
+
+    Frame::new()
+        .fill(palette.surface_container)
+        .stroke(Stroke::new(
+            metrics.strokes.outline,
+            palette.outline_variant,
+        ))
+        .corner_radius(CornerRadius::same(card_corner_radius_token().round() as u8))
+        .inner_margin(Margin::same(card_padding_token().round() as i8))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.spacing_mut().item_spacing = vec2(content_spacing_token(), row_spacing_token());
+            add_contents(ui);
+        });
+}
+
+fn draw_toggle_row<F>(
+    ui: &mut Ui,
+    label: &str,
+    current_value: bool,
+    enabled: bool,
+    ctor: F,
+    actions: &mut Vec<SettingsAction>,
+) where
+    F: Fn(bool) -> SettingsAction,
+{
+    ui.add_enabled_ui(enabled, |ui| {
+        ui.allocate_ui_with_layout(
+            vec2(ui.available_width(), toggle_row_height_token()),
+            Layout::left_to_right(egui::Align::Center),
+            |ui| {
+                ui.label(typography::rich_text_for_role(label, toggle_label_role()));
+
+                ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
+                    let response = components::Switch {
+                        checked: current_value,
+                        enabled,
+                        tooltip: Cow::Borrowed(label),
+                        ..components::Switch::new()
+                    }
+                    .show(ui);
+                    if response.changed {
+                        actions.push(ctor(response.checked));
+                    }
+                });
+            },
+        );
+    });
+}
+
+fn draw_color_picker_row(
+    ui: &mut Ui,
+    color_hex: &str,
+    enabled: bool,
+    ctor: fn(String) -> SettingsAction,
+    actions: &mut Vec<SettingsAction>,
+) {
+    ui.vertical(|ui| {
+        let swatch_color = parse_argb_hex(color_hex).unwrap_or(ui.visuals().faint_bg_color);
+        let (swatch_rect, _) = ui.allocate_exact_size(
+            vec2(color_swatch_width_token(), color_swatch_height_token()),
+            Sense::hover(),
+        );
+        // Slint uses a 6px swatch radius here; keep that exception to match the source UI.
+        ui.painter()
+            .rect_filled(swatch_rect, CornerRadius::same(6), swatch_color);
+
+        ui.add_enabled_ui(enabled, |ui| {
+            if let Some(color) =
+                color_picker_ui::draw_bound(ui, color_picker_state_from_argb_hex(color_hex))
+            {
+                actions.push(ctor(format_argb_hex(color)));
+            }
+        });
+    });
+}
+
+fn draw_centered_content_column(
+    ui: &mut Ui,
+    content_width: f32,
+    add_contents: impl FnOnce(&mut Ui),
+) {
+    let available_width = ui.available_width();
+    let side_spacing = ((available_width - content_width).max(0.0)) * 0.5;
 
     ui.horizontal(|ui| {
-        if let Some(color) = parse_argb_hex(spec.color_hex) {
-            ui.colored_label(color, "■");
-        } else {
-            ui.label("■");
+        if side_spacing > 0.0 {
+            ui.add_space(side_spacing);
         }
-    });
 
-    ui.add_enabled_ui(spec.enabled, |ui| {
-        if let Some(color) =
-            color_picker_ui::draw_bound(ui, color_picker_state_from_argb_hex(spec.color_hex))
-        {
-            actions.push((spec.color_action)(format_argb_hex(color)));
-        }
+        ui.vertical(|ui| {
+            ui.set_width(content_width);
+            add_contents(ui);
+        });
     });
 }
 
@@ -269,7 +482,12 @@ pub fn parse_argb_hex(value: &str) -> Option<Color32> {
 
 #[must_use]
 pub fn color_picker_state_from_argb_hex(value: &str) -> ColorPickerState {
-    color_picker_ui::state_for_color(parse_argb_hex(value).unwrap_or(Color32::BLACK))
+    let mut state =
+        color_picker_ui::state_for_color(parse_argb_hex(value).unwrap_or(Color32::BLACK));
+    state.value_slider_position = ColorPickerDock::Bottom;
+    state.wheel_minimum_width = color_picker_wheel_size_token();
+    state.wheel_minimum_height = color_picker_wheel_size_token();
+    state
 }
 
 #[must_use]
@@ -282,4 +500,21 @@ pub fn format_argb_hex(color: Color32) -> String {
         green = green,
         blue = blue,
     )
+}
+
+#[must_use]
+fn audio_backend_options() -> [AudioPlayerBackend; 3] {
+    [
+        AudioPlayerBackend::Rodio,
+        AudioPlayerBackend::Awedio,
+        AudioPlayerBackend::Browser,
+    ]
+}
+
+#[must_use]
+fn audio_backend_index(backend: AudioPlayerBackend) -> usize {
+    audio_backend_options()
+        .iter()
+        .position(|candidate| *candidate == backend)
+        .unwrap_or(0)
 }
