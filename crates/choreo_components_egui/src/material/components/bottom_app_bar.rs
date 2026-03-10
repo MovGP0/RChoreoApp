@@ -5,6 +5,8 @@ use egui::Response;
 use egui::Ui;
 use egui::vec2;
 
+use crate::material::components::centered_icon_rect;
+use crate::material::components::paint_icon;
 use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 
@@ -55,17 +57,39 @@ pub fn bottom_app_bar(ui: &mut Ui, content: BottomAppBar<'_>) -> BottomAppBarRes
         ui.set_min_height(metrics.sizes.size_80);
         ui.horizontal(|ui| {
             for item in content.icon_buttons {
-                let response = ui.add_enabled(item.enabled, egui::Button::image(item.icon.clone()));
+                let response = ui.add_enabled(
+                    item.enabled,
+                    egui::Button::new("").min_size(vec2(
+                        metrics.sizes.size_40,
+                        metrics.sizes.size_40,
+                    )),
+                );
+                let tint = ui.style().interact(&response).fg_stroke.color;
+                paint_icon(
+                    ui,
+                    &item.icon,
+                    centered_icon_rect(
+                        response.rect,
+                        vec2(metrics.icon_sizes.icon_size_24, metrics.icon_sizes.icon_size_24),
+                    ),
+                    tint,
+                );
                 icon_button_responses.push(response.on_hover_text(item.tooltip.clone()));
             }
             ui.add_space(ui.available_width().max(0.0));
             if let Some(fab_icon) = content.fab_icon {
-                let image = fab_icon.fit_to_exact_size(vec2(24.0, 24.0)).tint(Color32::WHITE);
-                let button = egui::Button::image(image)
+                let button = egui::Button::new("")
                     .fill(palette.primary)
                     .corner_radius(metrics.corner_radii.border_radius_16)
                     .min_size(vec2(metrics.sizes.size_56, metrics.sizes.size_56));
-                fab_response = Some(ui.add(button));
+                let response = ui.add(button);
+                paint_icon(
+                    ui,
+                    &fab_icon,
+                    centered_icon_rect(response.rect, vec2(24.0, 24.0)),
+                    Color32::WHITE,
+                );
+                fab_response = Some(response);
             }
         });
     });

@@ -10,7 +10,6 @@ use egui::Sense;
 use egui::Stroke;
 use egui::Ui;
 use egui::vec2;
-use egui_material3::MaterialIconButton;
 
 use crate::color_picker::state::ColorPickerDock;
 use crate::color_picker::state::ColorPickerState;
@@ -192,6 +191,13 @@ pub fn navigate_back_icon_svg() -> &'static str {
     ui_icons::icon(UiIconKey::SettingsNavigateBack).svg
 }
 
+fn navigate_back_icon_image() -> egui::Image<'static> {
+    egui::Image::from_bytes(
+        format!("bytes://settings/{}.svg", navigate_back_icon_name()),
+        navigate_back_icon_svg().as_bytes(),
+    )
+}
+
 #[must_use]
 pub fn available_audio_backends_for_current_target() -> Vec<AudioPlayerBackend> {
     AudioPlayerBackend::available_for_current_target().to_vec()
@@ -251,19 +257,38 @@ fn draw_header(
 ) {
     ui.set_min_height(header_row_height_token());
     ui.horizontal(|ui| {
-        if ui
-            .add(
-                MaterialIconButton::standard(navigate_back_icon_name())
-                    .svg_data(navigate_back_icon_svg()),
-            )
+        let palette = material_palette_for_visuals(ui.visuals());
+        if draw_navigate_back_button(ui, navigate_back_text)
             .on_hover_text(navigate_back_text)
             .clicked()
         {
             actions.push(SettingsAction::NavigateBack);
         }
 
-        ui.label(typography::rich_text_for_role(title, page_title_role()));
+        ui.label(
+            typography::rich_text_for_role(title, page_title_role()).color(palette.on_background),
+        );
     });
+}
+
+fn draw_navigate_back_button(ui: &mut Ui, navigate_back_text: &str) -> egui::Response {
+    let palette = material_palette_for_visuals(ui.visuals());
+    components::BaseButton {
+        icon: Some(navigate_back_icon_image()),
+        icon_color: Some(palette.on_background),
+        tooltip: Cow::Borrowed(navigate_back_text),
+        button_horizontal_padding: 0.0,
+        button_vertical_padding: 0.0,
+        min_layout_width: material_style_metrics().sizes.size_40,
+        min_layout_height: material_style_metrics().sizes.size_40,
+        icon_size: material_style_metrics().icon_sizes.icon_size_24,
+        border_radius: Some(material_style_metrics().sizes.size_40 * 0.5),
+        display_background: false,
+        clip_ripple: true,
+        ..components::BaseButton::new()
+    }
+    .show(ui, |_| {})
+    .response
 }
 
 fn draw_audio_backend_card(

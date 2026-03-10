@@ -18,6 +18,9 @@ use time::Month;
 use time::OffsetDateTime;
 use time::Weekday;
 
+use crate::material::components::centered_icon_rect;
+use crate::material::components::paint_icon;
+
 const FIELD_WIDTH_PX: f32 = 192.0;
 const FIELD_HEIGHT_PX: f32 = 48.0;
 const POPUP_WIDTH_PX: f32 = 360.0;
@@ -233,10 +236,10 @@ fn draw_month_row(ui: &mut Ui, popup_state: &mut DatePickerPopupState) {
         }
 
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-            if ui.add(month_nav_button(next_month_icon())).clicked() {
+            if add_month_nav_button(ui, next_month_icon()).clicked() {
                 show_next_month(popup_state);
             }
-            if ui.add(month_nav_button(previous_month_icon())).clicked() {
+            if add_month_nav_button(ui, previous_month_icon()).clicked() {
                 show_previous_month(popup_state);
             }
         });
@@ -319,9 +322,25 @@ fn draw_year_grid(ui: &mut Ui, popup_state: &mut DatePickerPopupState) {
 }
 
 fn month_nav_button(image: Image<'static>) -> Button<'static> {
-    Button::image(image.fit_to_exact_size(vec2(ICON_GLYPH_SIZE_PX, ICON_GLYPH_SIZE_PX)))
+    let _ = image;
+    Button::new("")
         .min_size(vec2(FIELD_HEIGHT_PX, FIELD_HEIGHT_PX))
         .corner_radius(CornerRadius::same(24))
+}
+
+fn add_month_nav_button(ui: &mut Ui, image: Image<'static>) -> egui::Response {
+    let response = ui.add(month_nav_button(image.clone()));
+    let tint = ui.style().interact(&response).fg_stroke.color;
+    paint_icon(
+        ui,
+        &image,
+        centered_icon_rect(
+            response.rect,
+            vec2(ICON_GLYPH_SIZE_PX, ICON_GLYPH_SIZE_PX),
+        ),
+        tint,
+    );
+    response
 }
 
 fn day_button(ui: &Ui, value: DatePickerValue, selected: bool, today: bool) -> Button<'static> {

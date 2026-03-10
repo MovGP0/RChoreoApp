@@ -15,6 +15,8 @@ use egui::vec2;
 
 use crate::delete_scene_dialog::ui::DeleteSceneDialogAction;
 use crate::delete_scene_dialog::ui::draw_delete_scene_dialog;
+use crate::material::components::centered_icon_rect;
+use crate::material::components::paint_icon;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
@@ -437,8 +439,7 @@ fn draw_search_bar(
                     }
 
                     if view_model.show_clear_button {
-                        if ui
-                            .add(search_bar_clear_button(clear_icon.0, clear_icon.1))
+                        if add_search_bar_clear_button(ui, clear_icon.0, clear_icon.1)
                             .on_hover_text(view_model.clear_tooltip)
                             .clicked()
                         {
@@ -463,8 +464,7 @@ fn draw_edit_toolbar_row(ui: &mut Ui, state: &ScenesState, actions: &mut Vec<Sce
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = material_style_metrics().spacings.spacing_12;
         let add_before = scene_add_before_icon();
-        if ui
-            .add(scene_icon_button(add_before))
+        if add_scene_icon_button(ui, add_before, true)
             .on_hover_text(strings.add_before.as_str())
             .clicked()
         {
@@ -473,16 +473,14 @@ fn draw_edit_toolbar_row(ui: &mut Ui, state: &ScenesState, actions: &mut Vec<Sce
             });
         }
         let add_after = scene_add_after_icon();
-        if ui
-            .add(scene_icon_button(add_after))
+        if add_scene_icon_button(ui, add_after, true)
             .on_hover_text(strings.add_after.as_str())
             .clicked()
         {
             actions.push(ScenesAction::InsertScene { insert_after: true });
         }
         let delete_scene = scene_delete_icon();
-        if ui
-            .add_enabled(state.can_delete_scene, scene_icon_button(delete_scene))
+        if add_scene_icon_button(ui, delete_scene, state.can_delete_scene)
             .on_hover_text(strings.delete_scene_title.as_str())
             .clicked()
         {
@@ -496,35 +494,28 @@ fn draw_navigation_toolbar_row(ui: &mut Ui, state: &ScenesState, actions: &mut V
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = material_style_metrics().spacings.spacing_12;
         let open = open_choreography_icon();
-        if ui
-            .add(scene_icon_button(open))
+        if add_scene_icon_button(ui, open, true)
             .on_hover_text(strings.open.as_str())
             .clicked()
         {
             actions.push(ScenesAction::RequestOpenChoreography);
         }
         let save = save_choreography_icon();
-        if ui
-            .add_enabled(state.can_save_choreo, scene_icon_button(save))
+        if add_scene_icon_button(ui, save, state.can_save_choreo)
             .on_hover_text(strings.save.as_str())
             .clicked()
         {
             actions.push(ScenesAction::RequestSaveChoreography);
         }
         let settings = navigate_settings_icon();
-        if ui
-            .add_enabled(state.can_navigate_to_settings, scene_icon_button(settings))
+        if add_scene_icon_button(ui, settings, state.can_navigate_to_settings)
             .on_hover_text(strings.settings.as_str())
             .clicked()
         {
             actions.push(ScenesAction::NavigateToSettings);
         }
         let dancers = navigate_dancers_icon();
-        if ui
-            .add_enabled(
-                state.can_navigate_to_dancer_settings,
-                scene_icon_button(dancers),
-            )
+        if add_scene_icon_button(ui, dancers, state.can_navigate_to_dancer_settings)
             .on_hover_text(strings.dancers.as_str())
             .clicked()
         {
@@ -613,16 +604,29 @@ fn scene_icon_button(icon: ui_icons::UiIconSpec) -> Button<'static> {
     scene_inline_icon_button(icon.token, icon.svg)
 }
 
+fn add_scene_icon_button(ui: &mut Ui, icon: ui_icons::UiIconSpec, enabled: bool) -> Response {
+    let image = Image::from_bytes(scene_icon_uri(icon.token), icon.svg.as_bytes());
+    let response = ui.add_enabled(enabled, scene_icon_button(icon));
+    let tint = ui.style().interact(&response).fg_stroke.color;
+    paint_icon(
+        ui,
+        &image,
+        centered_icon_rect(
+            response.rect,
+            vec2(TOOLBAR_ICON_GLYPH_SIZE_PX, TOOLBAR_ICON_GLYPH_SIZE_PX),
+        ),
+        tint,
+    );
+    response
+}
+
 fn scene_inline_icon_button(token: &'static str, svg: &'static str) -> Button<'static> {
-    Button::image(
-        Image::from_bytes(scene_icon_uri(token), svg.as_bytes())
-            .fit_to_exact_size(vec2(TOOLBAR_ICON_GLYPH_SIZE_PX, TOOLBAR_ICON_GLYPH_SIZE_PX)),
-    )
-    .frame(true)
-    .frame_when_inactive(false)
-    .corner_radius(TOOLBAR_ROW_HEIGHT_PX / 2.0)
-    .min_size(vec2(TOOLBAR_ROW_HEIGHT_PX, TOOLBAR_ROW_HEIGHT_PX))
-    .image_tint_follows_text_color(true)
+    let _ = (token, svg);
+    Button::new("")
+        .frame(true)
+        .frame_when_inactive(false)
+        .corner_radius(TOOLBAR_ROW_HEIGHT_PX / 2.0)
+        .min_size(vec2(TOOLBAR_ROW_HEIGHT_PX, TOOLBAR_ROW_HEIGHT_PX))
 }
 
 fn search_icon_image() -> Image<'static> {
@@ -632,16 +636,31 @@ fn search_icon_image() -> Image<'static> {
 }
 
 fn search_bar_clear_button(token: &'static str, svg: &'static str) -> Button<'static> {
-    Button::image(
-        Image::from_bytes(scene_icon_uri(token), svg.as_bytes())
-            .fit_to_exact_size(vec2(TOOLBAR_ICON_GLYPH_SIZE_PX, TOOLBAR_ICON_GLYPH_SIZE_PX)),
-    )
-    .frame(false)
-    .min_size(vec2(
+    let _ = (token, svg);
+    Button::new("").frame(false).min_size(vec2(
         SEARCH_BAR_ICON_BUTTON_SIZE_PX,
         SEARCH_BAR_ICON_BUTTON_SIZE_PX,
     ))
-    .image_tint_follows_text_color(true)
+}
+
+fn add_search_bar_clear_button(
+    ui: &mut Ui,
+    token: &'static str,
+    svg: &'static str,
+) -> Response {
+    let image = Image::from_bytes(scene_icon_uri(token), svg.as_bytes());
+    let response = ui.add(search_bar_clear_button(token, svg));
+    let tint = ui.style().interact(&response).fg_stroke.color;
+    paint_icon(
+        ui,
+        &image,
+        centered_icon_rect(
+            response.rect,
+            vec2(TOOLBAR_ICON_GLYPH_SIZE_PX, TOOLBAR_ICON_GLYPH_SIZE_PX),
+        ),
+        tint,
+    );
+    response
 }
 
 fn scene_icon_uri(token: &str) -> String {

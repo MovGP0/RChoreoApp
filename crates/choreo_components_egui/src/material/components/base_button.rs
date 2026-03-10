@@ -11,7 +11,7 @@ use egui::Vec2;
 use egui::vec2;
 
 use crate::material::components::icon::MaterialIconStyle;
-use crate::material::components::icon::icon_with_style;
+use crate::material::components::icon::show_icon_with_style;
 use crate::material::components::list::AvatarStyle;
 use crate::material::components::list::avatar;
 use crate::material::components::material_text::MaterialTextOverflow;
@@ -112,17 +112,25 @@ impl<'a> BaseButton<'a> {
         let response = apply_tooltip(ui, response, state_style);
 
         let inner = ui
-            .scope_builder(UiBuilder::new().max_rect(rect), |ui| self.paint_contents(ui, rect, add_children))
+            .scope_builder(UiBuilder::new().max_rect(rect), |ui| {
+                self.paint_contents(ui, rect, add_children)
+            })
             .inner;
 
         BaseButtonResponse { inner, response }
     }
 
     fn desired_size(&self, ui: &Ui) -> Vec2 {
-        let font_height = ui
-            .fonts(|fonts| fonts.row_height(&egui::FontId::proportional(MATERIAL_TYPOGRAPHY.label_large.font_size_px)));
+        let font_height = ui.fonts(|fonts| {
+            fonts.row_height(&egui::FontId::proportional(
+                MATERIAL_TYPOGRAPHY.label_large.font_size_px,
+            ))
+        });
         let leading_width = match (self.has_avatar(), self.has_icon()) {
-            (true, true) => self.avatar_size.unwrap_or(self.icon_size).max(self.icon_size),
+            (true, true) => self
+                .avatar_size
+                .unwrap_or(self.icon_size)
+                .max(self.icon_size),
             (true, false) => self.avatar_size.unwrap_or(self.icon_size),
             (false, true) => self.icon_size,
             (false, false) => 0.0,
@@ -133,9 +141,7 @@ impl<'a> BaseButton<'a> {
             (false, true) => self.icon_size,
             (false, false) => 0.0,
         };
-        let content_height = self
-            .text_height_or_zero(font_height)
-            .max(leading_height)
+        let content_height = self.text_height_or_zero(font_height).max(leading_height)
             + self.padding_top()
             + self.padding_bottom();
         let content_width = self.padding_left()
@@ -182,13 +188,14 @@ impl<'a> BaseButton<'a> {
                             let _ = avatar(ui, Some(avatar_icon), avatar_style);
                         }
                         if let Some(icon) = self.icon {
-                            let _ = ui.add(icon_with_style(
-                                icon,
+                            let _ = show_icon_with_style(
+                                ui,
+                                &icon,
                                 MaterialIconStyle {
                                     size: vec2(self.icon_size, self.icon_size),
                                     tint: self.icon_color.unwrap_or(content_color),
                                 },
-                            ));
+                            );
                         }
                     });
                 }

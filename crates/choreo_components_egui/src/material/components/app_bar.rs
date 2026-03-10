@@ -5,8 +5,10 @@ use egui::Ui;
 use egui::Vec2;
 use egui::vec2;
 
+use crate::material::components::centered_icon_rect;
 use crate::material::components::IconButtonItem;
 use crate::material::components::material_text;
+use crate::material::components::paint_icon;
 use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography::MATERIAL_TYPOGRAPHY;
@@ -75,10 +77,7 @@ impl<'a> BaseAppBar<'a> {
                         ui.add_space(self.spacing);
 
                         if let Some(button) = self.leading_button {
-                            let response = ui.add_enabled(
-                                button.enabled,
-                                egui::Button::image(button.icon.clone()),
-                            );
+                            let response = add_app_bar_icon_button(ui, button, metrics.sizes.size_40);
                             leading = Some(response.on_hover_text(button.tooltip.clone()));
                         }
 
@@ -89,7 +88,8 @@ impl<'a> BaseAppBar<'a> {
                                 metrics.spacings.spacing_6,
                             );
                             let title_width = (ui.available_width() - trailing_width).max(0.0);
-                            let title_height = self.text_style.font_size_px.max(metrics.sizes.size_40);
+                            let title_height =
+                                self.text_style.font_size_px.max(metrics.sizes.size_40);
                             ui.allocate_ui_with_layout(
                                 vec2(title_width, title_height),
                                 title_lane_layout(self.horizontal_alignment),
@@ -105,10 +105,7 @@ impl<'a> BaseAppBar<'a> {
                         }
 
                         for button in self.trailing_buttons {
-                            let response = ui.add_enabled(
-                                button.enabled,
-                                egui::Button::image(button.icon.clone()),
-                            );
+                            let response = add_app_bar_icon_button(ui, button, metrics.sizes.size_40);
                             trailing.push(response.on_hover_text(button.tooltip.clone()));
                         }
                         ui.add_space(self.appbar_padding_right);
@@ -127,6 +124,31 @@ impl<'a> BaseAppBar<'a> {
 
         AppBarResponse { leading, trailing }
     }
+}
+
+fn add_app_bar_icon_button(
+    ui: &mut Ui,
+    button: &IconButtonItem,
+    button_size: f32,
+) -> Response {
+    let response = ui.add_enabled(
+        button.enabled,
+        egui::Button::new("").min_size(vec2(button_size, button_size)),
+    );
+    let tint = ui.style().interact(&response).fg_stroke.color;
+    paint_icon(
+        ui,
+        &button.icon,
+        centered_icon_rect(
+            response.rect,
+            vec2(
+                material_style_metrics().icon_sizes.icon_size_24,
+                material_style_metrics().icon_sizes.icon_size_24,
+            ),
+        ),
+        tint,
+    );
+    response
 }
 
 pub struct AppBar<'a> {
@@ -305,9 +327,7 @@ fn estimated_trailing_width(button_count: usize, button_width: f32, spacing: f32
 fn title_lane_layout(alignment: egui::Align) -> egui::Layout {
     match alignment {
         egui::Align::Min => egui::Layout::left_to_right(egui::Align::Center),
-        egui::Align::Center => {
-            egui::Layout::centered_and_justified(egui::Direction::LeftToRight)
-        }
+        egui::Align::Center => egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
         egui::Align::Max => egui::Layout::right_to_left(egui::Align::Center),
     }
 }

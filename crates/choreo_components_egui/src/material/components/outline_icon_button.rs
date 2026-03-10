@@ -9,6 +9,8 @@ use egui::Stroke;
 use egui::Ui;
 use egui::vec2;
 
+use crate::material::components::centered_icon_rect;
+use crate::material::components::paint_icon;
 use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 
@@ -55,24 +57,37 @@ impl<'a> OutlineIconButton<'a> {
         } else if self.enabled {
             Stroke::new(metrics.strokes.outline, palette.outline)
         } else {
-            Stroke::new(metrics.strokes.outline, palette.on_surface.gamma_multiply(0.12))
+            Stroke::new(
+                metrics.strokes.outline,
+                palette.on_surface.gamma_multiply(0.12),
+            )
         };
         let icon = if is_checked {
-            self.checked_icon.clone().unwrap_or_else(|| self.icon.clone())
+            self.checked_icon
+                .clone()
+                .unwrap_or_else(|| self.icon.clone())
         } else {
             self.icon.clone()
         };
-        let button = Button::image(
-            icon.fit_to_exact_size(vec2(metrics.icon_sizes.icon_size_24, metrics.icon_sizes.icon_size_24))
-                .tint(tint),
-        )
-        .fill(fill)
-        .stroke(stroke)
-        .corner_radius(CornerRadius::same((metrics.sizes.size_40 * 0.5).round() as u8))
-        .min_size(vec2(metrics.sizes.size_40, metrics.sizes.size_40));
+        let button = Button::new("")
+            .fill(fill)
+            .stroke(stroke)
+            .corner_radius(CornerRadius::same(
+                (metrics.sizes.size_40 * 0.5).round() as u8
+            ))
+            .min_size(vec2(metrics.sizes.size_40, metrics.sizes.size_40));
         let response = ui
             .add_enabled(self.enabled, button)
             .on_hover_text(self.tooltip.clone().into_owned());
+        paint_icon(
+            ui,
+            &icon,
+            centered_icon_rect(
+                response.rect,
+                vec2(metrics.icon_sizes.icon_size_24, metrics.icon_sizes.icon_size_24),
+            ),
+            tint,
+        );
         if response.clicked() && self.checkable {
             self.checked = !self.checked;
         }

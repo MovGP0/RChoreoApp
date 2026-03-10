@@ -4,6 +4,9 @@ use egui::Response;
 use egui::Ui;
 use egui::vec2;
 
+use crate::material::components::centered_icon_rect;
+use crate::material::components::paint_icon;
+
 const ICON_BUTTON_SIZE_PX: f32 = 48.0;
 const ICON_GLYPH_SIZE_PX: f32 = 24.0;
 
@@ -43,16 +46,19 @@ pub fn top_bar_icon_button(ui: &mut Ui, image: Image<'static>, checked: bool) ->
     } else {
         ui.visuals().widgets.inactive.fg_stroke.color
     };
-    let button = Button::image(
-        image
-            .fit_to_exact_size(vec2(ICON_GLYPH_SIZE_PX, ICON_GLYPH_SIZE_PX))
-            .tint(tint),
-    )
-    .selected(checked)
-    .frame(true)
-    .frame_when_inactive(false)
-    .corner_radius(ICON_BUTTON_SIZE_PX / 2.0)
-    .min_size(vec2(ICON_BUTTON_SIZE_PX, ICON_BUTTON_SIZE_PX))
-    .image_tint_follows_text_color(false);
-    ui.add(button)
+    let response = ui.add(
+        Button::new("")
+            .selected(checked)
+            .frame(true)
+            .frame_when_inactive(false)
+            .corner_radius(ICON_BUTTON_SIZE_PX / 2.0)
+            .min_size(vec2(ICON_BUTTON_SIZE_PX, ICON_BUTTON_SIZE_PX)),
+    );
+    paint_icon(
+        ui,
+        &image,
+        centered_icon_rect(response.rect, vec2(ICON_GLYPH_SIZE_PX, ICON_GLYPH_SIZE_PX)),
+        tint,
+    );
+    response
 }
