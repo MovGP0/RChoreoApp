@@ -70,6 +70,35 @@ fn load_settings_preferences_behavior_spec() {
                 assert_eq!(state.primary_color_hex, "#FF1976D2");
             },
         );
+
+        spec.it(
+            "reload normalizes unsupported backends for the target",
+            |_| {
+                let mut state = SettingsState::default();
+                let mut preferences = BTreeMap::new();
+                preferences.insert(
+                    AUDIO_PLAYER_BACKEND_KEY.to_string(),
+                    if cfg!(target_arch = "wasm32") {
+                        "awedio".to_string()
+                    } else {
+                        "browser".to_string()
+                    },
+                );
+
+                reduce(
+                    &mut state,
+                    SettingsAction::LoadFromPreferences {
+                        entries: preferences,
+                    },
+                );
+
+                if cfg!(target_arch = "wasm32") {
+                    assert_eq!(state.audio_player_backend, AudioPlayerBackend::Browser);
+                } else {
+                    assert_eq!(state.audio_player_backend, AudioPlayerBackend::Rodio);
+                }
+            },
+        );
     });
 
     let report = crate::settings::run_suite(&suite);

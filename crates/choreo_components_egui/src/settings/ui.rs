@@ -67,8 +67,10 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
                     ui.add_space(card_spacing_token());
                 }
 
-                draw_audio_backend_card(ui, state, &strings, &mut actions);
-                ui.add_space(card_spacing_token());
+                if shows_audio_backend_card() {
+                    draw_audio_backend_card(ui, state, &strings, &mut actions);
+                    ui.add_space(card_spacing_token());
+                }
 
                 draw_theme_and_primary_color_card(ui, state, &strings, &mut actions);
                 ui.add_space(card_spacing_token());
@@ -190,6 +192,16 @@ pub fn navigate_back_icon_svg() -> &'static str {
     ui_icons::icon(UiIconKey::SettingsNavigateBack).svg
 }
 
+#[must_use]
+pub fn available_audio_backends_for_current_target() -> Vec<AudioPlayerBackend> {
+    AudioPlayerBackend::available_for_current_target().to_vec()
+}
+
+#[must_use]
+pub fn shows_audio_backend_card() -> bool {
+    AudioPlayerBackend::available_for_current_target().len() > 1
+}
+
 struct ColorCardSpec<'a> {
     label: &'a str,
     switch_enabled: bool,
@@ -266,18 +278,17 @@ fn draw_audio_backend_card(
             toggle_label_role(),
         ));
 
-        let options = audio_backend_options();
+        let options = available_audio_backends_for_current_target();
         let selected_index = audio_backend_index(state.audio_player_backend);
-        let labels = [
-            audio_backend_label(options[0], strings),
-            audio_backend_label(options[1], strings),
-            audio_backend_label(options[2], strings),
-        ];
+        let labels = options
+            .iter()
+            .map(|backend| audio_backend_label(*backend, strings))
+            .collect::<Vec<_>>();
         let response = components::mode_dropdown(
             ui,
             egui::Id::new("settings_audio_backend_dropdown"),
             Some(selected_index),
-            &labels,
+            labels.as_slice(),
             true,
             ui.available_width(),
             dropdown_height_token(),
@@ -503,17 +514,8 @@ pub fn format_argb_hex(color: Color32) -> String {
 }
 
 #[must_use]
-fn audio_backend_options() -> [AudioPlayerBackend; 3] {
-    [
-        AudioPlayerBackend::Rodio,
-        AudioPlayerBackend::Awedio,
-        AudioPlayerBackend::Browser,
-    ]
-}
-
-#[must_use]
 fn audio_backend_index(backend: AudioPlayerBackend) -> usize {
-    audio_backend_options()
+    AudioPlayerBackend::available_for_current_target()
         .iter()
         .position(|candidate| *candidate == backend)
         .unwrap_or(0)

@@ -2,6 +2,7 @@ use crate::settings::state::AudioPlayerBackend;
 use crate::settings::state::SettingsState;
 use crate::settings::translations::settings_translations;
 use crate::settings::ui::audio_backend_label;
+use crate::settings::ui::available_audio_backends_for_current_target;
 use crate::settings::ui::card_corner_radius_token;
 use crate::settings::ui::card_padding_token;
 use crate::settings::ui::card_spacing_token;
@@ -16,6 +17,7 @@ use crate::settings::ui::format_argb_hex;
 use crate::settings::ui::navigate_back_icon_name;
 use crate::settings::ui::navigate_back_icon_svg;
 use crate::settings::ui::parse_argb_hex;
+use crate::settings::ui::shows_audio_backend_card;
 use choreo_components_egui::material::styling::material_style_metrics::material_style_metrics;
 
 #[test]
@@ -40,6 +42,26 @@ fn audio_backend_labels_match_expected_values() {
         audio_backend_label(AudioPlayerBackend::Awedio, &strings),
         "Awedio"
     );
+    assert_eq!(
+        audio_backend_label(AudioPlayerBackend::Browser, &strings),
+        "Browser"
+    );
+}
+
+#[test]
+fn audio_backend_visibility_matches_current_target() {
+    let backends = available_audio_backends_for_current_target();
+
+    if cfg!(target_arch = "wasm32") {
+        assert_eq!(backends, vec![AudioPlayerBackend::Browser]);
+        assert!(!shows_audio_backend_card());
+    } else {
+        assert_eq!(
+            backends,
+            vec![AudioPlayerBackend::Rodio, AudioPlayerBackend::Awedio]
+        );
+        assert!(shows_audio_backend_card());
+    }
 }
 
 #[test]

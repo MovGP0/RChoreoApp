@@ -144,6 +144,7 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
             }
         }
         SettingsAction::UpdateAudioPlayerBackend { backend } => {
+            let backend = backend.normalize_for_current_target();
             state.audio_player_backend = backend;
             state.preferences.insert(
                 AUDIO_PLAYER_BACKEND_KEY.to_string(),
