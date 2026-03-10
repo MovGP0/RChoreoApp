@@ -4,7 +4,6 @@ use egui::Id;
 use egui::PopupCloseBehavior;
 use egui::Rect;
 use egui::RichText;
-use egui::ScrollArea;
 use egui::Sense;
 use egui::Shape;
 use egui::Stroke;
@@ -14,6 +13,8 @@ use egui::Ui;
 use egui::WidgetText;
 use egui::pos2;
 use egui::vec2;
+
+use crate::material::components::MaterialScrollArea;
 
 const FIELD_CORNER_RADIUS: u8 = 4;
 const FIELD_TEXT_PADDING_PX: f32 = 16.0;
@@ -63,7 +64,7 @@ pub fn mode_dropdown(
                 .show(ui, |ui| {
                     ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
 
-                    ScrollArea::vertical()
+                    MaterialScrollArea::vertical()
                         .max_height(item_height * MENU_MAX_VISIBLE_ITEMS as f32)
                         .show(ui, |ui| {
                             ui.set_min_width(width);

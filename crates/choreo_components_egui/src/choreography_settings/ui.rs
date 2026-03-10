@@ -2,7 +2,6 @@ use egui::Color32;
 use egui::CornerRadius;
 use egui::Frame;
 use egui::Margin;
-use egui::ScrollArea;
 use egui::Stroke;
 use egui::Ui;
 use egui_material3::MaterialSelect;
@@ -14,6 +13,7 @@ use crate::choreo_info::state::ChoreoInfoState;
 use crate::choreo_info::ui::ChoreoInfoLabels;
 use crate::color_picker::state::ColorPickerState;
 use crate::color_picker::ui as color_picker_ui;
+use crate::material::components::MaterialScrollArea;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
@@ -42,7 +42,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreographySettingsState) -> Vec<ChoreographyS
     let locale = DEFAULT_LOCALE;
     let section_titles = settings_section_titles(locale);
 
-    ScrollArea::vertical()
+    MaterialScrollArea::vertical()
         .auto_shrink([false, false])
         .show(ui, |ui| {
             ui.set_width(ui.available_width());

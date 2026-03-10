@@ -6,7 +6,6 @@ use egui::Margin;
 use egui::Pos2;
 use egui::Rect;
 use egui::Response;
-use egui::ScrollArea;
 use egui::Sense;
 use egui::Stroke;
 use egui::Ui;
@@ -15,6 +14,7 @@ use egui::vec2;
 
 use crate::delete_scene_dialog::ui::DeleteSceneDialogAction;
 use crate::delete_scene_dialog::ui::draw_delete_scene_dialog;
+use crate::material::components::MaterialScrollArea;
 use crate::material::components::centered_icon_rect;
 use crate::material::components::paint_icon;
 use crate::material::styling::material_style_metrics::material_style_metrics;
@@ -140,7 +140,7 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
                     .inner_margin(Margin::same(metrics.paddings.padding_12 as i8))
                     .show(ui, |ui| {
                         ui.set_min_height(ui.available_height());
-                        ScrollArea::vertical()
+                        MaterialScrollArea::vertical()
                             .auto_shrink([false, false])
                             .show(ui, |ui| {
                                 for (index, scene) in state.visible_scenes.iter().enumerate() {

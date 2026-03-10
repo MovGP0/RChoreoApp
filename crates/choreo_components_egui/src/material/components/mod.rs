@@ -150,6 +150,7 @@ pub use progress_indicator::CircularProgressIndicator;
 pub use progress_indicator::LinearProgressIndicator;
 pub use radio_button::RadioButton;
 pub use radio_button::RadioButtonTile;
+pub use scroll_view::MaterialScrollArea;
 pub use scroll_view::ScrollBarPolicy;
 pub use scroll_view::ScrollView;
 pub use scroll_view::ScrollViewResponse;

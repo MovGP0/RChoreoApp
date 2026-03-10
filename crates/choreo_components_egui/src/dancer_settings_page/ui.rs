@@ -7,7 +7,6 @@ use egui::Layout;
 use egui::Margin;
 use egui::Rect;
 use egui::RichText;
-use egui::ScrollArea;
 use egui::Sense;
 use egui::Stroke;
 use egui::Ui;
@@ -31,6 +30,7 @@ use crate::drawer_host::state::DrawerHostOpenMode;
 use crate::drawer_host::state::DrawerHostState;
 use crate::drawer_host::ui::draw_with_slots_in_rect;
 use crate::i18n::t;
+use crate::material::components::MaterialScrollArea;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
@@ -361,7 +361,7 @@ fn draw_content(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersActi
     );
 
     let _ = ui.scope_builder(UiBuilder::new().max_rect(scroll_rect), |ui| {
-        ScrollArea::vertical()
+        MaterialScrollArea::vertical()
             .id_salt("dancer_settings_page_scroll")
             .auto_shrink([false, false])
             .show(ui, |ui| {

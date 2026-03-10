@@ -1,13 +1,13 @@
 use egui::CornerRadius;
 use egui::Frame;
 use egui::Margin;
-use egui::ScrollArea;
 use egui::Stroke;
 use egui::Ui;
 use egui_material3::MaterialIconButton;
 
 use crate::dancers::dancer_list_item_view;
 use crate::dancers::state::DancerState;
+use crate::material::components::MaterialScrollArea;
 use crate::material::icons as ui_icons;
 use crate::material::icons::UiIconKey;
 use crate::material::styling::material_style_metrics::material_style_metrics;
@@ -74,7 +74,7 @@ pub fn draw(ui: &mut Ui, state: DancersPaneViewUiState<'_>) -> Vec<DancersPaneVi
         .corner_radius(CornerRadius::same(pane_corner_radius_token() as u8))
         .inner_margin(Margin::same(pane_inner_padding_token()))
         .show(ui, |ui| {
-            ScrollArea::vertical()
+            MaterialScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     for (index, dancer) in state.dancer_items.iter().enumerate() {

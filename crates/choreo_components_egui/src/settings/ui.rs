@@ -5,7 +5,6 @@ use egui::CornerRadius;
 use egui::Frame;
 use egui::Layout;
 use egui::Margin;
-use egui::ScrollArea;
 use egui::Sense;
 use egui::Stroke;
 use egui::Ui;
@@ -55,7 +54,7 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
 
     let content_width = ui.available_width().min(content_max_width_token());
 
-    ScrollArea::vertical()
+    components::MaterialScrollArea::vertical()
         .id_salt("settings_page_scroll")
         .auto_shrink([false, false])
         .show(ui, |ui| {
