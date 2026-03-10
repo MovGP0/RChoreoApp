@@ -57,12 +57,8 @@ impl<'a> MenuInner<'a> {
                 ui.add_space(metrics.paddings.padding_8);
 
                 for (index, item) in self.items.iter().enumerate() {
-                    let response = show_menu_item(
-                        ui,
-                        item,
-                        self.current_index == Some(index),
-                        width,
-                    );
+                    let response =
+                        show_menu_item(ui, item, self.current_index == Some(index), width);
                     if response.clicked() && item.enabled {
                         activated = Some(index);
                     }
@@ -120,7 +116,11 @@ fn show_menu_item(ui: &mut Ui, item: &MenuItem, selected: bool, width: f32) -> R
     let metrics = material_style_metrics();
     let (rect, response) = ui.allocate_exact_size(
         vec2(width, metrics.sizes.size_56),
-        if item.enabled { Sense::click() } else { Sense::hover() },
+        if item.enabled {
+            Sense::click()
+        } else {
+            Sense::hover()
+        },
     );
 
     if selected {
@@ -145,7 +145,10 @@ fn show_menu_item(ui: &mut Ui, item: &MenuItem, selected: bool, width: f32) -> R
                 let _ = ui.add(icon_with_style(
                     icon,
                     MaterialIconStyle {
-                        size: vec2(metrics.icon_sizes.icon_size_24, metrics.icon_sizes.icon_size_24),
+                        size: vec2(
+                            metrics.icon_sizes.icon_size_24,
+                            metrics.icon_sizes.icon_size_24,
+                        ),
                         tint,
                     },
                 ));

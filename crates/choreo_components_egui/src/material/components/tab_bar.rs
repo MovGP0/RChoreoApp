@@ -139,7 +139,10 @@ fn show_tab_item(
                     let _ = ui.add(icon_with_style(
                         icon,
                         MaterialIconStyle {
-                            size: vec2(metrics.icon_sizes.icon_size_24, metrics.icon_sizes.icon_size_24),
+                            size: vec2(
+                                metrics.icon_sizes.icon_size_24,
+                                metrics.icon_sizes.icon_size_24,
+                            ),
                             tint: color,
                         },
                     ));
@@ -161,7 +164,10 @@ fn show_tab_item(
                     let _ = ui.add(icon_with_style(
                         icon,
                         MaterialIconStyle {
-                            size: vec2(metrics.icon_sizes.icon_size_24, metrics.icon_sizes.icon_size_24),
+                            size: vec2(
+                                metrics.icon_sizes.icon_size_24,
+                                metrics.icon_sizes.icon_size_24,
+                            ),
                             tint: color,
                         },
                     ));

@@ -10,8 +10,8 @@ use egui::vec2;
 use crate::material::components::ListTile;
 use crate::material::components::StateLayerStyle;
 use crate::material::components::apply_tooltip;
-use crate::material::components::paint_state_layer_for_response;
 use crate::material::components::icon::icon_with_style;
+use crate::material::components::paint_state_layer_for_response;
 use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 

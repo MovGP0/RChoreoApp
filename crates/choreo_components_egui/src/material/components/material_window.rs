@@ -44,7 +44,10 @@ mod tests {
     fn material_window_scopes_disable_hover_flag() {
         let context = Context::default();
         assert!(!material_window_disable_hover());
-        let observed = MaterialWindow { disable_hover: true }.show(&context, material_window_disable_hover);
+        let observed = MaterialWindow {
+            disable_hover: true,
+        }
+        .show(&context, material_window_disable_hover);
         assert!(observed);
         assert!(!material_window_disable_hover());
     }
@@ -52,6 +55,9 @@ mod tests {
     #[test]
     fn material_window_background_matches_palette() {
         let context = Context::default();
-        assert_ne!(material_window_background(&context), egui::Color32::TRANSPARENT);
+        assert_ne!(
+            material_window_background(&context),
+            egui::Color32::TRANSPARENT
+        );
     }
 }

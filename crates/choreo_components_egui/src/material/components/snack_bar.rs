@@ -43,8 +43,7 @@ impl<'a> SnackBar<'a> {
         let palette = material_palette_for_visuals(ui.visuals());
         let metrics = material_style_metrics();
         let min_height = metrics.sizes.size_40 + metrics.paddings.padding_20;
-        let (rect, response) =
-            ui.allocate_exact_size(vec2(self.width, min_height), Sense::hover());
+        let (rect, response) = ui.allocate_exact_size(vec2(self.width, min_height), Sense::hover());
         paint_elevation(
             ui.painter(),
             rect,

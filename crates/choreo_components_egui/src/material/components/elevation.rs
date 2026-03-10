@@ -25,7 +25,12 @@ pub struct ElevationShadowSpec {
 }
 
 #[must_use]
-pub fn elevation_spec(background: Color32, border_radius: f32, level: u8, dark_mode: bool) -> ElevationSpec {
+pub fn elevation_spec(
+    background: Color32,
+    border_radius: f32,
+    level: u8,
+    dark_mode: bool,
+) -> ElevationSpec {
     ElevationSpec {
         background,
         border_radius,
@@ -35,7 +40,10 @@ pub fn elevation_spec(background: Color32, border_radius: f32, level: u8, dark_m
 }
 
 #[must_use]
-pub fn elevation_shadows(spec: ElevationSpec, palette: MaterialPalette) -> [ElevationShadowSpec; 2] {
+pub fn elevation_shadows(
+    spec: ElevationSpec,
+    palette: MaterialPalette,
+) -> [ElevationShadowSpec; 2] {
     let tokens = material_style_metrics();
     let (outer, inner, outer_color, inner_color) = match (spec.dark_mode, spec.level) {
         (false, 1) => (
@@ -115,10 +123,18 @@ pub fn elevation_shadows(spec: ElevationSpec, palette: MaterialPalette) -> [Elev
             palette.shadow_30,
         ),
     };
-    [shadow_spec(outer, outer_color), shadow_spec(inner, inner_color)]
+    [
+        shadow_spec(outer, outer_color),
+        shadow_spec(inner, inner_color),
+    ]
 }
 
-pub fn paint_elevation(painter: &Painter, rect: Rect, spec: ElevationSpec, palette: MaterialPalette) {
+pub fn paint_elevation(
+    painter: &Painter,
+    rect: Rect,
+    spec: ElevationSpec,
+    palette: MaterialPalette,
+) {
     let rounding = CornerRadius::same(spec.border_radius.round() as u8);
     for shadow in elevation_shadows(spec, palette) {
         let shadow_rect = rect
@@ -129,13 +145,13 @@ pub fn paint_elevation(painter: &Painter, rect: Rect, spec: ElevationSpec, palet
     painter.rect_filled(rect, rounding, spec.background);
 }
 
-pub fn paint_elevation_for_ui(painter: &Painter, rect: Rect, spec: ElevationSpec, visuals: &egui::Visuals) {
-    paint_elevation(
-        painter,
-        rect,
-        spec,
-        material_palette_for_visuals(visuals),
-    );
+pub fn paint_elevation_for_ui(
+    painter: &Painter,
+    rect: Rect,
+    spec: ElevationSpec,
+    visuals: &egui::Visuals,
+) {
+    paint_elevation(painter, rect, spec, material_palette_for_visuals(visuals));
 }
 
 const fn shadow_spec(shadow: ElevationShadow, color: Color32) -> ElevationShadowSpec {

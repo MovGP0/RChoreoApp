@@ -42,10 +42,16 @@ impl<'a> NavigationBarItemTemplate<'a> {
         let palette = material_palette_for_visuals(ui.visuals());
         let metrics = material_style_metrics();
         let (rect, response) = ui.allocate_exact_size(size, Sense::click());
-        let pill_width = metrics.sizes.size_64.max(size.x - 2.0 * metrics.paddings.padding_20);
+        let pill_width = metrics
+            .sizes
+            .size_64
+            .max(size.x - 2.0 * metrics.paddings.padding_20);
         let pill_height = metrics.sizes.size_32;
         let pill_rect = Rect::from_center_size(
-            pos2(rect.center().x, rect.top() + self.navitem_padding_top + pill_height * 0.5),
+            pos2(
+                rect.center().x,
+                rect.top() + self.navitem_padding_top + pill_height * 0.5,
+            ),
             vec2(pill_width, pill_height),
         );
         if self.selected {
@@ -63,7 +69,10 @@ impl<'a> NavigationBarItemTemplate<'a> {
         };
         let icon_rect = Rect::from_center_size(
             pill_rect.center(),
-            vec2(metrics.icon_sizes.icon_size_24, metrics.icon_sizes.icon_size_24),
+            vec2(
+                metrics.icon_sizes.icon_size_24,
+                metrics.icon_sizes.icon_size_24,
+            ),
         );
         if let Some(icon) = selected_icon(self.item, self.selected) {
             let _ = ui.put(
@@ -84,7 +93,10 @@ impl<'a> NavigationBarItemTemplate<'a> {
 
         let label_rect = Rect::from_min_max(
             pos2(rect.left(), pill_rect.bottom() + metrics.spacings.spacing_4),
-            pos2(rect.right(), rect.bottom() - self.navitem_padding_bottom + metrics.paddings.padding_8),
+            pos2(
+                rect.right(),
+                rect.bottom() - self.navitem_padding_bottom + metrics.paddings.padding_8,
+            ),
         );
         ui.scope_builder(UiBuilder::new().max_rect(label_rect), |ui| {
             ui.vertical_centered(|ui| {
@@ -102,7 +114,10 @@ impl<'a> NavigationBarItemTemplate<'a> {
         if self.item.show_badge || !self.item.badge.is_empty() {
             let badge_size = vec2(metrics.sizes.size_16, metrics.sizes.size_16);
             let badge_rect = Rect::from_min_size(
-                pos2(pill_rect.center().x + metrics.paddings.padding_8, rect.top()),
+                pos2(
+                    pill_rect.center().x + metrics.paddings.padding_8,
+                    rect.top(),
+                ),
                 badge_size,
             );
             let _ = ui.scope_builder(UiBuilder::new().max_rect(badge_rect), |ui| {
@@ -155,12 +170,9 @@ impl<'a> NavigationBar<'a> {
                 ui.spacing_mut().item_spacing.x = metrics.spacings.spacing_8;
                 ui.add_space(metrics.paddings.padding_8);
                 for (index, item) in self.items.iter().enumerate() {
-                    let response = NavigationBarItemTemplate::new(
-                        item,
-                        index,
-                        *self.current_index == index,
-                    )
-                    .show(ui, item_size);
+                    let response =
+                        NavigationBarItemTemplate::new(item, index, *self.current_index == index)
+                            .show(ui, item_size);
                     if response.clicked() && *self.current_index != index {
                         *self.current_index = index;
                         changed_to = Some(index);

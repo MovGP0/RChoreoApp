@@ -81,7 +81,9 @@ impl<'a> MaterialIconButton<'a> {
             self.disabled_icon_color.unwrap_or(enabled_color)
         };
         let icon = if self.checked {
-            self.checked_icon.clone().unwrap_or_else(|| self.icon.clone())
+            self.checked_icon
+                .clone()
+                .unwrap_or_else(|| self.icon.clone())
         } else {
             self.icon.clone()
         };
@@ -129,7 +131,11 @@ mod tests {
                     "../../../assets/icons/Home.svg"
                 )))
                 .show(ui);
-                min_size = response.response.rect.width().min(response.response.rect.height());
+                min_size = response
+                    .response
+                    .rect
+                    .width()
+                    .min(response.response.rect.height());
             });
         });
         assert!(min_size >= 40.0);
@@ -148,7 +154,11 @@ mod tests {
                     )))
                 }
                 .show(ui);
-                min_size = response.response.rect.width().min(response.response.rect.height());
+                min_size = response
+                    .response
+                    .rect
+                    .width()
+                    .min(response.response.rect.height());
             });
         });
         assert!(min_size >= 18.0);

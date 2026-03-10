@@ -85,7 +85,9 @@ impl<'a> MaterialText<'a> {
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let label = match self.style.overflow {
-            MaterialTextOverflow::Wrap => Label::new(self.rich_text()).wrap_mode(TextWrapMode::Wrap),
+            MaterialTextOverflow::Wrap => {
+                Label::new(self.rich_text()).wrap_mode(TextWrapMode::Wrap)
+            }
             MaterialTextOverflow::Clip => {
                 Label::new(self.rich_text()).wrap_mode(TextWrapMode::Truncate)
             }

@@ -94,10 +94,8 @@ impl Slider {
 
         let released = response.drag_stopped() || response.clicked() || value_changed;
 
-        let track_rect = egui::Rect::from_center_size(
-            rect.center(),
-            vec2(rect.width(), metrics.sizes.size_16),
-        );
+        let track_rect =
+            egui::Rect::from_center_size(rect.center(), vec2(rect.width(), metrics.sizes.size_16));
         ui.painter().rect_filled(
             track_rect,
             CornerRadius::same((track_rect.height() * 0.5).round() as u8),
@@ -141,16 +139,22 @@ impl Slider {
         }
 
         let thumb_center = egui::pos2(fill_rect.right(), track_rect.center().y);
-        ui.painter().circle_filled(
-            thumb_center,
-            metrics.sizes.size_6,
-            palette.primary,
-        );
+        ui.painter()
+            .circle_filled(thumb_center, metrics.sizes.size_6, palette.primary);
         if response.hovered() || response.has_focus() || response.is_pointer_button_down_on() {
             ui.painter().circle_stroke(
                 thumb_center,
                 metrics.sizes.size_14,
-                Stroke::new(2.0, palette.primary.gamma_multiply(if response.is_pointer_button_down_on() { 0.24 } else { 0.12 })),
+                Stroke::new(
+                    2.0,
+                    palette
+                        .primary
+                        .gamma_multiply(if response.is_pointer_button_down_on() {
+                            0.24
+                        } else {
+                            0.12
+                        }),
+                ),
             );
         }
 

@@ -6,8 +6,8 @@ use egui::Sense;
 use egui::Ui;
 use egui::vec2;
 
-use crate::material::components::FloatingActionButton;
 use crate::material::components::FabStyle;
+use crate::material::components::FloatingActionButton;
 use crate::material::components::badge;
 use crate::material::components::icon::icon_with_style;
 use crate::material::components::icon_button::MaterialIconButton;
@@ -36,7 +36,10 @@ impl<'a> NavigationRail<'a> {
     pub fn show(self, ui: &mut Ui) -> NavigationRailResponse {
         let palette = material_palette_for_visuals(ui.visuals());
         let metrics = material_style_metrics();
-        let rail_width = metrics.sizes.size_80.max(ui.available_width().min(metrics.sizes.size_80));
+        let rail_width = metrics
+            .sizes
+            .size_80
+            .max(ui.available_width().min(metrics.sizes.size_80));
         let mut changed_to = None;
         let mut menu_clicked = false;
         let mut fab_clicked = false;
@@ -74,11 +77,7 @@ impl<'a> NavigationRail<'a> {
 
             ui.with_layout(Layout::top_down(self.alignment), |ui| {
                 for (index, item) in self.items.iter().enumerate() {
-                    let response = show_navigation_rail_item(
-                        ui,
-                        item,
-                        index == self.current_index,
-                    );
+                    let response = show_navigation_rail_item(ui, item, index == self.current_index);
                     if response.clicked() && index != self.current_index {
                         changed_to = Some(index);
                     }
@@ -114,7 +113,10 @@ fn show_navigation_rail_item(ui: &mut Ui, item: &NavigationItem, selected: bool)
         ui.with_layout(Layout::top_down(Align::Center), |ui| {
             ui.add_space(0.0);
             let pill_rect = egui::Rect::from_center_size(
-                egui::pos2(rect.center().x, rect.top() + metrics.paddings.padding_12 + metrics.sizes.size_16),
+                egui::pos2(
+                    rect.center().x,
+                    rect.top() + metrics.paddings.padding_12 + metrics.sizes.size_16,
+                ),
                 vec2(metrics.sizes.size_56, metrics.sizes.size_32),
             );
             if selected {
@@ -136,7 +138,10 @@ fn show_navigation_rail_item(ui: &mut Ui, item: &NavigationItem, selected: bool)
                     icon_with_style(
                         image,
                         crate::material::components::icon::MaterialIconStyle {
-                            size: vec2(metrics.icon_sizes.icon_size_24, metrics.icon_sizes.icon_size_24),
+                            size: vec2(
+                                metrics.icon_sizes.icon_size_24,
+                                metrics.icon_sizes.icon_size_24,
+                            ),
                             tint: color,
                         },
                     ),
@@ -144,9 +149,13 @@ fn show_navigation_rail_item(ui: &mut Ui, item: &NavigationItem, selected: bool)
             }
 
             if item.show_badge || !item.badge.is_empty() {
-                let badge_pos = egui::pos2(pill_rect.center().x + metrics.paddings.padding_16, pill_rect.top());
+                let badge_pos = egui::pos2(
+                    pill_rect.center().x + metrics.paddings.padding_16,
+                    pill_rect.top(),
+                );
                 let badge_size = ui.scope_builder(
-                    egui::UiBuilder::new().max_rect(egui::Rect::from_min_size(badge_pos, vec2(24.0, 16.0))),
+                    egui::UiBuilder::new()
+                        .max_rect(egui::Rect::from_min_size(badge_pos, vec2(24.0, 16.0))),
                     |ui| badge(ui, item.badge.as_str()),
                 );
                 let _ = badge_size;
@@ -178,10 +187,7 @@ mod tests {
         let mut width = 0.0;
         let _ = context.run(egui::RawInput::default(), |ctx| {
             egui::CentralPanel::default().show(ctx, |ui| {
-                let items = vec![
-                    NavigationItem::new("Home"),
-                    NavigationItem::new("Settings"),
-                ];
+                let items = vec![NavigationItem::new("Home"), NavigationItem::new("Settings")];
                 let response = NavigationRail {
                     items: &items,
                     current_index: 0,
@@ -192,7 +198,10 @@ mod tests {
                     alignment: Align::Center,
                 }
                 .show(ui);
-                width = response.item_responses.first().map_or(0.0, |response| response.rect.width());
+                width = response
+                    .item_responses
+                    .first()
+                    .map_or(0.0, |response| response.rect.width());
             });
         });
         assert!(width >= 80.0);

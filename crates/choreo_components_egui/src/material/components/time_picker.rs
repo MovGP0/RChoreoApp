@@ -196,7 +196,10 @@ impl<'a> TimePickerPopup<'a> {
 
                     ui.add_space(metrics.spacings.spacing_16);
                     ui.horizontal(|ui| {
-                        if OutlineButton::new(self.cancel_text.as_ref()).show(ui).clicked() {
+                        if OutlineButton::new(self.cancel_text.as_ref())
+                            .show(ui)
+                            .clicked()
+                        {
                             cancelled = true;
                             self.state.open = false;
                         }

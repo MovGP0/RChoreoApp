@@ -14,11 +14,7 @@ pub struct ModalResponse<R> {
 pub struct Modal;
 
 impl Modal {
-    pub fn show<R>(
-        self,
-        ui: &mut Ui,
-        add_contents: impl FnOnce(&mut Ui) -> R,
-    ) -> ModalResponse<R> {
+    pub fn show<R>(self, ui: &mut Ui, add_contents: impl FnOnce(&mut Ui) -> R) -> ModalResponse<R> {
         let palette = material_palette_for_visuals(ui.visuals());
         let rect = ui.max_rect();
         let response = ui.interact(rect, ui.id().with("material_modal"), Sense::click());

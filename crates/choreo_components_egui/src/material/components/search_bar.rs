@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 
-use egui::vec2;
 use egui::Color32;
 use egui::CornerRadius;
 use egui::Id;
@@ -12,17 +11,18 @@ use egui::Sense;
 use egui::TextEdit;
 use egui::Ui;
 use egui::UiBuilder;
+use egui::vec2;
 
 use crate::material::components::divider::HorizontalDivider;
-use crate::material::components::icon::icon_with_style;
 use crate::material::components::icon::MaterialIconStyle;
+use crate::material::components::icon::icon_with_style;
 use crate::material::components::icon_button::MaterialIconButton;
-use crate::material::components::list::avatar;
 use crate::material::components::list::AvatarStyle;
 use crate::material::components::list::ListTile;
+use crate::material::components::list::avatar;
 use crate::material::components::list_view::ListView;
-use crate::material::components::material_text::material_text;
 use crate::material::components::material_text::MaterialTextOverflow;
+use crate::material::components::material_text::material_text;
 use crate::material::components::scroll_view::ScrollViewState;
 use crate::material::items::list_item::ListItem;
 use crate::material::styling::material_palette::material_palette_for_visuals;
@@ -389,9 +389,9 @@ mod tests {
     use egui::Context;
     use egui::Image;
 
-    use super::popup_visible_rows;
     use super::SearchBar;
     use super::SearchBarState;
+    use super::popup_visible_rows;
     use crate::material::items::list_item::ListItem;
 
     #[test]

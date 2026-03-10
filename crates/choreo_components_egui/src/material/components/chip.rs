@@ -107,45 +107,51 @@ impl<'a> FilterChip<'a> {
         } else {
             Color32::TRANSPARENT
         };
-        let response = chip_frame(ui, border_color, background, MaterialChipShape::Standard, |ui| {
-            BaseButton {
-                icon: Some(if self.checked {
-                    Image::new(egui::include_image!("../../../assets/icons/Check.svg"))
-                } else {
-                    self.icon.clone().unwrap_or_else(|| {
+        let response = chip_frame(
+            ui,
+            border_color,
+            background,
+            MaterialChipShape::Standard,
+            |ui| {
+                BaseButton {
+                    icon: Some(if self.checked {
                         Image::new(egui::include_image!("../../../assets/icons/Check.svg"))
-                    })
-                }),
-                icon_color: Some(if self.checked {
-                    palette.on_secondary_container
-                } else if self.enabled {
-                    palette.primary
-                } else {
-                    palette.on_surface
-                }),
-                text: self.text.clone(),
-                button_padding_left: Some(if self.icon.is_some() || self.checked {
-                    metrics.paddings.padding_8
-                } else {
-                    metrics.paddings.padding_16
-                }),
-                button_padding_right: Some(metrics.paddings.padding_16),
-                button_vertical_padding: metrics.paddings.padding_6,
-                min_layout_height: metrics.sizes.size_32,
-                color: Some(if self.checked {
-                    palette.on_secondary_container
-                } else {
-                    palette.on_surface
-                }),
-                tooltip: self.tooltip.clone(),
-                enabled: self.enabled,
-                border_radius: Some(metrics.corner_radii.border_radius_8),
-                display_background: !self.enabled,
-                ..BaseButton::new()
-            }
-            .show(ui, |_| {})
-            .response
-        });
+                    } else {
+                        self.icon.clone().unwrap_or_else(|| {
+                            Image::new(egui::include_image!("../../../assets/icons/Check.svg"))
+                        })
+                    }),
+                    icon_color: Some(if self.checked {
+                        palette.on_secondary_container
+                    } else if self.enabled {
+                        palette.primary
+                    } else {
+                        palette.on_surface
+                    }),
+                    text: self.text.clone(),
+                    button_padding_left: Some(if self.icon.is_some() || self.checked {
+                        metrics.paddings.padding_8
+                    } else {
+                        metrics.paddings.padding_16
+                    }),
+                    button_padding_right: Some(metrics.paddings.padding_16),
+                    button_vertical_padding: metrics.paddings.padding_6,
+                    min_layout_height: metrics.sizes.size_32,
+                    color: Some(if self.checked {
+                        palette.on_secondary_container
+                    } else {
+                        palette.on_surface
+                    }),
+                    tooltip: self.tooltip.clone(),
+                    enabled: self.enabled,
+                    border_radius: Some(metrics.corner_radii.border_radius_8),
+                    display_background: !self.enabled,
+                    ..BaseButton::new()
+                }
+                .show(ui, |_| {})
+                .response
+            },
+        );
         if response.clicked() && self.enabled {
             self.checked = !self.checked;
         }

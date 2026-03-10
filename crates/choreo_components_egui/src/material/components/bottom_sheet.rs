@@ -14,9 +14,9 @@ use egui::Vec2;
 use egui::pos2;
 use egui::vec2;
 
+use crate::material::components::ElevationSpec;
 use crate::material::components::Modal;
 use crate::material::components::paint_elevation;
-use crate::material::components::ElevationSpec;
 use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 
@@ -50,11 +50,10 @@ impl<'a> BottomSheet<'a> {
         let palette = material_palette_for_visuals(ui.visuals());
         let metrics = material_style_metrics();
         let available_width = ui.available_width();
-        let width = self
-            .size
-            .x
-            .min(metrics.sizes.size_640)
-            .min((available_width - 2.0 * metrics.paddings.padding_56).max(metrics.sizes.size_200));
+        let width =
+            self.size.x.min(metrics.sizes.size_640).min(
+                (available_width - 2.0 * metrics.paddings.padding_56).max(metrics.sizes.size_200),
+            );
         let inner = egui::Frame::new()
             .fill(palette.surface_container_low)
             .corner_radius(CornerRadius {
@@ -146,11 +145,10 @@ impl<'a> ModalBottomSheet<'a> {
             .show(ctx, |ui| {
                 ui.set_min_size(available_rect.size());
                 Modal.show(ui, |ui| {
-                    let width = self
-                        .size
-                        .x
-                        .min(metrics.sizes.size_640)
-                        .min((available_rect.width() - 2.0 * metrics.paddings.padding_56).max(metrics.sizes.size_200));
+                    let width = self.size.x.min(metrics.sizes.size_640).min(
+                        (available_rect.width() - 2.0 * metrics.paddings.padding_56)
+                            .max(metrics.sizes.size_200),
+                    );
                     let origin = pos2(
                         available_rect.center().x - width * 0.5,
                         available_rect.bottom(),
@@ -161,10 +159,8 @@ impl<'a> ModalBottomSheet<'a> {
                         .anchor(egui::Align2::LEFT_BOTTOM, vec2(0.0, 0.0))
                         .show(ui.ctx(), |ui| {
                             let desired_height = self.size.y.max(metrics.sizes.size_200);
-                            let (rect, _) = ui.allocate_exact_size(
-                                vec2(width, desired_height),
-                                Sense::hover(),
-                            );
+                            let (rect, _) =
+                                ui.allocate_exact_size(vec2(width, desired_height), Sense::hover());
                             paint_elevation(
                                 ui.painter(),
                                 rect,
@@ -190,8 +186,8 @@ impl<'a> ModalBottomSheet<'a> {
             })
             .inner;
         let sheet = modal.inner;
-        let close_requested = modal.response.clicked()
-            || (sheet.drag_delta_y > self.drag_margin && sheet.released);
+        let close_requested =
+            modal.response.clicked() || (sheet.drag_delta_y > self.drag_margin && sheet.released);
         ModalBottomSheetResponse {
             inner: sheet.inner,
             close_requested,
@@ -235,7 +231,8 @@ mod tests {
         let mut width = 0.0;
         let _ = context.run(egui::RawInput::default(), |ctx| {
             let available = egui::Rect::from_min_size(pos2(0.0, 0.0), vec2(800.0, 600.0));
-            let response = ModalBottomSheet::new().show(ctx, "sheet", available, |ui| ui.label("Body"));
+            let response =
+                ModalBottomSheet::new().show(ctx, "sheet", available, |ui| ui.label("Body"));
             width = response.backdrop_response.rect.width();
         });
         assert!(width >= 800.0);

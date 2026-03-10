@@ -29,7 +29,9 @@ impl RadioButton {
         );
         let keyboard_activate = self.enabled
             && response.has_focus()
-            && ui.input(|input| input.key_pressed(egui::Key::Enter) || input.key_pressed(egui::Key::Space));
+            && ui.input(|input| {
+                input.key_pressed(egui::Key::Enter) || input.key_pressed(egui::Key::Space)
+            });
 
         if response.clicked() && self.enabled {
             response.request_focus();
@@ -47,13 +49,16 @@ impl RadioButton {
         paint_state_layer_for_response(ui, &response, state_style);
         let response = apply_tooltip(ui, response, state_style);
 
-        let border_rect =
-            egui::Rect::from_center_size(rect.center(), vec2(metrics.sizes.size_20, metrics.sizes.size_20));
+        let border_rect = egui::Rect::from_center_size(
+            rect.center(),
+            vec2(metrics.sizes.size_20, metrics.sizes.size_20),
+        );
         let border_color = if !self.enabled {
             palette.on_surface.gamma_multiply(0.38)
         } else if self.checked {
             palette.primary
-        } else if response.hovered() || response.has_focus() || response.is_pointer_button_down_on() {
+        } else if response.hovered() || response.has_focus() || response.is_pointer_button_down_on()
+        {
             palette.on_surface
         } else {
             palette.on_surface_variant

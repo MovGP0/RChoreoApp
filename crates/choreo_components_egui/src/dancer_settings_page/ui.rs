@@ -31,10 +31,10 @@ use crate::drawer_host::state::DrawerHostOpenMode;
 use crate::drawer_host::state::DrawerHostState;
 use crate::drawer_host::ui::draw_with_slots_in_rect;
 use crate::i18n::t;
-use crate::nav_bar::hamburger_toggle_button;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
+use crate::nav_bar::hamburger_toggle_button;
 
 const TOP_BAR_HEIGHT_PX: f32 = 64.0;
 // Slint source control uses 420px for the drawer width.

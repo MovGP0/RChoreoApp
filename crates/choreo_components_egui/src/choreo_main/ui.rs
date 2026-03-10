@@ -5,8 +5,8 @@ use crate::dialog_host::ui::DialogHostProps;
 use crate::dialog_host::ui::dialog_metrics_tokens;
 use crate::dialog_host::ui::draw_dialog_host;
 use crate::main_page;
-use crate::settings;
 use crate::material::styling::material_style_metrics::material_style_metrics;
+use crate::settings;
 
 use super::actions::ChoreoMainAction;
 use super::state::ChoreoMainState;

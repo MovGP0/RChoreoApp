@@ -10,9 +10,9 @@ use egui::vec2;
 
 use crate::material::components::StateLayerStyle;
 use crate::material::components::apply_tooltip;
-use crate::material::components::paint_state_layer_for_response;
 use crate::material::components::icon::MaterialIconStyle;
 use crate::material::components::icon::icon_with_style;
+use crate::material::components::paint_state_layer_for_response;
 use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 
@@ -49,7 +49,9 @@ impl<'a> Switch<'a> {
         let (rect, mut response) = ui.allocate_exact_size(desired, Sense::click());
         let keyboard_toggle = self.enabled
             && response.has_focus()
-            && ui.input(|input| input.key_pressed(egui::Key::Enter) || input.key_pressed(egui::Key::Space));
+            && ui.input(|input| {
+                input.key_pressed(egui::Key::Enter) || input.key_pressed(egui::Key::Space)
+            });
         let changed = self.enabled && (response.clicked() || keyboard_toggle);
         if response.clicked() && self.enabled {
             response.request_focus();
@@ -149,7 +151,10 @@ impl<'a> Switch<'a> {
                 icon_with_style(
                     icon,
                     MaterialIconStyle {
-                        size: vec2(metrics.icon_sizes.icon_size_18, metrics.icon_sizes.icon_size_18),
+                        size: vec2(
+                            metrics.icon_sizes.icon_size_18,
+                            metrics.icon_sizes.icon_size_18,
+                        ),
                         tint: foreground,
                     },
                 ),

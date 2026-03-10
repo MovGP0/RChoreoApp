@@ -22,21 +22,14 @@ impl Vertical {
         }
     }
 
-    pub fn show<R>(
-        self,
-        ui: &mut Ui,
-        add_contents: impl FnOnce(&mut Ui) -> R,
-    ) -> InnerResponse<R> {
+    pub fn show<R>(self, ui: &mut Ui, add_contents: impl FnOnce(&mut Ui) -> R) -> InnerResponse<R> {
         egui::Frame::new()
             .inner_margin(Margin::same(self.padding.round() as i8))
             .show(ui, |ui| {
                 ui.vertical(|ui| {
                     ui.spacing_mut().item_spacing.y = self.spacing;
-                    ui.with_layout(
-                        egui::Layout::top_down(self.horizontal_align),
-                        add_contents,
-                    )
-                    .inner
+                    ui.with_layout(egui::Layout::top_down(self.horizontal_align), add_contents)
+                        .inner
                 })
                 .inner
             })

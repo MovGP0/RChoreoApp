@@ -17,7 +17,8 @@ impl Widget for HorizontalDivider {
         let desired = vec2(ui.available_width().max(0.0), 1.0);
         let (rect, response) = ui.allocate_at_least(desired, Sense::hover());
         let line_rect = horizontal_divider_rect(rect.min.x, rect.min.y, rect.width());
-        ui.painter().rect_filled(line_rect, 0.0, palette.outline_variant);
+        ui.painter()
+            .rect_filled(line_rect, 0.0, palette.outline_variant);
         response
     }
 }
@@ -31,7 +32,8 @@ impl Widget for VerticalDivider {
         let desired = vec2(1.0, ui.available_height().max(0.0));
         let (rect, response) = ui.allocate_at_least(desired, Sense::hover());
         let line_rect = vertical_divider_rect(rect.min.x, rect.min.y, rect.height());
-        ui.painter().rect_filled(line_rect, 0.0, palette.outline_variant);
+        ui.painter()
+            .rect_filled(line_rect, 0.0, palette.outline_variant);
         response
     }
 }
@@ -56,10 +58,10 @@ pub fn vertical_divider_rect(origin_x: f32, origin_y: f32, height: f32) -> Rect 
 
 #[cfg(test)]
 mod tests {
-    use super::horizontal_divider_rect;
-    use super::vertical_divider_rect;
     use super::HorizontalDivider;
     use super::VerticalDivider;
+    use super::horizontal_divider_rect;
+    use super::vertical_divider_rect;
     use egui::Context;
 
     #[test]

@@ -16,6 +16,7 @@ use super::state::USE_SYSTEM_THEME_KEY;
 use super::state::USE_TERTIARY_COLOR_KEY;
 use super::system_theme::detect_system_theme_mode;
 use super::system_theme::supports_system_theme_toggle;
+use crate::material::styling::material_schemes::MaterialSchemes;
 
 pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
     match action {
@@ -45,7 +46,7 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
             {
                 state.theme_mode = system_mode;
             }
-            bump_material_update(state);
+            refresh_material_theme(state);
         }
         SettingsAction::UpdateIsDarkMode { enabled } => {
             state.theme_mode = if enabled {
@@ -61,7 +62,7 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
                     "Light".to_string()
                 },
             );
-            bump_material_update(state);
+            refresh_material_theme(state);
         }
         SettingsAction::UpdateUsePrimaryColor { enabled } => {
             state.use_primary_color = enabled;
@@ -75,7 +76,7 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
                 state.preferences.remove(SECONDARY_COLOR_KEY);
                 state.preferences.remove(TERTIARY_COLOR_KEY);
             }
-            bump_material_update(state);
+            refresh_material_theme(state);
         }
         SettingsAction::UpdateUseSecondaryColor { enabled } => {
             if enabled && !state.use_primary_color {
@@ -90,7 +91,7 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
                 state.preferences.remove(SECONDARY_COLOR_KEY);
                 state.preferences.remove(TERTIARY_COLOR_KEY);
             }
-            bump_material_update(state);
+            refresh_material_theme(state);
         }
         SettingsAction::UpdateUseTertiaryColor { enabled } => {
             if enabled && !state.use_secondary_color {
@@ -102,7 +103,7 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
             if !enabled {
                 state.preferences.remove(TERTIARY_COLOR_KEY);
             }
-            bump_material_update(state);
+            refresh_material_theme(state);
         }
         SettingsAction::UpdatePrimaryColorHex { value } => {
             if !is_argb_hex(value.trim()) {
@@ -114,7 +115,7 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
                     PRIMARY_COLOR_KEY.to_string(),
                     state.primary_color_hex.clone(),
                 );
-                bump_material_update(state);
+                refresh_material_theme(state);
             }
         }
         SettingsAction::UpdateSecondaryColorHex { value } => {
@@ -127,7 +128,7 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
                     SECONDARY_COLOR_KEY.to_string(),
                     state.secondary_color_hex.clone(),
                 );
-                bump_material_update(state);
+                refresh_material_theme(state);
             }
         }
         SettingsAction::UpdateTertiaryColorHex { value } => {
@@ -140,7 +141,7 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
                     TERTIARY_COLOR_KEY.to_string(),
                     state.tertiary_color_hex.clone(),
                 );
-                bump_material_update(state);
+                refresh_material_theme(state);
             }
         }
         SettingsAction::UpdateAudioPlayerBackend { backend } => {
@@ -202,7 +203,7 @@ fn apply_preferences(state: &mut SettingsState) {
     {
         state.theme_mode = system_mode;
     }
-    bump_material_update(state);
+    refresh_material_theme(state);
 }
 
 fn bool_pref(
@@ -230,6 +231,17 @@ fn is_argb_hex(value: &str) -> bool {
             .all(|character| character.is_ascii_hexdigit())
 }
 
-fn bump_material_update(state: &mut SettingsState) {
+fn refresh_material_theme(state: &mut SettingsState) {
+    let primary_hex = state
+        .use_primary_color
+        .then_some(state.primary_color_hex.as_str());
+    let secondary_hex = (state.use_primary_color && state.use_secondary_color)
+        .then_some(state.secondary_color_hex.as_str());
+    let tertiary_hex =
+        (state.use_primary_color && state.use_secondary_color && state.use_tertiary_color)
+            .then_some(state.tertiary_color_hex.as_str());
+
+    state.material_scheme =
+        MaterialSchemes::from_seed_colors(primary_hex, secondary_hex, tertiary_hex);
     state.material_update_count += 1;
 }

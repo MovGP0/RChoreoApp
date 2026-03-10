@@ -1,4 +1,10 @@
 use egui::Color32;
+use material_color_utilities::dynamiccolor::{
+    DynamicScheme, DynamicSchemeBuilder, Platform, SpecVersion, Variant,
+};
+use material_color_utilities::hct::Hct;
+
+const DEFAULT_SOURCE_ARGB: u32 = 0xFF1976D2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MaterialScheme {
@@ -130,12 +136,135 @@ impl MaterialSchemes {
             dark: MaterialScheme::empty(),
         }
     }
+
+    #[must_use]
+    pub fn from_seed_colors(
+        primary_hex: Option<&str>,
+        secondary_hex: Option<&str>,
+        tertiary_hex: Option<&str>,
+    ) -> Self {
+        let primary = primary_hex
+            .and_then(hct_from_argb_hex)
+            .unwrap_or_else(|| Hct::from_int(DEFAULT_SOURCE_ARGB));
+        let secondary = secondary_hex.and_then(hct_from_argb_hex);
+        let tertiary = tertiary_hex.and_then(hct_from_argb_hex);
+
+        Self {
+            light: build_scheme(&primary, secondary.as_ref(), tertiary.as_ref(), false),
+            dark: build_scheme(&primary, secondary.as_ref(), tertiary.as_ref(), true),
+        }
+    }
+
+    #[must_use]
+    pub fn for_dark_mode(&self, is_dark: bool) -> MaterialScheme {
+        if is_dark { self.dark } else { self.light }
+    }
 }
 
 impl Default for MaterialSchemes {
     fn default() -> Self {
-        Self::empty()
+        Self::from_seed_colors(None, None, None)
     }
+}
+
+fn build_scheme(
+    primary: &Hct,
+    secondary: Option<&Hct>,
+    tertiary: Option<&Hct>,
+    is_dark: bool,
+) -> MaterialScheme {
+    let mut builder = DynamicSchemeBuilder::default()
+        .source_color_hct(primary.clone())
+        .variant(Variant::Content)
+        .is_dark(is_dark)
+        .platform(Platform::Phone)
+        .contrast_level(0.5)
+        .spec_version(SpecVersion::Spec2025);
+
+    if let Some(secondary) = secondary {
+        builder = builder.secondary_palette_key_color(secondary.clone());
+    }
+
+    if let Some(tertiary) = tertiary {
+        builder = builder.tertiary_palette_key_color(tertiary.clone());
+    }
+
+    map_scheme(&builder.build())
+}
+
+fn map_scheme(scheme: &DynamicScheme) -> MaterialScheme {
+    MaterialScheme {
+        primary: color32_from_argb(scheme.primary()),
+        surface_tint: color32_from_argb(scheme.surface_tint()),
+        on_primary: color32_from_argb(scheme.on_primary()),
+        primary_container: color32_from_argb(scheme.primary_container()),
+        on_primary_container: color32_from_argb(scheme.on_primary_container()),
+        secondary: color32_from_argb(scheme.secondary()),
+        on_secondary: color32_from_argb(scheme.on_secondary()),
+        secondary_container: color32_from_argb(scheme.secondary_container()),
+        on_secondary_container: color32_from_argb(scheme.on_secondary_container()),
+        tertiary: color32_from_argb(scheme.tertiary()),
+        on_tertiary: color32_from_argb(scheme.on_tertiary()),
+        tertiary_container: color32_from_argb(scheme.tertiary_container()),
+        on_tertiary_container: color32_from_argb(scheme.on_tertiary_container()),
+        error: color32_from_argb(scheme.error()),
+        on_error: color32_from_argb(scheme.on_error()),
+        error_container: color32_from_argb(scheme.error_container()),
+        on_error_container: color32_from_argb(scheme.on_error_container()),
+        background: color32_from_argb(scheme.background()),
+        on_background: color32_from_argb(scheme.on_background()),
+        surface: color32_from_argb(scheme.surface()),
+        on_surface: color32_from_argb(scheme.on_surface()),
+        surface_variant: color32_from_argb(scheme.surface_variant()),
+        on_surface_variant: color32_from_argb(scheme.on_surface_variant()),
+        outline: color32_from_argb(scheme.outline()),
+        outline_variant: color32_from_argb(scheme.outline_variant()),
+        shadow: color32_from_argb(scheme.shadow()),
+        scrim: color32_from_argb(scheme.scrim()),
+        inverse_surface: color32_from_argb(scheme.inverse_surface()),
+        inverse_on_surface: color32_from_argb(scheme.inverse_on_surface()),
+        inverse_primary: color32_from_argb(scheme.inverse_primary()),
+        primary_fixed: color32_from_argb(scheme.primary_fixed()),
+        on_primary_fixed: color32_from_argb(scheme.on_primary_fixed()),
+        primary_fixed_dim: color32_from_argb(scheme.primary_fixed_dim()),
+        on_primary_fixed_variant: color32_from_argb(scheme.on_primary_fixed_variant()),
+        secondary_fixed: color32_from_argb(scheme.secondary_fixed()),
+        on_secondary_fixed: color32_from_argb(scheme.on_secondary_fixed()),
+        secondary_fixed_dim: color32_from_argb(scheme.secondary_fixed_dim()),
+        on_secondary_fixed_variant: color32_from_argb(scheme.on_secondary_fixed_variant()),
+        tertiary_fixed: color32_from_argb(scheme.tertiary_fixed()),
+        on_tertiary_fixed: color32_from_argb(scheme.on_tertiary_fixed()),
+        tertiary_fixed_dim: color32_from_argb(scheme.tertiary_fixed_dim()),
+        on_tertiary_fixed_variant: color32_from_argb(scheme.on_tertiary_fixed_variant()),
+        surface_dim: color32_from_argb(scheme.surface_dim()),
+        surface_bright: color32_from_argb(scheme.surface_bright()),
+        surface_container_lowest: color32_from_argb(scheme.surface_container_lowest()),
+        surface_container_low: color32_from_argb(scheme.surface_container_low()),
+        surface_container: color32_from_argb(scheme.surface_container()),
+        surface_container_high: color32_from_argb(scheme.surface_container_high()),
+        surface_container_highest: color32_from_argb(scheme.surface_container_highest()),
+    }
+}
+
+fn hct_from_argb_hex(value: &str) -> Option<Hct> {
+    parse_argb_hex(value).map(Hct::from_int)
+}
+
+fn parse_argb_hex(value: &str) -> Option<u32> {
+    let trimmed = value.trim();
+    if trimmed.len() != 9 || !trimmed.starts_with('#') {
+        return None;
+    }
+
+    u32::from_str_radix(&trimmed[1..], 16).ok()
+}
+
+fn color32_from_argb(argb: u32) -> Color32 {
+    let alpha = ((argb >> 24) & 0xFF) as u8;
+    let red = ((argb >> 16) & 0xFF) as u8;
+    let green = ((argb >> 8) & 0xFF) as u8;
+    let blue = (argb & 0xFF) as u8;
+    Color32::from_rgba_unmultiplied(red, green, blue, alpha)
 }
 
 #[cfg(test)]
@@ -271,10 +400,30 @@ mod tests {
     }
 
     #[test]
-    fn material_schemes_default_to_empty_light_and_dark_schemes() {
+    fn default_schemes_produce_distinct_light_and_dark_role_sets() {
         let schemes = MaterialSchemes::default();
 
-        assert_eq!(schemes.light, MaterialScheme::empty());
-        assert_eq!(schemes.dark, MaterialScheme::empty());
+        assert_ne!(schemes.light, MaterialScheme::empty());
+        assert_ne!(schemes.dark, MaterialScheme::empty());
+        assert_ne!(schemes.light.primary, schemes.dark.primary);
+        assert_ne!(schemes.light.background, schemes.dark.background);
+    }
+
+    #[test]
+    fn custom_seed_colors_recalculate_light_and_dark_roles() {
+        let schemes = MaterialSchemes::from_seed_colors(
+            Some("#FF336699"),
+            Some("#FF884422"),
+            Some("#FF227744"),
+        );
+
+        assert_ne!(
+            schemes.light.primary,
+            MaterialSchemes::default().light.primary
+        );
+        assert_ne!(
+            schemes.dark.tertiary_container,
+            MaterialSchemes::default().dark.tertiary_container
+        );
     }
 }

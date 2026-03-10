@@ -33,28 +33,32 @@ impl<'a> ToolTip<'a> {
     pub fn show(self, ui: &mut Ui, anchor: Pos2) -> Response {
         let palette = material_palette_for_visuals(ui.visuals());
         let width = self.max_width;
-        egui::Area::new(Id::new(("material_tooltip", anchor.x.to_bits(), anchor.y.to_bits())))
-            .order(Order::Tooltip)
-            .fixed_pos(anchor)
-            .show(ui.ctx(), |ui| {
-                egui::Frame::new()
-                    .fill(palette.inverse_surface)
-                    .corner_radius(CornerRadius::same(4))
-                    .inner_margin(egui::Margin::symmetric(
-                        self.padding.x.round() as i8,
-                        self.padding.y.round() as i8,
-                    ))
-                    .show(ui, |ui| {
-                        ui.set_max_width(width);
-                        let _ = material_text(ui, self.text)
-                            .text_style(MATERIAL_TYPOGRAPHY.body_small)
-                            .color(palette.inverse_on_surface)
-                            .overflow(MaterialTextOverflow::Wrap)
-                            .show(ui);
-                    })
-                    .response
-            })
-            .inner
+        egui::Area::new(Id::new((
+            "material_tooltip",
+            anchor.x.to_bits(),
+            anchor.y.to_bits(),
+        )))
+        .order(Order::Tooltip)
+        .fixed_pos(anchor)
+        .show(ui.ctx(), |ui| {
+            egui::Frame::new()
+                .fill(palette.inverse_surface)
+                .corner_radius(CornerRadius::same(4))
+                .inner_margin(egui::Margin::symmetric(
+                    self.padding.x.round() as i8,
+                    self.padding.y.round() as i8,
+                ))
+                .show(ui, |ui| {
+                    ui.set_max_width(width);
+                    let _ = material_text(ui, self.text)
+                        .text_style(MATERIAL_TYPOGRAPHY.body_small)
+                        .color(palette.inverse_on_surface)
+                        .overflow(MaterialTextOverflow::Wrap)
+                        .show(ui);
+                })
+                .response
+        })
+        .inner
     }
 }
 

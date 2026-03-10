@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 
-use egui::vec2;
 use egui::Color32;
 use egui::CornerRadius;
 use egui::Id;
@@ -11,6 +10,7 @@ use egui::Sense;
 use egui::TextEdit;
 use egui::Ui;
 use egui::UiBuilder;
+use egui::vec2;
 
 use crate::material::components::icon_button::MaterialIconButton;
 use crate::material::components::material_text::material_text;
@@ -323,11 +323,7 @@ pub fn should_float_label(text: &str, has_focus: bool) -> bool {
 
 #[must_use]
 pub const fn active_indicator_height(has_focus: bool) -> f32 {
-    if has_focus {
-        3.0
-    } else {
-        1.0
-    }
+    if has_focus { 3.0 } else { 1.0 }
 }
 
 #[cfg(test)]
@@ -336,10 +332,10 @@ mod tests {
     use egui::Context;
     use egui::Image;
 
+    use super::TextField;
     use super::active_indicator_height;
     use super::field_highlight;
     use super::should_float_label;
-    use super::TextField;
 
     #[test]
     fn floating_label_matches_text_and_focus_state() {

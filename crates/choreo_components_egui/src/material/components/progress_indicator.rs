@@ -29,11 +29,8 @@ impl LinearProgressIndicator {
         let height = material_style_metrics().sizes.size_4;
         let (rect, response) =
             ui.allocate_exact_size(vec2(desired_width.max(0.0), height), Sense::hover());
-        ui.painter().rect_filled(
-            rect,
-            CornerRadius::same(2),
-            palette.primary_container,
-        );
+        ui.painter()
+            .rect_filled(rect, CornerRadius::same(2), palette.primary_container);
         let progress = if self.indeterminate {
             0.5
         } else {
@@ -70,8 +67,7 @@ impl CircularProgressIndicator {
 
     pub fn show(self, ui: &mut Ui) -> Response {
         let palette = material_palette_for_visuals(ui.visuals());
-        let (rect, response) =
-            ui.allocate_exact_size(vec2(self.size, self.size), Sense::hover());
+        let (rect, response) = ui.allocate_exact_size(vec2(self.size, self.size), Sense::hover());
         let center = rect.center();
         let radius = rect.width().min(rect.height()) * 0.5 - self.bar_height * 0.5;
         let track_color = if self.progress >= 1.0 {
@@ -103,7 +99,13 @@ impl CircularProgressIndicator {
     }
 }
 
-fn arc_points(center: egui::Pos2, radius: f32, start: f32, sweep: f32, steps: usize) -> Vec<egui::Pos2> {
+fn arc_points(
+    center: egui::Pos2,
+    radius: f32,
+    start: f32,
+    sweep: f32,
+    steps: usize,
+) -> Vec<egui::Pos2> {
     let mut points = Vec::with_capacity(steps + 1);
     for step in 0..=steps {
         let t = step as f32 / steps as f32;

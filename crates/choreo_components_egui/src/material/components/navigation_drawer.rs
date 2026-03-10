@@ -93,17 +93,13 @@ impl<'a> NavigationDrawer<'a> {
             title: self.title,
             min_width: self.min_width,
         }
-            .show(ui, |ui| {
-                let render = show_navigation_groups(
-                    ui,
-                    self.groups,
-                    self.current_group,
-                    self.current_index,
-                );
-                selected = render.selected;
-                item_responses = render.item_responses;
-            })
-            .response;
+        .show(ui, |ui| {
+            let render =
+                show_navigation_groups(ui, self.groups, self.current_group, self.current_index);
+            selected = render.selected;
+            item_responses = render.item_responses;
+        })
+        .response;
 
         NavigationDrawerResponse {
             response,
@@ -167,16 +163,12 @@ impl<'a> ModalNavigationDrawer<'a> {
             position: self.position,
             size: self.size,
         }
-            .show(ctx, id_source, available_rect, |ui| {
-                let render = show_navigation_groups(
-                    ui,
-                    self.groups,
-                    self.current_group,
-                    self.current_index,
-                );
-                selected = render.selected;
-                item_responses = render.item_responses;
-            });
+        .show(ctx, id_source, available_rect, |ui| {
+            let render =
+                show_navigation_groups(ui, self.groups, self.current_group, self.current_index);
+            selected = render.selected;
+            item_responses = render.item_responses;
+        });
 
         ModalNavigationDrawerResponse {
             backdrop_response: modal.backdrop_response,
@@ -300,7 +292,10 @@ fn show_navigation_item_leading(
     selected: bool,
 ) {
     let metrics = material_style_metrics();
-    let icon_size = vec2(metrics.icon_sizes.icon_size_24, metrics.icon_sizes.icon_size_24);
+    let icon_size = vec2(
+        metrics.icon_sizes.icon_size_24,
+        metrics.icon_sizes.icon_size_24,
+    );
     if let Some(image) = navigation_item_icon(item, selected) {
         let style = MaterialIconStyle {
             size: icon_size,
@@ -335,11 +330,7 @@ fn is_current_selection(
     current_group == selection.group_index as i32 && current_index == selection.item_index as i32
 }
 
-fn navigation_item_overlay_fill(
-    response: &Response,
-    selected: bool,
-    color: Color32,
-) -> Color32 {
+fn navigation_item_overlay_fill(response: &Response, selected: bool, color: Color32) -> Color32 {
     if selected {
         return Color32::TRANSPARENT;
     }
@@ -483,17 +474,15 @@ mod tests {
         vec![
             NavigationGroup {
                 title: String::from("Main"),
-                items: vec![
-                    demo_item("Home", true, "7"),
-                    NavigationItem::new("Library"),
-                ],
+                items: vec![demo_item("Home", true, "7"), NavigationItem::new("Library")],
             },
             NavigationGroup {
                 title: String::from("Secondary"),
                 items: vec![NavigationItem {
-                    icon: Some(Image::new((egui::TextureId::Managed(1), vec2(24.0, 24.0))).tint(
-                        Color32::WHITE,
-                    )),
+                    icon: Some(
+                        Image::new((egui::TextureId::Managed(1), vec2(24.0, 24.0)))
+                            .tint(Color32::WHITE),
+                    ),
                     selected_icon: None,
                     text: String::from("Settings"),
                     show_badge: false,

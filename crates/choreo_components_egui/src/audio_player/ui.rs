@@ -6,12 +6,12 @@ use egui::vec2;
 use egui_material3::MaterialSlider;
 
 use crate::material::components;
-use crate::slider_with_ticks::ui::SliderWithTicksInteraction;
-use crate::slider_with_ticks::ui::SliderWithTicksUiState;
 use crate::material::icons as ui_icons;
 use crate::material::icons::UiIconKey;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
+use crate::slider_with_ticks::ui::SliderWithTicksInteraction;
+use crate::slider_with_ticks::ui::SliderWithTicksUiState;
 
 use super::actions::AudioPlayerAction;
 use super::state::AudioPlayerState;

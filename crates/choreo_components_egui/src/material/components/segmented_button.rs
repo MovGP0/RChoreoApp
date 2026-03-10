@@ -54,7 +54,9 @@ impl<'a> SegmentedButton<'a> {
 
         egui::Frame::new()
             .stroke(Stroke::new(1.0, palette.outline))
-            .corner_radius(CornerRadius::same((metrics.sizes.size_40 * 0.5).round() as u8))
+            .corner_radius(CornerRadius::same(
+                (metrics.sizes.size_40 * 0.5).round() as u8
+            ))
             .show(ui, |ui| {
                 ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
                 ui.horizontal(|ui| {
@@ -90,13 +92,12 @@ fn show_segment_item(
 ) -> Response {
     let metrics = material_style_metrics();
     let palette = material_palette_for_visuals(ui.visuals());
-    let (rect, response) = ui.allocate_exact_size(
-        vec2(width, metrics.sizes.size_40),
-        Sense::click(),
-    );
+    let (rect, response) =
+        ui.allocate_exact_size(vec2(width, metrics.sizes.size_40), Sense::click());
 
     if selected {
-        ui.painter().rect_filled(rect, 0.0, palette.secondary_container);
+        ui.painter()
+            .rect_filled(rect, 0.0, palette.secondary_container);
     }
     if !last {
         ui.painter().line_segment(
@@ -113,7 +114,10 @@ fn show_segment_item(
                 let _ = ui.add(icon_with_style(
                     Image::new(egui::include_image!("../../../assets/icons/Check.svg")),
                     MaterialIconStyle {
-                        size: vec2(metrics.icon_sizes.icon_size_18, metrics.icon_sizes.icon_size_18),
+                        size: vec2(
+                            metrics.icon_sizes.icon_size_18,
+                            metrics.icon_sizes.icon_size_18,
+                        ),
                         tint,
                     },
                 ));
@@ -121,7 +125,10 @@ fn show_segment_item(
                 let _ = ui.add(icon_with_style(
                     icon,
                     MaterialIconStyle {
-                        size: vec2(metrics.icon_sizes.icon_size_18, metrics.icon_sizes.icon_size_18),
+                        size: vec2(
+                            metrics.icon_sizes.icon_size_18,
+                            metrics.icon_sizes.icon_size_18,
+                        ),
                         tint,
                     },
                 ));

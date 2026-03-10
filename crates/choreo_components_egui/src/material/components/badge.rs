@@ -45,9 +45,8 @@ pub fn badge_size(text: &str, font_id: FontId, ui: &Ui) -> egui::Vec2 {
         return vec2(metrics.sizes.size_16, metrics.sizes.size_16);
     }
 
-    let galley = ui.fonts(|fonts| {
-        fonts.layout_no_wrap(text.to_owned(), font_id, ui.visuals().text_color())
-    });
+    let galley =
+        ui.fonts(|fonts| fonts.layout_no_wrap(text.to_owned(), font_id, ui.visuals().text_color()));
     let width = (galley.size().x + metrics.paddings.padding_4 * 2.0).max(metrics.sizes.size_16);
     let height = galley.size().y.max(metrics.sizes.size_16);
     vec2(width, height)

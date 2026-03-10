@@ -118,9 +118,9 @@ impl<'a> BaseDialog<'a> {
                                 let response = MaterialIconButton {
                                     icon,
                                     tooltip: Cow::Borrowed(""),
-                                    ..MaterialIconButton::new(Image::new(
-                                        egui::include_image!("../../../assets/icons/Close.svg"),
-                                    ))
+                                    ..MaterialIconButton::new(Image::new(egui::include_image!(
+                                        "../../../assets/icons/Close.svg"
+                                    )))
                                 }
                                 .show(ui);
                                 if response.response.clicked() {
@@ -237,9 +237,9 @@ impl<'a> FullscreenDialog<'a> {
                     ui.spacing_mut().item_spacing.y = metrics.spacings.spacing_16;
                     ui.horizontal(|ui| {
                         ui.add_space(metrics.paddings.padding_24);
-                        let close = MaterialIconButton::new(Image::new(
-                            egui::include_image!("../../../assets/icons/Close.svg"),
-                        ))
+                        let close = MaterialIconButton::new(Image::new(egui::include_image!(
+                            "../../../assets/icons/Close.svg"
+                        )))
                         .show(ui);
                         let _ = close;
 

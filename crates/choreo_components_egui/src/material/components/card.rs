@@ -171,7 +171,9 @@ impl BaseCard {
         }
         response.clicked()
             || (response.has_focus()
-                && ui.input(|input| input.key_pressed(egui::Key::Space) || input.key_pressed(egui::Key::Enter)))
+                && ui.input(|input| {
+                    input.key_pressed(egui::Key::Space) || input.key_pressed(egui::Key::Enter)
+                }))
     }
 }
 

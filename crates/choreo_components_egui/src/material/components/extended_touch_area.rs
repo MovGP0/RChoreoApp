@@ -50,9 +50,7 @@ impl<'a> ExtendedTouchArea<'a> {
         let has_focus = response.has_focus();
         let activated = self.enabled
             && has_focus
-            && ui.input(|input| {
-                input.key_pressed(Key::Enter) || input.key_pressed(Key::Space)
-            });
+            && ui.input(|input| input.key_pressed(Key::Enter) || input.key_pressed(Key::Space));
         if self.enabled
             && !self.tooltip.is_empty()
             && response.hovered()

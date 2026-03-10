@@ -69,7 +69,12 @@ pub fn state_layer_opacity(style: StateLayerStyle<'_>, palette: MaterialPalette)
     0.0
 }
 
-pub fn paint_state_layer(painter: &Painter, rect: Rect, style: StateLayerStyle<'_>, palette: MaterialPalette) {
+pub fn paint_state_layer(
+    painter: &Painter,
+    rect: Rect,
+    style: StateLayerStyle<'_>,
+    palette: MaterialPalette,
+) {
     let opacity = state_layer_opacity(style, palette);
     if opacity <= 0.0 {
         return;
@@ -89,13 +94,17 @@ pub fn paint_state_layer(painter: &Painter, rect: Rect, style: StateLayerStyle<'
             painter.with_clip_rect(rect).circle_filled(
                 style.pressed_position,
                 ripple_radius,
-                style.color.gamma_multiply(palette.state_layer_opacity_press),
+                style
+                    .color
+                    .gamma_multiply(palette.state_layer_opacity_press),
             );
         } else {
             painter.circle_filled(
                 style.pressed_position,
                 ripple_radius,
-                style.color.gamma_multiply(palette.state_layer_opacity_press),
+                style
+                    .color
+                    .gamma_multiply(palette.state_layer_opacity_press),
             );
         }
     }
@@ -106,8 +115,16 @@ pub fn tooltip_anchor_for_response(response: &Response, style: StateLayerStyle<'
     response.rect.left_bottom() + vec2(0.0, style.tooltip_offset)
 }
 
-pub fn apply_tooltip(ui: &mut egui::Ui, response: Response, style: StateLayerStyle<'_>) -> Response {
-    if style.tooltip.is_empty() || style.disable_hover || style.pressed_or_enter() || !response.hovered() {
+pub fn apply_tooltip(
+    ui: &mut egui::Ui,
+    response: Response,
+    style: StateLayerStyle<'_>,
+) -> Response {
+    if style.tooltip.is_empty()
+        || style.disable_hover
+        || style.pressed_or_enter()
+        || !response.hovered()
+    {
         return response;
     }
     let anchor = tooltip_anchor_for_response(&response, style);

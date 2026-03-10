@@ -22,11 +22,7 @@ impl Horizontal {
         }
     }
 
-    pub fn show<R>(
-        self,
-        ui: &mut Ui,
-        add_contents: impl FnOnce(&mut Ui) -> R,
-    ) -> InnerResponse<R> {
+    pub fn show<R>(self, ui: &mut Ui, add_contents: impl FnOnce(&mut Ui) -> R) -> InnerResponse<R> {
         egui::Frame::new()
             .inner_margin(Margin::same(self.padding.round() as i8))
             .show(ui, |ui| {

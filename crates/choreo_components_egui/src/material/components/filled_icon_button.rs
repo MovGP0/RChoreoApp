@@ -42,7 +42,9 @@ impl FilledIconButton {
         let size = metrics.sizes.size_40;
         let border_radius = size * 0.5;
         let icon = if self.checked {
-            self.checked_icon.clone().unwrap_or_else(|| self.icon.clone())
+            self.checked_icon
+                .clone()
+                .unwrap_or_else(|| self.icon.clone())
         } else {
             self.icon.clone()
         };

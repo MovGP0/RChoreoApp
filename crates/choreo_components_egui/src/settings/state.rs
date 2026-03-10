@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use crate::material::styling::material_schemes::MaterialSchemes;
+
 pub use crate::audio_player::AudioPlayerBackend;
 
 pub const THEME_KEY: &str = "theme";
@@ -23,20 +25,7 @@ pub enum ThemeMode {
     Dark,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MaterialSchemeState {
-    pub light_background_hex: String,
-    pub dark_background_hex: String,
-}
-
-impl Default for MaterialSchemeState {
-    fn default() -> Self {
-        Self {
-            light_background_hex: "#FFFFFBFF".to_string(),
-            dark_background_hex: "#FF131318".to_string(),
-        }
-    }
-}
+pub type MaterialSchemeState = MaterialSchemes;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SettingsState {

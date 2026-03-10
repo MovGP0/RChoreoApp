@@ -279,9 +279,18 @@ mod tests {
 
     #[test]
     fn medium_weight_maps_to_distinct_emphasis() {
-        assert_eq!(font_weight_emphasis(FONT_WEIGHT_REGULAR), FontWeightEmphasis::Regular);
-        assert_eq!(font_weight_emphasis(FONT_WEIGHT_MEDIUM), FontWeightEmphasis::Medium);
-        assert_eq!(font_weight_emphasis(FONT_WEIGHT_SEMIBOLD), FontWeightEmphasis::Semibold);
+        assert_eq!(
+            font_weight_emphasis(FONT_WEIGHT_REGULAR),
+            FontWeightEmphasis::Regular
+        );
+        assert_eq!(
+            font_weight_emphasis(FONT_WEIGHT_MEDIUM),
+            FontWeightEmphasis::Medium
+        );
+        assert_eq!(
+            font_weight_emphasis(FONT_WEIGHT_SEMIBOLD),
+            FontWeightEmphasis::Semibold
+        );
     }
 
     #[test]

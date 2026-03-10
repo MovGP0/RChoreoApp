@@ -76,11 +76,7 @@ impl<'a> ListTile<'a> {
         }
     }
 
-    pub fn show(
-        self,
-        ui: &mut Ui,
-        add_trailing: impl FnOnce(&mut Ui),
-    ) -> Response {
+    pub fn show(self, ui: &mut Ui, add_trailing: impl FnOnce(&mut Ui)) -> Response {
         let palette = material_palette_for_visuals(ui.visuals());
         let metrics = material_style_metrics();
         let min_height = metrics.sizes.size_72;
@@ -96,7 +92,10 @@ impl<'a> ListTile<'a> {
                     || !self.avatar_text.is_empty()
                     || self.avatar_icon.is_some()
                 {
-                    let avatar_size = vec2(min_height - metrics.paddings.padding_16, min_height - metrics.paddings.padding_16);
+                    let avatar_size = vec2(
+                        min_height - metrics.paddings.padding_16,
+                        min_height - metrics.paddings.padding_16,
+                    );
                     let avatar_style = AvatarStyle {
                         background: self.avatar_background.unwrap_or(palette.primary),
                         size: avatar_size,
@@ -108,7 +107,9 @@ impl<'a> ListTile<'a> {
                             rect.center(),
                             egui::Align2::CENTER_CENTER,
                             self.avatar_text,
-                            egui::FontId::proportional(MATERIAL_TYPOGRAPHY.title_medium.font_size_px),
+                            egui::FontId::proportional(
+                                MATERIAL_TYPOGRAPHY.title_medium.font_size_px,
+                            ),
                             self.avatar_foreground.unwrap_or(palette.on_primary),
                         );
                     }

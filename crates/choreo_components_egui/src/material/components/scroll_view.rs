@@ -74,10 +74,8 @@ impl<'a> ScrollView<'a> {
             self.state.min_size.x.max(ui.available_width().max(0.0)),
             self.state.min_size.y,
         );
-        let inner = ui.allocate_ui_with_layout(
-            desired,
-            egui::Layout::top_down(egui::Align::Min),
-            |ui| {
+        let inner =
+            ui.allocate_ui_with_layout(desired, egui::Layout::top_down(egui::Align::Min), |ui| {
                 let mut scroll_area = ScrollArea::both().auto_shrink([false, false]);
                 scroll_area = match self.state.horizontal_scrollbar_policy {
                     ScrollBarPolicy::AlwaysOff => scroll_area.horizontal_scroll_offset(0.0),
@@ -105,8 +103,7 @@ impl<'a> ScrollView<'a> {
                     })
                     .inner
                 }
-            },
-        );
+            });
         let ((inner, viewport_rect), response) = (inner.inner, inner.response);
         ScrollViewResponse {
             inner,

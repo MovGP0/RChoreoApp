@@ -37,7 +37,8 @@ impl<'a> DrawerHeader<'a> {
         let metrics = material_style_metrics();
         let desired_height = metrics.sizes.size_56;
         let available_width = ui.available_width().max(metrics.sizes.size_56);
-        let (rect, response) = ui.allocate_exact_size(vec2(available_width, desired_height), Sense::hover());
+        let (rect, response) =
+            ui.allocate_exact_size(vec2(available_width, desired_height), Sense::hover());
         ui.scope_builder(UiBuilder::new().max_rect(rect), |ui| {
             ui.add_space(metrics.paddings.padding_16);
             let _ = material_text(ui, self.title)
@@ -86,7 +87,9 @@ impl<'a> Drawer<'a> {
         let width = self.min_width.max(ui.available_width().min(self.min_width));
         let frame = Frame::new()
             .fill(palette.surface_container_low)
-            .corner_radius(CornerRadius::same(metrics.corner_radii.border_radius_16.round() as u8))
+            .corner_radius(CornerRadius::same(
+                metrics.corner_radii.border_radius_16.round() as u8,
+            ))
             .inner_margin(egui::Margin::same(metrics.paddings.padding_12.round() as i8));
         let inner = frame.show(ui, |ui| {
             ui.set_min_width(width - metrics.paddings.padding_12 * 2.0);
@@ -160,7 +163,8 @@ impl<'a> ModalDrawer<'a> {
             .order(Order::Foreground)
             .fixed_pos(available_rect.min)
             .show(ctx, |ui| {
-                let (rect, response) = ui.allocate_exact_size(available_rect.size(), Sense::click());
+                let (rect, response) =
+                    ui.allocate_exact_size(available_rect.size(), Sense::click());
                 ui.painter()
                     .rect_filled(rect, CornerRadius::ZERO, palette.background_modal);
                 response
