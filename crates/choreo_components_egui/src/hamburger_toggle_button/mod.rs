@@ -1,4 +1,6 @@
 use egui::Color32;
+use egui::Context;
+use egui::Id;
 use egui::Pos2;
 use egui::Rect;
 use egui::Response;
@@ -12,6 +14,8 @@ use egui::vec2;
 use crate::material::styling::material_animations::MaterialAnimation;
 use crate::material::styling::material_animations::MaterialAnimationSpec;
 use crate::material::styling::material_animations::MaterialAnimations;
+use crate::material::styling::material_palette::MaterialPalette;
+use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 
 const CHECKED_ROTATION_DEGREES: f32 = 35.0;
@@ -49,6 +53,16 @@ pub const fn checked_animation_spec() -> MaterialAnimationSpec {
 }
 
 #[must_use]
+pub const fn unchecked_animation_spec() -> MaterialAnimationSpec {
+    MaterialAnimations::spec(MaterialAnimation::StandardFast)
+}
+
+#[must_use]
+pub const fn unchecked_animation_easing_spec() -> MaterialAnimationSpec {
+    MaterialAnimations::spec(MaterialAnimation::StandardDecelerate)
+}
+
+#[must_use]
 pub const fn state_layer_animation_spec() -> MaterialAnimationSpec {
     MaterialAnimations::spec(MaterialAnimation::Opacity)
 }
@@ -77,6 +91,25 @@ pub struct HamburgerToggleButton<'a> {
 pub struct HamburgerToggleButtonResult {
     pub response: Response,
     pub checked: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct ToggleAnimationState {
+    progress: f32,
+    from_progress: f32,
+    started_at: f64,
+    target_checked: bool,
+}
+
+impl Default for ToggleAnimationState {
+    fn default() -> Self {
+        Self {
+            progress: 0.0,
+            from_progress: 0.0,
+            started_at: 0.0,
+            target_checked: false,
+        }
+    }
 }
 
 impl<'a> HamburgerToggleButton<'a> {
@@ -164,19 +197,18 @@ fn draw_response(
         return response;
     }
 
-    let checked_progress =
-        checked_animation_spec().animate_bool(ui.ctx(), response.id.with("checked"), checked);
+    let palette = material_palette_for_visuals(ui.visuals());
+    let checked_progress = checked_animation_progress(ui.ctx(), response.id.with("checked"), checked);
     let opacity_tokens = state_opacity_tokens();
 
-    let visuals = ui.style().interact(&response);
     let mut bar_color = lerp_color(
-        visuals.fg_stroke.color,
-        ui.visuals().selection.stroke.color,
+        unchecked_bar_color(palette),
+        checked_bar_color(palette),
         checked_progress,
     );
 
     if !enabled {
-        bar_color = with_opacity(bar_color, opacity_tokens.disabled);
+        bar_color = with_opacity(disabled_bar_color(palette), opacity_tokens.disabled);
     }
 
     let is_hovered_or_pressed = response.hovered() || response.is_pointer_button_down_on();
@@ -189,10 +221,10 @@ fn draw_response(
     if hover_progress > 0.0 {
         let overlay_color = lerp_color(
             with_opacity(
-                ui.visuals().widgets.noninteractive.fg_stroke.color,
+                state_layer_tint(palette, false),
                 opacity_tokens.hover,
             ),
-            with_opacity(ui.visuals().selection.stroke.color, opacity_tokens.pressed),
+            with_opacity(state_layer_tint(palette, true), opacity_tokens.pressed),
             checked_progress,
         );
         let overlay_color = with_opacity(overlay_color, hover_progress);
@@ -208,6 +240,70 @@ fn draw_response(
     painter.line_segment([geometry.bottom_start, geometry.bottom_end], stroke);
 
     response
+}
+
+fn checked_animation_progress(ctx: &Context, id: Id, checked: bool) -> f32 {
+    let now = ctx.input(|input| input.time);
+    let mut state = ctx
+        .data(|data| data.get_temp::<ToggleAnimationState>(id))
+        .unwrap_or(ToggleAnimationState {
+            progress: if checked { 1.0 } else { 0.0 },
+            from_progress: if checked { 1.0 } else { 0.0 },
+            started_at: now,
+            target_checked: checked,
+        });
+
+    if state.target_checked != checked {
+        state.from_progress = state.progress;
+        state.started_at = now;
+        state.target_checked = checked;
+    }
+
+    let spec = if state.target_checked {
+        checked_animation_spec()
+    } else {
+        unchecked_animation_easing_spec()
+    };
+    let target_progress = if state.target_checked { 1.0 } else { 0.0 };
+    let duration = spec.duration.as_secs_f64();
+
+    if duration <= 0.0 {
+        state.progress = target_progress;
+    } else {
+        let elapsed_fraction = ((now - state.started_at) / duration).clamp(0.0, 1.0) as f32;
+        let eased = spec.sample(elapsed_fraction);
+        state.progress = egui::lerp(state.from_progress..=target_progress, eased);
+        if elapsed_fraction < 1.0 {
+            ctx.request_repaint();
+        }
+    }
+
+    ctx.data_mut(|data| data.insert_temp(id, state));
+    state.progress
+}
+
+#[must_use]
+fn unchecked_bar_color(palette: MaterialPalette) -> Color32 {
+    palette.on_surface
+}
+
+#[must_use]
+fn checked_bar_color(palette: MaterialPalette) -> Color32 {
+    palette.secondary
+}
+
+#[must_use]
+fn disabled_bar_color(palette: MaterialPalette) -> Color32 {
+    palette.on_surface_variant
+}
+
+#[must_use]
+fn state_layer_tint(palette: MaterialPalette, checked: bool) -> Color32 {
+    if checked {
+        palette.secondary
+    } else {
+        palette.on_surface_variant
+    }
 }
 
 #[must_use]
@@ -348,4 +444,64 @@ fn with_opacity(color: Color32, alpha_factor: f32) -> Color32 {
     let [r, g, b, a] = color.to_array();
     let next_alpha = (f32::from(a) * alpha_factor).round().clamp(0.0, 255.0) as u8;
     Color32::from_rgba_unmultiplied(r, g, b, next_alpha)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::time::Duration;
+
+    use egui::Color32;
+
+    use super::MaterialAnimation;
+    use super::MaterialAnimations;
+    use super::MaterialPalette;
+    use super::checked_bar_color;
+    use super::checked_animation_spec;
+    use super::disabled_bar_color;
+    use super::state_layer_tint;
+    use super::unchecked_animation_easing_spec;
+    use super::unchecked_animation_spec;
+
+    fn palette_fixture() -> MaterialPalette {
+        let mut palette = MaterialPalette::light();
+        palette.secondary = Color32::from_rgb(12, 34, 56);
+        palette.on_surface = Color32::from_rgb(78, 90, 12);
+        palette.on_surface_variant = Color32::from_rgb(120, 121, 122);
+        palette
+    }
+
+    #[test]
+    fn checked_state_uses_material_secondary_role() {
+        let palette = palette_fixture();
+
+        assert_eq!(checked_bar_color(palette), palette.secondary);
+        assert_eq!(state_layer_tint(palette, true), palette.secondary);
+    }
+
+    #[test]
+    fn disabled_state_uses_surface_variant_role() {
+        let palette = palette_fixture();
+
+        assert_eq!(disabled_bar_color(palette), palette.on_surface_variant);
+        assert_eq!(state_layer_tint(palette, false), palette.on_surface_variant);
+    }
+
+    #[test]
+    fn closing_animation_uses_faster_decelerating_curve() {
+        assert_eq!(
+            checked_animation_spec(),
+            MaterialAnimations::spec(MaterialAnimation::Emphasized)
+        );
+        assert_eq!(
+            unchecked_animation_easing_spec(),
+            MaterialAnimations::spec(MaterialAnimation::StandardDecelerate)
+        );
+        assert_eq!(
+            unchecked_animation_spec().duration,
+            Duration::from_millis(150)
+        );
+        assert!(
+            unchecked_animation_spec().duration < checked_animation_spec().duration
+        );
+    }
 }
