@@ -30,6 +30,22 @@ use super::translations::settings_translations;
 
 const DEFAULT_LOCALE: &str = "en";
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ThemeSelection {
+    UseSystemTheme,
+    DarkMode,
+    LightMode,
+}
+
+struct ColorCardSpec<'a> {
+    header: &'a str,
+    switch_enabled: bool,
+    enabled: bool,
+    color_hex: &'a str,
+    toggle_action: fn(bool) -> SettingsAction,
+    color_action: fn(String) -> SettingsAction,
+}
+
 #[must_use]
 pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
     let mut actions: Vec<SettingsAction> = Vec::new();
@@ -52,32 +68,27 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
                 );
                 ui.add_space(card_spacing_token());
 
-                if state.can_use_system_theme {
-                    draw_settings_card(ui, |ui| {
-                        draw_toggle_row(
-                            ui,
-                            strings.use_system_theme.as_str(),
-                            state.use_system_theme,
-                            true,
-                            update_use_system_theme_action,
-                            &mut actions,
-                        );
-                    });
-                    ui.add_space(card_spacing_token());
-                }
-
-                if shows_audio_backend_card() {
-                    draw_audio_backend_card(ui, state, &strings, &mut actions);
-                    ui.add_space(card_spacing_token());
-                }
-
-                draw_theme_and_primary_color_card(ui, state, &strings, &mut actions);
+                draw_theme_card(ui, state, &strings, &mut actions);
                 ui.add_space(card_spacing_token());
 
                 draw_color_card(
                     ui,
                     ColorCardSpec {
-                        label: strings.secondary_color.as_str(),
+                        header: strings.primary_color.as_str(),
+                        switch_enabled: true,
+                        enabled: state.use_primary_color,
+                        color_hex: &state.primary_color_hex,
+                        toggle_action: update_use_primary_color_action,
+                        color_action: update_primary_color_hex_action,
+                    },
+                    &mut actions,
+                );
+                ui.add_space(card_spacing_token());
+
+                draw_color_card(
+                    ui,
+                    ColorCardSpec {
+                        header: strings.secondary_color.as_str(),
                         switch_enabled: state.use_primary_color,
                         enabled: state.use_secondary_color,
                         color_hex: &state.secondary_color_hex,
@@ -91,7 +102,7 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
                 draw_color_card(
                     ui,
                     ColorCardSpec {
-                        label: strings.tertiary_color.as_str(),
+                        header: strings.tertiary_color.as_str(),
                         switch_enabled: state.use_secondary_color,
                         enabled: state.use_tertiary_color,
                         color_hex: &state.tertiary_color_hex,
@@ -100,6 +111,11 @@ pub fn draw(ui: &mut Ui, state: &SettingsState) -> Vec<SettingsAction> {
                     },
                     &mut actions,
                 );
+
+                if shows_audio_backend_card() {
+                    ui.add_space(card_spacing_token());
+                    draw_audio_backend_card(ui, state, &strings, &mut actions);
+                }
             });
         });
 
@@ -208,13 +224,49 @@ pub fn shows_audio_backend_card() -> bool {
     AudioPlayerBackend::available_for_current_target().len() > 1
 }
 
-struct ColorCardSpec<'a> {
-    label: &'a str,
-    switch_enabled: bool,
-    enabled: bool,
-    color_hex: &'a str,
-    toggle_action: fn(bool) -> SettingsAction,
-    color_action: fn(String) -> SettingsAction,
+#[must_use]
+pub fn visible_settings_card_headers(
+    state: &SettingsState,
+    strings: &super::translations::SettingsTranslations,
+) -> Vec<String> {
+    let mut headers = vec![
+        strings.theme.clone(),
+        strings.primary_color.clone(),
+        strings.secondary_color.clone(),
+        strings.tertiary_color.clone(),
+    ];
+
+    if shows_audio_backend_card() {
+        headers.push(strings.audio_backend.clone());
+    }
+
+    let _ = state;
+    headers
+}
+
+#[must_use]
+pub fn theme_mode_dropdown_labels(
+    state: &SettingsState,
+    strings: &super::translations::SettingsTranslations,
+) -> Vec<String> {
+    let mut labels = Vec::new();
+    if state.can_use_system_theme {
+        labels.push(strings.use_system_theme.clone());
+    }
+    labels.push(strings.dark_mode.clone());
+    labels.push(strings.light_mode.clone());
+    labels
+}
+
+#[must_use]
+pub fn selected_theme_mode_dropdown_index(state: &SettingsState) -> usize {
+    match selected_theme_selection(state) {
+        ThemeSelection::UseSystemTheme => 0,
+        ThemeSelection::DarkMode if state.can_use_system_theme => 1,
+        ThemeSelection::DarkMode => 0,
+        ThemeSelection::LightMode if state.can_use_system_theme => 2,
+        ThemeSelection::LightMode => 1,
+    }
 }
 
 fn update_use_system_theme_action(enabled: bool) -> SettingsAction {
@@ -303,6 +355,19 @@ fn draw_navigate_back_button(ui: &mut Ui, navigate_back_text: &str) -> egui::Res
     .response
 }
 
+fn draw_theme_card(
+    ui: &mut Ui,
+    state: &SettingsState,
+    strings: &super::translations::SettingsTranslations,
+    actions: &mut Vec<SettingsAction>,
+) {
+    draw_settings_card(ui, |ui| {
+        draw_card_header(ui, strings.theme.as_str());
+        ui.add_space(row_spacing_token());
+        draw_theme_mode_dropdown(ui, state, strings, actions);
+    });
+}
+
 fn draw_audio_backend_card(
     ui: &mut Ui,
     state: &SettingsState,
@@ -310,10 +375,8 @@ fn draw_audio_backend_card(
     actions: &mut Vec<SettingsAction>,
 ) {
     draw_settings_card(ui, |ui| {
-        ui.label(typography::rich_text_for_role(
-            strings.audio_backend.as_str(),
-            toggle_label_role(),
-        ));
+        draw_card_header(ui, strings.audio_backend.as_str());
+        ui.add_space(row_spacing_token());
 
         let options = available_audio_backends_for_current_target();
         let selected_index = audio_backend_index(state.audio_player_backend);
@@ -340,56 +403,14 @@ fn draw_audio_backend_card(
     });
 }
 
-fn draw_theme_and_primary_color_card(
-    ui: &mut Ui,
-    state: &SettingsState,
-    strings: &super::translations::SettingsTranslations,
-    actions: &mut Vec<SettingsAction>,
-) {
-    let can_toggle_dark_mode = if state.can_use_system_theme {
-        !state.use_system_theme
-    } else {
-        true
-    };
-
-    draw_settings_card(ui, |ui| {
-        draw_toggle_row(
-            ui,
-            strings.dark_mode.as_str(),
-            matches!(state.theme_mode, ThemeMode::Dark),
-            can_toggle_dark_mode,
-            update_is_dark_mode_action,
-            actions,
-        );
-
-        ui.add_space(row_spacing_token());
-
-        draw_toggle_row(
-            ui,
-            strings.primary_color.as_str(),
-            state.use_primary_color,
-            true,
-            update_use_primary_color_action,
-            actions,
-        );
-
-        ui.add_space(row_spacing_token());
-
-        draw_color_picker_row(
-            ui,
-            state.primary_color_hex.as_str(),
-            state.use_primary_color,
-            update_primary_color_hex_action,
-            actions,
-        );
-    });
-}
-
 fn draw_color_card(ui: &mut Ui, spec: ColorCardSpec<'_>, actions: &mut Vec<SettingsAction>) {
     draw_settings_card(ui, |ui| {
-        draw_toggle_row(
+        draw_card_header(ui, spec.header);
+        ui.add_space(row_spacing_token());
+
+        draw_toggle_switch_row(
             ui,
-            spec.label,
+            spec.header,
             spec.enabled,
             spec.switch_enabled,
             spec.toggle_action,
@@ -421,9 +442,16 @@ fn draw_settings_card(ui: &mut Ui, add_contents: impl FnOnce(&mut Ui)) {
         });
 }
 
-fn draw_toggle_row<F>(
+fn draw_card_header(ui: &mut Ui, title: &str) {
+    let palette = material_palette_for_visuals(ui.visuals());
+    ui.label(
+        typography::rich_text_for_role(title, section_label_role()).color(palette.on_surface),
+    );
+}
+
+fn draw_toggle_switch_row<F>(
     ui: &mut Ui,
-    label: &str,
+    tooltip: &str,
     current_value: bool,
     enabled: bool,
     ctor: F,
@@ -434,25 +462,47 @@ fn draw_toggle_row<F>(
     ui.add_enabled_ui(enabled, |ui| {
         ui.allocate_ui_with_layout(
             vec2(ui.available_width(), toggle_row_height_token()),
-            Layout::left_to_right(egui::Align::Center),
+            Layout::right_to_left(egui::Align::Center),
             |ui| {
-                ui.label(typography::rich_text_for_role(label, toggle_label_role()));
-
-                ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
-                    let response = components::Switch {
-                        checked: current_value,
-                        enabled,
-                        tooltip: Cow::Borrowed(label),
-                        ..components::Switch::new()
-                    }
-                    .show(ui);
-                    if response.changed {
-                        actions.push(ctor(response.checked));
-                    }
-                });
+                let response = components::Switch {
+                    checked: current_value,
+                    enabled,
+                    tooltip: Cow::Borrowed(tooltip),
+                    ..components::Switch::new()
+                }
+                .show(ui);
+                if response.changed {
+                    actions.push(ctor(response.checked));
+                }
             },
         );
     });
+}
+
+fn draw_theme_mode_dropdown(
+    ui: &mut Ui,
+    state: &SettingsState,
+    strings: &super::translations::SettingsTranslations,
+    actions: &mut Vec<SettingsAction>,
+) {
+    let labels = theme_mode_dropdown_labels(state, strings);
+    let label_refs = labels.iter().map(String::as_str).collect::<Vec<_>>();
+    let selected_index = selected_theme_mode_dropdown_index(state);
+    let response = components::mode_dropdown(
+        ui,
+        egui::Id::new("settings_theme_mode_dropdown"),
+        Some(selected_index),
+        label_refs.as_slice(),
+        true,
+        ui.available_width(),
+        dropdown_height_token(),
+    );
+
+    if let Some(next_index) = response
+        && next_index != selected_index
+    {
+        apply_theme_mode_dropdown_selection(state, next_index, actions);
+    }
 }
 
 fn draw_color_picker_row(
@@ -500,6 +550,62 @@ fn draw_centered_content_column(
             add_contents(ui);
         });
     });
+}
+
+fn apply_theme_mode_dropdown_selection(
+    state: &SettingsState,
+    next_index: usize,
+    actions: &mut Vec<SettingsAction>,
+) {
+    match theme_selection_for_index(state, next_index) {
+        ThemeSelection::UseSystemTheme => {
+            if !state.use_system_theme {
+                actions.push(update_use_system_theme_action(true));
+            }
+        }
+        ThemeSelection::DarkMode => {
+            if state.use_system_theme {
+                actions.push(update_use_system_theme_action(false));
+            }
+            if !matches!(state.theme_mode, ThemeMode::Dark) {
+                actions.push(update_is_dark_mode_action(true));
+            }
+        }
+        ThemeSelection::LightMode => {
+            if state.use_system_theme {
+                actions.push(update_use_system_theme_action(false));
+            }
+            if !matches!(state.theme_mode, ThemeMode::Light) {
+                actions.push(update_is_dark_mode_action(false));
+            }
+        }
+    }
+}
+
+#[must_use]
+fn selected_theme_selection(state: &SettingsState) -> ThemeSelection {
+    if state.can_use_system_theme && state.use_system_theme {
+        ThemeSelection::UseSystemTheme
+    } else if matches!(state.theme_mode, ThemeMode::Dark) {
+        ThemeSelection::DarkMode
+    } else {
+        ThemeSelection::LightMode
+    }
+}
+
+#[must_use]
+fn theme_selection_for_index(state: &SettingsState, index: usize) -> ThemeSelection {
+    if state.can_use_system_theme {
+        match index {
+            0 => ThemeSelection::UseSystemTheme,
+            1 => ThemeSelection::DarkMode,
+            _ => ThemeSelection::LightMode,
+        }
+    } else if index == 0 {
+        ThemeSelection::DarkMode
+    } else {
+        ThemeSelection::LightMode
+    }
 }
 
 #[must_use]

@@ -17,7 +17,10 @@ use crate::settings::ui::format_argb_hex;
 use crate::settings::ui::navigate_back_icon_name;
 use crate::settings::ui::navigate_back_icon_svg;
 use crate::settings::ui::parse_argb_hex;
+use crate::settings::ui::selected_theme_mode_dropdown_index;
+use crate::settings::ui::theme_mode_dropdown_labels;
 use crate::settings::ui::shows_audio_backend_card;
+use crate::settings::ui::visible_settings_card_headers;
 use choreo_components_egui::material::styling::material_style_metrics::material_style_metrics;
 
 #[test]
@@ -70,6 +73,52 @@ fn settings_translations_bind_slint_catalog_values() {
 
     assert_eq!(strings.title, "Einstellungen");
     assert_eq!(strings.use_system_theme, "Systemdesign verwenden");
+}
+
+#[test]
+fn theme_mode_dropdown_labels_follow_requested_selection_order() {
+    let strings = settings_translations("en");
+    let mut state = SettingsState::default();
+
+    assert_eq!(
+        theme_mode_dropdown_labels(&state, &strings),
+        vec![
+            "Use system theme".to_string(),
+            "Dark mode".to_string(),
+            "Light mode".to_string(),
+        ]
+    );
+    assert_eq!(selected_theme_mode_dropdown_index(&state), 0);
+
+    state.use_system_theme = false;
+    state.theme_mode = crate::settings::state::ThemeMode::Dark;
+    assert_eq!(selected_theme_mode_dropdown_index(&state), 1);
+
+    state.can_use_system_theme = false;
+    state.theme_mode = crate::settings::state::ThemeMode::Light;
+    assert_eq!(
+        theme_mode_dropdown_labels(&state, &strings),
+        vec!["Dark mode".to_string(), "Light mode".to_string()]
+    );
+    assert_eq!(selected_theme_mode_dropdown_index(&state), 1);
+}
+
+#[test]
+fn settings_card_headers_follow_requested_order() {
+    let state = SettingsState::default();
+    let strings = settings_translations("en");
+    let mut expected = vec![
+        "Theme".to_string(),
+        "Primary color".to_string(),
+        "Secondary color".to_string(),
+        "Tertiary color".to_string(),
+    ];
+
+    if shows_audio_backend_card() {
+        expected.push("Audio backend".to_string());
+    }
+
+    assert_eq!(visible_settings_card_headers(&state, &strings), expected);
 }
 
 #[test]
