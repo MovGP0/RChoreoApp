@@ -10,7 +10,9 @@ use egui::UiBuilder;
 use egui::Vec2;
 use egui::vec2;
 
+use crate::material::components::icon::centered_icon_rect;
 use crate::material::components::icon::MaterialIconStyle;
+use crate::material::components::icon::paint_icon;
 use crate::material::components::icon::show_icon_with_style;
 use crate::material::components::list::AvatarStyle;
 use crate::material::components::list::avatar;
@@ -172,11 +174,31 @@ impl<'a> BaseButton<'a> {
             rect.max - vec2(self.padding_right(), self.padding_bottom()),
         );
 
+        if self.text.is_empty() && self.avatar_icon.is_none() && self.icon.is_some() {
+            if let Some(icon) = self.icon.as_ref() {
+                paint_icon(
+                    ui,
+                    icon,
+                    centered_icon_rect(inner_rect, vec2(self.icon_size, self.icon_size)),
+                    self.icon_color.unwrap_or(content_color),
+                );
+            }
+            return ui
+                .scope_builder(UiBuilder::new().max_rect(inner_rect), add_children)
+                .inner;
+        }
+
         ui.scope_builder(UiBuilder::new().max_rect(inner_rect), |ui| {
-            ui.horizontal_centered(|ui| {
+            ui.with_layout(
+                egui::Layout::left_to_right(egui::Align::Center)
+                    .with_main_align(egui::Align::Center),
+                |ui| {
                 ui.spacing_mut().item_spacing.x = self.spacing;
                 if self.has_avatar() || self.has_icon() {
-                    ui.vertical_centered(|ui| {
+                    ui.with_layout(
+                        egui::Layout::top_down(egui::Align::Center)
+                            .with_main_align(egui::Align::Center),
+                        |ui| {
                         if let Some(avatar_icon) = self.avatar_icon {
                             let avatar_style = AvatarStyle {
                                 background: self.avatar_background.unwrap_or(Color32::TRANSPARENT),
@@ -197,7 +219,8 @@ impl<'a> BaseButton<'a> {
                                 },
                             );
                         }
-                    });
+                    },
+                    );
                 }
                 if !self.text.is_empty() {
                     let _ = material_text(ui, self.text)
@@ -207,7 +230,8 @@ impl<'a> BaseButton<'a> {
                         .show(ui);
                 }
                 add_children(ui)
-            })
+            },
+            )
             .inner
         })
         .inner

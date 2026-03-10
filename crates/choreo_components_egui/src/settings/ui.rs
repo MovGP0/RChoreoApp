@@ -255,20 +255,32 @@ fn draw_header(
     title: &str,
     actions: &mut Vec<SettingsAction>,
 ) {
-    ui.set_min_height(header_row_height_token());
-    ui.horizontal(|ui| {
-        let palette = material_palette_for_visuals(ui.visuals());
-        if draw_navigate_back_button(ui, navigate_back_text)
-            .on_hover_text(navigate_back_text)
-            .clicked()
-        {
-            actions.push(SettingsAction::NavigateBack);
-        }
+    let width = ui.available_width();
+    ui.allocate_ui_with_layout(
+        vec2(width, header_row_height_token()),
+        Layout::left_to_right(egui::Align::Center).with_cross_align(egui::Align::Center),
+        |ui| {
+            ui.spacing_mut().item_spacing.x = row_spacing_token();
+            let palette = material_palette_for_visuals(ui.visuals());
+            ui.allocate_ui_with_layout(
+                vec2(header_row_height_token(), header_row_height_token()),
+                Layout::left_to_right(egui::Align::Center).with_cross_align(egui::Align::Center),
+                |ui| {
+                    if draw_navigate_back_button(ui, navigate_back_text)
+                        .on_hover_text(navigate_back_text)
+                        .clicked()
+                    {
+                        actions.push(SettingsAction::NavigateBack);
+                    }
+                },
+            );
 
-        ui.label(
-            typography::rich_text_for_role(title, page_title_role()).color(palette.on_background),
-        );
-    });
+            ui.label(
+                typography::rich_text_for_role(title, page_title_role())
+                    .color(palette.on_background),
+            );
+        },
+    );
 }
 
 fn draw_navigate_back_button(ui: &mut Ui, navigate_back_text: &str) -> egui::Response {
