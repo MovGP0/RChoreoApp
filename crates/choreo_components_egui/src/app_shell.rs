@@ -5,8 +5,11 @@ use crate::choreo_main::MainPageBinding;
 use crate::choreo_main::MainPageDependencies;
 use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::ui;
-use crate::splash_screen_host;
+use crate::material::styling::material_palette::apply_material_visuals;
+use crate::material::styling::material_palette::material_palette_for_settings_state;
+use crate::material::styling::material_palette::with_current_material_palette;
 use crate::material::styling::material_typography as typography;
+use crate::splash_screen_host;
 
 pub struct AppShellViewModel {
     title: String,
@@ -63,6 +66,13 @@ impl AppShellViewModel {
         }
 
         if self.show_splash_screen {
+            if let Some(binding) = self.main_page_binding.as_ref() {
+                let state = {
+                    let view_model = binding.view_model();
+                    view_model.borrow().state().clone()
+                };
+                apply_material_visuals(context, &state.settings_state);
+            }
             egui::CentralPanel::default().show(context, |ui| {
                 splash_screen_host::ui::draw(ui, &self.splash_screen_state);
             });
@@ -76,17 +86,22 @@ impl AppShellViewModel {
             request_audio_repaint = binding.tick_audio_runtime();
         }
 
-        egui::CentralPanel::default().show(context, |ui| {
-            if let Some(binding) = self.main_page_binding.as_ref() {
-                let state = {
-                    let view_model = binding.view_model();
-                    view_model.borrow().state().clone()
-                };
-                for action in ui::draw(ui, &state) {
-                    binding.dispatch(action);
-                }
-            }
-        });
+        if let Some(binding) = self.main_page_binding.as_ref() {
+            let state = {
+                let view_model = binding.view_model();
+                view_model.borrow().state().clone()
+            };
+            apply_material_visuals(context, &state.settings_state);
+            let palette = material_palette_for_settings_state(&state.settings_state);
+
+            egui::CentralPanel::default().show(context, |ui| {
+                with_current_material_palette(palette, || {
+                    for action in ui::draw(ui, &state) {
+                        binding.dispatch(action);
+                    }
+                });
+            });
+        }
 
         if let Some(binding) = self.main_page_binding.as_ref() {
             request_audio_repaint |= binding.audio_runtime_is_active();
@@ -113,6 +128,7 @@ mod app_shell_splash_spec {
     use crate::choreo_main::MainPageDependencies;
     use crate::choreo_main::actions::ChoreoMainAction;
     use crate::choreo_main::actions::OpenChoreoRequested;
+    use crate::settings::actions::SettingsAction;
 
     #[test]
     fn first_frame_shows_splash_then_hands_off_to_main_ui() {
@@ -165,5 +181,49 @@ mod app_shell_splash_spec {
         let routed_requests = routed_requests.borrow();
         assert_eq!(routed_requests.len(), 1);
         assert_eq!(routed_requests[0].file_name.as_deref(), Some("demo.choreo"));
+    }
+
+    #[test]
+    fn ui_applies_dynamic_material_visuals_from_settings_state() {
+        let context = egui::Context::default();
+        let mut shell = AppShellViewModel::new("ChoreoApp");
+        let binding = shell
+            .main_page_binding
+            .as_ref()
+            .expect("shell should create a main page binding");
+
+        binding.dispatch(ChoreoMainAction::SettingsAction(
+            SettingsAction::UpdateUseSystemTheme { enabled: false },
+        ));
+        binding.dispatch(ChoreoMainAction::SettingsAction(
+            SettingsAction::UpdateUsePrimaryColor { enabled: true },
+        ));
+        binding.dispatch(ChoreoMainAction::SettingsAction(
+            SettingsAction::UpdatePrimaryColorHex {
+                value: "#FF336699".to_string(),
+            },
+        ));
+        binding.dispatch(ChoreoMainAction::SettingsAction(
+            SettingsAction::UpdateIsDarkMode { enabled: true },
+        ));
+
+        let expected = {
+            let view_model = binding.view_model();
+            let view_model = view_model.borrow();
+            crate::material::styling::material_palette::material_palette_for_settings_state(
+                &view_model.state().settings_state,
+            )
+        };
+
+        let _ = context.run(egui::RawInput::default(), |ctx| {
+            shell.ui(ctx);
+        });
+
+        let visuals = context.style().visuals.clone();
+        assert!(visuals.dark_mode);
+        assert_eq!(visuals.panel_fill, expected.background);
+        assert_eq!(visuals.selection.bg_fill, expected.secondary_container);
+        assert_eq!(egui_material3::get_global_color("primary"), expected.primary);
+        assert_eq!(egui_material3::get_global_color("onSurface"), expected.on_surface);
     }
 }

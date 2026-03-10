@@ -1,59 +1,17 @@
+use std::cell::RefCell;
+use std::collections::HashMap;
+
 use egui::Color32;
+use egui::Context;
 use egui::Visuals;
 
+use crate::material::styling::material_schemes::MaterialScheme;
+use crate::material::styling::material_schemes::MaterialSchemes;
+use crate::settings::state::SettingsState;
 use crate::settings::state::ThemeMode;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct MaterialScheme {
-    primary: Color32,
-    surface_tint: Color32,
-    on_primary: Color32,
-    primary_container: Color32,
-    on_primary_container: Color32,
-    secondary: Color32,
-    on_secondary: Color32,
-    secondary_container: Color32,
-    on_secondary_container: Color32,
-    tertiary: Color32,
-    on_tertiary: Color32,
-    tertiary_container: Color32,
-    on_tertiary_container: Color32,
-    error: Color32,
-    on_error: Color32,
-    error_container: Color32,
-    on_error_container: Color32,
-    background: Color32,
-    on_background: Color32,
-    surface: Color32,
-    on_surface: Color32,
-    surface_variant: Color32,
-    on_surface_variant: Color32,
-    outline: Color32,
-    outline_variant: Color32,
-    shadow: Color32,
-    scrim: Color32,
-    inverse_surface: Color32,
-    inverse_on_surface: Color32,
-    inverse_primary: Color32,
-    primary_fixed: Color32,
-    on_primary_fixed: Color32,
-    primary_fixed_dim: Color32,
-    on_primary_fixed_variant: Color32,
-    secondary_fixed: Color32,
-    on_secondary_fixed: Color32,
-    secondary_fixed_dim: Color32,
-    on_secondary_fixed_variant: Color32,
-    tertiary_fixed: Color32,
-    on_tertiary_fixed: Color32,
-    tertiary_fixed_dim: Color32,
-    on_tertiary_fixed_variant: Color32,
-    surface_dim: Color32,
-    surface_bright: Color32,
-    surface_container_lowest: Color32,
-    surface_container_low: Color32,
-    surface_container: Color32,
-    surface_container_high: Color32,
-    surface_container_highest: Color32,
+thread_local! {
+    static CURRENT_MATERIAL_PALETTE: RefCell<Option<MaterialPalette>> = const { RefCell::new(None) };
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -121,12 +79,12 @@ pub struct MaterialPalette {
 impl MaterialPalette {
     #[must_use]
     pub fn light() -> Self {
-        from_scheme(LIGHT_SCHEME)
+        Self::from_scheme(MaterialSchemes::default().light)
     }
 
     #[must_use]
     pub fn dark() -> Self {
-        from_scheme(DARK_SCHEME)
+        Self::from_scheme(MaterialSchemes::default().dark)
     }
 
     #[must_use]
@@ -142,6 +100,16 @@ impl MaterialPalette {
     #[must_use]
     pub fn from_visuals(visuals: &Visuals) -> Self {
         Self::from_dark_mode(visuals.dark_mode)
+    }
+
+    #[must_use]
+    pub fn from_scheme(scheme: MaterialScheme) -> Self {
+        from_scheme(scheme)
+    }
+
+    #[must_use]
+    pub fn from_schemes(schemes: &MaterialSchemes, is_dark: bool) -> Self {
+        Self::from_scheme(schemes.for_dark_mode(is_dark))
     }
 }
 
@@ -163,112 +131,154 @@ pub fn material_palette_for_theme_mode(theme_mode: ThemeMode) -> MaterialPalette
 
 #[must_use]
 pub fn material_palette_for_visuals(visuals: &Visuals) -> MaterialPalette {
-    MaterialPalette::from_visuals(visuals)
+    CURRENT_MATERIAL_PALETTE.with(|current| {
+        current
+            .borrow()
+            .unwrap_or_else(|| MaterialPalette::from_visuals(visuals))
+    })
 }
 
-const LIGHT_SCHEME: MaterialScheme = MaterialScheme {
-    primary: rgb(68, 94, 145),
-    surface_tint: rgb(68, 94, 145),
-    on_primary: rgb(255, 255, 255),
-    primary_container: rgb(216, 226, 255),
-    on_primary_container: rgb(0, 26, 66),
-    secondary: rgb(87, 94, 113),
-    on_secondary: rgb(255, 255, 255),
-    secondary_container: rgb(219, 226, 249),
-    on_secondary_container: rgb(20, 27, 44),
-    tertiary: rgb(113, 85, 115),
-    on_tertiary: rgb(255, 255, 255),
-    tertiary_container: rgb(252, 215, 251),
-    on_tertiary_container: rgb(41, 19, 45),
-    error: rgb(186, 26, 26),
-    on_error: rgb(255, 255, 255),
-    error_container: rgb(255, 218, 214),
-    on_error_container: rgb(65, 0, 2),
-    background: rgb(249, 249, 255),
-    on_background: rgb(26, 27, 32),
-    surface: rgb(249, 249, 255),
-    on_surface: rgb(26, 27, 32),
-    surface_variant: rgb(225, 226, 236),
-    on_surface_variant: rgb(68, 71, 79),
-    outline: rgb(117, 119, 127),
-    outline_variant: rgb(196, 198, 208),
-    shadow: rgb(0, 0, 0),
-    scrim: rgb(0, 0, 0),
-    inverse_surface: rgb(47, 48, 54),
-    inverse_on_surface: rgb(240, 240, 247),
-    inverse_primary: rgb(173, 198, 255),
-    primary_fixed: rgb(216, 226, 255),
-    on_primary_fixed: rgb(0, 26, 66),
-    primary_fixed_dim: rgb(173, 198, 255),
-    on_primary_fixed_variant: rgb(43, 70, 120),
-    secondary_fixed: rgb(219, 226, 249),
-    on_secondary_fixed: rgb(20, 27, 44),
-    secondary_fixed_dim: rgb(191, 198, 220),
-    on_secondary_fixed_variant: rgb(63, 71, 89),
-    tertiary_fixed: rgb(252, 215, 251),
-    on_tertiary_fixed: rgb(41, 19, 45),
-    tertiary_fixed_dim: rgb(222, 188, 223),
-    on_tertiary_fixed_variant: rgb(88, 62, 91),
-    surface_dim: rgb(217, 217, 224),
-    surface_bright: rgb(246, 246, 255),
-    surface_container_lowest: rgb(255, 255, 255),
-    surface_container_low: rgb(243, 243, 250),
-    surface_container: rgb(238, 237, 244),
-    surface_container_high: rgb(232, 231, 239),
-    surface_container_highest: rgb(226, 226, 233),
-};
+#[must_use]
+pub fn material_palette_for_settings_state(state: &SettingsState) -> MaterialPalette {
+    MaterialPalette::from_schemes(
+        &state.material_scheme,
+        matches!(state.theme_mode, ThemeMode::Dark),
+    )
+}
 
-const DARK_SCHEME: MaterialScheme = MaterialScheme {
-    primary: rgb(173, 198, 255),
-    surface_tint: rgb(173, 198, 255),
-    on_primary: rgb(17, 47, 96),
-    primary_container: rgb(43, 70, 120),
-    on_primary_container: rgb(216, 226, 255),
-    secondary: rgb(191, 198, 220),
-    on_secondary: rgb(41, 48, 65),
-    secondary_container: rgb(63, 71, 89),
-    on_secondary_container: rgb(219, 226, 249),
-    tertiary: rgb(222, 188, 223),
-    on_tertiary: rgb(64, 40, 67),
-    tertiary_container: rgb(88, 62, 91),
-    on_tertiary_container: rgb(252, 215, 251),
-    error: rgb(255, 180, 171),
-    on_error: rgb(105, 0, 5),
-    error_container: rgb(147, 0, 10),
-    on_error_container: rgb(255, 218, 214),
-    background: rgb(17, 19, 24),
-    on_background: rgb(226, 226, 233),
-    surface: rgb(17, 19, 24),
-    on_surface: rgb(226, 226, 233),
-    surface_variant: rgb(68, 71, 79),
-    on_surface_variant: rgb(196, 198, 208),
-    outline: rgb(142, 144, 153),
-    outline_variant: rgb(68, 71, 79),
-    shadow: rgb(0, 0, 0),
-    scrim: rgb(0, 0, 0),
-    inverse_surface: rgb(226, 226, 233),
-    inverse_on_surface: rgb(47, 48, 54),
-    inverse_primary: rgb(68, 94, 145),
-    primary_fixed: rgb(216, 226, 255),
-    on_primary_fixed: rgb(0, 26, 66),
-    primary_fixed_dim: rgb(173, 198, 255),
-    on_primary_fixed_variant: rgb(43, 70, 120),
-    secondary_fixed: rgb(219, 226, 249),
-    on_secondary_fixed: rgb(20, 27, 44),
-    secondary_fixed_dim: rgb(191, 198, 220),
-    on_secondary_fixed_variant: rgb(63, 71, 89),
-    tertiary_fixed: rgb(252, 215, 251),
-    on_tertiary_fixed: rgb(41, 19, 45),
-    tertiary_fixed_dim: rgb(222, 188, 223),
-    on_tertiary_fixed_variant: rgb(88, 62, 91),
-    surface_dim: rgb(17, 19, 24),
-    surface_bright: rgb(55, 57, 62),
-    surface_container_lowest: rgb(12, 14, 19),
-    surface_container_low: rgb(26, 27, 32),
-    surface_container: rgb(30, 31, 37),
-    surface_container_high: rgb(40, 42, 47),
-    surface_container_highest: rgb(51, 53, 58),
-};
+pub fn apply_material_visuals(context: &Context, state: &SettingsState) {
+    let palette = material_palette_for_settings_state(state);
+    let is_dark = matches!(state.theme_mode, ThemeMode::Dark);
+    sync_egui_material3_theme(palette, is_dark);
+    let mut visuals = if is_dark {
+        Visuals::dark()
+    } else {
+        Visuals::light()
+    };
+
+    visuals.override_text_color = Some(palette.on_background);
+    visuals.hyperlink_color = palette.primary;
+    visuals.faint_bg_color = palette.surface_container_low;
+    visuals.extreme_bg_color = palette.surface_container_highest;
+    visuals.code_bg_color = palette.surface_container_high;
+    visuals.warn_fg_color = palette.error;
+    visuals.error_fg_color = palette.error;
+    visuals.window_fill = palette.surface_container;
+    visuals.panel_fill = palette.background;
+    visuals.window_stroke.color = palette.outline_variant;
+    visuals.selection.bg_fill = palette.secondary_container;
+    visuals.selection.stroke.color = palette.on_secondary_container;
+
+    visuals.widgets.noninteractive.bg_fill = palette.surface_container_low;
+    visuals.widgets.noninteractive.weak_bg_fill = palette.surface_container_low;
+    visuals.widgets.noninteractive.bg_stroke.color = palette.outline_variant;
+    visuals.widgets.noninteractive.fg_stroke.color = palette.on_surface;
+
+    visuals.widgets.inactive.bg_fill = palette.surface_container;
+    visuals.widgets.inactive.weak_bg_fill = palette.surface_container;
+    visuals.widgets.inactive.bg_stroke.color = palette.outline_variant;
+    visuals.widgets.inactive.fg_stroke.color = palette.on_surface;
+
+    visuals.widgets.hovered.bg_fill = palette.surface_container_high;
+    visuals.widgets.hovered.weak_bg_fill = palette.surface_container_high;
+    visuals.widgets.hovered.bg_stroke.color = palette.outline;
+    visuals.widgets.hovered.fg_stroke.color = palette.on_surface;
+
+    visuals.widgets.active.bg_fill = palette.primary_container;
+    visuals.widgets.active.weak_bg_fill = palette.primary_container;
+    visuals.widgets.active.bg_stroke.color = palette.primary;
+    visuals.widgets.active.fg_stroke.color = palette.on_primary_container;
+
+    visuals.widgets.open.bg_fill = palette.secondary_container;
+    visuals.widgets.open.weak_bg_fill = palette.secondary_container;
+    visuals.widgets.open.bg_stroke.color = palette.secondary;
+    visuals.widgets.open.fg_stroke.color = palette.on_secondary_container;
+
+    context.set_visuals(visuals);
+}
+
+fn sync_egui_material3_theme(palette: MaterialPalette, is_dark: bool) {
+    let global_theme = egui_material3::get_global_theme();
+    let Ok(theme) = global_theme.lock() else {
+        return;
+    };
+    let mut next_theme = theme.clone();
+    drop(theme);
+
+    next_theme.theme_mode = if is_dark {
+        egui_material3::ThemeMode::Dark
+    } else {
+        egui_material3::ThemeMode::Light
+    };
+    next_theme.selected_colors = material_palette_selected_colors(palette);
+    egui_material3::update_global_theme(next_theme);
+}
+
+fn material_palette_selected_colors(palette: MaterialPalette) -> HashMap<String, Color32> {
+    [
+        ("primary", palette.primary),
+        ("surfaceTint", palette.surface_tint),
+        ("onPrimary", palette.on_primary),
+        ("primaryContainer", palette.primary_container),
+        ("onPrimaryContainer", palette.on_primary_container),
+        ("secondary", palette.secondary),
+        ("onSecondary", palette.on_secondary),
+        ("secondaryContainer", palette.secondary_container),
+        ("onSecondaryContainer", palette.on_secondary_container),
+        ("tertiary", palette.tertiary),
+        ("onTertiary", palette.on_tertiary),
+        ("tertiaryContainer", palette.tertiary_container),
+        ("onTertiaryContainer", palette.on_tertiary_container),
+        ("error", palette.error),
+        ("onError", palette.on_error),
+        ("errorContainer", palette.error_container),
+        ("onErrorContainer", palette.on_error_container),
+        ("background", palette.background),
+        ("onBackground", palette.on_background),
+        ("surface", palette.surface),
+        ("onSurface", palette.on_surface),
+        ("surfaceVariant", palette.surface_variant),
+        ("onSurfaceVariant", palette.on_surface_variant),
+        ("outline", palette.outline),
+        ("outlineVariant", palette.outline_variant),
+        ("shadow", palette.shadow),
+        ("scrim", palette.scrim),
+        ("inverseSurface", palette.inverse_surface),
+        ("inverseOnSurface", palette.inverse_on_surface),
+        ("inversePrimary", palette.inverse_primary),
+        ("primaryFixed", palette.primary_fixed),
+        ("onPrimaryFixed", palette.on_primary_fixed),
+        ("primaryFixedDim", palette.primary_fixed_dim),
+        ("onPrimaryFixedVariant", palette.on_primary_fixed_variant),
+        ("secondaryFixed", palette.secondary_fixed),
+        ("onSecondaryFixed", palette.on_secondary_fixed),
+        ("secondaryFixedDim", palette.secondary_fixed_dim),
+        ("onSecondaryFixedVariant", palette.on_secondary_fixed_variant),
+        ("tertiaryFixed", palette.tertiary_fixed),
+        ("onTertiaryFixed", palette.on_tertiary_fixed),
+        ("tertiaryFixedDim", palette.tertiary_fixed_dim),
+        ("onTertiaryFixedVariant", palette.on_tertiary_fixed_variant),
+        ("surfaceDim", palette.surface_dim),
+        ("surfaceBright", palette.surface_bright),
+        ("surfaceContainerLowest", palette.surface_container_lowest),
+        ("surfaceContainerLow", palette.surface_container_low),
+        ("surfaceContainer", palette.surface_container),
+        ("surfaceContainerHigh", palette.surface_container_high),
+        ("surfaceContainerHighest", palette.surface_container_highest),
+    ]
+    .into_iter()
+    .map(|(name, color)| (name.to_string(), color))
+    .collect()
+}
+
+pub fn with_current_material_palette<R>(palette: MaterialPalette, draw: impl FnOnce() -> R) -> R {
+    CURRENT_MATERIAL_PALETTE.with(|current| {
+        let previous = current.replace(Some(palette));
+        let result = draw();
+        current.replace(previous);
+        result
+    })
+}
 
 fn from_scheme(scheme: MaterialScheme) -> MaterialPalette {
     MaterialPalette {
@@ -333,39 +343,48 @@ fn from_scheme(scheme: MaterialScheme) -> MaterialPalette {
     }
 }
 
-const fn rgb(red: u8, green: u8, blue: u8) -> Color32 {
-    Color32::from_rgb(red, green, blue)
-}
-
 fn rgba(red: u8, green: u8, blue: u8, alpha: u8) -> Color32 {
     Color32::from_rgba_unmultiplied(red, green, blue, alpha)
 }
 
 #[cfg(test)]
 mod tests {
+    use egui::Context;
+
+    use crate::settings::actions::SettingsAction;
+    use crate::settings::reducer::reduce;
+    use crate::settings::state::SettingsState;
+
+    use super::apply_material_visuals;
     use super::MaterialPalette;
     use super::material_palette;
+    use super::material_palette_for_settings_state;
+    use super::material_palette_for_visuals;
+    use super::with_current_material_palette;
+    use crate::material::styling::material_schemes::MaterialSchemes;
     use crate::settings::state::ThemeMode;
 
     #[test]
-    fn light_palette_matches_slint_seed_values() {
+    fn light_palette_matches_dynamic_default_light_scheme() {
         let palette = MaterialPalette::light();
+        let default_schemes = MaterialSchemes::default();
 
-        assert_eq!(palette.primary, egui::Color32::from_rgb(68, 94, 145));
+        assert_eq!(palette.primary, default_schemes.light.primary);
         assert_eq!(
             palette.surface_container_highest,
-            egui::Color32::from_rgb(226, 226, 233)
+            default_schemes.light.surface_container_highest
         );
         assert_eq!(palette.background_modal.a(), 128);
     }
 
     #[test]
-    fn dark_palette_matches_slint_seed_values() {
+    fn dark_palette_matches_dynamic_default_dark_scheme() {
         let palette = MaterialPalette::dark();
+        let default_schemes = MaterialSchemes::default();
 
-        assert_eq!(palette.primary, egui::Color32::from_rgb(173, 198, 255));
-        assert_eq!(palette.on_primary, egui::Color32::from_rgb(17, 47, 96));
-        assert_eq!(palette.surface_dim, egui::Color32::from_rgb(17, 19, 24));
+        assert_eq!(palette.primary, default_schemes.dark.primary);
+        assert_eq!(palette.on_primary, default_schemes.dark.on_primary);
+        assert_eq!(palette.surface_dim, default_schemes.dark.surface_dim);
     }
 
     #[test]
@@ -396,5 +415,50 @@ mod tests {
         assert_eq!(palette.disable_opacity, 0.38);
         assert_eq!(palette.shadow_15.a(), 38);
         assert_eq!(palette.shadow_30.a(), 77);
+    }
+
+    #[test]
+    fn frame_local_palette_overrides_visual_dark_mode_fallback() {
+        let custom_palette = MaterialPalette {
+            primary: egui::Color32::from_rgb(12, 34, 56),
+            ..MaterialPalette::light()
+        };
+
+        with_current_material_palette(custom_palette, || {
+            let resolved = material_palette_for_visuals(&egui::Visuals::dark());
+            assert_eq!(resolved.primary, custom_palette.primary);
+        });
+    }
+
+    #[test]
+    fn apply_material_visuals_updates_egui_material3_global_theme_colors() {
+        let context = Context::default();
+        let mut state = SettingsState::default();
+
+        reduce(
+            &mut state,
+            SettingsAction::UpdateUseSystemTheme { enabled: false },
+        );
+        reduce(
+            &mut state,
+            SettingsAction::UpdateUsePrimaryColor { enabled: true },
+        );
+        reduce(
+            &mut state,
+            SettingsAction::UpdatePrimaryColorHex {
+                value: "#FF336699".to_string(),
+            },
+        );
+        reduce(
+            &mut state,
+            SettingsAction::UpdateIsDarkMode { enabled: true },
+        );
+
+        let expected = material_palette_for_settings_state(&state);
+
+        apply_material_visuals(&context, &state);
+
+        assert_eq!(egui_material3::get_global_color("primary"), expected.primary);
+        assert_eq!(egui_material3::get_global_color("onSurface"), expected.on_surface);
     }
 }
