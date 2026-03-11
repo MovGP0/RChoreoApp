@@ -37,6 +37,14 @@ pub struct StateOpacityTokens {
     pub pressed: f32,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct StateLayerVisualState {
+    interactive: bool,
+    hovered: bool,
+    pressed: bool,
+    focused: bool,
+}
+
 #[must_use]
 pub const fn state_opacity_tokens() -> StateOpacityTokens {
     let metrics = material_style_metrics();
@@ -211,7 +219,7 @@ fn draw_response(
         bar_color = with_opacity(disabled_bar_color(palette), opacity_tokens.disabled);
     }
 
-    let is_hovered_or_pressed = response.hovered() || response.is_pointer_button_down_on();
+    let is_hovered_or_pressed = enabled && (response.hovered() || response.is_pointer_button_down_on());
     let hover_progress = state_layer_animation_spec().animate_bool(
         ui.ctx(),
         response.id.with("hover"),
@@ -219,15 +227,17 @@ fn draw_response(
     );
 
     if hover_progress > 0.0 {
-        let overlay_color = lerp_color(
-            with_opacity(
-                state_layer_tint(palette, false),
-                opacity_tokens.hover,
-            ),
-            with_opacity(state_layer_tint(palette, true), opacity_tokens.pressed),
-            checked_progress,
+        let overlay_fill = state_layer_fill(
+            ui.visuals(),
+            checked,
+            StateLayerVisualState {
+                interactive: enabled,
+                hovered: response.hovered(),
+                pressed: response.is_pointer_button_down_on(),
+                focused: response.has_focus(),
+            },
         );
-        let overlay_color = with_opacity(overlay_color, hover_progress);
+        let overlay_color = with_opacity(overlay_fill, hover_progress);
         ui.painter()
             .add(Shape::rect_filled(rect, rect.height() / 2.0, overlay_color));
     }
@@ -298,11 +308,25 @@ fn disabled_bar_color(palette: MaterialPalette) -> Color32 {
 }
 
 #[must_use]
-fn state_layer_tint(palette: MaterialPalette, checked: bool) -> Color32 {
-    if checked {
-        palette.secondary_container
+fn state_layer_fill(
+    visuals: &egui::Visuals,
+    checked: bool,
+    state: StateLayerVisualState,
+) -> Color32 {
+    let widget_visuals = if !state.interactive {
+        visuals.widgets.noninteractive
+    } else if state.pressed || state.focused {
+        visuals.widgets.active
+    } else if state.hovered {
+        visuals.widgets.hovered
     } else {
-        palette.on_surface_variant
+        visuals.widgets.inactive
+    };
+
+    if checked {
+        visuals.selection.bg_fill
+    } else {
+        widget_visuals.weak_bg_fill
     }
 }
 
@@ -455,10 +479,16 @@ mod tests {
     use super::MaterialAnimation;
     use super::MaterialAnimations;
     use super::MaterialPalette;
-    use super::checked_bar_color;
+    use crate::material::styling::material_palette::apply_material_visuals;
+    use crate::material::styling::material_palette::material_palette_for_settings_state;
+    use crate::settings::state::SettingsState;
+    use crate::settings::state::ThemeMode;
+
+    use super::StateLayerVisualState;
     use super::checked_animation_spec;
+    use super::checked_bar_color;
     use super::disabled_bar_color;
-    use super::state_layer_tint;
+    use super::state_layer_fill;
     use super::unchecked_animation_easing_spec;
     use super::unchecked_animation_spec;
 
@@ -471,11 +501,56 @@ mod tests {
     }
 
     #[test]
-    fn checked_state_uses_material_container_role() {
+    fn checked_hover_fill_uses_material_selection_background() {
+        let context = egui::Context::default();
+        let settings = SettingsState {
+            theme_mode: ThemeMode::Dark,
+            ..SettingsState::default()
+        };
+        apply_material_visuals(&context, &settings);
+        let visuals = context.style().visuals.clone();
+        let palette = material_palette_for_settings_state(&settings);
+
+        assert_eq!(
+            state_layer_fill(
+                &visuals,
+                true,
+                StateLayerVisualState {
+                    interactive: true,
+                    hovered: true,
+                    pressed: false,
+                    focused: false,
+                },
+            ),
+            palette.secondary_container
+        );
+    }
+
+    #[test]
+    fn unchecked_hover_fill_uses_hover_container_in_dark_mode() {
+        let context = egui::Context::default();
+        let settings = SettingsState {
+            theme_mode: ThemeMode::Dark,
+            ..SettingsState::default()
+        };
+        apply_material_visuals(&context, &settings);
+        let visuals = context.style().visuals.clone();
         let palette = palette_fixture();
 
         assert_eq!(checked_bar_color(palette), palette.secondary);
-        assert_eq!(state_layer_tint(palette, true), palette.secondary_container);
+        assert_eq!(
+            state_layer_fill(
+                &visuals,
+                false,
+                StateLayerVisualState {
+                    interactive: true,
+                    hovered: true,
+                    pressed: false,
+                    focused: false,
+                },
+            ),
+            material_palette_for_settings_state(&settings).surface_container_high
+        );
     }
 
     #[test]
@@ -483,7 +558,6 @@ mod tests {
         let palette = palette_fixture();
 
         assert_eq!(disabled_bar_color(palette), palette.on_surface_variant);
-        assert_eq!(state_layer_tint(palette, false), palette.on_surface_variant);
     }
 
     #[test]
