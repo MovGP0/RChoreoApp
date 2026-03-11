@@ -1,11 +1,15 @@
 use egui::Button;
+use egui::Color32;
 use egui::Image;
 use egui::Response;
+use egui::Stroke;
 use egui::Ui;
 use egui::vec2;
 
 use crate::material::components::centered_icon_rect;
 use crate::material::components::paint_icon;
+use crate::material::styling::material_palette::MaterialPalette;
+use crate::material::styling::material_palette::material_palette_for_visuals;
 
 const ICON_BUTTON_SIZE_PX: f32 = 48.0;
 const ICON_GLYPH_SIZE_PX: f32 = 24.0;
@@ -41,16 +45,24 @@ pub fn icon_image(icon: TopBarIcon) -> Image<'static> {
 
 #[must_use]
 pub fn top_bar_icon_button(ui: &mut Ui, image: Image<'static>, checked: bool) -> Response {
-    let tint = if checked {
-        ui.visuals().selection.stroke.color
-    } else {
-        ui.visuals().widgets.inactive.fg_stroke.color
-    };
-    let response = ui.add(
+    top_bar_icon_button_enabled(ui, image, checked, true)
+}
+
+#[must_use]
+pub fn top_bar_icon_button_enabled(
+    ui: &mut Ui,
+    image: Image<'static>,
+    checked: bool,
+    enabled: bool,
+) -> Response {
+    let tint = icon_tint(material_palette_for_visuals(ui.visuals()), checked, enabled);
+    let response = ui.add_enabled(
+        enabled,
         Button::new("")
             .selected(checked)
             .frame(true)
             .frame_when_inactive(false)
+            .stroke(Stroke::NONE)
             .corner_radius(ICON_BUTTON_SIZE_PX / 2.0)
             .min_size(vec2(ICON_BUTTON_SIZE_PX, ICON_BUTTON_SIZE_PX)),
     );
@@ -61,4 +73,58 @@ pub fn top_bar_icon_button(ui: &mut Ui, image: Image<'static>, checked: bool) ->
         tint,
     );
     response
+}
+
+#[must_use]
+fn icon_tint(palette: MaterialPalette, checked: bool, enabled: bool) -> Color32 {
+    if !enabled {
+        return palette.on_surface.gamma_multiply(palette.disable_opacity);
+    }
+
+    if checked {
+        palette.on_secondary_container
+    } else {
+        palette.on_surface
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use egui::Color32;
+
+    use super::MaterialPalette;
+    use super::icon_tint;
+
+    fn palette_fixture() -> MaterialPalette {
+        let mut palette = MaterialPalette::light();
+        palette.on_surface = Color32::from_rgb(10, 20, 30);
+        palette.on_secondary_container = Color32::from_rgb(40, 50, 60);
+        palette.disable_opacity = 0.38;
+        palette
+    }
+
+    #[test]
+    fn enabled_top_bar_icon_tints_use_material_roles() {
+        let palette = palette_fixture();
+
+        assert_eq!(icon_tint(palette, false, true), palette.on_surface);
+        assert_eq!(
+            icon_tint(palette, true, true),
+            palette.on_secondary_container
+        );
+    }
+
+    #[test]
+    fn disabled_top_bar_icon_tint_uses_material_disabled_opacity() {
+        let palette = palette_fixture();
+
+        assert_eq!(
+            icon_tint(palette, false, false),
+            palette.on_surface.gamma_multiply(palette.disable_opacity)
+        );
+        assert_eq!(
+            icon_tint(palette, true, false),
+            palette.on_surface.gamma_multiply(palette.disable_opacity)
+        );
+    }
 }

@@ -300,7 +300,7 @@ fn disabled_bar_color(palette: MaterialPalette) -> Color32 {
 #[must_use]
 fn state_layer_tint(palette: MaterialPalette, checked: bool) -> Color32 {
     if checked {
-        palette.secondary
+        palette.secondary_container
     } else {
         palette.on_surface_variant
     }
@@ -471,11 +471,11 @@ mod tests {
     }
 
     #[test]
-    fn checked_state_uses_material_secondary_role() {
+    fn checked_state_uses_material_container_role() {
         let palette = palette_fixture();
 
         assert_eq!(checked_bar_color(palette), palette.secondary);
-        assert_eq!(state_layer_tint(palette, true), palette.secondary);
+        assert_eq!(state_layer_tint(palette, true), palette.secondary_container);
     }
 
     #[test]
