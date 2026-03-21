@@ -1,13 +1,13 @@
 use choreo_components_egui::audio_player::ui as audio_ui;
 use choreo_components_egui::main_page::ui as main_page_ui;
-use choreo_components_egui::nav_bar::ui as nav_ui;
-use choreo_components_egui::scenes::ui as scenes_ui;
-use choreo_components_egui::settings::ui as settings_ui;
 use choreo_components_egui::material::styling::material_typography::TypographyRole;
 use choreo_components_egui::material::styling::material_typography::apply_text_styles;
 use choreo_components_egui::material::styling::material_typography::font_id_for_role;
 use choreo_components_egui::material::styling::material_typography::platform_font_fallback_chain;
 use choreo_components_egui::material::styling::material_typography::style_for_role;
+use choreo_components_egui::nav_bar::ui as nav_ui;
+use choreo_components_egui::scenes::ui as scenes_ui;
+use choreo_components_egui::settings::ui as settings_ui;
 use egui::FontFamily;
 use egui::FontId;
 use egui::Style;

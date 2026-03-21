@@ -119,6 +119,41 @@ The important boundary is:
 - the app reducer decides which page is active and how pages coordinate
 - the runtime executes OS and IO side effects
 
+## Component Submodule Responsibilities
+
+Not every egui component should stop at `action.rs`, `state.rs`, `reducer.rs`, and `ui.rs`.
+
+When a page or shared widget starts mixing layout math, animation helpers, style tokens, and painting code in one file, split those responsibilities into focused submodules.
+
+The current `hamburger_toggle_button` module is a good example:
+
+```text
+crates/choreo_components_egui/src/hamburger_toggle_button/
+  mod.rs
+  geometry.rs
+  state.rs
+  tokens.rs
+  widget.rs
+```
+
+Use this ownership split:
+
+- `mod.rs`: keep it thin. It declares submodules and re-exports the supported public surface.
+- `geometry.rs`: own size calculations, rect-to-shape projection, interpolation math, and other deterministic layout helpers.
+- `state.rs`: own widget-local transition helpers, animation state, checked/unchecked mapping, and color/opacity helpers tied to transient UI state.
+- `tokens.rs`: own style metrics, animation specs, padding constants, and other theme/material values that should be shared instead of duplicated.
+- `widget.rs`: own the egui-facing widget type, `show()` or `draw()` entry points, response handling, and painting by composing `geometry`, `state`, and `tokens`.
+
+Practical rules:
+
+- Put pure geometry math in `geometry.rs`, not in `widget.rs`.
+- Put egui `Context`/`Id` animation bookkeeping in `state.rs` when it is widget-local and not part of app/page reducer state.
+- Put Material sizing, motion, and opacity lookups in `tokens.rs` so other widgets can reuse the same contract.
+- Keep `widget.rs` focused on request/response flow and painting, not on owning every helper.
+- Keep `mod.rs` free of implementation detail; it is the module boundary, not the implementation dump.
+
+This split is especially useful for shared egui controls, reusable page panels, and page-local widgets that need parity math or animation behavior but do not justify becoming full reducer features on their own.
+
 ## Page Routing Example
 
 The top-level app state can keep distinct page states while still using one store:

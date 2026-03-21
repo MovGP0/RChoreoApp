@@ -84,7 +84,10 @@ impl<'a> OutlineIconButton<'a> {
             &icon,
             centered_icon_rect(
                 response.rect,
-                vec2(metrics.icon_sizes.icon_size_24, metrics.icon_sizes.icon_size_24),
+                vec2(
+                    metrics.icon_sizes.icon_size_24,
+                    metrics.icon_sizes.icon_size_24,
+                ),
             ),
             tint,
         );

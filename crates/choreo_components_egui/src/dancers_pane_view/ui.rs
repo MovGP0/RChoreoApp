@@ -120,34 +120,32 @@ pub fn draw(ui: &mut Ui, state: DancersPaneViewUiState<'_>) -> Vec<DancersPaneVi
         vec2(ui.available_width(), pane_button_row_height_token()),
         egui::Layout::left_to_right(egui::Align::Center),
         |ui| {
-        ui.spacing_mut().item_spacing.x = pane_icon_gap_token();
+            ui.spacing_mut().item_spacing.x = pane_icon_gap_token();
 
-        let add_icon = ui_icons::icon(add_button_icon_key());
-        let add_image = Image::from_bytes(pane_icon_uri(add_icon.token), add_icon.svg.as_bytes());
-        let add_response =
-            crate::material::components::top_bar_icon::top_bar_icon_button_enabled(
-                ui,
-                add_image,
-                false,
-                true,
-            );
-        if add_response.clicked() {
-            actions.push(DancersPaneViewAction::AddDancer);
-        }
+            let add_icon = ui_icons::icon(add_button_icon_key());
+            let add_image =
+                Image::from_bytes(pane_icon_uri(add_icon.token), add_icon.svg.as_bytes());
+            let add_response =
+                crate::material::components::top_bar_icon::top_bar_icon_button_enabled(
+                    ui, add_image, false, true,
+                );
+            if add_response.clicked() {
+                actions.push(DancersPaneViewAction::AddDancer);
+            }
 
-        let remove_icon = ui_icons::icon(remove_button_icon_key());
-        let remove_image =
-            Image::from_bytes(pane_icon_uri(remove_icon.token), remove_icon.svg.as_bytes());
-        let delete_response =
-            crate::material::components::top_bar_icon::top_bar_icon_button_enabled(
-                ui,
-                remove_image,
-                false,
-                state.can_delete_dancer,
-            );
-        if delete_response.clicked() {
-            actions.push(DancersPaneViewAction::DeleteDancer);
-        }
+            let remove_icon = ui_icons::icon(remove_button_icon_key());
+            let remove_image =
+                Image::from_bytes(pane_icon_uri(remove_icon.token), remove_icon.svg.as_bytes());
+            let delete_response =
+                crate::material::components::top_bar_icon::top_bar_icon_button_enabled(
+                    ui,
+                    remove_image,
+                    false,
+                    state.can_delete_dancer,
+                );
+            if delete_response.clicked() {
+                actions.push(DancersPaneViewAction::DeleteDancer);
+            }
         },
     );
 

@@ -334,10 +334,7 @@ fn add_month_nav_button(ui: &mut Ui, image: Image<'static>) -> egui::Response {
     paint_icon(
         ui,
         &image,
-        centered_icon_rect(
-            response.rect,
-            vec2(ICON_GLYPH_SIZE_PX, ICON_GLYPH_SIZE_PX),
-        ),
+        centered_icon_rect(response.rect, vec2(ICON_GLYPH_SIZE_PX, ICON_GLYPH_SIZE_PX)),
         tint,
     );
     response

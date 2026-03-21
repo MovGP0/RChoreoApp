@@ -5,8 +5,8 @@ use egui::Ui;
 use egui::Vec2;
 use egui::vec2;
 
-use crate::material::components::centered_icon_rect;
 use crate::material::components::IconButtonItem;
+use crate::material::components::centered_icon_rect;
 use crate::material::components::material_text;
 use crate::material::components::paint_icon;
 use crate::material::styling::material_palette::material_palette_for_visuals;
@@ -77,7 +77,8 @@ impl<'a> BaseAppBar<'a> {
                         ui.add_space(self.spacing);
 
                         if let Some(button) = self.leading_button {
-                            let response = add_app_bar_icon_button(ui, button, metrics.sizes.size_40);
+                            let response =
+                                add_app_bar_icon_button(ui, button, metrics.sizes.size_40);
                             leading = Some(response.on_hover_text(button.tooltip.clone()));
                         }
 
@@ -105,7 +106,8 @@ impl<'a> BaseAppBar<'a> {
                         }
 
                         for button in self.trailing_buttons {
-                            let response = add_app_bar_icon_button(ui, button, metrics.sizes.size_40);
+                            let response =
+                                add_app_bar_icon_button(ui, button, metrics.sizes.size_40);
                             trailing.push(response.on_hover_text(button.tooltip.clone()));
                         }
                         ui.add_space(self.appbar_padding_right);
@@ -126,11 +128,7 @@ impl<'a> BaseAppBar<'a> {
     }
 }
 
-fn add_app_bar_icon_button(
-    ui: &mut Ui,
-    button: &IconButtonItem,
-    button_size: f32,
-) -> Response {
+fn add_app_bar_icon_button(ui: &mut Ui, button: &IconButtonItem, button_size: f32) -> Response {
     let response = ui.add_enabled(
         button.enabled,
         egui::Button::new("").min_size(vec2(button_size, button_size)),

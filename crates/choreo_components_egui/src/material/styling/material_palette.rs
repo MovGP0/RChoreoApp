@@ -253,7 +253,10 @@ fn material_palette_selected_colors(palette: MaterialPalette) -> HashMap<String,
         ("secondaryFixed", palette.secondary_fixed),
         ("onSecondaryFixed", palette.on_secondary_fixed),
         ("secondaryFixedDim", palette.secondary_fixed_dim),
-        ("onSecondaryFixedVariant", palette.on_secondary_fixed_variant),
+        (
+            "onSecondaryFixedVariant",
+            palette.on_secondary_fixed_variant,
+        ),
         ("tertiaryFixed", palette.tertiary_fixed),
         ("onTertiaryFixed", palette.on_tertiary_fixed),
         ("tertiaryFixedDim", palette.tertiary_fixed_dim),
@@ -355,8 +358,8 @@ mod tests {
     use crate::settings::reducer::reduce;
     use crate::settings::state::SettingsState;
 
-    use super::apply_material_visuals;
     use super::MaterialPalette;
+    use super::apply_material_visuals;
     use super::material_palette;
     use super::material_palette_for_settings_state;
     use super::material_palette_for_visuals;
@@ -458,7 +461,13 @@ mod tests {
 
         apply_material_visuals(&context, &state);
 
-        assert_eq!(egui_material3::get_global_color("primary"), expected.primary);
-        assert_eq!(egui_material3::get_global_color("onSurface"), expected.on_surface);
+        assert_eq!(
+            egui_material3::get_global_color("primary"),
+            expected.primary
+        );
+        assert_eq!(
+            egui_material3::get_global_color("onSurface"),
+            expected.on_surface
+        );
     }
 }

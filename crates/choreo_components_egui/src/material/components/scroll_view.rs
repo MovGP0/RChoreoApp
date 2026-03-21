@@ -129,11 +129,7 @@ impl MaterialScrollArea {
         self.show_viewport(ui, |ui, _viewport| add_contents(ui))
     }
 
-    pub fn show_viewport<R>(
-        self,
-        ui: &mut Ui,
-        add_contents: impl FnOnce(&mut Ui, Rect) -> R,
-    ) -> R {
+    pub fn show_viewport<R>(self, ui: &mut Ui, add_contents: impl FnOnce(&mut Ui, Rect) -> R) -> R {
         let wrapper_id = self
             .id
             .unwrap_or_else(|| ui.auto_id_with("material_scroll_area"));
@@ -152,7 +148,9 @@ impl MaterialScrollArea {
             ui.ctx().set_transform_layer(stretch_layer_id, transform);
 
             ui.scope_builder(
-                UiBuilder::new().layer_id(stretch_layer_id).max_rect(content_rect),
+                UiBuilder::new()
+                    .layer_id(stretch_layer_id)
+                    .max_rect(content_rect),
                 |ui| {
                     ui.set_clip_rect(transform.inverse() * clip_rect);
                     add_contents(ui, viewport)
@@ -358,11 +356,7 @@ fn relax_overscroll_toward_rest(overscroll_y: f32, dt: f32) -> f32 {
     let release_factor = (1.0 - OVERSCROLL_RELEASE_PER_SECOND * dt).clamp(0.0, 1.0);
     let relaxed = overscroll_y * release_factor;
 
-    if relaxed.abs() <= 0.1 {
-        0.0
-    } else {
-        relaxed
-    }
+    if relaxed.abs() <= 0.1 { 0.0 } else { relaxed }
 }
 
 #[must_use]

@@ -15,8 +15,8 @@ use choreo_components_egui::shell;
 use rfd::FileDialog;
 use std::env;
 use std::path::Path;
-use std::sync::Once;
 use std::rc::Rc;
+use std::sync::Once;
 
 mod app_icon;
 
@@ -132,7 +132,9 @@ fn pick_choreo_file() -> Option<OpenChoreoRequested> {
 
 fn load_open_choreo_request_from_path(path: &Path) -> Option<OpenChoreoRequested> {
     let contents = std::fs::read_to_string(path).ok()?;
-    let file_name = path.file_name().map(|name| name.to_string_lossy().into_owned());
+    let file_name = path
+        .file_name()
+        .map(|name| name.to_string_lossy().into_owned());
     let file_path = Some(path.to_string_lossy().into_owned());
     Some(OpenChoreoRequested {
         file_path,
@@ -173,7 +175,10 @@ mod desktop_open_choreo_spec {
         let request = load_open_choreo_request_from_path(&path)
             .expect("existing .choreo file should load into open request");
 
-        assert_eq!(request.file_path.as_deref(), Some(path.to_string_lossy().as_ref()));
+        assert_eq!(
+            request.file_path.as_deref(),
+            Some(path.to_string_lossy().as_ref())
+        );
         assert_eq!(
             request.file_name.as_deref(),
             path.file_name().and_then(|value| value.to_str())

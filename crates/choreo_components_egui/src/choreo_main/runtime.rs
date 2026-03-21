@@ -425,4 +425,3 @@ pub(crate) fn enqueue_open_audio_request(
 ) {
     view_model.request_open_audio(request);
 }
-

@@ -1,5 +1,5 @@
-use choreo_components_egui::i18n::t;
 use choreo_components_egui::i18n::slint_key_to_i18n_key;
+use choreo_components_egui::i18n::t;
 use choreo_components_egui::i18n::t_slint;
 use choreo_components_egui::i18n::translate_slint;
 

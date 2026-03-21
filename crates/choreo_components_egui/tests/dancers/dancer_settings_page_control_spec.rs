@@ -87,26 +87,29 @@ fn dancer_settings_page_control_spec() {
             },
         );
 
-        spec.it("positions the drawer host below the top bar and docks the footer to the bottom", |_| {
-            let page_rect =
-                egui::Rect::from_min_max(egui::pos2(120.0, 96.0), egui::pos2(1320.0, 780.0));
+        spec.it(
+            "positions the drawer host below the top bar and docks the footer to the bottom",
+            |_| {
+                let page_rect =
+                    egui::Rect::from_min_max(egui::pos2(120.0, 96.0), egui::pos2(1320.0, 780.0));
 
-            let top_bar = dancers::ui::top_bar_rect(page_rect);
-            let content = dancers::ui::main_content_rect(page_rect);
-            let footer = dancers::ui::footer_rect(content);
-            let scroll = dancers::ui::scroll_rect(content);
+                let top_bar = dancers::ui::top_bar_rect(page_rect);
+                let content = dancers::ui::main_content_rect(page_rect);
+                let footer = dancers::ui::footer_rect(content);
+                let scroll = dancers::ui::scroll_rect(content);
 
-            assert_eq!(top_bar.top(), 96.0);
-            assert_eq!(top_bar.bottom(), 160.0);
-            assert_eq!(content.top(), 160.0);
-            assert_eq!(content.bottom(), 780.0);
-            assert_eq!(footer.bottom(), 780.0);
-            assert_eq!(footer.top(), 724.0);
-            assert_eq!(scroll.left(), 136.0);
-            assert_eq!(scroll.right(), 856.0);
-            assert_eq!(scroll.top(), 176.0);
-            assert_eq!(scroll.bottom(), 708.0);
-        });
+                assert_eq!(top_bar.top(), 96.0);
+                assert_eq!(top_bar.bottom(), 160.0);
+                assert_eq!(content.top(), 160.0);
+                assert_eq!(content.bottom(), 780.0);
+                assert_eq!(footer.bottom(), 780.0);
+                assert_eq!(footer.top(), 724.0);
+                assert_eq!(scroll.left(), 136.0);
+                assert_eq!(scroll.right(), 856.0);
+                assert_eq!(scroll.top(), 176.0);
+                assert_eq!(scroll.bottom(), 708.0);
+            },
+        );
     });
 
     let report = dancers::run_suite(&suite);

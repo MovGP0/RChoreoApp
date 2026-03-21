@@ -60,7 +60,10 @@ fn navigate_main_to_dancers_spec() {
                     ChoreoMainAction::DancersAction(DancersAction::SaveToGlobal),
                 );
 
-                assert_eq!(state.choreography_settings_state.choreography.dancers.len(), 1);
+                assert_eq!(
+                    state.choreography_settings_state.choreography.dancers.len(),
+                    1
+                );
                 assert_eq!(
                     state.choreography_settings_state.choreography.dancers[0].name,
                     "Bob"
@@ -157,17 +160,19 @@ fn state_with_loaded_choreography() -> ChoreoMainState {
 
     reduce(
         &mut state,
-        ChoreoMainAction::ChoreographySettingsAction(ChoreographySettingsAction::LoadChoreography {
-            choreography: Box::new(choreography),
-            selected_scene: Some(SelectedSceneState {
-                scene_id: opening.scene_id,
-                name: opening.name.clone(),
-                text: String::new(),
-                fixed_positions: false,
-                timestamp: None,
-                color: Color::transparent(),
-            }),
-        }),
+        ChoreoMainAction::ChoreographySettingsAction(
+            ChoreographySettingsAction::LoadChoreography {
+                choreography: Box::new(choreography),
+                selected_scene: Some(SelectedSceneState {
+                    scene_id: opening.scene_id,
+                    name: opening.name.clone(),
+                    text: String::new(),
+                    fixed_positions: false,
+                    timestamp: None,
+                    color: Color::transparent(),
+                }),
+            },
+        ),
     );
 
     state

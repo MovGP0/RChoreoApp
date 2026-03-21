@@ -59,10 +59,8 @@ pub fn bottom_app_bar(ui: &mut Ui, content: BottomAppBar<'_>) -> BottomAppBarRes
             for item in content.icon_buttons {
                 let response = ui.add_enabled(
                     item.enabled,
-                    egui::Button::new("").min_size(vec2(
-                        metrics.sizes.size_40,
-                        metrics.sizes.size_40,
-                    )),
+                    egui::Button::new("")
+                        .min_size(vec2(metrics.sizes.size_40, metrics.sizes.size_40)),
                 );
                 let tint = ui.style().interact(&response).fg_stroke.color;
                 paint_icon(
@@ -70,7 +68,10 @@ pub fn bottom_app_bar(ui: &mut Ui, content: BottomAppBar<'_>) -> BottomAppBarRes
                     &item.icon,
                     centered_icon_rect(
                         response.rect,
-                        vec2(metrics.icon_sizes.icon_size_24, metrics.icon_sizes.icon_size_24),
+                        vec2(
+                            metrics.icon_sizes.icon_size_24,
+                            metrics.icon_sizes.icon_size_24,
+                        ),
                     ),
                     tint,
                 );

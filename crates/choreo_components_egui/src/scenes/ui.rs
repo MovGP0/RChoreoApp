@@ -643,11 +643,7 @@ fn search_bar_clear_button(token: &'static str, svg: &'static str) -> Button<'st
     ))
 }
 
-fn add_search_bar_clear_button(
-    ui: &mut Ui,
-    token: &'static str,
-    svg: &'static str,
-) -> Response {
+fn add_search_bar_clear_button(ui: &mut Ui, token: &'static str, svg: &'static str) -> Response {
     let image = Image::from_bytes(scene_icon_uri(token), svg.as_bytes());
     let response = ui.add(search_bar_clear_button(token, svg));
     let tint = ui.style().interact(&response).fg_stroke.color;

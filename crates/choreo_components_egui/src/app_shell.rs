@@ -223,7 +223,13 @@ mod app_shell_splash_spec {
         assert!(visuals.dark_mode);
         assert_eq!(visuals.panel_fill, expected.background);
         assert_eq!(visuals.selection.bg_fill, expected.secondary_container);
-        assert_eq!(egui_material3::get_global_color("primary"), expected.primary);
-        assert_eq!(egui_material3::get_global_color("onSurface"), expected.on_surface);
+        assert_eq!(
+            egui_material3::get_global_color("primary"),
+            expected.primary
+        );
+        assert_eq!(
+            egui_material3::get_global_color("onSurface"),
+            expected.on_surface
+        );
     }
 }

@@ -20,11 +20,7 @@ impl HapticFeedback for NoopHapticFeedback {
 #[cfg(target_os = "android")]
 mod android {
     use jni::JavaVM;
-    use jni::objects::{
-        Global,
-        JObject,
-        JValue
-    };
+    use jni::objects::{Global, JObject, JValue};
     use jni::sys::jobject;
     use ndk_context::android_context;
 
@@ -74,8 +70,7 @@ mod android {
                         jni::jni_str!("getSystemService"),
                         jni::jni_sig!("(Ljava/lang/String;)Ljava/lang/Object;"),
                         &[JValue::Object(&service_name)],
-                    )
-                    ?
+                    )?
                     .l()?;
                 action(env, vibrator)
             })

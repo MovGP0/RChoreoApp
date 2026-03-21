@@ -22,11 +22,7 @@ impl HapticFeedback for NoopHapticFeedback {
 #[allow(unsafe_code)]
 mod android {
     use jni::JavaVM;
-    use jni::objects::{
-        Global,
-        JObject,
-        JValue
-    };
+    use jni::objects::{Global, JObject, JValue};
     use jni::sys::jobject;
     use ndk_context::android_context;
 

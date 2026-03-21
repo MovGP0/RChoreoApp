@@ -102,8 +102,8 @@ fn slint_name_resolver_returns_catalog_entries() {
     let resolved = icons::from_slint_name("AccountGroup").expect("AccountGroup should resolve");
     assert_eq!(resolved.token, "groups");
 
-    let resolved =
-        icons::from_slint_name("AccountMultipleMinus").expect("AccountMultipleMinus should resolve");
+    let resolved = icons::from_slint_name("AccountMultipleMinus")
+        .expect("AccountMultipleMinus should resolve");
     assert_eq!(resolved.token, "group_remove");
 
     assert!(icons::from_slint_name("DoesNotExist").is_none());

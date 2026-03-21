@@ -30561,24 +30561,14 @@ impl UiIconRegistry {
             UiIconKey::AudioPlay => ui_icon_spec("play_arrow", "Play"),
             UiIconKey::AudioPause => ui_icon_spec("pause", "Pause"),
             UiIconKey::AudioLink => ui_icon_spec("link", "Link"),
-            UiIconKey::ScenesAddBefore => {
-                ui_icon_spec("add_row_above", "TableRowPlusBefore")
-            }
-            UiIconKey::ScenesAddAfter => {
-                ui_icon_spec("add_row_below", "TableRowPlusAfter")
-            }
+            UiIconKey::ScenesAddBefore => ui_icon_spec("add_row_above", "TableRowPlusBefore"),
+            UiIconKey::ScenesAddAfter => ui_icon_spec("add_row_below", "TableRowPlusAfter"),
             UiIconKey::ScenesDelete => ui_icon_spec("delete", "Delete"),
-            UiIconKey::ScenesOpenChoreography => {
-                ui_icon_spec("folder_open", "FolderOpen")
-            }
+            UiIconKey::ScenesOpenChoreography => ui_icon_spec("folder_open", "FolderOpen"),
             UiIconKey::ScenesSaveChoreography => ui_icon_spec("save", "ContentSave"),
             UiIconKey::ScenesNavigateSettings => ui_icon_spec("settings", "Cog"),
-            UiIconKey::ScenesNavigateDancers => {
-                ui_icon_spec("groups", "AccountGroup")
-            }
-            UiIconKey::SettingsNavigateBack => {
-                ui_icon_spec("arrow_back", "ArrowLeft")
-            }
+            UiIconKey::ScenesNavigateDancers => ui_icon_spec("groups", "AccountGroup"),
+            UiIconKey::SettingsNavigateBack => ui_icon_spec("arrow_back", "ArrowLeft"),
             UiIconKey::DancersAdd => ui_icon_spec("group_add", "AccountMultiplePlus"),
             UiIconKey::DancersRemove => ui_icon_spec("group_remove", "AccountMultipleMinus"),
             UiIconKey::NumberPickerDecrement => ui_icon_spec("remove", "Minus"),
@@ -30630,10 +30620,7 @@ fn material_icon_spec(property_name: &'static str, asset_name: &'static str) -> 
     }
 }
 
-fn ui_icon_spec(
-    token: &'static str,
-    slint_name: &'static str,
-) -> UiIconSpec {
+fn ui_icon_spec(token: &'static str, slint_name: &'static str) -> UiIconSpec {
     UiIconSpec {
         token,
         slint_name,

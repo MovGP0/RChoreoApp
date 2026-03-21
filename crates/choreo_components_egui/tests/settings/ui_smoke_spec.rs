@@ -18,8 +18,8 @@ use crate::settings::ui::navigate_back_icon_name;
 use crate::settings::ui::navigate_back_icon_svg;
 use crate::settings::ui::parse_argb_hex;
 use crate::settings::ui::selected_theme_mode_dropdown_index;
-use crate::settings::ui::theme_mode_dropdown_labels;
 use crate::settings::ui::shows_audio_backend_card;
+use crate::settings::ui::theme_mode_dropdown_labels;
 use crate::settings::ui::visible_settings_card_headers;
 use choreo_components_egui::material::styling::material_style_metrics::material_style_metrics;
 

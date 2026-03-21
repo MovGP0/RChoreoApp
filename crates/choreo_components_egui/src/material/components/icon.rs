@@ -120,7 +120,9 @@ fn cached_svg_icon_from_image(ctx: &Context, image: &Image<'_>) -> Option<Arc<Pa
 }
 
 fn cached_svg_icon(uri: &str, bytes: &[u8]) -> Option<Arc<ParsedSvgIcon>> {
-    let mut cache = svg_icon_cache().lock().unwrap_or_else(|poison| poison.into_inner());
+    let mut cache = svg_icon_cache()
+        .lock()
+        .unwrap_or_else(|poison| poison.into_inner());
     if let Some(parsed_icon) = cache.get(uri) {
         return parsed_icon.clone();
     }
@@ -155,9 +157,7 @@ fn parse_svg_icon(bytes: &[u8]) -> Option<ParsedSvgIcon> {
         .tessellate_path(
             path.as_slice(),
             &FillOptions::default(),
-            &mut BuffersBuilder::new(&mut geometry, |vertex: FillVertex<'_>| {
-                vertex.position()
-            }),
+            &mut BuffersBuilder::new(&mut geometry, |vertex: FillVertex<'_>| vertex.position()),
         )
         .ok()?;
 
@@ -321,10 +321,10 @@ mod tests {
     fn svg_icon_cache_reuses_parsed_geometry_for_same_uri() {
         let svg = icons::icon(UiIconKey::SettingsNavigateBack).svg;
 
-        let first = cached_svg_icon("bytes://tests/arrow_left.svg", svg.as_bytes())
-            .expect("first parse");
-        let second = cached_svg_icon("bytes://tests/arrow_left.svg", svg.as_bytes())
-            .expect("cached parse");
+        let first =
+            cached_svg_icon("bytes://tests/arrow_left.svg", svg.as_bytes()).expect("first parse");
+        let second =
+            cached_svg_icon("bytes://tests/arrow_left.svg", svg.as_bytes()).expect("cached parse");
 
         assert!(Arc::ptr_eq(&first, &second));
     }

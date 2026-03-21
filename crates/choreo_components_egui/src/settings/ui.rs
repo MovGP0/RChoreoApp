@@ -443,9 +443,7 @@ fn draw_settings_card(ui: &mut Ui, add_contents: impl FnOnce(&mut Ui)) {
 
 fn draw_card_header(ui: &mut Ui, title: &str) {
     let palette = material_palette_for_visuals(ui.visuals());
-    ui.label(
-        typography::rich_text_for_role(title, section_label_role()).color(palette.on_surface),
-    );
+    ui.label(typography::rich_text_for_role(title, section_label_role()).color(palette.on_surface));
 }
 
 fn draw_toggle_switch_row<F>(

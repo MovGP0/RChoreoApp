@@ -10,8 +10,8 @@ use egui::UiBuilder;
 use egui::Vec2;
 use egui::vec2;
 
-use crate::material::components::icon::centered_icon_rect;
 use crate::material::components::icon::MaterialIconStyle;
+use crate::material::components::icon::centered_icon_rect;
 use crate::material::components::icon::paint_icon;
 use crate::material::components::icon::show_icon_with_style;
 use crate::material::components::list::AvatarStyle;
@@ -193,44 +193,46 @@ impl<'a> BaseButton<'a> {
                 egui::Layout::left_to_right(egui::Align::Center)
                     .with_main_align(egui::Align::Center),
                 |ui| {
-                ui.spacing_mut().item_spacing.x = self.spacing;
-                if self.has_avatar() || self.has_icon() {
-                    ui.with_layout(
-                        egui::Layout::top_down(egui::Align::Center)
-                            .with_main_align(egui::Align::Center),
-                        |ui| {
-                        if let Some(avatar_icon) = self.avatar_icon {
-                            let avatar_style = AvatarStyle {
-                                background: self.avatar_background.unwrap_or(Color32::TRANSPARENT),
-                                size: vec2(
-                                    self.avatar_size.unwrap_or(self.icon_size),
-                                    self.avatar_size.unwrap_or(self.icon_size),
-                                ),
-                            };
-                            let _ = avatar(ui, Some(avatar_icon), avatar_style);
-                        }
-                        if let Some(icon) = self.icon {
-                            let _ = show_icon_with_style(
-                                ui,
-                                &icon,
-                                MaterialIconStyle {
-                                    size: vec2(self.icon_size, self.icon_size),
-                                    tint: self.icon_color.unwrap_or(content_color),
-                                },
-                            );
-                        }
-                    },
-                    );
-                }
-                if !self.text.is_empty() {
-                    let _ = material_text(ui, self.text)
-                        .text_style(MATERIAL_TYPOGRAPHY.label_large)
-                        .color(content_color)
-                        .overflow(MaterialTextOverflow::Clip)
-                        .show(ui);
-                }
-                add_children(ui)
-            },
+                    ui.spacing_mut().item_spacing.x = self.spacing;
+                    if self.has_avatar() || self.has_icon() {
+                        ui.with_layout(
+                            egui::Layout::top_down(egui::Align::Center)
+                                .with_main_align(egui::Align::Center),
+                            |ui| {
+                                if let Some(avatar_icon) = self.avatar_icon {
+                                    let avatar_style = AvatarStyle {
+                                        background: self
+                                            .avatar_background
+                                            .unwrap_or(Color32::TRANSPARENT),
+                                        size: vec2(
+                                            self.avatar_size.unwrap_or(self.icon_size),
+                                            self.avatar_size.unwrap_or(self.icon_size),
+                                        ),
+                                    };
+                                    let _ = avatar(ui, Some(avatar_icon), avatar_style);
+                                }
+                                if let Some(icon) = self.icon {
+                                    let _ = show_icon_with_style(
+                                        ui,
+                                        &icon,
+                                        MaterialIconStyle {
+                                            size: vec2(self.icon_size, self.icon_size),
+                                            tint: self.icon_color.unwrap_or(content_color),
+                                        },
+                                    );
+                                }
+                            },
+                        );
+                    }
+                    if !self.text.is_empty() {
+                        let _ = material_text(ui, self.text)
+                            .text_style(MATERIAL_TYPOGRAPHY.label_large)
+                            .color(content_color)
+                            .overflow(MaterialTextOverflow::Clip)
+                            .show(ui);
+                    }
+                    add_children(ui)
+                },
             )
             .inner
         })

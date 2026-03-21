@@ -8,8 +8,8 @@ use crate::audio_player::reducer::AudioPlayerEffect;
 use crate::choreography_settings::actions::ChoreographySettingsAction;
 use crate::choreography_settings::actions::UpdateSelectedSceneAction;
 use crate::choreography_settings::state::SelectedSceneState;
-use crate::dancers::state as dancers_state;
 use crate::dancers::actions::DancersAction;
+use crate::dancers::state as dancers_state;
 use crate::floor::state::FloorPosition;
 use crate::floor::state::SceneRenderPosition;
 use crate::settings::actions::SettingsAction;
@@ -67,7 +67,10 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
         }
         ChoreoMainAction::NavigateToDancers => {
             sync_dancers_projection(state);
-            crate::dancers::reducer::reduce(&mut state.dancers_state, DancersAction::LoadFromGlobal);
+            crate::dancers::reducer::reduce(
+                &mut state.dancers_state,
+                DancersAction::LoadFromGlobal,
+            );
             state.content = MainContent::Dancers;
         }
         ChoreoMainAction::ShowDialog { content } => {
@@ -439,13 +442,19 @@ fn sync_dancers_projection(state: &mut ChoreoMainState) {
                 .find(|scene| scene.scene_id == selected.scene_id)
         });
     let selected_positions = selected_scene
-        .map(|scene| map_selected_positions_from_scene(scene, &state.floor_state.selected_positions))
+        .map(|scene| {
+            map_selected_positions_from_scene(scene, &state.floor_state.selected_positions)
+        })
         .unwrap_or_default();
 
     state.dancers_state.global = dancers_state::DancersGlobalState {
         roles: choreography.roles.iter().map(map_role_state).collect(),
         dancers: choreography.dancers.iter().map(map_dancer_state).collect(),
-        scenes: choreography.scenes.iter().map(map_dancers_scene_state).collect(),
+        scenes: choreography
+            .scenes
+            .iter()
+            .map(map_dancers_scene_state)
+            .collect(),
         scene_views: choreography
             .scenes
             .iter()
