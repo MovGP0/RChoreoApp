@@ -112,6 +112,11 @@ adb install -r target/android/aarch64-linux-android/debug/apk/rchoreo_android.ap
 
 3. Launch it from the emulator’s app list.
 
+Launch via script
+```sh
+rust-script .\scripts\run_android_egui.rs -- --logcat
+```
+
 ## iOS
 
 Slint supports iOS via the Winit backend and Skia renderer, and requires macOS + Xcode/Xcodegen.

@@ -44,7 +44,18 @@ fn detect_system_theme_mode_uncached() -> Option<ThemeMode> {
         None
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(target_os = "android")]
+    {
+        match dark_light::detect() {
+            dark_light::Mode::Dark => Some(ThemeMode::Dark),
+            dark_light::Mode::Light => Some(ThemeMode::Light),
+            dark_light::Mode::Unspecified => None,
+            #[allow(unreachable_patterns)]
+            _ => None,
+        }
+    }
+
+    #[cfg(all(not(target_arch = "wasm32"), not(target_os = "android")))]
     {
         match dark_light::detect().ok()? {
             dark_light::Mode::Dark => Some(ThemeMode::Dark),

@@ -1255,12 +1255,15 @@ dependencies = [
  "egui",
  "egui-material3",
  "egui_extras",
+ "jni 0.22.1",
  "log",
  "lyon_extra",
  "lyon_path",
  "lyon_tessellation",
  "material-color-utilities",
+ "ndk-context",
  "nject",
+ "objc",
  "opentelemetry",
  "rodio",
  "rspec",
@@ -1277,8 +1280,6 @@ name = "choreo_i18n"
 version = "0.1.0"
 dependencies = [
  "once_cell",
- "slint",
- "slint-build",
  "sys-locale",
  "toml",
 ]

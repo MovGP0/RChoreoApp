@@ -20,7 +20,11 @@ impl HapticFeedback for NoopHapticFeedback {
 #[cfg(target_os = "android")]
 mod android {
     use jni::JavaVM;
-    use jni::objects::{GlobalRef, JObject, JValue};
+    use jni::objects::{
+        Global,
+        JObject,
+        JValue
+    };
     use jni::sys::jobject;
     use ndk_context::android_context;
 
@@ -28,22 +32,20 @@ mod android {
 
     pub struct AndroidHapticFeedback {
         vm: JavaVM,
-        context: GlobalRef,
+        context: Global<JObject<'static>>,
     }
 
     impl AndroidHapticFeedback {
         pub fn new() -> Self {
             let context = android_context();
-            let vm =
-                unsafe { JavaVM::from_raw(context.vm()) }.expect("Failed to attach to Android JVM");
-            let env = vm
-                .attach_current_thread()
-                .expect("Failed to attach Android thread");
-            let context_obj = unsafe { JObject::from_raw(context.context() as jobject) };
-            let global_context = env
-                .new_global_ref(context_obj)
+            let vm = unsafe { JavaVM::from_raw(context.vm() as *mut jni::sys::JavaVM) };
+            let global_context = vm
+                .attach_current_thread(|env| {
+                    let context_object =
+                        unsafe { JObject::from_raw(env, context.context() as jobject) };
+                    env.new_global_ref(context_object)
+                })
                 .expect("Failed to create global Android context ref");
-            std::mem::forget(context_obj);
 
             Self {
                 vm,
@@ -53,55 +55,69 @@ mod android {
 
         fn with_env<R>(
             &self,
-            action: impl FnOnce(&jni::JNIEnv, JObject) -> Option<R>,
+            action: impl FnOnce(&mut jni::Env<'_>, &JObject<'static>) -> jni::errors::Result<R>,
         ) -> Option<R> {
-            let env = self.vm.attach_current_thread().ok()?;
-            action(&env, self.context.as_obj())
+            self.vm
+                .attach_current_thread(|env| action(env, self.context.as_obj()))
+                .ok()
         }
 
         fn with_vibrator<R>(
             &self,
-            action: impl FnOnce(&jni::JNIEnv, JObject) -> Option<R>,
+            action: impl FnOnce(&mut jni::Env<'_>, JObject<'_>) -> jni::errors::Result<R>,
         ) -> Option<R> {
             self.with_env(|env, context| {
-                let service_name = env.new_string("vibrator").ok()?;
+                let service_name = env.new_string("vibrator")?;
                 let vibrator = env
                     .call_method(
                         context,
-                        "getSystemService",
-                        "(Ljava/lang/String;)Ljava/lang/Object;",
+                        jni::jni_str!("getSystemService"),
+                        jni::jni_sig!("(Ljava/lang/String;)Ljava/lang/Object;"),
                         &[JValue::Object(&service_name)],
                     )
-                    .ok()?
-                    .l()
-                    .ok()?;
+                    ?
+                    .l()?;
                 action(env, vibrator)
             })
+        }
+    }
+
+    impl Default for AndroidHapticFeedback {
+        fn default() -> Self {
+            Self::new()
         }
     }
 
     impl HapticFeedback for AndroidHapticFeedback {
         fn is_supported(&self) -> bool {
             self.with_vibrator(|env, vibrator| {
-                env.call_method(vibrator, "hasVibrator", "()Z", &[])
-                    .ok()?
-                    .z()
-                    .ok()
+                env.call_method(
+                    vibrator,
+                    jni::jni_str!("hasVibrator"),
+                    jni::jni_sig!("()Z"),
+                    &[],
+                )?
+                .z()
             })
             .unwrap_or(false)
         }
 
         fn perform_click(&self) {
             let _ = self.with_vibrator(|env, vibrator| {
-                let _ = env.call_method(vibrator, "vibrate", "(J)V", &[JValue::Long(10)]);
-                Some(())
+                let _ = env.call_method(
+                    vibrator,
+                    jni::jni_str!("vibrate"),
+                    jni::jni_sig!("(J)V"),
+                    &[JValue::Long(10)],
+                );
+                Ok(())
             });
         }
     }
 }
 
 #[cfg(target_os = "android")]
-pub use android::AndroidHapticFeedback;
+use android::AndroidHapticFeedback;
 
 #[cfg(target_os = "ios")]
 mod ios {
