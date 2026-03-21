@@ -8,16 +8,20 @@ use crate::audio_player::reducer::AudioPlayerEffect;
 use crate::choreography_settings::actions::ChoreographySettingsAction;
 use crate::choreography_settings::actions::UpdateSelectedSceneAction;
 use crate::choreography_settings::state::SelectedSceneState;
+use crate::dancers::state as dancers_state;
 use crate::dancers::actions::DancersAction;
 use crate::floor::state::FloorPosition;
 use crate::floor::state::SceneRenderPosition;
 use crate::settings::actions::SettingsAction;
 use choreo_master_mobile_json::Color;
+use choreo_master_mobile_json::DancerId;
 use choreo_master_mobile_json::SceneId;
 use choreo_models::DancerModel;
 use choreo_models::PositionModel;
+use choreo_models::RoleModel;
 use choreo_models::SceneModel;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
     match action {
@@ -62,6 +66,8 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             state.content = MainContent::Main;
         }
         ChoreoMainAction::NavigateToDancers => {
+            sync_dancers_projection(state);
+            crate::dancers::reducer::reduce(&mut state.dancers_state, DancersAction::LoadFromGlobal);
             state.content = MainContent::Dancers;
         }
         ChoreoMainAction::ShowDialog { content } => {
@@ -218,7 +224,11 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
                 state.content = MainContent::Main;
                 return;
             }
+            let should_sync_choreography = matches!(&action, DancersAction::SaveToGlobal);
             crate::dancers::reducer::reduce(&mut state.dancers_state, action);
+            if should_sync_choreography {
+                sync_main_state_from_dancers(state);
+            }
         }
         ChoreoMainAction::ClearOutgoingCommands => {
             state.outgoing_open_choreo_requests.clear();
@@ -416,6 +426,98 @@ fn sync_main_state_from_choreography_settings(state: &mut ChoreoMainState) {
     }
 }
 
+fn sync_dancers_projection(state: &mut ChoreoMainState) {
+    let choreography = &state.choreography_settings_state.choreography;
+    let selected_scene = state
+        .choreography_settings_state
+        .selected_scene
+        .as_ref()
+        .and_then(|selected| {
+            choreography
+                .scenes
+                .iter()
+                .find(|scene| scene.scene_id == selected.scene_id)
+        });
+    let selected_positions = selected_scene
+        .map(|scene| map_selected_positions_from_scene(scene, &state.floor_state.selected_positions))
+        .unwrap_or_default();
+
+    state.dancers_state.global = dancers_state::DancersGlobalState {
+        roles: choreography.roles.iter().map(map_role_state).collect(),
+        dancers: choreography.dancers.iter().map(map_dancer_state).collect(),
+        scenes: choreography.scenes.iter().map(map_dancers_scene_state).collect(),
+        scene_views: choreography
+            .scenes
+            .iter()
+            .map(map_dancers_scene_view_state)
+            .collect(),
+        selected_scene: selected_scene.map(map_dancers_scene_view_state),
+        selected_positions: selected_positions.clone(),
+        selected_positions_snapshot: selected_positions,
+    };
+}
+
+fn sync_main_state_from_dancers(state: &mut ChoreoMainState) {
+    let roles = state
+        .dancers_state
+        .roles
+        .iter()
+        .map(|role| {
+            Rc::new(RoleModel {
+                z_index: role.z_index,
+                name: role.name.clone(),
+                color: role.color.clone(),
+            })
+        })
+        .collect::<Vec<_>>();
+    let role_lookup = roles
+        .iter()
+        .map(|role| (role.name.to_ascii_lowercase(), role.clone()))
+        .collect::<HashMap<_, _>>();
+    let dancers = state
+        .dancers_state
+        .dancers
+        .iter()
+        .map(|dancer| {
+            let role = role_lookup
+                .get(&dancer.role.name.to_ascii_lowercase())
+                .cloned()
+                .or_else(|| roles.first().cloned())
+                .unwrap_or_else(|| {
+                    Rc::new(RoleModel {
+                        z_index: dancer.role.z_index,
+                        name: dancer.role.name.clone(),
+                        color: dancer.role.color.clone(),
+                    })
+                });
+
+            Rc::new(DancerModel {
+                dancer_id: DancerId(dancer.dancer_id),
+                role,
+                name: dancer.name.clone(),
+                shortcut: dancer.shortcut.clone(),
+                color: dancer.color.clone(),
+                icon: dancer.icon.clone(),
+            })
+        })
+        .collect::<Vec<_>>();
+    let dancer_lookup = dancers
+        .iter()
+        .map(|dancer| (dancer.dancer_id.0, dancer.clone()))
+        .collect::<HashMap<_, _>>();
+    let choreography = &mut state.choreography_settings_state.choreography;
+
+    choreography.roles = roles;
+    choreography.dancers = dancers;
+
+    for scene in &mut choreography.scenes {
+        update_scene_model_dancers(scene, &dancer_lookup);
+    }
+
+    sync_main_state_from_choreography_settings(state);
+    sync_dancers_projection(state);
+}
+
 fn refresh_floor_projection(state: &mut ChoreoMainState) {
     let choreography = &state.choreography_settings_state.choreography;
     state.floor_state.floor_front = state.choreography_settings_state.floor_front;
@@ -508,6 +610,90 @@ fn adjacent_scenes_for_audio_or_selected(
         scenes.get(index),
         scenes.get(index + 1),
     )
+}
+
+fn map_role_state(role: &Rc<RoleModel>) -> dancers_state::RoleState {
+    dancers_state::RoleState {
+        name: role.name.clone(),
+        color: role.color.clone(),
+        z_index: role.z_index,
+    }
+}
+
+fn map_dancer_state(dancer: &Rc<DancerModel>) -> dancers_state::DancerState {
+    dancers_state::DancerState {
+        dancer_id: dancer.dancer_id.0,
+        role: map_role_state(&dancer.role),
+        name: dancer.name.clone(),
+        shortcut: dancer.shortcut.clone(),
+        color: dancer.color.clone(),
+        icon: dancer.icon.clone(),
+    }
+}
+
+fn map_dancers_scene_state(scene: &SceneModel) -> dancers_state::SceneState {
+    dancers_state::SceneState {
+        positions: scene.positions.iter().map(map_position_state).collect(),
+        variations: scene
+            .variations
+            .iter()
+            .map(|variation| variation.iter().map(map_dancers_scene_state).collect())
+            .collect(),
+        current_variation: scene
+            .current_variation
+            .iter()
+            .map(map_dancers_scene_state)
+            .collect(),
+    }
+}
+
+fn map_dancers_scene_view_state(scene: &SceneModel) -> dancers_state::SceneViewState {
+    dancers_state::SceneViewState {
+        positions: scene.positions.iter().map(map_position_state).collect(),
+    }
+}
+
+fn map_position_state(position: &PositionModel) -> dancers_state::PositionState {
+    dancers_state::PositionState {
+        dancer_id: position.dancer.as_ref().map(|dancer| dancer.dancer_id.0),
+        dancer_name: position.dancer.as_ref().map(|dancer| dancer.name.clone()),
+    }
+}
+
+fn map_selected_positions_from_scene(
+    scene: &SceneModel,
+    selected_indexes: &[usize],
+) -> Vec<dancers_state::PositionState> {
+    selected_indexes
+        .iter()
+        .filter_map(|index| scene.positions.get(*index))
+        .map(map_position_state)
+        .collect()
+}
+
+fn update_scene_model_dancers(scene: &mut SceneModel, dancers: &HashMap<i32, Rc<DancerModel>>) {
+    scene.positions.retain_mut(|position| {
+        let Some(dancer_id) = position.dancer.as_ref().map(|dancer| dancer.dancer_id.0) else {
+            return true;
+        };
+
+        if let Some(updated_dancer) = dancers.get(&dancer_id) {
+            position.dancer = Some(updated_dancer.clone());
+            true
+        } else {
+            false
+        }
+    });
+
+    for variation in &mut scene.variations {
+        for variation_scene in variation {
+            update_scene_model_dancers(variation_scene, dancers);
+        }
+    }
+
+    for variation_scene in &mut scene.current_variation {
+        update_scene_model_dancers(variation_scene, dancers);
+    }
 }
 
 fn map_scene_render_positions(scene: &SceneModel, transparency: f64) -> Vec<SceneRenderPosition> {

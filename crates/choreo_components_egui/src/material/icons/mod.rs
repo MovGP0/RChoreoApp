@@ -30552,43 +30552,37 @@ impl UiIconRegistry {
     #[must_use]
     pub fn icon(self, key: UiIconKey) -> UiIconSpec {
         match key {
-            UiIconKey::FloorResetViewport => ui_icon_spec("home", "Home", "Home"),
-            UiIconKey::FloorOpenSvgOverlay => ui_icon_spec("image", "Svg", "Svg"),
-            UiIconKey::NavOpen => ui_icon_spec("menu", "Menu", "Menu"),
-            UiIconKey::NavClose => ui_icon_spec("close", "Close", "Close"),
-            UiIconKey::NavSettings => ui_icon_spec("edit", "Pen", "Pen"),
-            UiIconKey::AudioOpenPanel => ui_icon_spec("play_circle", "PlayCircle", "PlayCircle"),
-            UiIconKey::AudioPlay => ui_icon_spec("play_arrow", "Play", "Play"),
-            UiIconKey::AudioPause => ui_icon_spec("pause", "Pause", "Pause"),
-            UiIconKey::AudioLink => ui_icon_spec("link", "Link", "Link"),
+            UiIconKey::FloorResetViewport => ui_icon_spec("home", "Home"),
+            UiIconKey::FloorOpenSvgOverlay => ui_icon_spec("image", "Svg"),
+            UiIconKey::NavOpen => ui_icon_spec("menu", "Menu"),
+            UiIconKey::NavClose => ui_icon_spec("close", "Close"),
+            UiIconKey::NavSettings => ui_icon_spec("edit", "Pen"),
+            UiIconKey::AudioOpenPanel => ui_icon_spec("play_circle", "PlayCircle"),
+            UiIconKey::AudioPlay => ui_icon_spec("play_arrow", "Play"),
+            UiIconKey::AudioPause => ui_icon_spec("pause", "Pause"),
+            UiIconKey::AudioLink => ui_icon_spec("link", "Link"),
             UiIconKey::ScenesAddBefore => {
-                ui_icon_spec("add_row_above", "TableRowPlusBefore", "TableRowPlusBefore")
+                ui_icon_spec("add_row_above", "TableRowPlusBefore")
             }
             UiIconKey::ScenesAddAfter => {
-                ui_icon_spec("add_row_below", "TableRowPlusAfter", "TableRowPlusAfter")
+                ui_icon_spec("add_row_below", "TableRowPlusAfter")
             }
-            UiIconKey::ScenesDelete => ui_icon_spec("delete", "Delete", "Delete"),
+            UiIconKey::ScenesDelete => ui_icon_spec("delete", "Delete"),
             UiIconKey::ScenesOpenChoreography => {
-                ui_icon_spec("folder_open", "FolderOpen", "FolderOpen")
+                ui_icon_spec("folder_open", "FolderOpen")
             }
-            UiIconKey::ScenesSaveChoreography => ui_icon_spec("save", "ContentSave", "ContentSave"),
-            UiIconKey::ScenesNavigateSettings => ui_icon_spec("settings", "Cog", "Cog"),
+            UiIconKey::ScenesSaveChoreography => ui_icon_spec("save", "ContentSave"),
+            UiIconKey::ScenesNavigateSettings => ui_icon_spec("settings", "Cog"),
             UiIconKey::ScenesNavigateDancers => {
-                ui_icon_spec("groups", "AccountGroup", "AccountGroup")
+                ui_icon_spec("groups", "AccountGroup")
             }
             UiIconKey::SettingsNavigateBack => {
-                ui_icon_spec("arrow_back", "ArrowLeft", "ArrowLeftThick")
+                ui_icon_spec("arrow_back", "ArrowLeft")
             }
-            UiIconKey::DancersAdd => {
-                ui_icon_spec("group_add", "AccountMultiplePlus", "AccountMultiplePlus")
-            }
-            UiIconKey::DancersRemove => ui_icon_spec(
-                "group_remove",
-                "AccountMultipleRemove",
-                "AccountMultipleRemove",
-            ),
-            UiIconKey::NumberPickerDecrement => ui_icon_spec("remove", "Minus", "Minus"),
-            UiIconKey::NumberPickerIncrement => ui_icon_spec("add", "Plus", "Plus"),
+            UiIconKey::DancersAdd => ui_icon_spec("group_add", "AccountMultiplePlus"),
+            UiIconKey::DancersRemove => ui_icon_spec("group_remove", "AccountMultipleMinus"),
+            UiIconKey::NumberPickerDecrement => ui_icon_spec("remove", "Minus"),
+            UiIconKey::NumberPickerIncrement => ui_icon_spec("add", "Plus"),
         }
     }
 
@@ -30613,6 +30607,7 @@ impl UiIconRegistry {
             "AccountGroup" => UiIconKey::ScenesNavigateDancers,
             "ArrowLeft" => UiIconKey::SettingsNavigateBack,
             "AccountMultiplePlus" => UiIconKey::DancersAdd,
+            "AccountMultipleMinus" => UiIconKey::DancersRemove,
             "AccountMultipleRemove" => UiIconKey::DancersRemove,
             "Minus" => UiIconKey::NumberPickerDecrement,
             "Plus" => UiIconKey::NumberPickerIncrement,
@@ -30638,12 +30633,11 @@ fn material_icon_spec(property_name: &'static str, asset_name: &'static str) -> 
 fn ui_icon_spec(
     token: &'static str,
     slint_name: &'static str,
-    asset_name: &'static str,
 ) -> UiIconSpec {
     UiIconSpec {
         token,
         slint_name,
-        svg: must_asset_icon_data(asset_name).svg,
+        svg: must_asset_icon_data(slint_name).svg,
     }
 }
 
@@ -30774,7 +30768,7 @@ mod tests {
                 UiIconKey::SettingsNavigateBack,
                 "arrow_back",
                 "ArrowLeft",
-                "ArrowLeftThick",
+                "ArrowLeft",
             ),
             (
                 UiIconKey::DancersAdd,
@@ -30785,8 +30779,8 @@ mod tests {
             (
                 UiIconKey::DancersRemove,
                 "group_remove",
-                "AccountMultipleRemove",
-                "AccountMultipleRemove",
+                "AccountMultipleMinus",
+                "AccountMultipleMinus",
             ),
             (UiIconKey::NumberPickerDecrement, "remove", "Minus", "Minus"),
             (UiIconKey::NumberPickerIncrement, "add", "Plus", "Plus"),

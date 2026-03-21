@@ -1,5 +1,6 @@
 use crate::dancers;
 use crate::dancers::Report;
+use choreo_components_egui::material::icons::UiIconKey;
 use choreo_components_egui::material::styling::material_typography::TypographyRole;
 
 #[test]
@@ -47,6 +48,24 @@ fn dancers_pane_view_ui_spec() {
                 dancers::dancers_pane_view::ui::title_role(),
                 TypographyRole::TitleMedium
             );
+        });
+
+        spec.it("uses plus for add and minus for remove button icons", |_| {
+            assert_eq!(
+                dancers::dancers_pane_view::ui::add_button_icon_key(),
+                UiIconKey::DancersAdd
+            );
+            assert_eq!(
+                dancers::dancers_pane_view::ui::remove_button_icon_key(),
+                UiIconKey::DancersRemove
+            );
+        });
+
+        spec.it("reserves footer space so the add and delete buttons stay visible", |_| {
+            assert_eq!(dancers::dancers_pane_view::ui::pane_button_row_height_token(), 48.0);
+
+            let list_height = dancers::dancers_pane_view::ui::pane_list_height(360.0);
+            assert_eq!(list_height, 300.0);
         });
 
         spec.it("maps pane select action to dancers select action", |_| {

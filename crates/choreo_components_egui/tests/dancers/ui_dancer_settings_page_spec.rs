@@ -45,6 +45,30 @@ fn icon_options_are_loaded_from_i18n_catalog() {
 }
 
 #[test]
+fn dropdown_helpers_follow_shared_material_dropdown_contract() {
+    let state = sample_state();
+
+    assert_eq!(crate::dancers::ui::dropdown_height_token(), 60.0);
+    assert_eq!(
+        crate::dancers::ui::role_option_labels(&state),
+        vec!["Leader".to_string(), "Follower".to_string()]
+    );
+    assert_eq!(
+        crate::dancers::ui::dancer_option_labels(&state),
+        vec!["Alex".to_string(), "Blake".to_string()]
+    );
+    let expected_icon_labels = state
+        .icon_options
+        .iter()
+        .map(|option| option.display_name.clone())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        crate::dancers::ui::icon_option_labels(&state),
+        expected_icon_labels
+    );
+}
+
+#[test]
 fn swap_dialog_view_model_formats_translated_message_from_selected_dancers() {
     let mut state = sample_state();
     state.is_dialog_open = true;

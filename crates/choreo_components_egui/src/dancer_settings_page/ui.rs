@@ -1,10 +1,13 @@
 use choreo_master_mobile_json::Color;
+use egui::Area;
 use egui::Align;
 use egui::Color32;
 use egui::CornerRadius;
 use egui::Frame;
+use egui::Id;
 use egui::Layout;
 use egui::Margin;
+use egui::Order;
 use egui::Rect;
 use egui::RichText;
 use egui::Sense;
@@ -30,7 +33,7 @@ use crate::drawer_host::state::DrawerHostOpenMode;
 use crate::drawer_host::state::DrawerHostState;
 use crate::drawer_host::ui::draw_with_slots_in_rect;
 use crate::i18n::t;
-use crate::material::components::MaterialScrollArea;
+use crate::material::components;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
@@ -73,6 +76,11 @@ pub const fn content_outer_margin_token() -> f32 {
 #[must_use]
 pub const fn footer_height_token() -> f32 {
     FOOTER_HEIGHT_PX
+}
+
+#[must_use]
+pub const fn dropdown_height_token() -> f32 {
+    60.0
 }
 
 #[must_use]
@@ -138,19 +146,23 @@ pub fn draw(ui: &mut Ui, state: &DancersState) -> Vec<DancersAction> {
             dialog_content: state.dialog_content.as_deref().unwrap_or_default(),
         },
         |ui| {
-            let page_rect = ui.available_rect_before_wrap();
-            let top_bar_rect = Rect::from_min_size(
-                page_rect.min,
-                vec2(page_rect.width(), top_bar_height_token()),
-            );
-            let content_rect =
-                Rect::from_min_max(pos2(page_rect.left(), top_bar_rect.bottom()), page_rect.max);
+            let page_rect = shell_rect(ui);
+            let top_bar_rect = top_bar_rect(page_rect);
 
-            let _ = ui.scope_builder(UiBuilder::new().max_rect(top_bar_rect), |ui| {
-                draw_top_bar(ui, state, &mut page_actions, locale);
-            });
-            let _ = ui.scope_builder(UiBuilder::new().max_rect(content_rect), |ui| {
-                draw_main_content(ui, content_rect, state, &mut page_actions, locale);
+            Area::new(Id::new("dancer_settings_page_top_bar"))
+                .order(Order::Foreground)
+                .fixed_pos(top_bar_rect.min)
+                .show(ui.ctx(), |ui| {
+                    let local_rect = Rect::from_min_size(egui::Pos2::ZERO, top_bar_rect.size());
+                    ui.painter()
+                        .rect_filled(local_rect, 0.0, ui.visuals().panel_fill);
+                    let _ = ui.scope_builder(UiBuilder::new().max_rect(local_rect), |ui| {
+                        draw_top_bar(ui, state, &mut page_actions, locale);
+                    });
+                });
+
+            let _ = ui.scope_builder(UiBuilder::new().max_rect(page_rect), |ui| {
+                draw_main_content(ui, page_rect, state, &mut page_actions, locale);
             });
             let _ = ui.allocate_rect(page_rect, Sense::hover());
         },
@@ -168,6 +180,46 @@ pub fn draw(ui: &mut Ui, state: &DancersState) -> Vec<DancersAction> {
     }
 
     page_actions
+}
+
+#[must_use]
+pub fn role_option_labels(state: &DancersState) -> Vec<String> {
+    state.roles.iter().map(|role| role.name.clone()).collect()
+}
+
+#[must_use]
+pub fn dancer_option_labels(state: &DancersState) -> Vec<String> {
+    state.dancers
+        .iter()
+        .map(|dancer| dancer.name.clone())
+        .collect()
+}
+
+#[must_use]
+pub fn icon_option_labels(state: &DancersState) -> Vec<String> {
+    state
+        .icon_options
+        .iter()
+        .map(|option| option.display_name.clone())
+        .collect()
+}
+
+#[must_use]
+pub fn shell_rect(ui: &Ui) -> Rect {
+    ui.max_rect()
+}
+
+#[must_use]
+pub fn top_bar_rect(page_rect: Rect) -> Rect {
+    Rect::from_min_size(page_rect.min, vec2(page_rect.width(), top_bar_height_token()))
+}
+
+#[must_use]
+pub fn main_content_rect(page_rect: Rect) -> Rect {
+    Rect::from_min_max(
+        pos2(page_rect.left(), top_bar_rect(page_rect).bottom()),
+        page_rect.right_bottom(),
+    )
 }
 
 fn draw_dialog_panel(ui: &mut Ui, state: &DancersState, locale: &str) -> Option<SwapDialogAction> {
@@ -227,7 +279,7 @@ pub fn drawer_host_state(
         left_drawer_width: LIST_DRAWER_WIDTH_PX,
         responsive_breakpoint: 900.0,
         open_mode: DrawerHostOpenMode::Modal,
-        top_inset: 0.0,
+        top_inset: top_bar_height_token(),
         inline_left: false,
         is_left_open: state.is_dancer_list_open,
         is_right_open: false,
@@ -245,29 +297,133 @@ pub fn drawer_host_state(
 
 fn draw_top_bar(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersAction>, locale: &str) {
     let title = t(locale, "DancersTitle");
-    Frame::new()
-        .fill(ui.visuals().faint_bg_color)
-        .stroke(Stroke::new(
-            material_style_metrics().strokes.outline,
-            ui.visuals().widgets.noninteractive.bg_stroke.color,
-        ))
-        .inner_margin(Margin::same(content_spacing_token() as i8))
-        .show(ui, |ui| {
-            ui.set_min_height(TOP_BAR_HEIGHT_PX);
-            ui.horizontal(|ui| {
-                let response = hamburger_toggle_button::draw(
-                    ui,
-                    state.is_dancer_list_open,
-                    true,
-                    &title,
-                    Some(vec2(48.0, 48.0)),
-                );
-                if response.clicked() {
-                    actions.push(DancersAction::ToggleDancerList);
-                }
-                ui.label(typography::rich_text_for_role(title, top_bar_title_role()));
+    ui.set_min_height(TOP_BAR_HEIGHT_PX);
+    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+        ui.add_space(content_spacing_token());
+        let response = hamburger_toggle_button::draw(
+            ui,
+            state.is_dancer_list_open,
+            true,
+            &title,
+            Some(vec2(48.0, 48.0)),
+        );
+        if response.clicked() {
+            actions.push(DancersAction::ToggleDancerList);
+        }
+        ui.add_space(content_spacing_token());
+        ui.label(typography::rich_text_for_role(title, top_bar_title_role()));
+    });
+}
+
+#[must_use]
+pub fn content_top_inset_token() -> f32 {
+    content_outer_margin_token()
+}
+
+#[must_use]
+pub fn footer_content_padding_token() -> f32 {
+    f32::from(FOOTER_PADDING_PX)
+}
+
+#[must_use]
+pub fn footer_inner_height_token() -> f32 {
+    footer_height_token() - (footer_content_padding_token() * 2.0)
+}
+
+#[must_use]
+pub fn content_column_width(surface_rect: Rect) -> f32 {
+    let max_content_width = (surface_rect.width() - (content_outer_margin_token() * 2.0)).max(0.0);
+    content_max_width_token().min(max_content_width)
+}
+
+#[must_use]
+pub fn content_column_left(surface_rect: Rect) -> f32 {
+    surface_rect.left() + content_outer_margin_token()
+}
+
+#[must_use]
+pub fn content_column_right(surface_rect: Rect) -> f32 {
+    content_column_left(surface_rect) + content_column_width(surface_rect)
+}
+
+fn draw_footer(ui: &mut Ui, actions: &mut Vec<DancersAction>, locale: &str) {
+    ui.painter().rect_filled(ui.max_rect(), 0.0, ui.visuals().window_fill);
+    ui.set_width(ui.max_rect().width());
+    ui.set_min_height(footer_height_token());
+    ui.spacing_mut().item_spacing = vec2(
+        footer_content_padding_token(),
+        footer_content_padding_token(),
+    );
+    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+        ui.add_space(footer_content_padding_token());
+        if ui
+            .add(MaterialButton::new(t(locale, "CommonOk")))
+            .clicked()
+        {
+            actions.push(DancersAction::SaveToGlobal);
+        }
+        if ui
+            .add(MaterialButton::new(t(locale, "CommonCancel")))
+            .clicked()
+        {
+            actions.push(DancersAction::Cancel);
+        }
+        ui.add_space(footer_content_padding_token());
+    });
+}
+
+fn draw_content(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersAction>, locale: &str) {
+    let surface_rect = main_content_rect(ui.max_rect());
+    ui.painter().rect_filled(
+        surface_rect,
+        CornerRadius::ZERO,
+        ui.visuals().faint_bg_color,
+    );
+
+    let footer_rect = footer_rect(surface_rect);
+    let scroll_rect = scroll_rect(surface_rect);
+
+    let _ = ui.scope_builder(UiBuilder::new().max_rect(scroll_rect), |ui| {
+        egui::ScrollArea::vertical()
+            .id_salt("dancer_settings_page_scroll")
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                ui.set_width(scroll_rect.width());
+                draw_dancer_card(ui, state, actions, locale);
+                ui.add_space(content_spacing_token());
+                draw_swap_card(ui, state, actions, locale);
             });
-        });
+    });
+
+    let _ = ui.scope_builder(UiBuilder::new().max_rect(footer_rect), |ui| {
+        draw_footer(ui, actions, locale);
+    });
+}
+
+#[must_use]
+pub fn footer_rect(surface_rect: Rect) -> Rect {
+    Rect::from_min_max(
+        pos2(
+            surface_rect.left(),
+            surface_rect.bottom() - footer_height_token(),
+        ),
+        surface_rect.right_bottom(),
+    )
+}
+
+#[must_use]
+pub fn scroll_rect(surface_rect: Rect) -> Rect {
+    let footer_rect = footer_rect(surface_rect);
+    Rect::from_min_max(
+        pos2(
+            content_column_left(surface_rect),
+            surface_rect.top() + content_top_inset_token(),
+        ),
+        pos2(
+            content_column_right(surface_rect),
+            footer_rect.top() - content_outer_margin_token(),
+        ),
+    )
 }
 
 #[must_use]
@@ -332,72 +488,6 @@ fn draw_dancers_pane(
     actions.extend(pane_actions.into_iter().map(map_pane_action));
 }
 
-fn draw_content(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersAction>, locale: &str) {
-    let surface_rect = ui.max_rect();
-    ui.painter().rect_filled(
-        surface_rect,
-        CornerRadius::ZERO,
-        ui.visuals().faint_bg_color,
-    );
-
-    let footer_rect = Rect::from_min_max(
-        pos2(
-            surface_rect.left(),
-            surface_rect.bottom() - footer_height_token(),
-        ),
-        surface_rect.right_bottom(),
-    );
-    let scroll_rect = Rect::from_min_max(
-        pos2(
-            surface_rect.left() + content_outer_margin_token(),
-            surface_rect.top() + content_outer_margin_token(),
-        ),
-        pos2(
-            (surface_rect.left() + content_outer_margin_token() + content_max_width_token())
-                .min(surface_rect.right() - content_outer_margin_token()),
-            footer_rect.top() - content_outer_margin_token(),
-        ),
-    );
-
-    let _ = ui.scope_builder(UiBuilder::new().max_rect(scroll_rect), |ui| {
-        MaterialScrollArea::vertical()
-            .id_salt("dancer_settings_page_scroll")
-            .auto_shrink([false, false])
-            .show(ui, |ui| {
-                ui.set_width(scroll_rect.width());
-                draw_dancer_card(ui, state, actions, locale);
-                ui.add_space(content_spacing_token());
-                draw_swap_card(ui, state, actions, locale);
-            });
-    });
-
-    let _ = ui.scope_builder(UiBuilder::new().max_rect(footer_rect), |ui| {
-        Frame::new()
-            .fill(ui.visuals().window_fill)
-            .stroke(Stroke::new(
-                material_style_metrics().strokes.outline,
-                ui.visuals().widgets.noninteractive.bg_stroke.color,
-            ))
-            .inner_margin(Margin::same(FOOTER_PADDING_PX))
-            .show(ui, |ui| {
-                ui.set_min_height(footer_height_token());
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ui
-                        .add(MaterialButton::new(t(locale, "CommonOk")))
-                        .clicked()
-                    {
-                        actions.push(DancersAction::SaveToGlobal);
-                    }
-                    if ui
-                        .add(MaterialButton::new(t(locale, "CommonCancel")))
-                        .clicked()
-                    {
-                        actions.push(DancersAction::Cancel);
-                    }
-                });
-            });
-    });
-}
 
 fn draw_dancer_card(
     ui: &mut Ui,
@@ -418,21 +508,24 @@ fn draw_dancer_card(
             ui.label(t(locale, "DancerRoleLabel"));
 
             let selected_role = selected_role_index(state).unwrap_or(0);
-            let mut selected_role_mut = selected_role;
-            egui::ComboBox::from_id_salt("dancer_settings_role")
-                .selected_text(
-                    state
-                        .roles
-                        .get(selected_role_mut)
-                        .map(|role| role.name.clone())
-                        .unwrap_or_default(),
-                )
-                .show_ui(ui, |ui| {
-                    for (index, role) in state.roles.iter().enumerate() {
-                        ui.selectable_value(&mut selected_role_mut, index, role.name.as_str());
-                    }
-                });
-            if selected_role_mut != selected_role {
+            let role_labels = role_option_labels(state);
+            let role_label_refs = role_labels.iter().map(String::as_str).collect::<Vec<_>>();
+            let role_response = components::mode_dropdown(
+                ui,
+                egui::Id::new("dancer_settings_role"),
+                if state.roles.is_empty() {
+                    None
+                } else {
+                    Some(selected_role)
+                },
+                role_label_refs.as_slice(),
+                !state.roles.is_empty(),
+                ui.available_width(),
+                dropdown_height_token(),
+            );
+            if let Some(selected_role_mut) = role_response
+                && selected_role_mut != selected_role
+            {
                 actions.push(DancersAction::SelectRole {
                     index: selected_role_mut,
                 });
@@ -476,22 +569,23 @@ fn draw_dancer_card(
 
             ui.label(t(locale, "DancerIconLabel"));
             let mut selected_icon = selected_icon_index(state).unwrap_or(0);
-            let selected_icon_label = state
-                .icon_options
-                .get(selected_icon)
-                .map(|option| option.display_name.clone())
-                .unwrap_or_default();
-            egui::ComboBox::from_id_salt("dancer_settings_icon")
-                .selected_text(selected_icon_label)
-                .show_ui(ui, |ui| {
-                    for (index, option) in state.icon_options.iter().enumerate() {
-                        ui.selectable_value(
-                            &mut selected_icon,
-                            index,
-                            option.display_name.as_str(),
-                        );
-                    }
-                });
+            let icon_labels = icon_option_labels(state);
+            let icon_label_refs = icon_labels.iter().map(String::as_str).collect::<Vec<_>>();
+            if let Some(next_selected_icon) = components::mode_dropdown(
+                ui,
+                egui::Id::new("dancer_settings_icon"),
+                if state.icon_options.is_empty() {
+                    None
+                } else {
+                    Some(selected_icon)
+                },
+                icon_label_refs.as_slice(),
+                !state.icon_options.is_empty(),
+                ui.available_width(),
+                dropdown_height_token(),
+            ) {
+                selected_icon = next_selected_icon;
+            }
             if let Some(option) = state.icon_options.get(selected_icon)
                 && state
                     .selected_icon_option
@@ -550,15 +644,23 @@ fn draw_swap_card(
                         .position(|dancer| dancer.dancer_id == from.dancer_id)
                 })
                 .unwrap_or(0);
-            let mut from_index_mut = from_index;
-            egui::ComboBox::from_id_salt("dancer_settings_swap_from")
-                .selected_text(dancer_name_for_index(state, from_index_mut))
-                .show_ui(ui, |ui| {
-                    for (index, dancer) in state.dancers.iter().enumerate() {
-                        ui.selectable_value(&mut from_index_mut, index, dancer.name.as_str());
-                    }
-                });
-            if from_index_mut != from_index {
+            let dancer_labels = dancer_option_labels(state);
+            let dancer_label_refs = dancer_labels.iter().map(String::as_str).collect::<Vec<_>>();
+            if let Some(from_index_mut) = components::mode_dropdown(
+                ui,
+                egui::Id::new("dancer_settings_swap_from"),
+                if state.dancers.is_empty() {
+                    None
+                } else {
+                    Some(from_index)
+                },
+                dancer_label_refs.as_slice(),
+                !state.dancers.is_empty(),
+                ui.available_width(),
+                dropdown_height_token(),
+            )
+                && from_index_mut != from_index
+            {
                 actions.push(DancersAction::UpdateSwapFrom {
                     index: from_index_mut,
                 });
@@ -575,15 +677,21 @@ fn draw_swap_card(
                         .position(|dancer| dancer.dancer_id == to.dancer_id)
                 })
                 .unwrap_or(0);
-            let mut to_index_mut = to_index;
-            egui::ComboBox::from_id_salt("dancer_settings_swap_to")
-                .selected_text(dancer_name_for_index(state, to_index_mut))
-                .show_ui(ui, |ui| {
-                    for (index, dancer) in state.dancers.iter().enumerate() {
-                        ui.selectable_value(&mut to_index_mut, index, dancer.name.as_str());
-                    }
-                });
-            if to_index_mut != to_index {
+            if let Some(to_index_mut) = components::mode_dropdown(
+                ui,
+                egui::Id::new("dancer_settings_swap_to"),
+                if state.dancers.is_empty() {
+                    None
+                } else {
+                    Some(to_index)
+                },
+                dancer_label_refs.as_slice(),
+                !state.dancers.is_empty(),
+                ui.available_width(),
+                dropdown_height_token(),
+            )
+                && to_index_mut != to_index
+            {
                 actions.push(DancersAction::UpdateSwapTo {
                     index: to_index_mut,
                 });
@@ -664,14 +772,6 @@ fn draw_swap_dialog_dancer_row(ui: &mut Ui, dancer_name: &str, dancer_color: Col
                 .font(typography::font_id_for_role(TypographyRole::BodyMedium)),
         );
     });
-}
-
-fn dancer_name_for_index(state: &DancersState, index: usize) -> String {
-    state
-        .dancers
-        .get(index)
-        .map(|dancer| dancer.name.clone())
-        .unwrap_or_default()
 }
 
 fn swap_dialog_dancer_name(dancer: Option<&DancerState>) -> String {

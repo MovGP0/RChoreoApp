@@ -42,6 +42,14 @@ fn key_component_icon_mappings_match_expected_tokens() {
     let settings_back = icons::icon(UiIconKey::SettingsNavigateBack);
     assert_eq!(settings_back.token, "arrow_back");
     assert_eq!(settings_back.slint_name, "ArrowLeft");
+
+    let dancers_add = icons::icon(UiIconKey::DancersAdd);
+    assert_eq!(dancers_add.token, "group_add");
+    assert_eq!(dancers_add.slint_name, "AccountMultiplePlus");
+
+    let dancers_remove = icons::icon(UiIconKey::DancersRemove);
+    assert_eq!(dancers_remove.token, "group_remove");
+    assert_eq!(dancers_remove.slint_name, "AccountMultipleMinus");
 }
 
 #[test]
@@ -93,6 +101,10 @@ fn slint_name_resolver_returns_catalog_entries() {
 
     let resolved = icons::from_slint_name("AccountGroup").expect("AccountGroup should resolve");
     assert_eq!(resolved.token, "groups");
+
+    let resolved =
+        icons::from_slint_name("AccountMultipleMinus").expect("AccountMultipleMinus should resolve");
+    assert_eq!(resolved.token, "group_remove");
 
     assert!(icons::from_slint_name("DoesNotExist").is_none());
 }
