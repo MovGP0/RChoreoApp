@@ -1,6 +1,6 @@
 use choreo_master_mobile_json::Color;
-use egui::Area;
 use egui::Align;
+use egui::Area;
 use egui::Color32;
 use egui::CornerRadius;
 use egui::Frame;
@@ -18,11 +18,7 @@ use egui::pos2;
 use egui::vec2;
 use egui_material3::MaterialButton;
 
-use crate::color_picker::state::ColorPickerState;
 use crate::color_picker::ui as color_picker_ui;
-use crate::dancers::actions::DancersAction;
-use crate::dancers::state::DancerState;
-use crate::dancers::state::DancersState;
 use crate::dancers_pane_view::ui as dancers_pane_view;
 use crate::dancers_pane_view::ui::DancersPaneViewAction;
 use crate::dialog_host::ui::DialogHostProps;
@@ -38,6 +34,19 @@ use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
 use crate::nav_bar::hamburger_toggle_button;
+
+use super::action::DancerSettingsPageAction;
+use super::action::SwapDialogAction;
+use super::reducer::map_swap_dialog_action;
+use super::state::DancerSettingsPageState;
+use super::state::build_swap_dialog_view_model;
+use super::state::dancer_option_labels;
+use super::state::icon_option_labels;
+use super::state::role_option_labels;
+use super::state::selected_dancer_color_picker_state;
+use super::state::selected_dancer_index;
+use super::state::selected_icon_index;
+use super::state::selected_role_index;
 
 const TOP_BAR_HEIGHT_PX: f32 = 64.0;
 // Slint source control uses 420px for the drawer width.
@@ -88,45 +97,8 @@ pub const fn uses_scrollable_content_shell() -> bool {
     true
 }
 
-#[must_use]
-pub fn selected_dancer_color_picker_state(state: &DancersState) -> ColorPickerState {
-    let selected_color = state
-        .selected_dancer
-        .as_ref()
-        .map(|dancer| color_to_egui(&dancer.color))
-        .unwrap_or(Color32::TRANSPARENT);
-
-    color_picker_ui::state_for_color(selected_color)
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SwapDialogViewModel {
-    pub title_text: String,
-    pub first_dancer_name: String,
-    pub second_dancer_name: String,
-    pub first_dancer_color: Color32,
-    pub second_dancer_color: Color32,
-    pub message_text: String,
-    pub cancel_text: String,
-    pub confirm_text: String,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SwapDialogAction {
-    Cancel,
-    Confirm,
-}
-
-#[must_use]
-pub const fn map_swap_dialog_action(action: SwapDialogAction) -> DancersAction {
-    match action {
-        SwapDialogAction::Cancel => DancersAction::HideDialog,
-        SwapDialogAction::Confirm => DancersAction::ConfirmSwapDancers,
-    }
-}
-
-pub fn draw(ui: &mut Ui, state: &DancersState) -> Vec<DancersAction> {
-    let mut page_actions: Vec<DancersAction> = Vec::new();
+pub fn draw(ui: &mut Ui, state: &DancerSettingsPageState) -> Vec<DancerSettingsPageAction> {
+    let mut page_actions: Vec<DancerSettingsPageAction> = Vec::new();
     let mut dialog_action = None;
     let locale = "en";
     let dialog_metrics = dialog_metrics_tokens();
@@ -176,32 +148,10 @@ pub fn draw(ui: &mut Ui, state: &DancersState) -> Vec<DancersAction> {
     }
 
     if close_requested {
-        page_actions.push(DancersAction::HideDialog);
+        page_actions.push(DancerSettingsPageAction::DismissDialog);
     }
 
     page_actions
-}
-
-#[must_use]
-pub fn role_option_labels(state: &DancersState) -> Vec<String> {
-    state.roles.iter().map(|role| role.name.clone()).collect()
-}
-
-#[must_use]
-pub fn dancer_option_labels(state: &DancersState) -> Vec<String> {
-    state.dancers
-        .iter()
-        .map(|dancer| dancer.name.clone())
-        .collect()
-}
-
-#[must_use]
-pub fn icon_option_labels(state: &DancersState) -> Vec<String> {
-    state
-        .icon_options
-        .iter()
-        .map(|option| option.display_name.clone())
-        .collect()
 }
 
 #[must_use]
@@ -211,7 +161,10 @@ pub fn shell_rect(ui: &Ui) -> Rect {
 
 #[must_use]
 pub fn top_bar_rect(page_rect: Rect) -> Rect {
-    Rect::from_min_size(page_rect.min, vec2(page_rect.width(), top_bar_height_token()))
+    Rect::from_min_size(
+        page_rect.min,
+        vec2(page_rect.width(), top_bar_height_token()),
+    )
 }
 
 #[must_use]
@@ -222,7 +175,11 @@ pub fn main_content_rect(page_rect: Rect) -> Rect {
     )
 }
 
-fn draw_dialog_panel(ui: &mut Ui, state: &DancersState, locale: &str) -> Option<SwapDialogAction> {
+fn draw_dialog_panel(
+    ui: &mut Ui,
+    state: &DancerSettingsPageState,
+    locale: &str,
+) -> Option<SwapDialogAction> {
     if state.dialog_content.as_deref() == Some(SWAP_DANCERS_DIALOG_ID) {
         return draw_swap_dialog_panel(ui, state, locale);
     }
@@ -234,8 +191,8 @@ fn draw_dialog_panel(ui: &mut Ui, state: &DancersState, locale: &str) -> Option<
 fn draw_main_content(
     ui: &mut Ui,
     content_rect: Rect,
-    state: &DancersState,
-    actions: &mut Vec<DancersAction>,
+    state: &DancerSettingsPageState,
+    actions: &mut Vec<DancerSettingsPageAction>,
     locale: &str,
 ) {
     let drawer_state = drawer_host_state(
@@ -244,8 +201,8 @@ fn draw_main_content(
         ui.visuals().panel_fill,
     );
 
-    let mut content_actions: Vec<DancersAction> = Vec::new();
-    let mut pane_actions: Vec<DancersAction> = Vec::new();
+    let mut content_actions: Vec<DancerSettingsPageAction> = Vec::new();
+    let mut pane_actions: Vec<DancerSettingsPageAction> = Vec::new();
     let drawer_actions = draw_with_slots_in_rect(
         ui.ctx(),
         content_rect,
@@ -264,14 +221,14 @@ fn draw_main_content(
     for drawer_action in drawer_actions {
         let DrawerHostAction::OverlayClicked { close_left, .. } = drawer_action;
         if close_left {
-            actions.push(DancersAction::CloseDancerList);
+            actions.push(DancerSettingsPageAction::CloseDancerList);
         }
     }
 }
 
 #[must_use]
 pub fn drawer_host_state(
-    state: &DancersState,
+    state: &DancerSettingsPageState,
     overlay_color: Color32,
     drawer_background: Color32,
 ) -> DrawerHostState {
@@ -295,7 +252,12 @@ pub fn drawer_host_state(
     }
 }
 
-fn draw_top_bar(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersAction>, locale: &str) {
+fn draw_top_bar(
+    ui: &mut Ui,
+    state: &DancerSettingsPageState,
+    actions: &mut Vec<DancerSettingsPageAction>,
+    locale: &str,
+) {
     let title = t(locale, "DancersTitle");
     ui.set_min_height(TOP_BAR_HEIGHT_PX);
     ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
@@ -308,7 +270,7 @@ fn draw_top_bar(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersActi
             Some(vec2(48.0, 48.0)),
         );
         if response.clicked() {
-            actions.push(DancersAction::ToggleDancerList);
+            actions.push(DancerSettingsPageAction::ToggleDancerList);
         }
         ui.add_space(content_spacing_token());
         ui.label(typography::rich_text_for_role(title, top_bar_title_role()));
@@ -346,8 +308,9 @@ pub fn content_column_right(surface_rect: Rect) -> f32 {
     content_column_left(surface_rect) + content_column_width(surface_rect)
 }
 
-fn draw_footer(ui: &mut Ui, actions: &mut Vec<DancersAction>, locale: &str) {
-    ui.painter().rect_filled(ui.max_rect(), 0.0, ui.visuals().window_fill);
+fn draw_footer(ui: &mut Ui, actions: &mut Vec<DancerSettingsPageAction>, locale: &str) {
+    ui.painter()
+        .rect_filled(ui.max_rect(), 0.0, ui.visuals().window_fill);
     ui.set_width(ui.max_rect().width());
     ui.set_min_height(footer_height_token());
     ui.spacing_mut().item_spacing = vec2(
@@ -356,23 +319,25 @@ fn draw_footer(ui: &mut Ui, actions: &mut Vec<DancersAction>, locale: &str) {
     );
     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
         ui.add_space(footer_content_padding_token());
-        if ui
-            .add(MaterialButton::new(t(locale, "CommonOk")))
-            .clicked()
-        {
-            actions.push(DancersAction::SaveToGlobal);
+        if ui.add(MaterialButton::new(t(locale, "CommonOk"))).clicked() {
+            actions.push(DancerSettingsPageAction::SavePage);
         }
         if ui
             .add(MaterialButton::new(t(locale, "CommonCancel")))
             .clicked()
         {
-            actions.push(DancersAction::Cancel);
+            actions.push(DancerSettingsPageAction::CancelPage);
         }
         ui.add_space(footer_content_padding_token());
     });
 }
 
-fn draw_content(ui: &mut Ui, state: &DancersState, actions: &mut Vec<DancersAction>, locale: &str) {
+fn draw_content(
+    ui: &mut Ui,
+    state: &DancerSettingsPageState,
+    actions: &mut Vec<DancerSettingsPageAction>,
+    locale: &str,
+) {
     let surface_rect = main_content_rect(ui.max_rect());
     ui.painter().rect_filled(
         surface_rect,
@@ -431,48 +396,10 @@ pub const fn top_bar_title_role() -> TypographyRole {
     TypographyRole::TitleLarge
 }
 
-#[must_use]
-pub fn build_swap_dialog_view_model(
-    state: &DancersState,
-    locale: &str,
-) -> Option<SwapDialogViewModel> {
-    if !state.is_dialog_open || state.dialog_content.as_deref() != Some(SWAP_DANCERS_DIALOG_ID) {
-        return None;
-    }
-
-    let first_name = swap_dialog_dancer_name(state.swap_from_dancer.as_ref());
-    let second_name = swap_dialog_dancer_name(state.swap_to_dancer.as_ref());
-    let message_template = t(
-        locale,
-        "DancerSwapDialogMessage",
-    );
-
-    Some(SwapDialogViewModel {
-        title_text: t(locale, "DancerSwapDialogTitle"),
-        first_dancer_name: first_name.clone(),
-        second_dancer_name: second_name.clone(),
-        first_dancer_color: state
-            .swap_from_dancer
-            .as_ref()
-            .map(|dancer| color_to_egui(&dancer.color))
-            .unwrap_or(Color32::TRANSPARENT),
-        second_dancer_color: state
-            .swap_to_dancer
-            .as_ref()
-            .map(|dancer| color_to_egui(&dancer.color))
-            .unwrap_or(Color32::TRANSPARENT),
-        message_text: message_template
-            .replace("{0}", &first_name)
-            .replace("{1}", &second_name),
-        cancel_text: t(locale, "DancerSwapDialogCancel"),
-        confirm_text: t(locale, "DancerSwapDialogConfirm"),
-    })
-}
-
 fn draw_dancers_pane(
     ui: &mut Ui,
-    state: &DancersState,
-    actions: &mut Vec<DancersAction>,
+    state: &DancerSettingsPageState,
+    actions: &mut Vec<DancerSettingsPageAction>,
     locale: &str,
 ) {
     let pane_title = t(locale, "DancersTitle");
@@ -488,11 +415,10 @@ fn draw_dancers_pane(
     actions.extend(pane_actions.into_iter().map(map_pane_action));
 }
 
-
 fn draw_dancer_card(
     ui: &mut Ui,
-    state: &DancersState,
-    actions: &mut Vec<DancersAction>,
+    state: &DancerSettingsPageState,
+    actions: &mut Vec<DancerSettingsPageAction>,
     locale: &str,
 ) {
     Frame::new()
@@ -526,7 +452,7 @@ fn draw_dancer_card(
             if let Some(selected_role_mut) = role_response
                 && selected_role_mut != selected_role
             {
-                actions.push(DancersAction::SelectRole {
+                actions.push(DancerSettingsPageAction::SelectRole {
                     index: selected_role_mut,
                 });
             }
@@ -539,14 +465,11 @@ fn draw_dancer_card(
             if ui
                 .add_enabled(
                     state.has_selected_dancer,
-                    egui::TextEdit::singleline(&mut name).hint_text(t(
-                        locale,
-                        "DancerNameLabel",
-                    )),
+                    egui::TextEdit::singleline(&mut name).hint_text(t(locale, "DancerNameLabel")),
                 )
                 .changed()
             {
-                actions.push(DancersAction::UpdateDancerName { value: name });
+                actions.push(DancerSettingsPageAction::UpdateDancerName { value: name });
             }
 
             let mut shortcut = state
@@ -557,14 +480,12 @@ fn draw_dancer_card(
             if ui
                 .add_enabled(
                     state.has_selected_dancer,
-                    egui::TextEdit::singleline(&mut shortcut).hint_text(t(
-                        locale,
-                        "DancerShortcutLabel",
-                    )),
+                    egui::TextEdit::singleline(&mut shortcut)
+                        .hint_text(t(locale, "DancerShortcutLabel")),
                 )
                 .changed()
             {
-                actions.push(DancersAction::UpdateDancerShortcut { value: shortcut });
+                actions.push(DancerSettingsPageAction::UpdateDancerShortcut { value: shortcut });
             }
 
             ui.label(t(locale, "DancerIconLabel"));
@@ -593,7 +514,7 @@ fn draw_dancer_card(
                     .map(|value| value.key.as_str())
                     != Some(option.key.as_str())
             {
-                actions.push(DancersAction::UpdateDancerIcon {
+                actions.push(DancerSettingsPageAction::UpdateDancerIcon {
                     value: option.icon_name.clone(),
                 });
             }
@@ -603,7 +524,7 @@ fn draw_dancer_card(
                 if let Some(color32) =
                     color_picker_ui::draw_bound(ui, selected_dancer_color_picker_state(state))
                 {
-                    actions.push(DancersAction::UpdateDancerColor {
+                    actions.push(DancerSettingsPageAction::UpdateDancerColor {
                         value: Color {
                             r: color32.r(),
                             g: color32.g(),
@@ -618,8 +539,8 @@ fn draw_dancer_card(
 
 fn draw_swap_card(
     ui: &mut Ui,
-    state: &DancersState,
-    actions: &mut Vec<DancersAction>,
+    state: &DancerSettingsPageState,
+    actions: &mut Vec<DancerSettingsPageAction>,
     locale: &str,
 ) {
     Frame::new()
@@ -658,10 +579,9 @@ fn draw_swap_card(
                 !state.dancers.is_empty(),
                 ui.available_width(),
                 dropdown_height_token(),
-            )
-                && from_index_mut != from_index
+            ) && from_index_mut != from_index
             {
-                actions.push(DancersAction::UpdateSwapFrom {
+                actions.push(DancerSettingsPageAction::UpdateSwapFrom {
                     index: from_index_mut,
                 });
             }
@@ -689,10 +609,9 @@ fn draw_swap_card(
                 !state.dancers.is_empty(),
                 ui.available_width(),
                 dropdown_height_token(),
-            )
-                && to_index_mut != to_index
+            ) && to_index_mut != to_index
             {
-                actions.push(DancersAction::UpdateSwapTo {
+                actions.push(DancerSettingsPageAction::UpdateSwapTo {
                     index: to_index_mut,
                 });
             }
@@ -704,14 +623,14 @@ fn draw_swap_card(
                 )
                 .clicked()
             {
-                actions.push(DancersAction::RequestSwapDancers);
+                actions.push(DancerSettingsPageAction::RequestSwapDancers);
             }
         });
 }
 
 pub fn draw_swap_dialog_panel(
     ui: &mut Ui,
-    state: &DancersState,
+    state: &DancerSettingsPageState,
     locale: &str,
 ) -> Option<SwapDialogAction> {
     let view_model = build_swap_dialog_view_model(state, locale)?;
@@ -774,79 +693,13 @@ fn draw_swap_dialog_dancer_row(ui: &mut Ui, dancer_name: &str, dancer_color: Col
     });
 }
 
-fn swap_dialog_dancer_name(dancer: Option<&DancerState>) -> String {
-    let Some(dancer) = dancer else {
-        return "?".to_string();
-    };
-
-    if !dancer.name.trim().is_empty() {
-        return dancer.name.clone();
-    }
-    if !dancer.shortcut.trim().is_empty() {
-        return dancer.shortcut.clone();
-    }
-
-    format!("#{}", dancer.dancer_id)
-}
-
 #[must_use]
-pub fn selected_dancer_index(state: &DancersState) -> Option<usize> {
-    let selected_dancer_id = state
-        .selected_dancer
-        .as_ref()
-        .map(|dancer| dancer.dancer_id)?;
-    state
-        .dancers
-        .iter()
-        .position(|dancer| dancer.dancer_id == selected_dancer_id)
-}
-
-#[must_use]
-pub fn selected_role_index(state: &DancersState) -> Option<usize> {
-    let selected_role_name = state
-        .selected_role
-        .as_ref()
-        .map(|role| role.name.as_str())?;
-    state
-        .roles
-        .iter()
-        .position(|role| role.name == selected_role_name)
-}
-
-#[must_use]
-pub fn selected_icon_index(state: &DancersState) -> Option<usize> {
-    let selected_key = state
-        .selected_icon_option
-        .as_ref()
-        .map(|option| option.key.as_str())?;
-    state
-        .icon_options
-        .iter()
-        .position(|option| option.key == selected_key)
-}
-
-#[must_use]
-pub fn dancer_supporting_text(dancer: &DancerState) -> String {
-    format!(
-        "{} ({})  [{}]",
-        dancer.role.name, dancer.role.z_index, dancer.shortcut
-    )
-}
-
-#[must_use]
-pub fn dancer_role_details_text(dancer: &DancerState) -> String {
-    dancer_supporting_text(dancer)
-}
-
-#[must_use]
-pub fn map_pane_action(action: DancersPaneViewAction) -> DancersAction {
+pub fn map_pane_action(action: DancersPaneViewAction) -> DancerSettingsPageAction {
     match action {
-        DancersPaneViewAction::SelectDancer { index } => DancersAction::SelectDancer { index },
-        DancersPaneViewAction::AddDancer => DancersAction::AddDancer,
-        DancersPaneViewAction::DeleteDancer => DancersAction::DeleteSelectedDancer,
+        DancersPaneViewAction::SelectDancer { index } => {
+            DancerSettingsPageAction::SelectDancer { index }
+        }
+        DancersPaneViewAction::AddDancer => DancerSettingsPageAction::AddDancer,
+        DancersPaneViewAction::DeleteDancer => DancerSettingsPageAction::DeleteSelectedDancer,
     }
-}
-
-fn color_to_egui(color: &Color) -> Color32 {
-    Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
 }

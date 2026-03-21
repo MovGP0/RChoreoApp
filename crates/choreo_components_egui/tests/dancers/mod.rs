@@ -15,6 +15,7 @@ pub mod add_dancer_behavior_spec;
 pub mod cancel_dancer_settings_behavior_spec;
 pub mod color_picker_integration_spec;
 pub mod dancer_list_item_view_spec;
+pub mod dancer_settings_page_action_mapping_spec;
 pub mod dancer_settings_page_control_spec;
 pub mod dancers_pane_view_ui_spec;
 pub mod delete_dancer_behavior_spec;
