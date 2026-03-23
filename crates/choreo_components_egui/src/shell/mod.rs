@@ -17,7 +17,7 @@ pub fn app_title() -> &'static str {
 /// Desktop rasterizes this asset into window-icon pixels at startup.
 /// WASM keeps a checked-in favicon copy that is kept byte-equal by a parity spec.
 pub fn app_icon_svg() -> &'static str {
-    include_str!("../../../choreo_components/ui/app_icon.svg")
+    include_str!("../../assets/app_icon.svg")
 }
 
 pub fn create_shell_host() -> ShellHostViewModel {

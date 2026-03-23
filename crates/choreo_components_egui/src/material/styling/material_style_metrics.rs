@@ -1,4 +1,4 @@
-/// Direct port of `crates/choreo_components/material-1.0/ui/styling/material_style_metrics.slint`.
+/// Direct port of the legacy Slint material style metrics source.
 ///
 /// The first five token groups mirror the Slint source structure and values.
 /// The remaining groups are egui-specific extensions already consumed by the

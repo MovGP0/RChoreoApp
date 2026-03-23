@@ -589,14 +589,14 @@ fn draw_scene_list_item(ui: &mut Ui, scene: &SceneItemState, show_timestamps: bo
 fn scene_search_icon() -> (&'static str, &'static str) {
     (
         "search",
-        include_str!("../../../choreo_components/ui/icons/Magnify.svg"),
+        include_str!("../../assets/icons/Magnify.svg"),
     )
 }
 
 fn clear_search_icon() -> (&'static str, &'static str) {
     (
         "close",
-        include_str!("../../../choreo_components/ui/icons/Close.svg"),
+        include_str!("../../assets/icons/Close.svg"),
     )
 }
 

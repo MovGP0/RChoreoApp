@@ -16,24 +16,9 @@ icon = "run"
 command = "cargo build --package rchoreo_desktop_egui"
 
 [[actions]]
-name = "Run Desktop Slint"
-icon = "run"
-command = "cargo run --package rchoreo_desktop"
-
-[[actions]]
-name = "Run Desktop Slint OTEL"
-icon = "run"
-command = "cargo run --package rchoreo_desktop --features debug-otel"
-
-[[actions]]
 name = "Build Workspace"
 icon = "run"
 command = "cargo build --workspace"
-
-[[actions]]
-name = "Build Wasm Slint"
-icon = "run"
-command = "wasm-pack build --release --target web apps/wasm"
 
 [[actions]]
 name = "Build Wasm Egui"
@@ -43,7 +28,7 @@ command = "wasm-pack build --release --target web apps/wasm_egui"
 [[actions]]
 name = "Run Wasm Dev Server"
 icon = "run"
-command = "pwsh.exe -NoLogo -NoProfile -File scripts/run_wasm_dev.ps1"
+command = "rust-script .\\scripts\\run_wasm_dev.rs"
 
 [[actions]]
 name = "Build Android Egui x64"
@@ -53,4 +38,4 @@ command = "cargo apk build --manifest-path apps/android_egui/Cargo.toml --packag
 [[actions]]
 name = "Run Android Egui"
 icon = "run"
-command = "rust-script .\\scripts\\run_android_egui.rs -- --logcat"
+command = "rust-script .\\scripts\\run_android.rs -- --logcat"

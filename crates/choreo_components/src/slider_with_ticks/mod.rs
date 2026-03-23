@@ -1,5 +1,0 @@
-mod slider_with_ticks_behavior;
-mod slider_with_ticks_view_model;
-
-pub use slider_with_ticks_behavior::SliderWithTicksBehavior;
-pub use slider_with_ticks_view_model::SliderWithTicksViewModel;

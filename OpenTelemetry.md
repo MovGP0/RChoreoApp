@@ -2,7 +2,7 @@
 
 ## Scope
 
-- Target only `apps/desktop` debug builds (`cfg(debug_assertions)`).
+- Target only `apps/desktop_egui` debug builds (`cfg(debug_assertions)`).
 - Keep release builds and non-desktop targets unchanged.
 - Enable OTLP export only when env vars are set.
 - Trace user-button initiated flows through commands/events/behaviors.
@@ -11,13 +11,13 @@
 ## Current Repository State
 
 - Logging is currently based on `log` + `env_logger` (for example in `crates/choreo_state_machine/src/machine.rs`).
-- Behavior activation already has a centralized hook (`crates/choreo_components/src/logging/types.rs`).
-- UI actions fan out through `MainPageBinding` and crossbeam channels into behavior handlers (for example `open_choreo_behavior.rs`, `open_audio_behavior.rs`, `open_audio_file_behavior.rs`).
-- Workspace already separates app targets (`apps/desktop`, `apps/android`, `apps/wasm`), which supports desktop-only integration.
+- Behavior activation and tracing gates already have centralized hooks in `crates/choreo_components_egui/src/observability/mod.rs`.
+- UI actions fan out through `MainPageBinding` and the egui behavior pipeline in `crates/choreo_components_egui/src/choreo_main/`.
+- Workspace already separates app targets (`apps/desktop_egui`, `apps/android_egui`, `apps/wasm_egui`), which supports desktop-only integration.
 
 ## Design Summary
 
-1. Add an observability module in `apps/desktop` that initializes an OTel tracer provider only in debug.
+1. Add an observability module in `apps/desktop_egui` that initializes an OTel tracer provider only in debug.
 2. Use OTLP HTTP exporter by default for desktop debug to avoid runtime constraints (`reqwest-blocking-client` path in `opentelemetry-otlp`).
 3. Use the latest Aspire Dashboard Docker container as the default local OTLP endpoint and web UI.
 4. Gate exporting on `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`; if absent, keep existing logging only.
@@ -31,7 +31,7 @@
 
 ## Proposed Crates (Desktop App Only)
 
-In `apps/desktop/Cargo.toml`:
+In `apps/desktop_egui/Cargo.toml`:
 
 ```toml
 [dependencies]
@@ -53,13 +53,13 @@ debug-otel = [
 Then compile-enable in desktop debug CI/dev command:
 
 ```sh
-cargo run -p rchoreo_desktop --features debug-otel
+cargo run -p rchoreo_desktop_egui --features debug-otel
 ```
 
 And runtime-enable export via env vars (Aspire local OTLP/HTTP):
 
 ```sh
-OTEL_SERVICE_NAME=rchoreo_desktop_debug
+OTEL_SERVICE_NAME=rchoreo_desktop_egui_debug
 OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 ```
@@ -68,9 +68,9 @@ OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 
 Create new desktop-only files:
 
-- `apps/desktop/src/observability/mod.rs`
-- `apps/desktop/src/observability/otel.rs`
-- `apps/desktop/src/observability/trace_context.rs`
+- `apps/desktop_egui/src/observability/mod.rs`
+- `apps/desktop_egui/src/observability/otel.rs`
+- `apps/desktop_egui/src/observability/trace_context.rs`
 
 Responsibilities:
 
@@ -82,7 +82,7 @@ Responsibilities:
 
 ### Phase 1: Bootstrap and Safety Gates
 
-- Add `init_debug_otel()` in desktop startup (`apps/desktop/src/main.rs`).
+- Add `init_debug_otel()` in desktop startup (`apps/desktop_egui/src/main.rs`).
 - `init_debug_otel()` should:
   - return no-op if `!cfg!(debug_assertions)`;
   - return no-op if endpoint env vars are absent;
@@ -155,9 +155,9 @@ pub struct TraceContext {
 
 ## 1. Build/Static
 
-- `cargo build -p rchoreo_desktop --features debug-otel`
-- `cargo clippy -p rchoreo_desktop --all-targets --all-features -- -D warnings`
-- `cargo test -p rchoreo_desktop`
+- `cargo build -p rchoreo_desktop_egui --features debug-otel`
+- `cargo clippy -p rchoreo_desktop_egui --all-targets --all-features -- -D warnings`
+- `cargo test -p rchoreo_desktop_egui`
 
 ## 2. Local End-to-End
 
@@ -183,10 +183,10 @@ Open the returned `http://localhost:18888/login?t=...` link in browser.
 Run app with env vars and debug feature:
 
 ```sh
-OTEL_SERVICE_NAME=rchoreo_desktop_debug
+OTEL_SERVICE_NAME=rchoreo_desktop_egui_debug
 OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
-cargo run -p rchoreo_desktop --features debug-otel
+cargo run -p rchoreo_desktop_egui --features debug-otel
 ```
 
 Container lifecycle (keep container/image after stop):
