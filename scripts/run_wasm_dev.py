@@ -9,7 +9,7 @@ from pathlib import Path
 
 def main() -> int:
     root_dir = Path(__file__).resolve().parent.parent
-    wasm_dir = root_dir / "apps" / "wasm_egui"
+    wasm_dir = root_dir / "apps" / "wasm"
 
     subprocess.run(
         [
@@ -18,7 +18,7 @@ def main() -> int:
             "--release",
             "--target",
             "web",
-            "apps/wasm_egui",
+            "apps/wasm",
         ],
         cwd=root_dir,
         check=True,

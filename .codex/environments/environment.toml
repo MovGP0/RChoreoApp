@@ -6,14 +6,14 @@ name = "RChoreoApp"
 script = ""
 
 [[actions]]
-name = "Run Desktop Egui"
+name = "Run Desktop"
 icon = "run"
-command = "cargo run --package rchoreo_desktop_egui"
+command = "cargo run --package rchoreo_desktop"
 
 [[actions]]
-name = "Build Desktop Egui"
+name = "Build Desktop"
 icon = "run"
-command = "cargo build --package rchoreo_desktop_egui"
+command = "cargo build --package rchoreo_desktop"
 
 [[actions]]
 name = "Build Workspace"
@@ -21,9 +21,9 @@ icon = "run"
 command = "cargo build --workspace"
 
 [[actions]]
-name = "Build Wasm Egui"
+name = "Build Wasm"
 icon = "run"
-command = "wasm-pack build --release --target web apps/wasm_egui"
+command = "wasm-pack build --release --target web apps/wasm"
 
 [[actions]]
 name = "Run Wasm Dev Server"
@@ -31,11 +31,16 @@ icon = "run"
 command = "rust-script .\\scripts\\run_wasm_dev.rs"
 
 [[actions]]
-name = "Build Android Egui x64"
+name = "Build Android x64"
 icon = "run"
-command = "cargo apk build --manifest-path apps/android_egui/Cargo.toml --package rchoreo_android_egui --lib --target x86_64-linux-android --target-dir target/android_egui"
+command = "cargo apk build --manifest-path apps/android/Cargo.toml --package rchoreo_android --lib --target x86_64-linux-android --target-dir target/android"
 
 [[actions]]
-name = "Run Android Egui"
+name = "Build Android ARM64"
+icon = "run"
+command = "cargo apk build --manifest-path apps/android/Cargo.toml --package rchoreo_android --lib --target aarch64-linux-android --target-dir target/android"
+
+[[actions]]
+name = "Run Android"
 icon = "run"
 command = "rust-script .\\scripts\\run_android.rs -- --logcat"

@@ -17,7 +17,7 @@ const DEFAULT_PORT: u16 = 8000;
 fn main() -> Result<(), Box<dyn Error>>
 {
     let repo_root = find_repo_root(env::current_dir()?)?;
-    let wasm_dir = repo_root.join("apps").join("wasm_egui");
+    let wasm_dir = repo_root.join("apps").join("wasm");
 
     ensure_wasm_build(&repo_root)?;
 
@@ -53,7 +53,7 @@ fn find_repo_root(start_dir: PathBuf) -> Result<PathBuf, Box<dyn Error>>
     let mut current = start_dir.as_path();
     loop
     {
-        if current.join("apps").join("wasm_egui").join("Cargo.toml").exists()
+        if current.join("apps").join("wasm").join("Cargo.toml").exists()
         {
             return Ok(current.to_path_buf());
         }
@@ -72,7 +72,7 @@ fn ensure_wasm_build(repo_root: &Path) -> Result<(), Box<dyn Error>>
     command.arg("--release");
     command.arg("--target");
     command.arg("web");
-    command.arg("apps/wasm_egui");
+    command.arg("apps/wasm");
 
     run_command(&mut command)
 }

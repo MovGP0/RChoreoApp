@@ -815,7 +815,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "choreo_components_egui"
+name = "choreo_components"
 version = "0.1.0"
 dependencies = [
  "choreo_i18n",
@@ -3732,10 +3732,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "rchoreo_android_egui"
+name = "rchoreo_android"
 version = "0.1.0"
 dependencies = [
- "choreo_components_egui",
+ "choreo_components",
  "eframe",
  "egui",
  "egui-material3",
@@ -3743,10 +3743,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "rchoreo_desktop_egui"
+name = "rchoreo_desktop"
 version = "0.1.0"
 dependencies = [
- "choreo_components_egui",
+ "choreo_components",
  "eframe",
  "egui",
  "egui-material3",
@@ -3759,10 +3759,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "rchoreo_wasm_egui"
+name = "rchoreo_wasm"
 version = "0.1.0"
 dependencies = [
- "choreo_components_egui",
+ "choreo_components",
  "console_error_panic_hook",
  "console_log",
  "eframe",

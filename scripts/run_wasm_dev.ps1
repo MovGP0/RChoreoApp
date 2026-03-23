@@ -4,12 +4,12 @@ param()
 $ErrorActionPreference = "Stop"
 
 $rootDir = Resolve-Path (Join-Path $PSScriptRoot "..")
-$wasmDir = Join-Path $rootDir "apps/wasm_egui"
+$wasmDir = Join-Path $rootDir "apps/wasm"
 
 Push-Location $rootDir
 try
 {
-    & wasm-pack build --release --target web apps/wasm_egui
+    & wasm-pack build --release --target web apps/wasm
 }
 finally
 {

@@ -22,7 +22,7 @@
 - Behaviors are always transient
 
 ## Unit Testing
-See `UnitTesting.md` for detailed instructions.
+See `docs/UnitTesting.md` for detailed instructions.
 
 ## Spec Driven Development
 
@@ -38,13 +38,13 @@ Use Spec Driven Development (SDD) as the default workflow for behavior changes a
 Rules:
 - Prefer `rspec` BDD style (`describe`/`it`) for new behavior scenarios.
 - Keep specs behavior-focused (user-visible outcome), not implementation-coupled.
-- For synchronization/state-flow work, codify scenarios in a document first (for example `Timestamp.md`), then map each scenario to one or more specs.
+- For synchronization/state-flow work, codify scenarios in a document first (for example `docs/Timestamp.md`), then map each scenario to one or more specs.
 - Do not introduce business logic changes without a corresponding failing spec first, unless fixing build/lint breakages required to run tests.
 - When a bug is reported, first reproduce it with a spec; the fix is complete only when that spec passes and remains in the suite.
 - If essential logic required by a spec is missing (for example a class/function does not exist yet), first create a clear `TODO:` list in the spec file that documents the planned implementation steps and required seams; once the classes/functions are in place, replace those `TODO:` entries with the actual spec code.
 
 ## Model View Behavior Pattern
-See `ModelViewBehavior.md` for detailed instructions.
+See `docs/ModelViewBehavior.md` for detailed instructions.
 Key rules:
 - Activate behaviors before attaching the View-ViewModel adapter, since the adapter holds a mutable borrow.
 - Do not borrow the ViewModel inside subscription callbacks; the adapter is still attached with a mutable borrow.
@@ -55,8 +55,8 @@ Key rules:
 - Bind labels/text in egui from centralized translation lookups.
 - ViewModels must not contain UI strings or translation keys.
 - Translation keys must use the same `PascalCase` key names as the `choreo_i18n` TOML catalog (for example `SettingsAudioBackendLabel`).
-- Use `crates/choreo_components_egui/src/i18n.rs::t(locale, key)` for direct lookups. It is fail-fast: missing catalog keys must be treated as errors, not masked by per-call fallback strings.
-- Keep key normalization logic limited to the Slint bridge helpers in `crates/choreo_components_egui/src/i18n.rs` (for example when mapping `snake_case` Slint/global property names to catalog keys). Do not duplicate key-conversion helpers in per-feature translation modules.
+- Use `crates/choreo_components/src/i18n.rs::t(locale, key)` for direct lookups. It is fail-fast: missing catalog keys must be treated as errors, not masked by per-call fallback strings.
+- Keep key normalization logic limited to the bridge helpers in `crates/choreo_components/src/i18n.rs` (for example when mapping `snake_case` global property names to catalog keys). Do not duplicate key-conversion helpers in per-feature translation modules.
 - When adding a new translation:
   - add the catalog entry to `choreo_i18n`
   - reference it from egui using the exact `PascalCase` catalog key
@@ -248,8 +248,8 @@ If you encounter a compile error after a code change you did, keep a note here h
 
 # egui
 
-See `egui.md` for additional instructions.
+See `docs/egui.md` for additional instructions.
 
 # Open Telemetry
 
-See `OpenTelemetry.md` for activity tracing.
+See `docs/OpenTelemetry.md` for activity tracing.

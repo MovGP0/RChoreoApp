@@ -13,9 +13,9 @@ use std::time::Duration;
 use std::time::Instant;
 
 const DEFAULT_AVD_NAME: &str = "Medium_Phone_API_36.1";
-const DEFAULT_MANIFEST_PATH: &str = "apps/android_egui/Cargo.toml";
-const DEFAULT_PACKAGE_NAME: &str = "rchoreo_android_egui";
-const DEFAULT_TARGET_DIR: &str = "target/android_egui";
+const DEFAULT_MANIFEST_PATH: &str = "apps/android/Cargo.toml";
+const DEFAULT_PACKAGE_NAME: &str = "rchoreo_android";
+const DEFAULT_TARGET_DIR: &str = "target/android";
 const EMULATOR_BOOT_TIMEOUT: Duration = Duration::from_secs(300);
 const DEVICE_DISCOVERY_TIMEOUT: Duration = Duration::from_secs(120);
 
@@ -242,7 +242,7 @@ fn find_repo_root(start_dir: PathBuf) -> Result<PathBuf, Box<dyn Error>>
     let mut current = start_dir.as_path();
     loop
     {
-        if current.join("apps").join("android_egui").join("Cargo.toml").exists()
+        if current.join("apps").join("android").join("Cargo.toml").exists()
         {
             return Ok(current.to_path_buf());
         }
