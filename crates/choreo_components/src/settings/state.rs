@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::material::styling::material_schemes::MaterialSchemes;
-pub use choreo_material3::ThemeMode;
+pub use material3::ThemeMode;
 
 pub use crate::audio_player::AudioPlayerBackend;
 

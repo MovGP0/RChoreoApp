@@ -43,4 +43,4 @@ pub mod time;
 pub mod timestamp_state_machine;
 
 pub use app_shell::AppShellViewModel;
-pub use choreo_material3 as material;
+pub use material3 as material;
