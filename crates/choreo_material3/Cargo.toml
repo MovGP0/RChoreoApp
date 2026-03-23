@@ -1,0 +1,15 @@
+[package]
+name = "choreo_material3"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+egui = "0.32.3"
+egui_extras = { version = "0.32.3", features = ["svg"] }
+egui-material3 = "0.0.7"
+material-color-utilities = "1.0.0-dev.18"
+lyon_extra = "1.0.3"
+lyon_path = "1.0.16"
+lyon_tessellation = "1.0.16"
+time = { version = "0.3", features = ["formatting", "parsing"] }

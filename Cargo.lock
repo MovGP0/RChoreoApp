@@ -873,6 +873,7 @@ dependencies = [
  "awedio",
  "choreo_i18n",
  "choreo_master_mobile_json",
+ "choreo_material3",
  "choreo_models",
  "choreo_state_machine",
  "crossbeam-channel",
@@ -920,6 +921,20 @@ dependencies = [
  "time 0.3.47",
  "wasm-bindgen",
  "web-sys",
+]
+
+[[package]]
+name = "choreo_material3"
+version = "0.1.0"
+dependencies = [
+ "egui",
+ "egui-material3",
+ "egui_extras",
+ "lyon_extra",
+ "lyon_path",
+ "lyon_tessellation",
+ "material-color-utilities",
+ "time 0.3.47",
 ]
 
 [[package]]

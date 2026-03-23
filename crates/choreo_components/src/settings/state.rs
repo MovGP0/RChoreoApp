@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::material::styling::material_schemes::MaterialSchemes;
+pub use choreo_material3::ThemeMode;
 
 pub use crate::audio_player::AudioPlayerBackend;
 
@@ -17,13 +18,6 @@ pub const AUDIO_PLAYER_BACKEND_KEY: &str = "audio_player_backend";
 pub const DEFAULT_PRIMARY_COLOR_HEX: &str = "#FF1976D2";
 pub const DEFAULT_SECONDARY_COLOR_HEX: &str = "#FF675A84";
 pub const DEFAULT_TERTIARY_COLOR_HEX: &str = "#FF825A2C";
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum ThemeMode {
-    #[default]
-    Light,
-    Dark,
-}
 
 pub type MaterialSchemeState = MaterialSchemes;
 

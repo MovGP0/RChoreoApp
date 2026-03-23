@@ -36,8 +36,11 @@ fn material_theme_application_spec() {
                 Some("Dark")
             );
             assert_eq!(
-                choreo_components::material::styling::material_palette::material_palette_for_settings_state(&state)
-                    .background,
+                choreo_components::material::styling::material_palette::material_palette_for_theme(
+                    &state.material_scheme,
+                    state.theme_mode,
+                )
+                .background,
                 state.material_scheme.dark.background
             );
 
@@ -51,8 +54,11 @@ fn material_theme_application_spec() {
                 Some("Light")
             );
             assert_eq!(
-                choreo_components::material::styling::material_palette::material_palette_for_settings_state(&state)
-                    .background,
+                choreo_components::material::styling::material_palette::material_palette_for_theme(
+                    &state.material_scheme,
+                    state.theme_mode,
+                )
+                .background,
                 state.material_scheme.light.background
             );
 

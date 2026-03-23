@@ -4,6 +4,7 @@ members = [
     "crates/choreo_state_machine",
     "crates/choreo_algorithms",
     "crates/choreo_models",
+    "crates/choreo_material3",
     "crates/choreo_components",
     "crates/choreo_i18n",
     "apps/desktop",

@@ -28,7 +28,6 @@ pub mod logging;
 pub mod main_page;
 pub mod main_page_drawer_host;
 pub mod main_root_view;
-pub mod material;
 pub mod nav_bar;
 pub mod number_picker;
 pub mod observability;
@@ -44,3 +43,4 @@ pub mod time;
 pub mod timestamp_state_machine;
 
 pub use app_shell::AppShellViewModel;
+pub use choreo_material3 as material;

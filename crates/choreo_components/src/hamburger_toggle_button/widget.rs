@@ -234,7 +234,7 @@ mod tests {
     use crate::material::styling::material_animations::MaterialAnimation;
     use crate::material::styling::material_animations::MaterialAnimations;
     use crate::material::styling::material_palette::apply_material_visuals;
-    use crate::material::styling::material_palette::material_palette_for_settings_state;
+    use crate::material::styling::material_palette::material_palette_for_theme;
     use crate::settings::state::SettingsState;
     use crate::settings::state::ThemeMode;
 
@@ -253,9 +253,9 @@ mod tests {
             theme_mode: ThemeMode::Dark,
             ..SettingsState::default()
         };
-        apply_material_visuals(&context, &settings);
+        apply_material_visuals(&context, &settings.material_scheme, settings.theme_mode);
         let visuals = context.style().visuals.clone();
-        let palette = material_palette_for_settings_state(&settings);
+        let palette = material_palette_for_theme(&settings.material_scheme, settings.theme_mode);
 
         assert_eq!(
             state_layer_fill(
@@ -279,7 +279,7 @@ mod tests {
             theme_mode: ThemeMode::Dark,
             ..SettingsState::default()
         };
-        apply_material_visuals(&context, &settings);
+        apply_material_visuals(&context, &settings.material_scheme, settings.theme_mode);
         let visuals = context.style().visuals.clone();
         let palette = palette_fixture();
 
@@ -295,7 +295,8 @@ mod tests {
                     focused: false,
                 },
             ),
-            material_palette_for_settings_state(&settings).surface_container_high
+            material_palette_for_theme(&settings.material_scheme, settings.theme_mode)
+                .surface_container_high
         );
     }
 

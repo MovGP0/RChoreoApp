@@ -6,7 +6,7 @@ use crate::choreo_main::MainPageDependencies;
 use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::ui;
 use crate::material::styling::material_palette::apply_material_visuals;
-use crate::material::styling::material_palette::material_palette_for_settings_state;
+use crate::material::styling::material_palette::material_palette_for_theme;
 use crate::material::styling::material_palette::with_current_material_palette;
 use crate::material::styling::material_typography as typography;
 use crate::splash_screen_host;
@@ -71,7 +71,11 @@ impl AppShellViewModel {
                     let view_model = binding.view_model();
                     view_model.borrow().state().clone()
                 };
-                apply_material_visuals(context, &state.settings_state);
+                apply_material_visuals(
+                    context,
+                    &state.settings_state.material_scheme,
+                    state.settings_state.theme_mode,
+                );
             }
             egui::CentralPanel::default().show(context, |ui| {
                 splash_screen_host::ui::draw(ui, &self.splash_screen_state);
@@ -91,8 +95,15 @@ impl AppShellViewModel {
                 let view_model = binding.view_model();
                 view_model.borrow().state().clone()
             };
-            apply_material_visuals(context, &state.settings_state);
-            let palette = material_palette_for_settings_state(&state.settings_state);
+            apply_material_visuals(
+                context,
+                &state.settings_state.material_scheme,
+                state.settings_state.theme_mode,
+            );
+            let palette = material_palette_for_theme(
+                &state.settings_state.material_scheme,
+                state.settings_state.theme_mode,
+            );
 
             egui::CentralPanel::default().show(context, |ui| {
                 with_current_material_palette(palette, || {
@@ -210,8 +221,9 @@ mod app_shell_splash_spec {
         let expected = {
             let view_model = binding.view_model();
             let view_model = view_model.borrow();
-            crate::material::styling::material_palette::material_palette_for_settings_state(
-                &view_model.state().settings_state,
+            crate::material::styling::material_palette::material_palette_for_theme(
+                &view_model.state().settings_state.material_scheme,
+                view_model.state().settings_state.theme_mode,
             )
         };
 
