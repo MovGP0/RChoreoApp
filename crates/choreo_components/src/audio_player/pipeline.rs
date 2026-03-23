@@ -28,7 +28,7 @@ use super::state::AudioPlayerChoreographyScene;
 use super::state::AudioPlayerScene;
 use super::state::AudioPlayerState;
 
-pub struct AudioPlayerBehaviorDependencies {
+pub struct AudioPlayerPipelineDependencies {
     pub global_state_store: Rc<GlobalStateActor>,
     pub open_audio_receiver: Receiver<OpenAudioFileCommand>,
     pub close_audio_receiver: Receiver<CloseAudioFileCommand>,
@@ -38,42 +38,42 @@ pub struct AudioPlayerBehaviorDependencies {
     pub haptic_feedback: Option<Box<dyn AudioPlayerHapticFeedback>>,
 }
 
-pub struct AudioPlayerBehaviorPipeline {
-    pub open_audio_file: OpenAudioFileBehavior,
-    pub close_audio_file: CloseAudioFileBehavior,
-    pub ticks: AudioPlayerTicksBehavior,
-    pub link_scene: AudioPlayerLinkSceneBehavior,
-    pub position_changed: AudioPlayerPositionChangedBehavior,
+pub struct AudioPlayerPipeline {
+    pub open_audio_file: OpenAudioFileProcessor,
+    pub close_audio_file: CloseAudioFileProcessor,
+    pub ticks: AudioPlayerRuntimeTicker,
+    pub link_scene: AudioPlayerSceneLinkProcessor,
+    pub position_changed: AudioPlayerPositionPublisher,
     pub haptic_feedback: Option<Box<dyn AudioPlayerHapticFeedback>>,
 }
 
-pub fn build_audio_player_behaviors(
-    deps: AudioPlayerBehaviorDependencies,
-) -> AudioPlayerBehaviorPipeline {
-    AudioPlayerBehaviorPipeline {
-        open_audio_file: OpenAudioFileBehavior::new(
+pub fn build_audio_player_pipeline(
+    deps: AudioPlayerPipelineDependencies,
+) -> AudioPlayerPipeline {
+    AudioPlayerPipeline {
+        open_audio_file: OpenAudioFileProcessor::new(
             deps.open_audio_receiver,
             Rc::clone(&deps.preferences),
         ),
-        close_audio_file: CloseAudioFileBehavior::new(deps.close_audio_receiver),
-        ticks: AudioPlayerTicksBehavior::new(Rc::clone(&deps.global_state_store)),
-        link_scene: AudioPlayerLinkSceneBehavior::new(
+        close_audio_file: CloseAudioFileProcessor::new(deps.close_audio_receiver),
+        ticks: AudioPlayerRuntimeTicker::new(Rc::clone(&deps.global_state_store)),
+        link_scene: AudioPlayerSceneLinkProcessor::new(
             Rc::clone(&deps.global_state_store),
             deps.link_scene_receiver,
         ),
-        position_changed: AudioPlayerPositionChangedBehavior::new(deps.position_changed_senders),
+        position_changed: AudioPlayerPositionPublisher::new(deps.position_changed_senders),
         haptic_feedback: deps.haptic_feedback,
     }
 }
 
 pub use crate::haptics::HapticFeedback as AudioPlayerHapticFeedback;
 
-pub struct OpenAudioFileBehavior {
+pub struct OpenAudioFileProcessor {
     receiver: Receiver<OpenAudioFileCommand>,
     preferences: Rc<dyn Preferences>,
 }
 
-impl OpenAudioFileBehavior {
+impl OpenAudioFileProcessor {
     pub fn new(receiver: Receiver<OpenAudioFileCommand>, preferences: Rc<dyn Preferences>) -> Self {
         Self {
             receiver,
@@ -138,11 +138,11 @@ impl OpenAudioFileBehavior {
     }
 }
 
-pub struct CloseAudioFileBehavior {
+pub struct CloseAudioFileProcessor {
     receiver: Receiver<CloseAudioFileCommand>,
 }
 
-impl CloseAudioFileBehavior {
+impl CloseAudioFileProcessor {
     pub fn new(receiver: Receiver<CloseAudioFileCommand>) -> Self {
         Self { receiver }
     }
@@ -163,11 +163,11 @@ impl CloseAudioFileBehavior {
     }
 }
 
-pub struct AudioPlayerTicksBehavior {
+pub struct AudioPlayerRuntimeTicker {
     global_state: Rc<GlobalStateActor>,
 }
 
-impl AudioPlayerTicksBehavior {
+impl AudioPlayerRuntimeTicker {
     #[must_use]
     pub fn new(global_state: Rc<GlobalStateActor>) -> Self {
         Self { global_state }
@@ -182,18 +182,18 @@ impl AudioPlayerTicksBehavior {
     }
 }
 
-impl Default for AudioPlayerTicksBehavior {
+impl Default for AudioPlayerRuntimeTicker {
     fn default() -> Self {
         Self::new(GlobalStateActor::new())
     }
 }
 
-pub struct AudioPlayerLinkSceneBehavior {
+pub struct AudioPlayerSceneLinkProcessor {
     global_state: Rc<GlobalStateActor>,
     receiver: Receiver<LinkSceneToPositionCommand>,
 }
 
-impl AudioPlayerLinkSceneBehavior {
+impl AudioPlayerSceneLinkProcessor {
     pub fn new(
         global_state: Rc<GlobalStateActor>,
         receiver: Receiver<LinkSceneToPositionCommand>,
@@ -240,11 +240,11 @@ impl AudioPlayerLinkSceneBehavior {
     }
 }
 
-pub struct AudioPlayerPositionChangedBehavior {
+pub struct AudioPlayerPositionPublisher {
     senders: Vec<Sender<AudioPlayerPositionChangedEvent>>,
 }
 
-impl AudioPlayerPositionChangedBehavior {
+impl AudioPlayerPositionPublisher {
     pub fn new(senders: Vec<Sender<AudioPlayerPositionChangedEvent>>) -> Self {
         Self { senders }
     }

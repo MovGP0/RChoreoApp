@@ -11,10 +11,10 @@ use choreo_models::SceneModel;
 
 use choreo_components::audio_player::AudioPlayerBackend;
 use choreo_components::audio_player::actions::AudioPlayerAction;
-use choreo_components::audio_player::audio_player_behaviors::AudioPlayerBehaviorDependencies;
-use choreo_components::audio_player::audio_player_behaviors::AudioPlayerHapticFeedback;
-use choreo_components::audio_player::audio_player_behaviors::reduce_with_haptics;
-use choreo_components::audio_player::build_audio_player_behaviors;
+use choreo_components::audio_player::AudioPlayerHapticFeedback;
+use choreo_components::audio_player::AudioPlayerPipelineDependencies;
+use choreo_components::audio_player::build_audio_player_pipeline;
+use choreo_components::audio_player::reduce_with_haptics;
 use choreo_components::audio_player::messages::LinkSceneToPositionCommand;
 use choreo_components::audio_player::state::AudioPlayerState;
 use choreo_components::global::GlobalStateActor;
@@ -86,7 +86,7 @@ fn link_command_keeps_trace_context_and_propagates_to_position_event() {
         };
     }));
 
-    let pipeline = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
+    let pipeline = build_audio_player_pipeline(AudioPlayerPipelineDependencies {
         global_state_store: Rc::clone(&global_state),
         open_audio_receiver: open_rx,
         close_audio_receiver: close_rx,

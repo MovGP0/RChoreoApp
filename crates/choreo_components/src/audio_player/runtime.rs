@@ -32,6 +32,11 @@ impl AudioPlayerRuntime {
         self.player = None;
     }
 
+    #[must_use]
+    pub(crate) fn backend(&self) -> AudioPlayerBackend {
+        self.backend
+    }
+
     pub fn close(&mut self) {
         self.player = None;
     }

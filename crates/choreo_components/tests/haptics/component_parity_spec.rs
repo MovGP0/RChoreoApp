@@ -6,7 +6,7 @@ use choreo_components::audio_player::HapticFeedback as AudioPlayerHapticFeedback
 use choreo_components::audio_player::NoopHapticFeedback as AudioPlayerNoopHapticFeedback;
 use choreo_components::audio_player::PlatformHapticFeedback as AudioPlayerPlatformHapticFeedback;
 use choreo_components::audio_player::actions::AudioPlayerAction;
-use choreo_components::audio_player::audio_player_behaviors::reduce_with_haptics;
+use choreo_components::audio_player::reduce_with_haptics;
 use choreo_components::audio_player::state::AudioPlayerState;
 use choreo_components::haptics::HapticFeedback;
 use choreo_components::nav_bar::actions::NavBarAction;

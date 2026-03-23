@@ -7,12 +7,15 @@ use choreo_models::ChoreographyModelMapper;
 
 use crate::audio_player::actions::AudioPlayerAction;
 use crate::audio_player::runtime::AudioPlayerRuntime;
+use crate::audio_player::runtime::apply_player_sample;
 use crate::audio_player::runtime::apply_player_sample_without_position;
 use crate::audio_player::state::AudioPlayerChoreographyScene;
 use crate::audio_player::state::AudioPlayerScene;
+use crate::audio_player::types::AudioPlayerSample;
 use crate::choreography_settings::actions::ChoreographySettingsAction;
 use crate::choreography_settings::state::SelectedSceneState;
 use crate::scenes::state::parse_timestamp_seconds;
+use crate::settings::actions::SettingsAction;
 
 use super::actions::ChoreoMainAction;
 use super::actions::OpenAudioRequested;
@@ -259,6 +262,11 @@ pub(crate) fn apply_audio_action_side_effects(
     action: &ChoreoMainAction,
 ) {
     match action {
+        ChoreoMainAction::SettingsAction(SettingsAction::UpdateAudioPlayerBackend {
+            backend,
+        }) => {
+            switch_audio_backend(view_model, audio_runtime, *backend);
+        }
         ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::TogglePlayPause) => {
             audio_runtime.toggle_play_pause();
         }
@@ -290,6 +298,57 @@ pub(crate) fn apply_audio_action_side_effects(
             audio_runtime.set_speed(*speed);
         }
         _ => {}
+    }
+}
+
+fn switch_audio_backend(
+    view_model: &mut MainViewModel,
+    audio_runtime: &mut AudioPlayerRuntime,
+    backend: crate::audio_player::AudioPlayerBackend,
+) {
+    let backend = backend.normalize_for_current_target();
+    if audio_runtime.backend() == backend {
+        return;
+    }
+
+    let had_player = audio_runtime.has_player();
+    let previous_sample = audio_runtime.sample();
+    audio_runtime.set_backend(backend);
+
+    if !had_player {
+        return;
+    }
+
+    let Some(file_path) = view_model.state().audio_player_state.last_opened_audio_file_path.clone()
+    else {
+        return;
+    };
+
+    apply_open_audio_request(view_model, audio_runtime, file_path.as_str());
+    restore_audio_player_sample(audio_runtime, previous_sample);
+
+    if let Some(sample) = audio_runtime.sample() {
+        apply_player_sample(&mut view_model.state_mut().audio_player_state, sample);
+    }
+}
+
+fn restore_audio_player_sample(
+    audio_runtime: &mut AudioPlayerRuntime,
+    sample: Option<AudioPlayerSample>,
+) {
+    let Some(sample) = sample else {
+        return;
+    };
+
+    audio_runtime.set_speed(sample.speed);
+    audio_runtime.set_volume(sample.volume);
+    audio_runtime.set_balance(sample.balance);
+    audio_runtime.set_loop(sample.loop_enabled);
+
+    if sample.is_playing {
+        audio_runtime.seek_and_play(sample.position);
+    } else if sample.position > 0.0 {
+        audio_runtime.seek(sample.position);
     }
 }
 
@@ -424,4 +483,89 @@ pub(crate) fn enqueue_open_audio_request(
     request: OpenAudioRequested,
 ) {
     view_model.request_open_audio(request);
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+    use std::path::Path;
+    use std::path::PathBuf;
+    use std::time::SystemTime;
+    use std::time::UNIX_EPOCH;
+
+    use crate::audio_player::AudioPlayerBackend;
+    use crate::audio_player::runtime::AudioPlayerRuntime;
+    use crate::choreo_main::MainViewModel;
+    use crate::settings::actions::SettingsAction;
+
+    use super::apply_audio_action_side_effects;
+    use super::apply_open_audio_request;
+
+    #[test]
+    fn updating_audio_backend_in_settings_switches_runtime_backend_for_open_audio() {
+        let mut view_model = MainViewModel::new(Vec::new());
+        let mut runtime = AudioPlayerRuntime::new(AudioPlayerBackend::Rodio);
+        let path = unique_temp_file("wav");
+        write_test_wav(&path);
+        let file_path = path.to_string_lossy().into_owned();
+
+        apply_open_audio_request(&mut view_model, &mut runtime, file_path.as_str());
+
+        view_model.dispatch(crate::choreo_main::actions::ChoreoMainAction::SettingsAction(
+            SettingsAction::UpdateAudioPlayerBackend {
+                backend: AudioPlayerBackend::Awedio,
+            },
+        ));
+
+        let action = crate::choreo_main::actions::ChoreoMainAction::SettingsAction(
+            SettingsAction::UpdateAudioPlayerBackend {
+                backend: AudioPlayerBackend::Awedio,
+            },
+        );
+        apply_audio_action_side_effects(&mut view_model, &mut runtime, &action);
+
+        assert_eq!(runtime.backend(), AudioPlayerBackend::Awedio);
+        assert!(runtime.has_player());
+
+        let _ = fs::remove_file(path);
+    }
+
+    fn unique_temp_file(extension: &str) -> PathBuf {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system time should be after unix epoch")
+            .as_nanos();
+        let mut path = std::env::temp_dir();
+        path.push(format!("rchoreo_audio_backend_switch_{nanos}.{extension}"));
+        path
+    }
+
+    fn write_test_wav(path: &Path) {
+        let sample_rate = 8_000_u32;
+        let sample_count = 8_000_usize;
+        let data_size = (sample_count * std::mem::size_of::<i16>()) as u32;
+        let mut bytes = Vec::with_capacity(44 + data_size as usize);
+        bytes.extend_from_slice(b"RIFF");
+        bytes.extend_from_slice(&(36 + data_size).to_le_bytes());
+        bytes.extend_from_slice(b"WAVE");
+        bytes.extend_from_slice(b"fmt ");
+        bytes.extend_from_slice(&16_u32.to_le_bytes());
+        bytes.extend_from_slice(&1_u16.to_le_bytes());
+        bytes.extend_from_slice(&1_u16.to_le_bytes());
+        bytes.extend_from_slice(&sample_rate.to_le_bytes());
+        bytes.extend_from_slice(&(sample_rate * 2).to_le_bytes());
+        bytes.extend_from_slice(&2_u16.to_le_bytes());
+        bytes.extend_from_slice(&16_u16.to_le_bytes());
+        bytes.extend_from_slice(b"data");
+        bytes.extend_from_slice(&data_size.to_le_bytes());
+        for index in 0..sample_count {
+            let sample = if index % 32 < 16 {
+                i16::MAX / 6
+            } else {
+                -(i16::MAX / 6)
+            };
+            bytes.extend_from_slice(&sample.to_le_bytes());
+        }
+        fs::write(path, bytes).expect("test wav file should be written");
+    }
 }

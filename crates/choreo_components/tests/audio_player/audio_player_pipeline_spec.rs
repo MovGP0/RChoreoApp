@@ -11,8 +11,8 @@ use choreo_models::SettingsPreferenceKeys;
 
 use choreo_components::audio_player::AudioPlayerBackend;
 use choreo_components::audio_player::OpenAudioFileCommand;
-use choreo_components::audio_player::audio_player_behaviors::AudioPlayerBehaviorDependencies;
-use choreo_components::audio_player::build_audio_player_behaviors;
+use choreo_components::audio_player::AudioPlayerPipelineDependencies;
+use choreo_components::audio_player::build_audio_player_pipeline;
 use choreo_components::audio_player::messages::CloseAudioFileCommand;
 use choreo_components::audio_player::messages::LinkSceneToPositionCommand;
 use choreo_components::audio_player::runtime::AudioPlayerRuntime;
@@ -36,7 +36,7 @@ fn build_pipeline_handles_open_and_close_commands() {
     );
     let global_state = GlobalStateActor::new();
 
-    let pipeline = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
+    let pipeline = build_audio_player_pipeline(AudioPlayerPipelineDependencies {
         global_state_store: Rc::clone(&global_state),
         open_audio_receiver: open_rx,
         close_audio_receiver: close_rx,
@@ -111,7 +111,7 @@ fn pipeline_links_scene_and_publishes_position_changed_event() {
         };
     }));
 
-    let pipeline = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
+    let pipeline = build_audio_player_pipeline(AudioPlayerPipelineDependencies {
         global_state_store: Rc::clone(&global_state),
         open_audio_receiver: open_rx,
         close_audio_receiver: close_rx,

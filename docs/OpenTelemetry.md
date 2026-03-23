@@ -134,10 +134,10 @@ pub struct TraceContext {
 }
 ```
 
-### Phase 4: Behavior-Level Instrumentation
+### Phase 4: Runtime Pipeline Instrumentation
 
-- Add spans around major behavior work blocks, especially:
-  - file open/load (`OpenChoreoBehavior`, `OpenAudioFileBehavior`);
+- Add spans around major runtime pipeline work blocks, especially:
+  - file open/load (`OpenChoreoRequested`, `OpenAudioFileProcessor`);
   - state machine transitions (`ApplicationStateMachine::try_apply`);
   - floor redraw/gesture loops where expensive operations happen.
 - Add semantic attributes via `opentelemetry-semantic-conventions` instead of ad-hoc keys where possible.

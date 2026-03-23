@@ -6,8 +6,8 @@ use choreo_models::SettingsPreferenceKeys;
 use choreo_components::audio_player::AudioPlayerBackend;
 use choreo_components::audio_player::OpenAudioFileCommand;
 use choreo_components::audio_player::actions::AudioPlayerAction;
-use choreo_components::audio_player::audio_player_behaviors::AudioPlayerBehaviorDependencies;
-use choreo_components::audio_player::build_audio_player_behaviors;
+use choreo_components::audio_player::AudioPlayerPipelineDependencies;
+use choreo_components::audio_player::build_audio_player_pipeline;
 use choreo_components::audio_player::reducer::reduce;
 use choreo_components::audio_player::runtime::AudioPlayerRuntime;
 use choreo_components::audio_player::state::AudioPlayerState;
@@ -96,7 +96,7 @@ fn open_behavior_reads_backend_and_persists_last_opened_path_for_missing_file() 
         AudioPlayerBackend::Awedio.as_preference().to_string(),
     );
 
-    let pipeline = build_audio_player_behaviors(AudioPlayerBehaviorDependencies {
+    let pipeline = build_audio_player_pipeline(AudioPlayerPipelineDependencies {
         global_state_store: GlobalStateActor::new(),
         open_audio_receiver: open_rx,
         close_audio_receiver: close_rx,

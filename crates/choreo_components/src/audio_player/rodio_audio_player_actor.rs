@@ -68,14 +68,14 @@ enum AudioCommand {
     Shutdown,
 }
 
-pub(super) struct NativeAudioPlayerActor {
+pub(super) struct RodioAudioPlayerActor {
     shared: Arc<Mutex<SharedAudioState>>,
     sender: Sender<AudioCommand>,
     receiver_probe: Receiver<AudioCommand>,
     worker: Option<JoinHandle<()>>,
 }
 
-impl NativeAudioPlayerActor {
+impl RodioAudioPlayerActor {
     #[must_use]
     pub(super) fn new(file_path: String) -> Self {
         let shared = Arc::new(Mutex::new(SharedAudioState::default()));
@@ -83,9 +83,9 @@ impl NativeAudioPlayerActor {
         let receiver_probe = receiver.clone();
         let shared_for_thread = Arc::clone(&shared);
         let worker = thread::Builder::new()
-            .name("audio-player-actor-native".to_string())
+            .name("audio-player-actor-rodio".to_string())
             .spawn(move || {
-                let mut runtime = NativeRuntime::new(file_path);
+                let mut runtime = RodioRuntime::new(file_path);
                 runtime.publish(&shared_for_thread);
                 loop {
                     match receiver.recv_timeout(Duration::from_millis(16)) {
@@ -143,7 +143,7 @@ impl NativeAudioPlayerActor {
     }
 }
 
-impl AudioPlayer for NativeAudioPlayerActor {
+impl AudioPlayer for RodioAudioPlayerActor {
     fn sample(&self) -> AudioPlayerSample {
         let state = self.state();
         AudioPlayerSample {
@@ -196,7 +196,7 @@ impl AudioPlayer for NativeAudioPlayerActor {
     }
 }
 
-impl Drop for NativeAudioPlayerActor {
+impl Drop for RodioAudioPlayerActor {
     fn drop(&mut self) {
         loop {
             match self.sender.try_send(AudioCommand::Shutdown) {
@@ -273,7 +273,7 @@ impl Engine {
     }
 }
 
-struct NativeRuntime {
+struct RodioRuntime {
     file_path: String,
     duration: f64,
     position: f64,
@@ -286,7 +286,7 @@ struct NativeRuntime {
     engine: Engine,
 }
 
-impl NativeRuntime {
+impl RodioRuntime {
     fn new(file_path: String) -> Self {
         let duration = read_duration_seconds(&file_path);
         let mut runtime = Self {
@@ -493,7 +493,7 @@ fn append_source(player: &Player, file_path: &str, start_seconds: f64) -> bool {
     true
 }
 
-fn read_duration_seconds(file_path: &str) -> f64 {
+pub(super) fn read_duration_seconds(file_path: &str) -> f64 {
     let Some(file) = File::open(file_path).ok() else {
         return 0.0;
     };
