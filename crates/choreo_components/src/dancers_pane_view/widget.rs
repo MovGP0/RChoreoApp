@@ -1,12 +1,3 @@
-use egui::CornerRadius;
-use egui::Frame;
-use egui::Image;
-use egui::Margin;
-use egui::Sense;
-use egui::Stroke;
-use egui::Ui;
-use egui::UiBuilder;
-use material3::styling::material_typography::TypographyRole;
 use crate::dancers::dancer_list_item_view;
 use crate::dancers_pane_view::geometry::pane_list_size;
 use crate::dancers_pane_view::tokens::pane_corner_radius_token;
@@ -18,6 +9,15 @@ use crate::material::icons as ui_icons;
 use crate::material::icons::UiIconKey;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
+use egui::CornerRadius;
+use egui::Frame;
+use egui::Image;
+use egui::Margin;
+use egui::Sense;
+use egui::Stroke;
+use egui::Ui;
+use egui::UiBuilder;
+use material3::styling::material_typography::TypographyRole;
 
 pub fn draw(ui: &mut Ui, state: DancersPaneViewUiState<'_>) -> Vec<DancersPaneViewAction> {
     let mut actions = Vec::new();
@@ -36,7 +36,10 @@ pub fn draw(ui: &mut Ui, state: DancersPaneViewUiState<'_>) -> Vec<DancersPaneVi
 }
 
 fn draw_title(ui: &mut Ui, title_text: &str) {
-    ui.label(typography::rich_text_for_role(title_text, TypographyRole::TitleMedium));
+    ui.label(typography::rich_text_for_role(
+        title_text,
+        TypographyRole::TitleMedium,
+    ));
 }
 
 fn draw_dancer_list(

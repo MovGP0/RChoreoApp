@@ -20,7 +20,8 @@ impl AndroidHapticFeedback {
         let vm = unsafe { JavaVM::from_raw(context.vm() as *mut jni::sys::JavaVM) };
         let global_context = vm
             .attach_current_thread(|env| {
-                let context_object = unsafe { JObject::from_raw(env, context.context() as jobject) };
+                let context_object =
+                    unsafe { JObject::from_raw(env, context.context() as jobject) };
                 env.new_global_ref(context_object)
             })
             .expect("Failed to create global Android context ref");

@@ -10,12 +10,12 @@ use choreo_models::ChoreographyModel;
 use choreo_models::SceneModel;
 
 use choreo_components::audio_player::AudioPlayerBackend;
-use choreo_components::audio_player::actions::AudioPlayerAction;
 use choreo_components::audio_player::AudioPlayerHapticFeedback;
 use choreo_components::audio_player::AudioPlayerPipelineDependencies;
+use choreo_components::audio_player::actions::AudioPlayerAction;
 use choreo_components::audio_player::build_audio_player_pipeline;
-use choreo_components::audio_player::reduce_with_haptics;
 use choreo_components::audio_player::messages::LinkSceneToPositionCommand;
+use choreo_components::audio_player::reduce_with_haptics;
 use choreo_components::audio_player::state::AudioPlayerState;
 use choreo_components::global::GlobalStateActor;
 use choreo_components::global::SceneViewModel;

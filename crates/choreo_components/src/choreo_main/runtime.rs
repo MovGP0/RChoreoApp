@@ -262,9 +262,7 @@ pub(crate) fn apply_audio_action_side_effects(
     action: &ChoreoMainAction,
 ) {
     match action {
-        ChoreoMainAction::SettingsAction(SettingsAction::UpdateAudioPlayerBackend {
-            backend,
-        }) => {
+        ChoreoMainAction::SettingsAction(SettingsAction::UpdateAudioPlayerBackend { backend }) => {
             switch_audio_backend(view_model, audio_runtime, *backend);
         }
         ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::TogglePlayPause) => {
@@ -319,7 +317,11 @@ fn switch_audio_backend(
         return;
     }
 
-    let Some(file_path) = view_model.state().audio_player_state.last_opened_audio_file_path.clone()
+    let Some(file_path) = view_model
+        .state()
+        .audio_player_state
+        .last_opened_audio_file_path
+        .clone()
     else {
         return;
     };
@@ -511,11 +513,13 @@ mod tests {
 
         apply_open_audio_request(&mut view_model, &mut runtime, file_path.as_str());
 
-        view_model.dispatch(crate::choreo_main::actions::ChoreoMainAction::SettingsAction(
-            SettingsAction::UpdateAudioPlayerBackend {
-                backend: AudioPlayerBackend::Awedio,
-            },
-        ));
+        view_model.dispatch(
+            crate::choreo_main::actions::ChoreoMainAction::SettingsAction(
+                SettingsAction::UpdateAudioPlayerBackend {
+                    backend: AudioPlayerBackend::Awedio,
+                },
+            ),
+        );
 
         let action = crate::choreo_main::actions::ChoreoMainAction::SettingsAction(
             SettingsAction::UpdateAudioPlayerBackend {

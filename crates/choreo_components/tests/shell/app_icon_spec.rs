@@ -15,8 +15,7 @@ fn app_icon_spec() {
 fn android_launcher_icons_match_expected_density_sizes() {
     let android_icons = [
         (
-            include_bytes!("../../../../apps/android/res/mipmap-mdpi/ic_launcher.png")
-                .as_slice(),
+            include_bytes!("../../../../apps/android/res/mipmap-mdpi/ic_launcher.png").as_slice(),
             48_u32,
         ),
         (
@@ -25,8 +24,7 @@ fn android_launcher_icons_match_expected_density_sizes() {
             48_u32,
         ),
         (
-            include_bytes!("../../../../apps/android/res/mipmap-hdpi/ic_launcher.png")
-                .as_slice(),
+            include_bytes!("../../../../apps/android/res/mipmap-hdpi/ic_launcher.png").as_slice(),
             72_u32,
         ),
         (
@@ -35,8 +33,7 @@ fn android_launcher_icons_match_expected_density_sizes() {
             72_u32,
         ),
         (
-            include_bytes!("../../../../apps/android/res/mipmap-xhdpi/ic_launcher.png")
-                .as_slice(),
+            include_bytes!("../../../../apps/android/res/mipmap-xhdpi/ic_launcher.png").as_slice(),
             96_u32,
         ),
         (
@@ -45,8 +42,7 @@ fn android_launcher_icons_match_expected_density_sizes() {
             96_u32,
         ),
         (
-            include_bytes!("../../../../apps/android/res/mipmap-xxhdpi/ic_launcher.png")
-                .as_slice(),
+            include_bytes!("../../../../apps/android/res/mipmap-xxhdpi/ic_launcher.png").as_slice(),
             144_u32,
         ),
         (
@@ -60,10 +56,8 @@ fn android_launcher_icons_match_expected_density_sizes() {
             192_u32,
         ),
         (
-            include_bytes!(
-                "../../../../apps/android/res/mipmap-xxxhdpi/ic_launcher_round.png"
-            )
-            .as_slice(),
+            include_bytes!("../../../../apps/android/res/mipmap-xxxhdpi/ic_launcher_round.png")
+                .as_slice(),
             192_u32,
         ),
     ];

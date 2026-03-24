@@ -10,8 +10,8 @@ use choreo_models::SceneModel;
 use choreo_models::SettingsPreferenceKeys;
 
 use choreo_components::audio_player::AudioPlayerBackend;
-use choreo_components::audio_player::OpenAudioFileCommand;
 use choreo_components::audio_player::AudioPlayerPipelineDependencies;
+use choreo_components::audio_player::OpenAudioFileCommand;
 use choreo_components::audio_player::build_audio_player_pipeline;
 use choreo_components::audio_player::messages::CloseAudioFileCommand;
 use choreo_components::audio_player::messages::LinkSceneToPositionCommand;

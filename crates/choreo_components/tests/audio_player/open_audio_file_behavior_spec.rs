@@ -4,9 +4,9 @@ use std::sync::mpsc::channel;
 use choreo_models::SettingsPreferenceKeys;
 
 use choreo_components::audio_player::AudioPlayerBackend;
+use choreo_components::audio_player::AudioPlayerPipelineDependencies;
 use choreo_components::audio_player::OpenAudioFileCommand;
 use choreo_components::audio_player::actions::AudioPlayerAction;
-use choreo_components::audio_player::AudioPlayerPipelineDependencies;
 use choreo_components::audio_player::build_audio_player_pipeline;
 use choreo_components::audio_player::reducer::reduce;
 use choreo_components::audio_player::runtime::AudioPlayerRuntime;

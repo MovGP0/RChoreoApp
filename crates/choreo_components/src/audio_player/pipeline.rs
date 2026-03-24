@@ -47,9 +47,7 @@ pub struct AudioPlayerPipeline {
     pub haptic_feedback: Option<Box<dyn AudioPlayerHapticFeedback>>,
 }
 
-pub fn build_audio_player_pipeline(
-    deps: AudioPlayerPipelineDependencies,
-) -> AudioPlayerPipeline {
+pub fn build_audio_player_pipeline(deps: AudioPlayerPipelineDependencies) -> AudioPlayerPipeline {
     AudioPlayerPipeline {
         open_audio_file: OpenAudioFileProcessor::new(
             deps.open_audio_receiver,

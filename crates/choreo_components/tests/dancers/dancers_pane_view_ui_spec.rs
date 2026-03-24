@@ -1,7 +1,5 @@
 use crate::dancers;
 use crate::dancers::Report;
-use choreo_components::material::icons::UiIconKey;
-use choreo_components::material::styling::material_typography::TypographyRole;
 
 #[test]
 fn dancers_pane_view_ui_spec() {

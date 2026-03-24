@@ -12,6 +12,7 @@ pub mod behavior;
 pub mod choreo_info;
 pub mod choreo_main;
 pub mod choreography_settings;
+pub mod color_picker;
 pub mod dancer_settings_page;
 pub mod dancers;
 pub mod dancers_pane_view;

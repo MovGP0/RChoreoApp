@@ -1,10 +1,11 @@
-use egui::pos2;
-use egui::vec2;
 use egui::Color32;
 use egui::Pos2;
 use egui::Rect;
 use egui::Vec2;
+use egui::pos2;
+use egui::vec2;
 
+use crate::dancers::dancer_list_item_view::tokens::ROW_HEIGHT_PX;
 use crate::dancers::dancer_list_item_view::tokens::item_top_bottom_gap_token;
 use crate::dancers::dancer_list_item_view::tokens::subtitle_y_token;
 use crate::dancers::dancer_list_item_view::tokens::swatch_half_height_token;
@@ -12,7 +13,6 @@ use crate::dancers::dancer_list_item_view::tokens::swatch_size_token;
 use crate::dancers::dancer_list_item_view::tokens::swatch_x_token;
 use crate::dancers::dancer_list_item_view::tokens::title_x_token;
 use crate::dancers::dancer_list_item_view::tokens::title_y_token;
-use crate::dancers::dancer_list_item_view::tokens::ROW_HEIGHT_PX;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct DancerListItemLayout {

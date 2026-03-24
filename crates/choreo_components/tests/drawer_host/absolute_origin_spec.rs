@@ -3,7 +3,6 @@ use crate::drawer_host::ui::compute_layout;
 use crate::drawer_host::ui::draw_with_slots_in_rect;
 use egui::Rect;
 use egui::pos2;
-
 #[test]
 fn absolute_origin_spec() {
     let state = DrawerHostState {

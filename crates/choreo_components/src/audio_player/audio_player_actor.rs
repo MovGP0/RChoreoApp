@@ -47,12 +47,12 @@ pub fn create_platform_audio_player(
     #[cfg(not(target_arch = "wasm32"))]
     {
         match platform_audio_player_kind(backend) {
-            PlatformAudioPlayerKind::Rodio => {
-                Box::new(rodio_audio_player_actor::RodioAudioPlayerActor::new(file_path))
-            }
-            PlatformAudioPlayerKind::Awedio => {
-                Box::new(awedio_audio_player_actor::AwedioAudioPlayerActor::new(file_path))
-            }
+            PlatformAudioPlayerKind::Rodio => Box::new(
+                rodio_audio_player_actor::RodioAudioPlayerActor::new(file_path),
+            ),
+            PlatformAudioPlayerKind::Awedio => Box::new(
+                awedio_audio_player_actor::AwedioAudioPlayerActor::new(file_path),
+            ),
             PlatformAudioPlayerKind::Silent => {
                 Box::new(silent_audio_player_actor::SilentAudioPlayerActor::new())
             }
@@ -64,9 +64,7 @@ pub fn create_platform_audio_player(
 fn platform_audio_player_kind(backend: AudioPlayerBackend) -> PlatformAudioPlayerKind {
     match backend {
         AudioPlayerBackend::Browser => PlatformAudioPlayerKind::Browser,
-        AudioPlayerBackend::Rodio | AudioPlayerBackend::Awedio => {
-            PlatformAudioPlayerKind::Silent
-        }
+        AudioPlayerBackend::Rodio | AudioPlayerBackend::Awedio => PlatformAudioPlayerKind::Silent,
     }
 }
 
