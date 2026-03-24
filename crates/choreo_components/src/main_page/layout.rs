@@ -3,13 +3,13 @@ use egui::Ui;
 use egui::pos2;
 use egui::vec2;
 
+use crate::choreography_settings;
 use crate::choreo_main::state::ChoreoMainState;
 use crate::material::components::drawer_host::state::DrawerHostOpenMode;
 use crate::material::components::drawer_host::state::DrawerHostState;
 
 pub(super) const TOP_BAR_HEIGHT_PX: f32 = 84.0;
 pub(super) const DRAWER_WIDTH_LEFT_PX: f32 = 324.0;
-pub(super) const DRAWER_WIDTH_RIGHT_PX: f32 = 480.0;
 pub(super) const AUDIO_PANEL_HEIGHT_PX: f32 = 84.0;
 pub(super) const GRID_12_PX: f32 = 12.0;
 
@@ -17,7 +17,7 @@ pub(super) const GRID_12_PX: f32 = 12.0;
 pub fn drawer_host_state(_viewport_size: egui::Vec2, state: &ChoreoMainState) -> DrawerHostState {
     DrawerHostState {
         left_drawer_width: DRAWER_WIDTH_LEFT_PX,
-        right_drawer_width: DRAWER_WIDTH_RIGHT_PX,
+        right_drawer_width: choreography_settings::ui::drawer_width_token(),
         responsive_breakpoint: 900.0,
         open_mode: DrawerHostOpenMode::Standard,
         top_inset: 0.0,

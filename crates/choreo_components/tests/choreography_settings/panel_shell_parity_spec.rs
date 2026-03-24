@@ -1,5 +1,6 @@
 use crate::choreography_settings::create_state;
 use choreo_components::choreography_settings::translations::ChoreographySettingsTranslations;
+use choreo_components::choreography_settings::ui::drawer_width_token;
 use choreo_components::choreography_settings::ui::uses_vertical_scroll_container;
 
 const LOCALE: &str = "en";
@@ -21,6 +22,11 @@ fn choreography_settings_sections_render_in_slint_card_order() {
 #[test]
 fn choreography_settings_panel_uses_vertical_scroll_container() {
     assert!(uses_vertical_scroll_container());
+}
+
+#[test]
+fn choreography_settings_panel_exposes_a_fixed_drawer_width_token() {
+    assert_eq!(drawer_width_token(), 360.0);
 }
 
 fn render_debug_shapes(

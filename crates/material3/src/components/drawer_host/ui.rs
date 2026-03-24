@@ -23,6 +23,16 @@ pub struct DrawerHostLayout {
 }
 
 #[must_use]
+pub const fn content_layer_order() -> Order {
+    Order::Middle
+}
+
+#[must_use]
+pub const fn panel_layer_order() -> Order {
+    Order::Foreground
+}
+
+#[must_use]
 pub fn inline_left_width(state: &DrawerHostState, host_width: f32) -> f32 {
     if is_inline_left_layout(state, host_width) && state.is_left_open {
         state.left_drawer_width
@@ -188,7 +198,7 @@ pub fn draw_with_slots_in_rect(
     let overlay_action = overlay_close_action(state, host_rect.width());
 
     Area::new(Id::new((id_source, "content")))
-        .order(Order::Middle)
+        .order(content_layer_order())
         .fixed_pos(layout.content_rect.min)
         .show(context, |ui| {
             ui.set_min_size(layout.content_rect.size());
@@ -218,7 +228,7 @@ pub fn draw_with_slots_in_rect(
 
     if state.is_top_open {
         Area::new(Id::new((id_source, "top_panel")))
-            .order(Order::Tooltip)
+            .order(panel_layer_order())
             .fixed_pos(layout.top_panel_rect.min)
             .show(context, |ui| {
                 ui.set_min_size(layout.top_panel_rect.size());
@@ -233,7 +243,7 @@ pub fn draw_with_slots_in_rect(
 
     if state.is_bottom_open {
         Area::new(Id::new((id_source, "bottom_panel")))
-            .order(Order::Tooltip)
+            .order(panel_layer_order())
             .fixed_pos(layout.bottom_panel_rect.min)
             .show(context, |ui| {
                 ui.set_min_size(layout.bottom_panel_rect.size());
@@ -251,7 +261,7 @@ pub fn draw_with_slots_in_rect(
 
     if state.is_left_open {
         Area::new(Id::new((id_source, "left_panel")))
-            .order(Order::Tooltip)
+            .order(panel_layer_order())
             .fixed_pos(layout.left_panel_rect.min)
             .show(context, |ui| {
                 ui.set_min_size(layout.left_panel_rect.size());
@@ -266,7 +276,7 @@ pub fn draw_with_slots_in_rect(
 
     if state.is_right_open {
         Area::new(Id::new((id_source, "right_panel")))
-            .order(Order::Tooltip)
+            .order(panel_layer_order())
             .fixed_pos(layout.right_panel_rect.min)
             .show(context, |ui| {
                 ui.set_min_size(layout.right_panel_rect.size());
@@ -284,7 +294,6 @@ pub fn draw_with_slots_in_rect(
 
     actions
 }
-
 fn pointer_not_in_open_panel(ui: &Ui, layout: &DrawerHostLayout, state: &DrawerHostState) -> bool {
     let pointer_pos = ui.ctx().pointer_latest_pos();
     let Some(pointer_pos) = pointer_pos else {

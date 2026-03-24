@@ -73,6 +73,11 @@ pub const fn uses_vertical_scroll_container() -> bool {
 }
 
 #[must_use]
+pub const fn drawer_width_token() -> f32 {
+    360.0
+}
+
+#[must_use]
 pub fn settings_section_titles(locale: &str) -> [String; 4] {
     [
         ChoreographySettingsTranslations::selected_scene(locale),

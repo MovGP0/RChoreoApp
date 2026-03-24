@@ -30,6 +30,7 @@ use crate::main_page::ui::translated_mode_labels;
 use choreo_components::choreo_main::actions::OpenAudioRequested;
 use choreo_components::choreo_main::actions::OpenChoreoRequested;
 use choreo_components::choreography_settings::actions::ChoreographySettingsAction;
+use choreo_components::choreography_settings::ui::drawer_width_token as settings_drawer_width_token;
 use choreo_components::nav_bar::translations::nav_bar_translations;
 use choreo_components::scenes::actions::ScenesAction;
 use choreo_master_mobile_json::Color;
@@ -158,7 +159,7 @@ fn ui_parity_spec() {
                 let drawer_state = drawer_host_state(egui::vec2(1280.0, 720.0), &state);
 
                 assert_eq!(drawer_state.left_drawer_width, 324.0);
-                assert_eq!(drawer_state.right_drawer_width, 480.0);
+                assert_eq!(drawer_state.right_drawer_width, settings_drawer_width_token());
                 assert_eq!(drawer_state.responsive_breakpoint, 900.0);
                 assert_eq!(drawer_state.open_mode, DrawerHostOpenMode::Standard);
                 assert_eq!(drawer_state.top_inset, 0.0);
@@ -225,13 +226,19 @@ fn ui_parity_spec() {
                 assert_eq!(layout.left_panel_rect.left(), host_rect.left());
                 assert_eq!(layout.left_panel_rect.right(), host_rect.left() + 324.0);
                 assert_eq!(layout.right_panel_rect.right(), host_rect.right());
-                assert_eq!(layout.right_panel_rect.left(), host_rect.right() - 480.0);
+                assert_eq!(
+                    layout.right_panel_rect.left(),
+                    host_rect.right() - settings_drawer_width_token()
+                );
                 assert_eq!(layout.content_rect.left(), host_rect.left() + 324.0);
                 assert_eq!(layout.content_rect.right(), host_rect.right());
 
                 let floor_rect = floor_content_rect(layout.content_rect, true);
                 assert_eq!(floor_rect.left(), host_rect.left() + 324.0);
-                assert_eq!(floor_rect.right(), host_rect.right() - 480.0);
+                assert_eq!(
+                    floor_rect.right(),
+                    host_rect.right() - settings_drawer_width_token()
+                );
             },
         );
 

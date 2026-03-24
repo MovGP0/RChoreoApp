@@ -47,7 +47,6 @@ pub use super::top_bar::top_bar_settings_icon_svg;
 pub use super::top_bar::translated_mode_labels;
 
 use super::layout::AUDIO_PANEL_HEIGHT_PX;
-use super::layout::DRAWER_WIDTH_RIGHT_PX;
 use super::layout::GRID_12_PX;
 use super::scene_pane::draw_scenes_drawer;
 use super::top_bar::draw_top_bar;
@@ -60,6 +59,16 @@ const SETTINGS_DEBUG_BORDER_COLOR: Color32 = Color32::from_rgb(0, 160, 255);
 const AUDIO_DEBUG_BORDER_COLOR: Color32 = Color32::from_rgb(255, 208, 0);
 const PANEL_DEBUG_CONTENT_PADDING_PX: f32 = 4.0;
 
+#[must_use]
+pub const fn top_bar_layer_order() -> egui::Order {
+    egui::Order::Debug
+}
+
+#[must_use]
+pub const fn audio_panel_layer_order() -> egui::Order {
+    egui::Order::Tooltip
+}
+
 pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     let mut actions: Vec<ChoreoMainAction> = Vec::new();
     ui.spacing_mut().item_spacing = vec2(GRID_12_PX, GRID_12_PX);
@@ -68,7 +77,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     let top_bar_rect = top_bar_rect(page_rect);
     let drawer_host_rect = drawer_host_rect(page_rect, audio_panel_height);
     egui::Area::new(egui::Id::new("main_page_top_bar"))
-        .order(egui::Order::Foreground)
+        .order(top_bar_layer_order())
         .fixed_pos(top_bar_rect.min)
         .show(ui.ctx(), |ui| {
             ui.set_clip_rect(top_bar_rect);
@@ -143,7 +152,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     if state.is_audio_player_open {
         let audio_rect = audio_panel_rect(page_rect, audio_panel_height);
         egui::Area::new(egui::Id::new("main_page_audio_host"))
-            .order(egui::Order::Foreground)
+            .order(audio_panel_layer_order())
             .fixed_pos(audio_rect.min)
             .show(ui.ctx(), |ui| {
                 ui.set_clip_rect(audio_rect);
@@ -177,7 +186,10 @@ pub fn floor_content_rect(slot_rect: egui::Rect, is_right_drawer_open: bool) -> 
         return slot_rect;
     }
 
-    let right = (slot_rect.max.x - DRAWER_WIDTH_RIGHT_PX).max(slot_rect.min.x);
+    let right = (
+        slot_rect.max.x - choreography_settings::ui::drawer_width_token()
+    )
+        .max(slot_rect.min.x);
     egui::Rect::from_min_max(slot_rect.min, egui::pos2(right, slot_rect.max.y))
 }
 
@@ -211,10 +223,11 @@ fn draw_floor_host_content(
 fn draw_settings_drawer(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     let mut actions = Vec::new();
     let panel_rect = ui.max_rect();
+    let panel_width = panel_rect.width();
     ui.set_clip_rect(panel_rect);
     ui.set_min_size(panel_rect.size());
-    ui.set_width(DRAWER_WIDTH_RIGHT_PX);
-    ui.set_min_width(DRAWER_WIDTH_RIGHT_PX);
+    ui.set_width(panel_width);
+    ui.set_min_width(panel_width);
     ui.painter()
         .rect_filled(panel_rect, 0.0, ui.visuals().window_fill);
     if cfg!(debug_assertions) {
