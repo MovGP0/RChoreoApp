@@ -116,7 +116,11 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
         |ui| {
             slot_actions
                 .borrow_mut()
-                .extend(draw_floor_host_content(ui, &state.floor_state));
+                .extend(draw_floor_host_content(
+                    ui,
+                    &state.floor_state,
+                    state.is_choreography_settings_open,
+                ));
         },
         |ui| {
             let mut slot_actions = slot_actions.borrow_mut();
@@ -167,9 +171,23 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     actions
 }
 
-fn draw_floor_host_content(ui: &mut Ui, state: &floor::state::FloorState) -> Vec<ChoreoMainAction> {
+#[must_use]
+pub fn floor_content_rect(slot_rect: egui::Rect, is_right_drawer_open: bool) -> egui::Rect {
+    if !is_right_drawer_open {
+        return slot_rect;
+    }
+
+    let right = (slot_rect.max.x - DRAWER_WIDTH_RIGHT_PX).max(slot_rect.min.x);
+    egui::Rect::from_min_max(slot_rect.min, egui::pos2(right, slot_rect.max.y))
+}
+
+fn draw_floor_host_content(
+    ui: &mut Ui,
+    state: &floor::state::FloorState,
+    is_right_drawer_open: bool,
+) -> Vec<ChoreoMainAction> {
     let mut actions: Vec<ChoreoMainAction> = Vec::new();
-    let host_rect = ui.max_rect();
+    let host_rect = floor_content_rect(ui.max_rect(), is_right_drawer_open);
     ui.set_clip_rect(host_rect);
     ui.set_min_size(host_rect.size());
     ui.painter()

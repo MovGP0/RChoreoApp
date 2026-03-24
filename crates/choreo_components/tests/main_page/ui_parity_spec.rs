@@ -6,6 +6,7 @@ use crate::main_page::state::InteractionMode;
 use crate::main_page::ui::drawer_host_rect;
 use crate::main_page::ui::drawer_host_state;
 use crate::main_page::ui::audio_panel_rect;
+use crate::main_page::ui::floor_content_rect;
 use crate::main_page::ui::home_icon_name;
 use crate::main_page::ui::map_choreography_settings_action;
 use crate::main_page::ui::map_drawer_host_action;
@@ -37,6 +38,7 @@ use choreo_models::SceneModel;
 use material3::components::drawer_host::actions::DrawerHostAction;
 use material3::components::drawer_host::state::DrawerHostOpenMode;
 use material3::components::drawer_host::ui::compute_layout as compute_drawer_host_layout;
+use material3::components::drawer_host::ui::overlay_visible as drawer_host_overlay_visible;
 
 #[test]
 fn ui_parity_spec() {
@@ -160,8 +162,11 @@ fn ui_parity_spec() {
                 assert_eq!(drawer_state.responsive_breakpoint, 900.0);
                 assert_eq!(drawer_state.open_mode, DrawerHostOpenMode::Standard);
                 assert_eq!(drawer_state.top_inset, 0.0);
+                assert!(!drawer_state.left_close_on_click_away);
+                assert!(!drawer_state.right_close_on_click_away);
                 assert!(drawer_state.is_left_open);
                 assert!(drawer_state.is_right_open);
+                assert!(!drawer_host_overlay_visible(&drawer_state, 1280.0));
             },
         );
 
@@ -223,6 +228,10 @@ fn ui_parity_spec() {
                 assert_eq!(layout.right_panel_rect.left(), host_rect.right() - 480.0);
                 assert_eq!(layout.content_rect.left(), host_rect.left() + 324.0);
                 assert_eq!(layout.content_rect.right(), host_rect.right());
+
+                let floor_rect = floor_content_rect(layout.content_rect, true);
+                assert_eq!(floor_rect.left(), host_rect.left() + 324.0);
+                assert_eq!(floor_rect.right(), host_rect.right() - 480.0);
             },
         );
 

@@ -218,7 +218,7 @@ pub fn draw_with_slots_in_rect(
 
     if state.is_top_open {
         Area::new(Id::new((id_source, "top_panel")))
-            .order(Order::Middle)
+            .order(Order::Tooltip)
             .fixed_pos(layout.top_panel_rect.min)
             .show(context, |ui| {
                 ui.set_min_size(layout.top_panel_rect.size());
@@ -233,7 +233,7 @@ pub fn draw_with_slots_in_rect(
 
     if state.is_bottom_open {
         Area::new(Id::new((id_source, "bottom_panel")))
-            .order(Order::Middle)
+            .order(Order::Tooltip)
             .fixed_pos(layout.bottom_panel_rect.min)
             .show(context, |ui| {
                 ui.set_min_size(layout.bottom_panel_rect.size());
@@ -251,7 +251,7 @@ pub fn draw_with_slots_in_rect(
 
     if state.is_left_open {
         Area::new(Id::new((id_source, "left_panel")))
-            .order(Order::Middle)
+            .order(Order::Tooltip)
             .fixed_pos(layout.left_panel_rect.min)
             .show(context, |ui| {
                 ui.set_min_size(layout.left_panel_rect.size());
@@ -266,7 +266,7 @@ pub fn draw_with_slots_in_rect(
 
     if state.is_right_open {
         Area::new(Id::new((id_source, "right_panel")))
-            .order(Order::Middle)
+            .order(Order::Tooltip)
             .fixed_pos(layout.right_panel_rect.min)
             .show(context, |ui| {
                 ui.set_min_size(layout.right_panel_rect.size());

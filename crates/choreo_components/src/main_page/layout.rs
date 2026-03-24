@@ -21,6 +21,8 @@ pub fn drawer_host_state(_viewport_size: egui::Vec2, state: &ChoreoMainState) ->
         responsive_breakpoint: 900.0,
         open_mode: DrawerHostOpenMode::Standard,
         top_inset: 0.0,
+        left_close_on_click_away: false,
+        right_close_on_click_away: false,
         inline_left: false,
         is_left_open: state.is_nav_open,
         is_right_open: state.is_choreography_settings_open,
