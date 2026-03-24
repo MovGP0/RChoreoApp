@@ -237,6 +237,13 @@ fn draw_settings_drawer(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainA
             Stroke::new(1.0, SETTINGS_DEBUG_BORDER_COLOR),
             StrokeKind::Inside,
         );
+        ui.painter().text(
+            panel_rect.left_top() + vec2(PANEL_DEBUG_CONTENT_PADDING_PX, PANEL_DEBUG_CONTENT_PADDING_PX),
+            egui::Align2::LEFT_TOP,
+            format!("{:.0} x {:.0}", panel_rect.width(), panel_rect.height()),
+            egui::TextStyle::Monospace.resolve(ui.style()),
+            SETTINGS_DEBUG_BORDER_COLOR,
+        );
     }
     let inner_rect = panel_rect.shrink(PANEL_DEBUG_CONTENT_PADDING_PX);
     let _ = ui.scope_builder(UiBuilder::new().max_rect(inner_rect), |ui| {

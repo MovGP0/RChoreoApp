@@ -1,5 +1,10 @@
 use egui::Color32;
+use egui::Align2;
 use egui::CornerRadius;
+use egui::FontSelection;
+use egui::Id;
+use egui::LayerId;
+use egui::Order;
 use egui::Rect;
 use egui::Response;
 use egui::Sense;
@@ -96,6 +101,7 @@ impl BaseCard {
     ) -> CardResponse<R> {
         self.paint_background(ui, rect);
         self.paint_border(ui, rect);
+        self.paint_debug_size_label(ui, rect);
         self.paint_state_layer(ui, &response);
 
         let clip_rect = rect.intersect(ui.clip_rect());
@@ -153,6 +159,37 @@ impl BaseCard {
         state_layer.border_radius = card_corner_radius();
         state_layer.enabled = ui.is_enabled();
         paint_state_layer_for_response(ui, response, state_layer);
+    }
+
+    fn paint_debug_size_label(self, ui: &Ui, rect: Rect) {
+        if !cfg!(debug_assertions) {
+            return;
+        }
+
+        let label = format!("{:.0} x {:.0}", rect.width(), rect.height());
+        let text_color = if self.border_color == Color32::TRANSPARENT {
+            ui.visuals().strong_text_color()
+        } else {
+            self.border_color
+        };
+        let layer_id = LayerId::new(
+            Order::Debug,
+            Id::new((
+                "material_card_debug_size",
+                rect.min.x.to_bits(),
+                rect.min.y.to_bits(),
+                rect.max.x.to_bits(),
+                rect.max.y.to_bits(),
+            )),
+        );
+
+        ui.ctx().layer_painter(layer_id).text(
+            rect.left_top() + egui::vec2(4.0, 4.0),
+            Align2::LEFT_TOP,
+            label,
+            FontSelection::Style(egui::TextStyle::Monospace).resolve(ui.style()),
+            text_color,
+        );
     }
 
     #[must_use]

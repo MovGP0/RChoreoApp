@@ -1,7 +1,9 @@
 use egui::Align;
 use egui::Color32;
 use egui::CornerRadius;
+use egui::Direction;
 use egui::Frame;
+use egui::Label;
 use egui::Layout;
 use egui::Margin;
 use egui::Stroke;
@@ -60,55 +62,77 @@ pub fn draw(ui: &mut Ui, state: NumberPickerUiState<'_>) -> Option<i32> {
     let decrement_icon = ui_icon(UiIconKey::NumberPickerDecrement);
     let increment_icon = ui_icon(UiIconKey::NumberPickerIncrement);
     let mut changed_value = None;
+    let spacing = metrics.spacings.spacing_8;
+    let controls_cluster_width =
+        metrics.sizes.size_40 * 2.0 + metrics.sizes.size_72 + spacing * 2.0;
+    let label_width = (ui.available_width() - controls_cluster_width - spacing).max(0.0);
 
     ui.horizontal(|ui| {
-        ui.label(
+        ui.spacing_mut().item_spacing.x = spacing;
+        let label = Label::new(
             rich_text_for_role(state.label, TypographyRole::BodyMedium)
                 .color(ui.visuals().weak_text_color()),
+        )
+        .truncate();
+        let _ = ui.add_sized(vec2(label_width, metrics.sizes.size_40), label);
+
+        let _ = ui.allocate_ui_with_layout(
+            vec2(controls_cluster_width, metrics.sizes.size_40),
+            Layout::right_to_left(Align::Center),
+            |ui| {
+                ui.spacing_mut().item_spacing.x = spacing;
+
+                if ui
+                    .add_enabled(
+                        can_increase,
+                        MaterialIconButton::standard(increment_icon.token)
+                            .svg_data(increment_icon.svg),
+                    )
+                    .clicked()
+                {
+                    changed_value =
+                        increase_value(current_value, state.minimum, state.maximum, state.step);
+                }
+
+                Frame::new()
+                    .fill(value_fill(ui, state.enabled))
+                    .stroke(Stroke::new(
+                        metrics.strokes.outline,
+                        ui.visuals().widgets.noninteractive.bg_stroke.color,
+                    ))
+                    .corner_radius(CornerRadius::same(
+                        metrics.corner_radii.border_radius_8 as u8,
+                    ))
+                    .inner_margin(Margin::symmetric(0, metrics.paddings.padding_8 as i8))
+                    .show(ui, |ui| {
+                        ui.set_min_size(vec2(metrics.sizes.size_72, metrics.sizes.size_40));
+                        ui.with_layout(
+                            Layout::centered_and_justified(Direction::LeftToRight),
+                            |ui| {
+                                ui.label(
+                                    rich_text_for_role(
+                                        current_value.to_string(),
+                                        TypographyRole::TitleMedium,
+                                    )
+                                    .color(value_text_color(ui, state.enabled)),
+                                );
+                            },
+                        );
+                    });
+
+                if ui
+                    .add_enabled(
+                        can_decrease,
+                        MaterialIconButton::standard(decrement_icon.token)
+                            .svg_data(decrement_icon.svg),
+                    )
+                    .clicked()
+                {
+                    changed_value =
+                        decrease_value(current_value, state.minimum, state.maximum, state.step);
+                }
+            },
         );
-        ui.add_space(ui.available_width().max(0.0));
-
-        if ui
-            .add_enabled(
-                can_decrease,
-                MaterialIconButton::standard(decrement_icon.token).svg_data(decrement_icon.svg),
-            )
-            .clicked()
-        {
-            changed_value = decrease_value(current_value, state.minimum, state.maximum, state.step);
-        }
-
-        Frame::new()
-            .fill(value_fill(ui, state.enabled))
-            .stroke(Stroke::new(
-                metrics.strokes.outline,
-                ui.visuals().widgets.noninteractive.bg_stroke.color,
-            ))
-            .corner_radius(CornerRadius::same(
-                metrics.corner_radii.border_radius_8 as u8,
-            ))
-            .inner_margin(Margin::symmetric(0, metrics.paddings.padding_8 as i8))
-            .show(ui, |ui| {
-                ui.set_min_size(vec2(metrics.sizes.size_72, metrics.sizes.size_40));
-                ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                    ui.add_space(ui.available_width().max(0.0) / 2.0);
-                    ui.label(
-                        rich_text_for_role(current_value.to_string(), TypographyRole::TitleMedium)
-                            .color(value_text_color(ui, state.enabled)),
-                    );
-                    ui.add_space(ui.available_width().max(0.0) / 2.0);
-                });
-            });
-
-        if ui
-            .add_enabled(
-                can_increase,
-                MaterialIconButton::standard(increment_icon.token).svg_data(increment_icon.svg),
-            )
-            .clicked()
-        {
-            changed_value = increase_value(current_value, state.minimum, state.maximum, state.step);
-        }
     });
 
     changed_value

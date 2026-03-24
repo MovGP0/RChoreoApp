@@ -1,9 +1,14 @@
 use egui::Color32;
 use egui::CornerRadius;
 use egui::Frame;
+use egui::Id;
+use egui::Layout;
+use egui::LayerId;
 use egui::Margin;
+use egui::Order;
 use egui::Stroke;
 use egui::Ui;
+use egui::vec2;
 use egui_material3::MaterialSelect;
 use egui_material3::MaterialSwitch;
 
@@ -46,20 +51,23 @@ pub fn draw(ui: &mut Ui, state: &ChoreographySettingsState) -> Vec<ChoreographyS
     MaterialScrollArea::vertical()
         .auto_shrink([false, false])
         .show(ui, |ui| {
-            ui.set_width(ui.available_width());
-            draw_settings_card(ui, &section_titles[0], |ui| {
+            let card_outer_width = ui.available_width().min(drawer_width_token()).max(0.0);
+            ui.set_width(card_outer_width);
+            ui.set_min_width(card_outer_width);
+            ui.set_max_width(card_outer_width);
+            draw_settings_card(ui, card_outer_width, &section_titles[0], |ui| {
                 draw_selected_scene_section(ui, state, locale, &mut actions);
             });
             ui.add_space(card_spacing_token());
-            draw_settings_card(ui, &section_titles[1], |ui| {
+            draw_settings_card(ui, card_outer_width, &section_titles[1], |ui| {
                 draw_display_section(ui, state, locale, &mut actions);
             });
             ui.add_space(card_spacing_token());
-            draw_settings_card(ui, &section_titles[2], |ui| {
+            draw_settings_card(ui, card_outer_width, &section_titles[2], |ui| {
                 draw_choreography_section(ui, state, locale, &mut actions);
             });
             ui.add_space(card_spacing_token());
-            draw_settings_card(ui, &section_titles[3], |ui| {
+            draw_settings_card(ui, card_outer_width, &section_titles[3], |ui| {
                 draw_floor_section(ui, state, locale, &mut actions);
             });
         });
@@ -405,9 +413,18 @@ fn draw_selected_scene_section(
     });
 }
 
-fn draw_settings_card(ui: &mut Ui, title: &str, add_contents: impl FnOnce(&mut Ui)) {
+fn draw_settings_card(
+    ui: &mut Ui,
+    outer_width: f32,
+    title: &str,
+    add_contents: impl FnOnce(&mut Ui),
+) {
     let metrics = material_style_metrics();
-    Frame::new()
+    let content_width = settings_card_content_width(outer_width);
+    ui.set_width(outer_width);
+    ui.set_min_width(outer_width);
+    ui.set_max_width(outer_width);
+    let response = Frame::new()
         .fill(ui.visuals().window_fill)
         .stroke(Stroke::new(
             metrics.strokes.outline,
@@ -418,19 +435,56 @@ fn draw_settings_card(ui: &mut Ui, title: &str, add_contents: impl FnOnce(&mut U
         ))
         .inner_margin(Margin::same(metrics.paddings.padding_12 as i8))
         .show(ui, |ui| {
-            ui.set_width(ui.available_width());
-            ui.spacing_mut().item_spacing.y = metrics.spacings.spacing_8;
-            ui.label(typography::rich_text_for_role(
-                title,
-                settings_card_title_role(),
-            ));
-            add_contents(ui);
+            let _ = ui.allocate_ui_with_layout(
+                vec2(content_width, 0.0),
+                Layout::top_down(egui::Align::Min),
+                |ui| {
+                ui.set_width(content_width);
+                ui.set_min_width(content_width);
+                ui.set_max_width(content_width);
+                ui.spacing_mut().item_spacing.y = metrics.spacings.spacing_8;
+                ui.label(typography::rich_text_for_role(
+                    title,
+                    settings_card_title_role(),
+                ));
+                add_contents(ui);
+                },
+            );
         });
+
+    if cfg!(debug_assertions) {
+        let rect = response.response.rect;
+        let layer_id = LayerId::new(
+            Order::Debug,
+            Id::new((
+                "choreography_settings_card_debug_size",
+                rect.min.x.to_bits(),
+                rect.min.y.to_bits(),
+                rect.max.x.to_bits(),
+                rect.max.y.to_bits(),
+            )),
+        );
+        ui.ctx().layer_painter(layer_id).text(
+            rect.left_top() + egui::vec2(4.0, 4.0),
+            egui::Align2::LEFT_TOP,
+            format!("{:.0} x {:.0}", rect.width(), rect.height()),
+            egui::TextStyle::Monospace.resolve(ui.style()),
+            ui.visuals().widgets.noninteractive.bg_stroke.color,
+        );
+    }
 }
 
 #[must_use]
 pub fn card_spacing_token() -> f32 {
     material_style_metrics().spacings.spacing_12
+}
+
+#[must_use]
+pub fn settings_card_content_width(outer_width: f32) -> f32 {
+    let metrics = material_style_metrics();
+    let horizontal_padding = metrics.paddings.padding_12 * 2.0;
+    let horizontal_stroke = metrics.strokes.outline * 2.0;
+    (outer_width - horizontal_padding - horizontal_stroke).max(0.0)
 }
 
 #[must_use]
