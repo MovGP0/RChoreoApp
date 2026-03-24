@@ -1,10 +1,10 @@
 use egui::Ui;
 
 use crate::dancers;
-use crate::dialog_host::ui::DialogHostProps;
-use crate::dialog_host::ui::dialog_metrics_tokens;
-use crate::dialog_host::ui::draw_dialog_host;
 use crate::main_page;
+use crate::material::components::dialog_host::DialogHostProps;
+use crate::material::components::dialog_host::dialog_metrics_tokens;
+use crate::material::components::dialog_host::draw_dialog_host;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::settings;
 

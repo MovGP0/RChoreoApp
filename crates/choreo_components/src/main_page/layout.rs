@@ -4,8 +4,8 @@ use egui::pos2;
 use egui::vec2;
 
 use crate::choreo_main::state::ChoreoMainState;
-use crate::drawer_host::state::DrawerHostOpenMode;
-use crate::drawer_host::state::DrawerHostState;
+use crate::material::components::drawer_host::state::DrawerHostOpenMode;
+use crate::material::components::drawer_host::state::DrawerHostState;
 
 pub(super) const TOP_BAR_HEIGHT_PX: f32 = 84.0;
 pub(super) const DRAWER_WIDTH_LEFT_PX: f32 = 324.0;

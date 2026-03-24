@@ -1,1 +1,1 @@
-pub use crate::hamburger_toggle_button::*;
+pub use crate::material::components::hamburger_toggle_button::*;

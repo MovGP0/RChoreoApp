@@ -1,6 +1,6 @@
-use choreo_components::hamburger_toggle_button::HamburgerToggleButton;
-use choreo_components::hamburger_toggle_button::minimum_button_size_token;
-use choreo_components::hamburger_toggle_button::next_checked_state;
+use material3::components::hamburger_toggle_button::HamburgerToggleButton;
+use material3::components::hamburger_toggle_button::minimum_button_size_token;
+use material3::components::hamburger_toggle_button::next_checked_state;
 
 #[test]
 fn next_checked_state_matches_enabled_and_toggle_on_click_semantics() {

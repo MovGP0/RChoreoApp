@@ -4,10 +4,10 @@ use std::sync::Arc;
 use choreo_components::choreo_main;
 use choreo_components::dancer_settings_page;
 use choreo_components::dancers_pane_view;
-use choreo_components::dialog_host;
 use choreo_components::material::styling::material_style_metrics::material_style_metrics;
 use choreo_components::nav_bar;
 use choreo_components::settings;
+use material3::components::dialog_host;
 use rspec::ConfigurationBuilder;
 use rspec::Logger;
 use rspec::Runner;
@@ -59,7 +59,7 @@ fn ui_style_tokens_spec() {
 
         spec.it("dialog host consumes shared dialog metrics tokens", |_| {
             let metrics = material_style_metrics();
-            let dialog_metrics = dialog_host::ui::dialog_metrics_tokens();
+            let dialog_metrics = dialog_host::dialog_metrics_tokens();
             assert_eq!(
                 dialog_metrics.dialog_padding,
                 metrics.paddings.padding_24 as i8

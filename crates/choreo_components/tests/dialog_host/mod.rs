@@ -5,8 +5,7 @@ use rspec::ConfigurationBuilder;
 use rspec::Logger;
 use rspec::Runner;
 
-#[path = "../../src/dialog_host/ui.rs"]
-pub mod ui;
+pub use material3::components::dialog_host as ui;
 
 pub use rspec::report::Report;
 

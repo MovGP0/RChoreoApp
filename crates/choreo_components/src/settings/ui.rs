@@ -10,10 +10,10 @@ use egui::Stroke;
 use egui::Ui;
 use egui::vec2;
 
-use crate::color_picker::state::ColorPickerDock;
-use crate::color_picker::state::ColorPickerState;
-use crate::color_picker::ui as color_picker_ui;
 use crate::material::components;
+use crate::material::components::color_picker::state::ColorPickerDock;
+use crate::material::components::color_picker::state::ColorPickerState;
+use crate::material::components::color_picker::ui as color_picker_ui;
 use crate::material::icons as ui_icons;
 use crate::material::icons::UiIconKey;
 use crate::material::styling::material_palette::material_palette_for_visuals;

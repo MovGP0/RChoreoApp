@@ -11,13 +11,14 @@ use crate::choreo_info::messages::ChoreoInfoAction;
 use crate::choreo_info::state::ChoreoDate;
 use crate::choreo_info::state::ChoreoInfoState;
 use crate::choreo_info::ui::ChoreoInfoLabels;
-use crate::color_picker::state::ColorPickerState;
-use crate::color_picker::ui as color_picker_ui;
 use crate::material::components::MaterialScrollArea;
+use crate::material::components::color_picker::state::ColorPickerState;
+use crate::material::components::color_picker::ui as color_picker_ui;
+use crate::material::components::number_picker;
+use crate::material::components::number_picker::NumberPickerUiState;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
-use crate::number_picker::ui::NumberPickerUiState;
 use choreo_master_mobile_json::Color;
 
 use super::actions::ChoreographySettingsAction;
@@ -135,7 +136,7 @@ fn draw_floor_section(
     actions: &mut Vec<ChoreographySettingsAction>,
 ) {
     let floor_maximum = floor_size_maximum(state);
-    if let Some(front) = crate::number_picker::ui::draw(
+    if let Some(front) = number_picker::draw(
         ui,
         NumberPickerUiState {
             label: &ChoreographySettingsTranslations::floor_front(locale),
@@ -148,7 +149,7 @@ fn draw_floor_section(
     ) {
         actions.push(ChoreographySettingsAction::UpdateFloorFront(front));
     }
-    if let Some(back) = crate::number_picker::ui::draw(
+    if let Some(back) = number_picker::draw(
         ui,
         NumberPickerUiState {
             label: &ChoreographySettingsTranslations::floor_back(locale),
@@ -161,7 +162,7 @@ fn draw_floor_section(
     ) {
         actions.push(ChoreographySettingsAction::UpdateFloorBack(back));
     }
-    if let Some(left) = crate::number_picker::ui::draw(
+    if let Some(left) = number_picker::draw(
         ui,
         NumberPickerUiState {
             label: &ChoreographySettingsTranslations::floor_left(locale),
@@ -174,7 +175,7 @@ fn draw_floor_section(
     ) {
         actions.push(ChoreographySettingsAction::UpdateFloorLeft(left));
     }
-    if let Some(right) = crate::number_picker::ui::draw(
+    if let Some(right) = number_picker::draw(
         ui,
         NumberPickerUiState {
             label: &ChoreographySettingsTranslations::floor_right(locale),
@@ -334,7 +335,7 @@ fn draw_selected_scene_section(
             let mut seconds = state.scene_timestamp_seconds_part;
             let mut millis = state.scene_timestamp_millis;
 
-            if let Some(next_minutes) = crate::number_picker::ui::draw(
+            if let Some(next_minutes) = number_picker::draw(
                 ui,
                 NumberPickerUiState {
                     label: &ChoreographySettingsTranslations::timestamp_minutes(locale),
@@ -347,7 +348,7 @@ fn draw_selected_scene_section(
             ) {
                 minutes = next_minutes;
             }
-            if let Some(next_seconds) = crate::number_picker::ui::draw(
+            if let Some(next_seconds) = number_picker::draw(
                 ui,
                 NumberPickerUiState {
                     label: &ChoreographySettingsTranslations::timestamp_seconds(locale),
@@ -360,7 +361,7 @@ fn draw_selected_scene_section(
             ) {
                 seconds = next_seconds;
             }
-            if let Some(next_millis) = crate::number_picker::ui::draw(
+            if let Some(next_millis) = number_picker::draw(
                 ui,
                 NumberPickerUiState {
                     label: &ChoreographySettingsTranslations::timestamp_millis(locale),

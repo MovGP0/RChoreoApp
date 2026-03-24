@@ -9,8 +9,8 @@ use crate::audio_player;
 use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::state::ChoreoMainState;
 use crate::choreography_settings;
-use crate::drawer_host::ui::draw_with_slots_in_rect;
 use crate::floor;
+use crate::material::components::drawer_host::ui::draw_with_slots_in_rect;
 
 pub use super::layout::audio_panel_height_px;
 pub use super::layout::drawer_host_rect;

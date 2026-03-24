@@ -1,7 +1,7 @@
-use crate::material::styling::material_animations::MaterialAnimation;
-use crate::material::styling::material_animations::MaterialAnimationSpec;
-use crate::material::styling::material_animations::MaterialAnimations;
-use crate::material::styling::material_style_metrics::material_style_metrics;
+use crate::styling::material_animations::MaterialAnimation;
+use crate::styling::material_animations::MaterialAnimationSpec;
+use crate::styling::material_animations::MaterialAnimations;
+use crate::styling::material_style_metrics::material_style_metrics;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct StateOpacityTokens {

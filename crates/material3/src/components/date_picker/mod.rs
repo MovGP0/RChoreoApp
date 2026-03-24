@@ -440,19 +440,19 @@ fn month_year_text(month: u8, year: i32) -> String {
 
 fn calendar_icon() -> Image<'static> {
     Image::new(egui::include_image!(
-        "../../assets/icons/CalendarToday.svg"
+        "../../../assets/icons/CalendarToday.svg"
     ))
 }
 
 fn previous_month_icon() -> Image<'static> {
     Image::new(egui::include_image!(
-        "../../assets/icons/ChevronLeft.svg"
+        "../../../assets/icons/ChevronLeft.svg"
     ))
 }
 
 fn next_month_icon() -> Image<'static> {
     Image::new(egui::include_image!(
-        "../../assets/icons/ChevronRight.svg"
+        "../../../assets/icons/ChevronRight.svg"
     ))
 }
 

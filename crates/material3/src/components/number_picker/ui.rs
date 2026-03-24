@@ -9,11 +9,11 @@ use egui::Ui;
 use egui::vec2;
 use egui_material3::MaterialIconButton;
 
-use crate::material::icons as ui_icons;
-use crate::material::icons::UiIconKey;
-use crate::material::styling::material_style_metrics::material_style_metrics;
-use crate::material::styling::material_typography as typography;
-use crate::material::styling::material_typography::TypographyRole;
+use crate::icons::UiIconKey;
+use crate::icons::icon as ui_icon;
+use crate::styling::material_style_metrics::material_style_metrics;
+use crate::styling::material_typography::TypographyRole;
+use crate::styling::material_typography::rich_text_for_role;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct NumberPickerUiState<'a> {
@@ -57,13 +57,13 @@ pub fn draw(ui: &mut Ui, state: NumberPickerUiState<'_>) -> Option<i32> {
         && decrease_value(current_value, state.minimum, state.maximum, state.step).is_some();
     let can_increase = state.enabled
         && increase_value(current_value, state.minimum, state.maximum, state.step).is_some();
-    let decrement_icon = ui_icons::icon(UiIconKey::NumberPickerDecrement);
-    let increment_icon = ui_icons::icon(UiIconKey::NumberPickerIncrement);
+    let decrement_icon = ui_icon(UiIconKey::NumberPickerDecrement);
+    let increment_icon = ui_icon(UiIconKey::NumberPickerIncrement);
     let mut changed_value = None;
 
     ui.horizontal(|ui| {
         ui.label(
-            typography::rich_text_for_role(state.label, TypographyRole::BodyMedium)
+            rich_text_for_role(state.label, TypographyRole::BodyMedium)
                 .color(ui.visuals().weak_text_color()),
         );
         ui.add_space(ui.available_width().max(0.0));
@@ -93,11 +93,8 @@ pub fn draw(ui: &mut Ui, state: NumberPickerUiState<'_>) -> Option<i32> {
                 ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
                     ui.add_space(ui.available_width().max(0.0) / 2.0);
                     ui.label(
-                        typography::rich_text_for_role(
-                            current_value.to_string(),
-                            TypographyRole::TitleMedium,
-                        )
-                        .color(value_text_color(ui, state.enabled)),
+                        rich_text_for_role(current_value.to_string(), TypographyRole::TitleMedium)
+                            .color(value_text_color(ui, state.enabled)),
                     );
                     ui.add_space(ui.available_width().max(0.0) / 2.0);
                 });

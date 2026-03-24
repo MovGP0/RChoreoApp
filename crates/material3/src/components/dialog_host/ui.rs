@@ -1,3 +1,5 @@
+use egui::pos2;
+use egui::vec2;
 use egui::Area;
 use egui::Color32;
 use egui::CornerRadius;
@@ -9,10 +11,6 @@ use egui::Pos2;
 use egui::Rect;
 use egui::Sense;
 use egui::Ui;
-use egui::pos2;
-use egui::vec2;
-
-use crate::material::styling::material_style_metrics::material_style_metrics;
 
 #[cfg_attr(test, allow(dead_code))]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -25,11 +23,10 @@ pub struct DialogMetricsTokens {
 #[must_use]
 #[cfg_attr(test, allow(dead_code))]
 pub const fn dialog_metrics_tokens() -> DialogMetricsTokens {
-    let metrics = material_style_metrics();
     DialogMetricsTokens {
-        dialog_padding: metrics.paddings.padding_24 as i8,
-        dialog_margin: metrics.paddings.padding_24,
-        dialog_corner_radius: metrics.corner_radii.border_radius_12 as u8,
+        dialog_padding: 24,
+        dialog_margin: 24.0,
+        dialog_corner_radius: 12,
     }
 }
 

@@ -1,10 +1,10 @@
 use choreo_master_mobile_json::Color;
 use egui::Color32;
 
-use crate::color_picker::state::ColorPickerState;
-use crate::color_picker::ui as color_picker_ui;
 use crate::dancers::state::DancerState;
 use crate::dancers::state::DancersState;
+use crate::material::components::color_picker::state::ColorPickerState;
+use crate::material::components::color_picker::ui as color_picker_ui;
 
 pub type DancerSettingsPageState = DancersState;
 

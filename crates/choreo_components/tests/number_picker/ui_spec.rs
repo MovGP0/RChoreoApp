@@ -1,7 +1,7 @@
-use choreo_components::number_picker::ui::clamped_value;
-use choreo_components::number_picker::ui::decrease_value;
-use choreo_components::number_picker::ui::increase_value;
-use choreo_components::number_picker::ui::normalized_step;
+use material3::components::number_picker::ui::clamped_value;
+use material3::components::number_picker::ui::decrease_value;
+use material3::components::number_picker::ui::increase_value;
+use material3::components::number_picker::ui::normalized_step;
 
 #[test]
 fn normalized_step_matches_slint_minimum_of_one() {

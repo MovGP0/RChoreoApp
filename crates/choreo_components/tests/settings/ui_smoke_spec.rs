@@ -148,7 +148,7 @@ fn color_picker_state_uses_parsed_argb_value() {
     );
     assert_eq!(
         picker_state.value_slider_position,
-        choreo_components::color_picker::state::ColorPickerDock::Bottom
+        material3::components::color_picker::state::ColorPickerDock::Bottom
     );
     assert_eq!(
         picker_state.wheel_minimum_width,

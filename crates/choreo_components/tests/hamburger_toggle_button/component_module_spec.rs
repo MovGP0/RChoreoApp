@@ -1,5 +1,5 @@
-use choreo_components::hamburger_toggle_button;
-use choreo_components::hamburger_toggle_button::HamburgerToggleButton;
+use material3::components::hamburger_toggle_button;
+use material3::components::hamburger_toggle_button::HamburgerToggleButton;
 
 #[test]
 fn hamburger_toggle_button_component_module_exports_reusable_widget_surface() {

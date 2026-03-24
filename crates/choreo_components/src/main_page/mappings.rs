@@ -4,8 +4,8 @@ use crate::choreo_main::actions::OpenAudioRequested;
 use crate::choreo_main::actions::OpenChoreoRequested;
 use crate::choreo_main::state::ChoreoMainState;
 use crate::choreography_settings::actions::ChoreographySettingsAction;
-use crate::drawer_host::actions::DrawerHostAction;
 use crate::floor::actions::FloorAction;
+use crate::material::components::drawer_host::actions::DrawerHostAction;
 use crate::scenes::actions::ScenesAction;
 
 #[must_use]

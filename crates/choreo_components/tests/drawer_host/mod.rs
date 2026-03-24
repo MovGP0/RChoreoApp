@@ -5,14 +5,10 @@ use rspec::ConfigurationBuilder;
 use rspec::Logger;
 use rspec::Runner;
 
-#[path = "../../src/drawer_host/actions.rs"]
-pub mod actions;
-#[path = "../../src/drawer_host/reducer.rs"]
-pub mod reducer;
-#[path = "../../src/drawer_host/state.rs"]
-pub mod state;
-#[path = "../../src/drawer_host/ui.rs"]
-pub mod ui;
+pub use material3::components::drawer_host::actions;
+pub use material3::components::drawer_host::reducer;
+pub use material3::components::drawer_host::state;
+pub use material3::components::drawer_host::ui;
 
 pub use rspec::report::Report;
 

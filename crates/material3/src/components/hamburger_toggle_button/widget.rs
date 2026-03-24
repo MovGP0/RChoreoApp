@@ -6,8 +6,8 @@ use egui::Stroke;
 use egui::Ui;
 use egui::Vec2;
 
-use crate::material::styling::material_palette::MaterialPalette;
-use crate::material::styling::material_palette::material_palette_for_visuals;
+use crate::styling::material_palette::MaterialPalette;
+use crate::styling::material_palette::material_palette_for_visuals;
 
 use super::geometry::desired_size;
 use super::geometry::geometry_for_rect_with_progress;
@@ -223,20 +223,22 @@ mod tests {
 
     use egui::Color32;
 
-    use super::super::tokens::checked_animation_spec;
-    use super::super::tokens::unchecked_animation_easing_spec;
-    use super::super::tokens::unchecked_animation_spec;
+    use super::HamburgerToggleButton;
     use super::MaterialPalette;
     use super::StateLayerVisualState;
     use super::checked_bar_color;
     use super::disabled_bar_color;
     use super::state_layer_fill;
-    use crate::material::styling::material_animations::MaterialAnimation;
-    use crate::material::styling::material_animations::MaterialAnimations;
-    use crate::material::styling::material_palette::apply_material_visuals;
-    use crate::material::styling::material_palette::material_palette_for_theme;
-    use crate::settings::state::SettingsState;
-    use crate::settings::state::ThemeMode;
+    use crate::ThemeMode;
+    use crate::styling::material_animations::MaterialAnimation;
+    use crate::styling::material_animations::MaterialAnimations;
+    use crate::styling::material_palette::apply_material_visuals;
+    use crate::styling::material_palette::material_palette_for_theme;
+    use crate::styling::material_schemes::MaterialSchemes;
+
+    use super::super::tokens::checked_animation_spec;
+    use super::super::tokens::unchecked_animation_easing_spec;
+    use super::super::tokens::unchecked_animation_spec;
 
     fn palette_fixture() -> MaterialPalette {
         let mut palette = MaterialPalette::light();
@@ -249,13 +251,11 @@ mod tests {
     #[test]
     fn checked_hover_fill_uses_material_selection_background() {
         let context = egui::Context::default();
-        let settings = SettingsState {
-            theme_mode: ThemeMode::Dark,
-            ..SettingsState::default()
-        };
-        apply_material_visuals(&context, &settings.material_scheme, settings.theme_mode);
+        let schemes = MaterialSchemes::default();
+        let theme_mode = ThemeMode::Dark;
+        apply_material_visuals(&context, &schemes, theme_mode);
         let visuals = context.style().visuals.clone();
-        let palette = material_palette_for_theme(&settings.material_scheme, settings.theme_mode);
+        let palette = material_palette_for_theme(&schemes, theme_mode);
 
         assert_eq!(
             state_layer_fill(
@@ -275,11 +275,9 @@ mod tests {
     #[test]
     fn unchecked_hover_fill_uses_hover_container_in_dark_mode() {
         let context = egui::Context::default();
-        let settings = SettingsState {
-            theme_mode: ThemeMode::Dark,
-            ..SettingsState::default()
-        };
-        apply_material_visuals(&context, &settings.material_scheme, settings.theme_mode);
+        let schemes = MaterialSchemes::default();
+        let theme_mode = ThemeMode::Dark;
+        apply_material_visuals(&context, &schemes, theme_mode);
         let visuals = context.style().visuals.clone();
         let palette = palette_fixture();
 
@@ -295,7 +293,7 @@ mod tests {
                     focused: false,
                 },
             ),
-            material_palette_for_theme(&settings.material_scheme, settings.theme_mode)
+            material_palette_for_theme(&schemes, theme_mode)
                 .surface_container_high
         );
     }
@@ -322,5 +320,10 @@ mod tests {
             Duration::from_millis(150)
         );
         assert!(unchecked_animation_spec().duration < checked_animation_spec().duration);
+    }
+
+    #[test]
+    fn widget_surface_still_constructs() {
+        let _ = HamburgerToggleButton::new(false);
     }
 }
