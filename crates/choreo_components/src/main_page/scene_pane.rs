@@ -1,4 +1,8 @@
+use egui::Color32;
+use egui::Stroke;
+use egui::StrokeKind;
 use egui::Ui;
+use egui::UiBuilder;
 
 use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::state::ChoreoMainState;
@@ -14,25 +18,38 @@ use choreo_master_mobile_json::SceneId;
 use super::layout::DRAWER_WIDTH_LEFT_PX;
 use super::mappings::map_scene_pane_action;
 
+const SCENES_DEBUG_BORDER_COLOR: Color32 = Color32::from_rgb(0, 208, 96);
+const PANEL_DEBUG_CONTENT_PADDING_PX: f32 = 4.0;
+
 pub(super) fn draw_scenes_drawer(
     ui: &mut Ui,
     state: &ChoreoMainState,
     actions: &mut Vec<ChoreoMainAction>,
 ) {
     let pane_state = scene_pane_state(state);
-    ui.allocate_ui_with_layout(
-        egui::vec2(DRAWER_WIDTH_LEFT_PX, ui.available_height()),
-        egui::Layout::top_down(egui::Align::LEFT),
-        |ui| {
-            ui.set_min_width(DRAWER_WIDTH_LEFT_PX);
-            ui.set_min_height(ui.available_height());
-            for action in scenes::ui::draw(ui, &pane_state) {
-                if let Some(mapped_action) = map_scene_pane_action(action) {
-                    actions.push(mapped_action);
-                }
+    let panel_rect = ui.max_rect();
+    ui.set_clip_rect(panel_rect);
+    ui.set_min_size(panel_rect.size());
+    ui.set_width(DRAWER_WIDTH_LEFT_PX);
+    ui.set_min_width(DRAWER_WIDTH_LEFT_PX);
+    ui.painter()
+        .rect_filled(panel_rect, 0.0, ui.visuals().window_fill);
+    if cfg!(debug_assertions) {
+        ui.painter().rect_stroke(
+            panel_rect,
+            0.0,
+            Stroke::new(1.0, SCENES_DEBUG_BORDER_COLOR),
+            StrokeKind::Inside,
+        );
+    }
+    let inner_rect = panel_rect.shrink(PANEL_DEBUG_CONTENT_PADDING_PX);
+    let _ = ui.scope_builder(UiBuilder::new().max_rect(inner_rect), |ui| {
+        for action in scenes::ui::draw(ui, &pane_state) {
+            if let Some(mapped_action) = map_scene_pane_action(action) {
+                actions.push(mapped_action);
             }
-        },
-    );
+        }
+    });
 }
 
 #[must_use]

@@ -1,7 +1,6 @@
 use egui::Area;
 use egui::Id;
 use egui::Order;
-use egui::Pos2;
 use egui::Rect;
 use egui::Sense;
 use egui::Ui;
@@ -185,124 +184,123 @@ pub fn draw_with_slots_in_rect(
     draw_bottom_panel: impl FnOnce(&mut Ui),
 ) -> Vec<DrawerHostAction> {
     let mut actions: Vec<DrawerHostAction> = Vec::new();
-    let local_host_rect = Rect::from_min_size(Pos2::ZERO, host_rect.size());
-    let local_layout = compute_layout(local_host_rect, state);
+    let layout = compute_layout(host_rect, state);
     let overlay_action = overlay_close_action(state, host_rect.width());
 
-    Area::new(Id::new((id_source, "host")))
+    Area::new(Id::new((id_source, "content")))
         .order(Order::Middle)
-        .fixed_pos(host_rect.min)
+        .fixed_pos(layout.content_rect.min)
         .show(context, |ui| {
-            ui.set_min_size(host_rect.size());
+            ui.set_min_size(layout.content_rect.size());
+            let _ = ui.scope_builder(UiBuilder::new().max_rect(layout.content_rect), |ui| {
+                ui.set_clip_rect(layout.content_rect);
+                draw_content(ui);
+            });
+        });
 
-            let _ = ui.scope_builder(
-                UiBuilder::new()
-                    .id_salt((id_source, "content"))
-                    .max_rect(local_layout.content_rect),
-                |ui| {
-                    draw_content(ui);
-                },
-            );
-
-            if let Some(overlay_action) = overlay_action {
-                let overlay_response = ui.allocate_rect(local_layout.overlay_rect, Sense::click());
+    if let Some(overlay_action) = overlay_action {
+        let overlay_clicked = Area::new(Id::new((id_source, "overlay")))
+            .order(Order::Foreground)
+            .fixed_pos(layout.overlay_rect.min)
+            .show(context, |ui| {
+                let overlay_response = ui.allocate_rect(layout.overlay_rect, Sense::click());
                 ui.painter()
-                    .rect_filled(local_layout.overlay_rect, 0.0, state.overlay_color);
+                    .rect_filled(layout.overlay_rect, 0.0, state.overlay_color);
 
-                if overlay_response.clicked()
-                    && pointer_not_in_open_panel(ui, host_rect.min, &local_layout, state)
-                {
-                    actions.push(overlay_action);
-                }
-            }
+                overlay_response.clicked() && pointer_not_in_open_panel(ui, &layout, state)
+            })
+            .inner;
 
-            if state.is_top_open {
+        if overlay_clicked {
+            actions.push(overlay_action);
+        }
+    }
+
+    if state.is_top_open {
+        Area::new(Id::new((id_source, "top_panel")))
+            .order(Order::Middle)
+            .fixed_pos(layout.top_panel_rect.min)
+            .show(context, |ui| {
+                ui.set_min_size(layout.top_panel_rect.size());
                 ui.painter()
-                    .rect_filled(local_layout.top_panel_rect, 0.0, state.drawer_background);
-                let _ = ui.scope_builder(
-                    UiBuilder::new()
-                        .id_salt((id_source, "top_panel"))
-                        .max_rect(local_layout.top_panel_rect),
-                    |ui| {
-                        draw_top_panel(ui);
-                    },
-                );
-            }
+                    .rect_filled(layout.top_panel_rect, 0.0, state.drawer_background);
+                let _ = ui.scope_builder(UiBuilder::new().max_rect(layout.top_panel_rect), |ui| {
+                    ui.set_clip_rect(layout.top_panel_rect);
+                    draw_top_panel(ui);
+                });
+            });
+    }
 
-            if state.is_bottom_open {
-                ui.painter().rect_filled(
-                    local_layout.bottom_panel_rect,
-                    0.0,
-                    state.drawer_background,
-                );
+    if state.is_bottom_open {
+        Area::new(Id::new((id_source, "bottom_panel")))
+            .order(Order::Middle)
+            .fixed_pos(layout.bottom_panel_rect.min)
+            .show(context, |ui| {
+                ui.set_min_size(layout.bottom_panel_rect.size());
+                ui.painter()
+                    .rect_filled(layout.bottom_panel_rect, 0.0, state.drawer_background);
                 let _ = ui.scope_builder(
-                    UiBuilder::new()
-                        .id_salt((id_source, "bottom_panel"))
-                        .max_rect(local_layout.bottom_panel_rect),
+                    UiBuilder::new().max_rect(layout.bottom_panel_rect),
                     |ui| {
+                        ui.set_clip_rect(layout.bottom_panel_rect);
                         draw_bottom_panel(ui);
                     },
                 );
-            }
+            });
+    }
 
-            if state.is_left_open {
-                ui.painter().rect_filled(
-                    local_layout.left_panel_rect,
-                    0.0,
-                    state.drawer_background,
-                );
-                let _ = ui.scope_builder(
-                    UiBuilder::new()
-                        .id_salt((id_source, "left_panel"))
-                        .max_rect(local_layout.left_panel_rect),
-                    |ui| {
-                        draw_left_panel(ui);
-                    },
-                );
-            }
+    if state.is_left_open {
+        Area::new(Id::new((id_source, "left_panel")))
+            .order(Order::Middle)
+            .fixed_pos(layout.left_panel_rect.min)
+            .show(context, |ui| {
+                ui.set_min_size(layout.left_panel_rect.size());
+                ui.painter()
+                    .rect_filled(layout.left_panel_rect, 0.0, state.drawer_background);
+                let _ = ui.scope_builder(UiBuilder::new().max_rect(layout.left_panel_rect), |ui| {
+                    ui.set_clip_rect(layout.left_panel_rect);
+                    draw_left_panel(ui);
+                });
+            });
+    }
 
-            if state.is_right_open {
-                ui.painter().rect_filled(
-                    local_layout.right_panel_rect,
-                    0.0,
-                    state.drawer_background,
-                );
+    if state.is_right_open {
+        Area::new(Id::new((id_source, "right_panel")))
+            .order(Order::Middle)
+            .fixed_pos(layout.right_panel_rect.min)
+            .show(context, |ui| {
+                ui.set_min_size(layout.right_panel_rect.size());
+                ui.painter()
+                    .rect_filled(layout.right_panel_rect, 0.0, state.drawer_background);
                 let _ = ui.scope_builder(
-                    UiBuilder::new()
-                        .id_salt((id_source, "right_panel"))
-                        .max_rect(local_layout.right_panel_rect),
+                    UiBuilder::new().max_rect(layout.right_panel_rect),
                     |ui| {
+                        ui.set_clip_rect(layout.right_panel_rect);
                         draw_right_panel(ui);
                     },
                 );
-            }
-        });
+            });
+    }
 
     actions
 }
 
-fn pointer_not_in_open_panel(
-    ui: &Ui,
-    host_origin: Pos2,
-    layout: &DrawerHostLayout,
-    state: &DrawerHostState,
-) -> bool {
+fn pointer_not_in_open_panel(ui: &Ui, layout: &DrawerHostLayout, state: &DrawerHostState) -> bool {
     let pointer_pos = ui.ctx().pointer_latest_pos();
     let Some(pointer_pos) = pointer_pos else {
         return false;
     };
-    let local_pointer_pos = pos2(pointer_pos.x - host_origin.x, pointer_pos.y - host_origin.y);
 
-    if state.is_left_open && layout.left_panel_rect.contains(local_pointer_pos) {
+    if state.is_left_open && layout.left_panel_rect.contains(pointer_pos) {
         return false;
     }
-    if state.is_right_open && layout.right_panel_rect.contains(local_pointer_pos) {
+    if state.is_right_open && layout.right_panel_rect.contains(pointer_pos) {
         return false;
     }
-    if state.is_top_open && layout.top_panel_rect.contains(local_pointer_pos) {
+    if state.is_top_open && layout.top_panel_rect.contains(pointer_pos) {
         return false;
     }
-    if state.is_bottom_open && layout.bottom_panel_rect.contains(local_pointer_pos) {
+    if state.is_bottom_open && layout.bottom_panel_rect.contains(pointer_pos) {
         return false;
     }
 

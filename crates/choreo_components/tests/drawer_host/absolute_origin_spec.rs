@@ -22,6 +22,7 @@ fn absolute_origin_spec() {
         host_rect.max.x - state.right_drawer_width
     );
     assert_eq!(layout.right_panel_rect.min.y, host_rect.min.y);
+    assert_eq!(layout.right_panel_rect.right(), host_rect.right());
 
     let context = egui::Context::default();
     let output = context.run(egui::RawInput::default(), |ctx| {

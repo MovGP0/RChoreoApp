@@ -1,4 +1,6 @@
 use egui::Context;
+use egui::Frame;
+use egui::Margin;
 use std::time::Duration;
 
 use crate::choreo_main::MainPageBinding;
@@ -77,9 +79,11 @@ impl AppShellViewModel {
                     state.settings_state.theme_mode,
                 );
             }
-            egui::CentralPanel::default().show(context, |ui| {
+            egui::CentralPanel::default()
+                .frame(root_panel_frame(context))
+                .show(context, |ui| {
                 splash_screen_host::ui::draw(ui, &self.splash_screen_state);
-            });
+                });
             self.show_splash_screen = false;
             context.request_repaint();
             return;
@@ -105,13 +109,15 @@ impl AppShellViewModel {
                 state.settings_state.theme_mode,
             );
 
-            egui::CentralPanel::default().show(context, |ui| {
-                with_current_material_palette(palette, || {
-                    for action in ui::draw(ui, &state) {
-                        binding.dispatch(action);
-                    }
+            egui::CentralPanel::default()
+                .frame(root_panel_frame(context))
+                .show(context, |ui| {
+                    with_current_material_palette(palette, || {
+                        for action in ui::draw(ui, &state) {
+                            binding.dispatch(action);
+                        }
+                    });
                 });
-            });
         }
 
         if let Some(binding) = self.main_page_binding.as_ref() {
@@ -127,6 +133,12 @@ impl AppShellViewModel {
             binding.route_external_file_path(file_path);
         }
     }
+}
+
+fn root_panel_frame(context: &Context) -> Frame {
+    Frame::new()
+        .fill(context.style().visuals.panel_fill)
+        .inner_margin(Margin::same(0))
 }
 
 #[cfg(test)]

@@ -5,6 +5,7 @@ use crate::main_page::state::ChoreoMainState;
 use crate::main_page::state::InteractionMode;
 use crate::main_page::ui::drawer_host_rect;
 use crate::main_page::ui::drawer_host_state;
+use crate::main_page::ui::audio_panel_rect;
 use crate::main_page::ui::home_icon_name;
 use crate::main_page::ui::map_choreography_settings_action;
 use crate::main_page::ui::map_drawer_host_action;
@@ -28,13 +29,14 @@ use crate::main_page::ui::translated_mode_labels;
 use choreo_components::choreo_main::actions::OpenAudioRequested;
 use choreo_components::choreo_main::actions::OpenChoreoRequested;
 use choreo_components::choreography_settings::actions::ChoreographySettingsAction;
-use material3::components::drawer_host::actions::DrawerHostAction;
-use material3::components::drawer_host::state::DrawerHostOpenMode;
 use choreo_components::nav_bar::translations::nav_bar_translations;
 use choreo_components::scenes::actions::ScenesAction;
 use choreo_master_mobile_json::Color;
 use choreo_master_mobile_json::SceneId;
 use choreo_models::SceneModel;
+use material3::components::drawer_host::actions::DrawerHostAction;
+use material3::components::drawer_host::state::DrawerHostOpenMode;
+use material3::components::drawer_host::ui::compute_layout as compute_drawer_host_layout;
 
 #[test]
 fn ui_parity_spec() {
@@ -143,7 +145,7 @@ fn ui_parity_spec() {
         );
 
         spec.it(
-            "projects drawer host state with parity insets and drawer widths",
+            "projects drawer host state below the nav bar with the expected drawer widths",
             |_| {
                 let state = ChoreoMainState {
                     is_nav_open: true,
@@ -157,14 +159,14 @@ fn ui_parity_spec() {
                 assert_eq!(drawer_state.right_drawer_width, 480.0);
                 assert_eq!(drawer_state.responsive_breakpoint, 900.0);
                 assert_eq!(drawer_state.open_mode, DrawerHostOpenMode::Standard);
-                assert_eq!(drawer_state.top_inset, 84.0);
+                assert_eq!(drawer_state.top_inset, 0.0);
                 assert!(drawer_state.is_left_open);
                 assert!(drawer_state.is_right_open);
             },
         );
 
         spec.it(
-            "keeps the drawer host shell-wide while reserving the nav bar as top inset",
+            "positions the drawer host directly below the nav bar",
             |_| {
                 let page_rect =
                     egui::Rect::from_min_max(egui::pos2(20.0, 30.0), egui::pos2(1300.0, 750.0));
@@ -174,9 +176,53 @@ fn ui_parity_spec() {
 
                 assert_eq!(top_bar.top(), 30.0);
                 assert_eq!(top_bar.bottom(), 114.0);
-                assert_eq!(drawer_host.top(), 30.0);
+                assert_eq!(top_bar.bottom(), drawer_host.top());
+                assert_eq!(drawer_host.top(), 114.0);
+                assert_eq!(drawer_host.bottom(), 750.0);
+                assert_eq!(drawer_host.bottom(), page_rect.bottom());
                 assert_eq!(drawer_host.left(), 20.0);
                 assert_eq!(drawer_host.right(), 1300.0);
+            },
+        );
+
+        spec.it(
+            "docks the audio player to the bottom and shrinks the drawer host only while visible",
+            |_| {
+                let page_rect =
+                    egui::Rect::from_min_max(egui::pos2(20.0, 30.0), egui::pos2(1300.0, 750.0));
+
+                let drawer_host = drawer_host_rect(page_rect, 84.0);
+                let audio_panel = audio_panel_rect(page_rect, 84.0);
+
+                assert_eq!(drawer_host.top(), 114.0);
+                assert_eq!(drawer_host.bottom(), 666.0);
+                assert_eq!(drawer_host.bottom(), audio_panel.top());
+                assert_eq!(audio_panel.top(), 666.0);
+                assert_eq!(audio_panel.bottom(), 750.0);
+                assert_eq!(audio_panel.bottom(), page_rect.bottom());
+            },
+        );
+
+        spec.it(
+            "anchors horizontal drawer edges to the page and reserves inline left content space",
+            |_| {
+                let state = ChoreoMainState {
+                    is_nav_open: true,
+                    is_choreography_settings_open: true,
+                    ..ChoreoMainState::default()
+                };
+                let page_rect =
+                    egui::Rect::from_min_max(egui::pos2(20.0, 30.0), egui::pos2(1300.0, 750.0));
+                let host_rect = drawer_host_rect(page_rect, 0.0);
+                let drawer_state = drawer_host_state(host_rect.size(), &state);
+                let layout = compute_drawer_host_layout(host_rect, &drawer_state);
+
+                assert_eq!(layout.left_panel_rect.left(), host_rect.left());
+                assert_eq!(layout.left_panel_rect.right(), host_rect.left() + 324.0);
+                assert_eq!(layout.right_panel_rect.right(), host_rect.right());
+                assert_eq!(layout.right_panel_rect.left(), host_rect.right() - 480.0);
+                assert_eq!(layout.content_rect.left(), host_rect.left() + 324.0);
+                assert_eq!(layout.content_rect.right(), host_rect.right());
             },
         );
 
