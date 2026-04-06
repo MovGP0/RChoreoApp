@@ -45,7 +45,8 @@ assert!(
 ```
 
 Note that this is not required when there is only a single assertion in the test.
-BDD style integration testing using `rspec` also do not require this.
+
+When using BDD style integration testing `rspec`, the single assertion rule applies per `it` or `then` block.
 
 ## Unit Test Structure
 - Unit tests should be structured using the Arrange-Act-Assert (AAA) pattern for clarity and maintainability.

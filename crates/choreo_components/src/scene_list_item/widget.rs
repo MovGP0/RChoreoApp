@@ -17,7 +17,7 @@ use crate::scene_list_item::geometry::row_height_px;
 use crate::scene_list_item::state::SceneItemState;
 use crate::time::format_seconds;
 
-const SCENE_ROW_SWATCH_CORNER_RADIUS_PX: u8 = 3;
+const SCENE_ROW_SWATCH_CORNER_RADIUS_PX: u8 = 4;
 
 #[must_use]
 pub const fn title_role() -> TypographyRole {
@@ -40,28 +40,24 @@ pub struct SceneListItemColors {
 }
 
 #[must_use]
-pub fn colors_for_selection(
-    palette: MaterialPalette,
-    is_selected: bool,
-) -> SceneListItemColors {
+pub fn colors_for_selection(palette: MaterialPalette, is_selected: bool) -> SceneListItemColors {
     let metrics = material_style_metrics();
-    if is_selected
-    {
-        SceneListItemColors{
-            background: palette.secondary_container,
-            border: palette.on_secondary_container,
-            title: palette.on_secondary_container,
-            timestamp: palette.on_secondary_container,
-            accent: palette.on_secondary_container,
-            border_width: metrics.strokes.focus
+    if is_selected {
+        SceneListItemColors {
+            background: palette.surface_container_high,
+            border: palette.secondary,
+            title: palette.on_surface,
+            timestamp: palette.on_surface_variant,
+            accent: palette.secondary,
+            border_width: metrics.strokes.focus,
         }
     } else {
         SceneListItemColors {
-            background: palette.surface_container_highest,
+            background: palette.surface_container_low,
             border: palette.outline_variant,
             title: palette.on_surface,
             timestamp: palette.on_surface_variant,
-            accent: palette.on_secondary_container,
+            accent: palette.outline_variant,
             border_width: metrics.strokes.outline,
         }
     }
@@ -100,12 +96,7 @@ pub fn draw(ui: &mut Ui, scene: &SceneItemState, show_timestamps: bool) -> Respo
     ui.painter().rect_filled(
         layout.swatch_rect,
         CornerRadius::same(SCENE_ROW_SWATCH_CORNER_RADIUS_PX),
-        egui::Color32::from_rgba_unmultiplied(
-            scene.color.r,
-            scene.color.g,
-            scene.color.b,
-            scene.color.a,
-        ),
+        Color32::from_rgba_unmultiplied(scene.color.r, scene.color.g, scene.color.b, scene.color.a),
     );
 
     ui.painter().text(

@@ -15,6 +15,7 @@ use crate::material::components::MaterialScrollArea;
 use crate::material::components::centered_icon_rect;
 use crate::material::components::paint_icon;
 use crate::material::components::top_bar_icon::top_bar_icon_button_enabled;
+use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::scene_list_item;
 use crate::scene_list_item::SceneItemState;
@@ -41,6 +42,15 @@ pub use crate::scene_list_item::layout_for_row_rect as scene_list_item_layout;
 pub use crate::scene_list_item::row_height_px as scene_row_height_px;
 pub use crate::scene_list_item::timestamp_role as scene_timestamp_role;
 pub use crate::scene_list_item::title_role as scene_title_role;
+
+#[must_use]
+pub fn scene_list_item_colors(
+    visuals: &egui::Visuals,
+    is_selected: bool,
+) -> crate::scene_list_item::SceneListItemColors {
+    let palette = material_palette_for_visuals(visuals);
+    crate::scene_list_item::colors_for_selection(palette, is_selected)
+}
 
 #[must_use]
 pub fn delete_scene_dialog_scene(state: &ScenesState) -> Option<&SceneItemState> {
