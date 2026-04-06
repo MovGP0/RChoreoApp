@@ -5,7 +5,7 @@ use egui::Ui;
 use egui::vec2;
 use egui_material3::MaterialButton;
 
-use crate::scenes::state::SceneItemState;
+use crate::scene_list_item::SceneItemState;
 use crate::scenes::translations::scenes_translations;
 
 #[derive(Debug, Clone, PartialEq)]

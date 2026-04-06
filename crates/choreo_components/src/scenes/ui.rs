@@ -3,13 +3,10 @@ use egui::CornerRadius;
 use egui::Frame;
 use egui::Image;
 use egui::Margin;
-use egui::Pos2;
-use egui::Rect;
 use egui::Response;
 use egui::Sense;
 use egui::Stroke;
 use egui::Ui;
-use egui::pos2;
 use egui::vec2;
 
 use crate::delete_scene_dialog::ui::DeleteSceneDialogAction;
@@ -19,13 +16,11 @@ use crate::material::components::centered_icon_rect;
 use crate::material::components::paint_icon;
 use crate::material::components::top_bar_icon::top_bar_icon_button_enabled;
 use crate::material::styling::material_style_metrics::material_style_metrics;
-use crate::material::styling::material_typography as typography;
-use crate::material::styling::material_typography::TypographyRole;
+use crate::scene_list_item;
+use crate::scene_list_item::SceneItemState;
 
 use super::actions::ScenesAction;
-use super::state::SceneItemState;
 use super::state::ScenesState;
-use super::state::format_seconds;
 use super::translations::scenes_translations;
 use super::ui_icons;
 use super::ui_icons::UiIconKey;
@@ -35,18 +30,6 @@ const SEARCH_BAR_HEIGHT_PX: f32 = 44.0;
 const SEARCH_BAR_ICON_BUTTON_SIZE_PX: f32 = 24.0;
 const TOOLBAR_ROW_HEIGHT_PX: f32 = 48.0;
 const TOOLBAR_ICON_GLYPH_SIZE_PX: f32 = 24.0;
-const SCENE_ROW_HEIGHT_PX: f32 = 50.0;
-const SCENE_ROW_HEIGHT_WITH_TIMESTAMPS_PX: f32 = 62.0;
-const SCENE_ROW_VERTICAL_GAP_PX: f32 = 4.0;
-const SCENE_ROW_SWATCH_X_PX: f32 = 8.0;
-const SCENE_ROW_SWATCH_Y_PX: f32 = 8.0;
-const SCENE_ROW_SWATCH_SIZE_PX: f32 = 12.0;
-const SCENE_ROW_SWATCH_CORNER_RADIUS_PX: u8 = 3;
-const SCENE_ROW_TEXT_LEFT_PX: f32 = 26.0;
-const SCENE_ROW_TITLE_Y_PX: f32 = 8.0;
-const SCENE_ROW_TIMESTAMP_Y_PX: f32 = 30.0;
-const SCENE_ROW_ACCENT_WIDTH_PX: f32 = 4.0;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SceneSearchBarViewModel {
     pub placeholder_text: String,
@@ -54,24 +37,10 @@ pub struct SceneSearchBarViewModel {
     pub show_clear_button: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct SceneListItemLayout {
-    pub content_rect: Rect,
-    pub accent_rect: Rect,
-    pub swatch_rect: Rect,
-    pub title_position: Pos2,
-    pub timestamp_position: Pos2,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct SceneListItemColors {
-    pub background: egui::Color32,
-    pub border: egui::Color32,
-    pub title: egui::Color32,
-    pub timestamp: egui::Color32,
-    pub accent: egui::Color32,
-    pub border_width: f32,
-}
+pub use crate::scene_list_item::layout_for_row_rect as scene_list_item_layout;
+pub use crate::scene_list_item::row_height_px as scene_row_height_px;
+pub use crate::scene_list_item::timestamp_role as scene_timestamp_role;
+pub use crate::scene_list_item::title_role as scene_title_role;
 
 #[must_use]
 pub fn delete_scene_dialog_scene(state: &ScenesState) -> Option<&SceneItemState> {
@@ -145,7 +114,7 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
                             .auto_shrink([false, false])
                             .show(ui, |ui| {
                                 for (index, scene) in state.visible_scenes.iter().enumerate() {
-                                    if draw_scene_list_item(ui, scene, state.show_timestamps)
+                                    if scene_list_item::draw(ui, scene, state.show_timestamps)
                                         .clicked()
                                     {
                                         actions.push(ScenesAction::SelectScene { index });
@@ -179,7 +148,7 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
                 .selected_scene
                 .as_ref()
                 .map(|scene| scene.name.as_str())
-                .filter(|name| !name.trim().is_empty())
+                .filter(|name: &&str| !name.trim().is_empty())
                 .unwrap_or(strings.delete_scene_dialog_default_name.as_str());
             ui.label(
                 strings
@@ -211,16 +180,6 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
     }
 
     actions
-}
-
-#[must_use]
-pub const fn scene_title_role() -> TypographyRole {
-    TypographyRole::BodyMedium
-}
-
-#[must_use]
-pub const fn scene_timestamp_role() -> TypographyRole {
-    TypographyRole::LabelMedium
 }
 
 #[must_use]
@@ -272,15 +231,6 @@ pub fn build_scene_search_bar_view_model(
 }
 
 #[must_use]
-pub fn scene_row_height_px(show_timestamps: bool) -> f32 {
-    if show_timestamps {
-        SCENE_ROW_HEIGHT_WITH_TIMESTAMPS_PX
-    } else {
-        SCENE_ROW_HEIGHT_PX
-    }
-}
-
-#[must_use]
 pub const fn scene_toolbar_button_stroke_width_px() -> f32 {
     0.0
 }
@@ -315,67 +265,6 @@ pub fn scene_search_bar_content_width(
     right_padding_px: f32,
 ) -> f32 {
     (panel_width - left_padding_px - right_padding_px).max(0.0)
-}
-
-#[must_use]
-pub fn scene_list_item_layout(row_rect: Rect, show_timestamps: bool) -> SceneListItemLayout {
-    let content_rect = row_rect.shrink2(vec2(0.0, SCENE_ROW_VERTICAL_GAP_PX));
-    let swatch_rect = Rect::from_min_size(
-        pos2(
-            content_rect.left() + SCENE_ROW_SWATCH_X_PX,
-            content_rect.top() + SCENE_ROW_SWATCH_Y_PX,
-        ),
-        vec2(SCENE_ROW_SWATCH_SIZE_PX, SCENE_ROW_SWATCH_SIZE_PX),
-    );
-    let accent_rect = Rect::from_min_size(
-        content_rect.min,
-        vec2(SCENE_ROW_ACCENT_WIDTH_PX, content_rect.height()),
-    );
-    let text_left = content_rect.left() + SCENE_ROW_TEXT_LEFT_PX;
-    let timestamp_y = if show_timestamps {
-        content_rect.top() + SCENE_ROW_TIMESTAMP_Y_PX
-    } else {
-        content_rect.bottom()
-    };
-
-    SceneListItemLayout {
-        content_rect,
-        accent_rect,
-        swatch_rect,
-        title_position: pos2(text_left, content_rect.top() + SCENE_ROW_TITLE_Y_PX),
-        timestamp_position: pos2(text_left, timestamp_y),
-    }
-}
-
-#[must_use]
-pub fn scene_list_item_colors(visuals: &egui::Visuals, is_selected: bool) -> SceneListItemColors {
-    let metrics = material_style_metrics();
-    let (background, border, title, timestamp, border_width) = if is_selected {
-        (
-            visuals.selection.bg_fill,
-            visuals.selection.stroke.color,
-            visuals.strong_text_color(),
-            visuals.selection.stroke.color,
-            metrics.strokes.focus,
-        )
-    } else {
-        (
-            visuals.extreme_bg_color,
-            visuals.widgets.noninteractive.bg_stroke.color,
-            visuals.text_color(),
-            visuals.weak_text_color(),
-            metrics.strokes.outline,
-        )
-    };
-
-    SceneListItemColors {
-        background,
-        border,
-        title,
-        timestamp,
-        accent: visuals.selection.stroke.color,
-        border_width,
-    }
 }
 
 fn draw_search_bar(
@@ -528,68 +417,6 @@ fn draw_navigation_toolbar_row(ui: &mut Ui, state: &ScenesState, actions: &mut V
             actions.push(ScenesAction::NavigateToDancerSettings);
         }
     });
-}
-
-fn draw_scene_list_item(ui: &mut Ui, scene: &SceneItemState, show_timestamps: bool) -> Response {
-    let (row_rect, response) = ui.allocate_exact_size(
-        vec2(ui.available_width(), scene_row_height_px(show_timestamps)),
-        Sense::click(),
-    );
-    if !ui.is_rect_visible(row_rect) {
-        return response;
-    }
-
-    let visuals = ui.style().visuals.clone();
-    let layout = scene_list_item_layout(row_rect, show_timestamps);
-    let colors = scene_list_item_colors(&visuals, scene.is_selected);
-
-    ui.painter().rect(
-        layout.content_rect,
-        CornerRadius::same(material_style_metrics().sizes.size_6 as u8),
-        colors.background,
-        Stroke::new(colors.border_width, colors.border),
-        egui::StrokeKind::Middle,
-    );
-
-    if scene.is_selected {
-        ui.painter().rect_filled(
-            layout.accent_rect,
-            CornerRadius::same(material_style_metrics().sizes.size_6 as u8),
-            colors.accent,
-        );
-    }
-
-    ui.painter().rect_filled(
-        layout.swatch_rect,
-        CornerRadius::same(SCENE_ROW_SWATCH_CORNER_RADIUS_PX),
-        egui::Color32::from_rgba_unmultiplied(
-            scene.color.r,
-            scene.color.g,
-            scene.color.b,
-            scene.color.a,
-        ),
-    );
-
-    ui.painter().text(
-        layout.title_position,
-        egui::Align2::LEFT_TOP,
-        scene.name.as_str(),
-        typography::font_id_for_role(scene_title_role()),
-        colors.title,
-    );
-
-    if show_timestamps {
-        let timestamp_text = scene.timestamp.map(format_seconds).unwrap_or_default();
-        ui.painter().text(
-            layout.timestamp_position,
-            egui::Align2::LEFT_TOP,
-            timestamp_text,
-            typography::font_id_for_role(scene_timestamp_role()),
-            colors.timestamp,
-        );
-    }
-
-    response
 }
 
 fn scene_search_icon() -> (&'static str, &'static str) {

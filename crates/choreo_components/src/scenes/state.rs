@@ -1,41 +1,8 @@
 use choreo_master_mobile_json::Color;
 use choreo_master_mobile_json::SceneId;
 use choreo_models::ChoreographyModel;
-use choreo_models::PositionModel;
-use choreo_models::SceneModel;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct SceneItemState {
-    pub scene_id: SceneId,
-    pub name: String,
-    pub text: String,
-    pub fixed_positions: bool,
-    pub timestamp: Option<f64>,
-    pub is_selected: bool,
-    pub positions: Vec<PositionModel>,
-    pub variation_depth: i32,
-    pub variations: Vec<Vec<SceneModel>>,
-    pub current_variation: Vec<SceneModel>,
-    pub color: Color,
-}
-
-impl SceneItemState {
-    pub fn new(scene_id: SceneId, name: impl Into<String>, color: Color) -> Self {
-        Self {
-            scene_id,
-            name: name.into(),
-            text: String::new(),
-            fixed_positions: false,
-            timestamp: None,
-            is_selected: false,
-            positions: Vec::new(),
-            variation_depth: 0,
-            variations: Vec::new(),
-            current_variation: Vec::new(),
-            color,
-        }
-    }
-}
+pub use crate::scene_list_item::SceneItemState;
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct ScenesState {
@@ -154,7 +121,7 @@ pub fn build_scene_name(scenes: &[SceneItemState]) -> String {
 }
 
 pub fn next_scene_id(scenes: &[SceneItemState]) -> SceneId {
-    let mut next = 0;
+    let mut next: i64 = 0;
     for scene in scenes {
         next = next.max(scene.scene_id.0 as i64);
     }

@@ -9,7 +9,7 @@ use choreo_models::SceneModel;
 use crate::floor::state::Matrix;
 use crate::floor::state::Point;
 
-pub type SceneViewModel = crate::scenes::state::SceneItemState;
+pub type SceneViewModel = crate::scene_list_item::SceneItemState;
 
 // egui does not expose a retained canvas handle equivalent to the Slint view handle,
 // so parity is modeled as an opaque placeholder until a real handle is needed.

@@ -1,13 +1,13 @@
 use choreo_models::SceneModel;
 
 use super::actions::ScenesAction;
-use super::state::SceneItemState;
 use super::state::ScenesState;
 use super::state::build_scene_name;
 use super::state::format_seconds;
 use super::state::next_scene_id;
 use super::state::normalize_text;
 use super::state::parse_timestamp_seconds;
+use crate::scene_list_item::SceneItemState;
 
 pub fn reduce(state: &mut ScenesState, action: ScenesAction) {
     match action {

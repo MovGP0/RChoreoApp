@@ -28,6 +28,7 @@ pub mod main_root_view;
 pub mod nav_bar;
 pub mod observability;
 pub mod preferences;
+pub mod scene_list_item;
 pub mod scenes;
 pub mod settings;
 pub mod shell;

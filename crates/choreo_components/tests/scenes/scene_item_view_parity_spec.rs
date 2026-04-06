@@ -55,23 +55,40 @@ fn scene_item_view_parity_spec() {
             "maps selected state to source-aligned selection colors",
             |_| {
                 let visuals = egui::Visuals::dark();
+                let palette =
+                    crate::material::styling::material_palette::MaterialPalette::from_visuals(
+                        &visuals,
+                    );
 
-                let selected = scene_list_item_colors(&visuals, true);
-                let unselected = scene_list_item_colors(&visuals, false);
+                let (
+                    selected_background,
+                    selected_border,
+                    selected_title,
+                    selected_timestamp,
+                    selected_accent,
+                    selected_border_width,
+                ) = scene_list_item_colors(&visuals, true);
+                let (
+                    unselected_background,
+                    unselected_border,
+                    unselected_title,
+                    unselected_timestamp,
+                    _unselected_accent,
+                    unselected_border_width,
+                ) = scene_list_item_colors(&visuals, false);
 
-                assert_eq!(selected.background, visuals.selection.bg_fill);
-                assert_eq!(selected.border, visuals.selection.stroke.color);
-                assert_eq!(selected.title, visuals.strong_text_color());
-                assert_eq!(selected.timestamp, visuals.selection.stroke.color);
-                assert_eq!(selected.accent, visuals.selection.stroke.color);
-                assert_eq!(unselected.background, visuals.extreme_bg_color);
-                assert_eq!(
-                    unselected.border,
-                    visuals.widgets.noninteractive.bg_stroke.color
-                );
-                assert_eq!(unselected.title, visuals.text_color());
-                assert_eq!(unselected.timestamp, visuals.weak_text_color());
-                assert_ne!(selected.background, Color32::TRANSPARENT);
+                assert_eq!(selected_background, palette.secondary_container);
+                assert_eq!(selected_border, palette.on_secondary_container);
+                assert_eq!(selected_title, palette.on_secondary_container);
+                assert_eq!(selected_timestamp, palette.on_secondary_container);
+                assert_eq!(selected_accent, palette.on_secondary_container);
+                assert_eq!(unselected_background, palette.surface_container_highest);
+                assert_eq!(unselected_border, palette.outline_variant);
+                assert_eq!(unselected_title, palette.on_surface);
+                assert_eq!(unselected_timestamp, palette.on_surface_variant);
+                assert_eq!(selected_border_width, 3.0);
+                assert_eq!(unselected_border_width, 1.0);
+                assert_ne!(selected_background, Color32::TRANSPARENT);
             },
         );
 
