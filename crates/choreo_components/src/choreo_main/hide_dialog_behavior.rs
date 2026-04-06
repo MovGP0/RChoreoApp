@@ -1,11 +1,7 @@
 use nject::injectable;
 
-use crate::behavior::Behavior;
-use crate::behavior::CompositeDisposable;
-use crate::logging::BehaviorLog;
-
-use super::main_view_model::MainViewModel;
 use super::messages::CloseDialogCommand;
+use super::state::ChoreoMainState;
 
 #[injectable]
 #[inject(|| Self)]
@@ -13,13 +9,8 @@ use super::messages::CloseDialogCommand;
 pub struct HideDialogBehavior;
 
 impl HideDialogBehavior {
-    pub fn apply(view_model: &mut MainViewModel, command: CloseDialogCommand) {
-        view_model.hide_dialog(command);
-    }
-}
-
-impl Behavior<MainViewModel> for HideDialogBehavior {
-    fn activate(&self, _view_model: &mut MainViewModel, _disposables: &mut CompositeDisposable) {
-        BehaviorLog::behavior_activated("HideDialogBehavior", "MainViewModel");
+    pub fn apply(state: &mut ChoreoMainState, _command: CloseDialogCommand) {
+        state.dialog_content = None;
+        state.is_dialog_open = false;
     }
 }

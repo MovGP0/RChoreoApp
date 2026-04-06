@@ -15,13 +15,8 @@ use choreo_state_machine::ScalePositionsSelectionCompletedTrigger;
 use choreo_state_machine::ScalePositionsStartedTrigger;
 use nject::injectable;
 
-use crate::behavior::Behavior;
-use crate::behavior::CompositeDisposable;
 use crate::global::GlobalStateActor;
 use crate::global::InteractionMode;
-use crate::logging::BehaviorLog;
-
-use super::main_view_model::MainViewModel;
 
 #[injectable]
 #[inject(
@@ -102,11 +97,5 @@ impl ApplyInteractionModeBehavior {
                 state_machine.try_apply(&ScaleAroundDancerCompletedTrigger);
             }
         }
-    }
-}
-
-impl Behavior<MainViewModel> for ApplyInteractionModeBehavior {
-    fn activate(&self, _view_model: &mut MainViewModel, _disposables: &mut CompositeDisposable) {
-        BehaviorLog::behavior_activated("ApplyInteractionModeBehavior", "MainViewModel");
     }
 }

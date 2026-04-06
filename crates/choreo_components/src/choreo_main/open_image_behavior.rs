@@ -1,12 +1,8 @@
 use nject::injectable;
 
-use crate::behavior::Behavior;
-use crate::behavior::CompositeDisposable;
-use crate::logging::BehaviorLog;
-
-use super::main_view_model::MainViewModel;
 use super::messages::OpenImageRequested;
 use super::messages::OpenSvgFileCommand;
+use super::state::ChoreoMainState;
 
 #[injectable]
 #[inject(|| Self)]
@@ -22,8 +18,8 @@ impl OpenImageBehavior {
     }
 }
 
-impl Behavior<MainViewModel> for OpenImageBehavior {
-    fn activate(&self, _view_model: &mut MainViewModel, _disposables: &mut CompositeDisposable) {
-        BehaviorLog::behavior_activated("OpenImageBehavior", "MainViewModel");
-    }
+pub(super) fn request_open_image(state: &mut ChoreoMainState, file_path: String) {
+    state
+        .outgoing_open_svg_commands
+        .push(OpenSvgFileCommand { file_path });
 }

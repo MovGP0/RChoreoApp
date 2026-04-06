@@ -3,22 +3,17 @@ use std::path::Path;
 use std::rc::Rc;
 
 use crate::audio_player::runtime::AudioPlayerRuntime;
-use crate::behavior::Behavior;
-
-use super::HideDialogBehavior;
-use super::ShowDialogBehavior;
+use super::behaviors::ChoreoMainBehaviorDependencies;
+use super::behaviors::ChoreoMainBehaviors;
 use super::actions::ChoreoMainAction;
 use super::actions::OpenAudioRequested;
 use super::actions::OpenChoreoRequested;
-use super::behavior_pipeline::MainBehaviorDependencies;
-use super::behavior_pipeline::MainBehaviorPipeline;
-use super::main_view_model::MainViewModel;
-use super::main_view_model_provider::MainViewModelProvider;
-use super::main_view_model_provider::MainViewModelProviderDependencies;
 use super::messages::CloseDialogCommand;
 use super::messages::OpenImageRequested;
 use super::messages::OpenSvgFileCommand;
 use super::messages::ShowDialogCommand;
+use super::reducer::reduce_with_behaviors;
+use super::state::ChoreoMainState;
 use super::runtime::apply_audio_action_side_effects;
 use super::runtime::consume_outgoing_commands;
 use super::runtime::enqueue_open_audio_request;
@@ -37,14 +32,13 @@ pub struct MainPageActionHandlers {
 #[derive(Default)]
 pub struct MainPageDependencies {
     pub action_handlers: MainPageActionHandlers,
-    pub behaviors: Vec<Box<dyn Behavior<MainViewModel>>>,
-    pub behavior_dependencies: MainBehaviorDependencies,
+    pub behavior_dependencies: ChoreoMainBehaviorDependencies,
 }
 
 pub struct MainPageBinding {
-    view_model: Rc<RefCell<MainViewModel>>,
+    state: Rc<RefCell<ChoreoMainState>>,
     action_handlers: MainPageActionHandlers,
-    behavior_pipeline: MainBehaviorPipeline,
+    behaviors: ChoreoMainBehaviors,
     audio_runtime: RefCell<AudioPlayerRuntime>,
 }
 
@@ -52,136 +46,91 @@ impl MainPageBinding {
     pub fn new(deps: MainPageDependencies) -> Self {
         let MainPageDependencies {
             action_handlers,
-            behaviors,
             behavior_dependencies,
         } = deps;
-        let provider = MainViewModelProvider::new(MainViewModelProviderDependencies {
-            behaviors,
-            behavior_dependencies,
-        });
-        let view_model = provider.main_view_model();
-        let audio_backend = view_model
-            .borrow()
-            .state()
-            .settings_state
-            .audio_player_backend;
+        let behaviors = ChoreoMainBehaviors::from_dependencies(behavior_dependencies);
+        let state = Rc::new(RefCell::new(ChoreoMainState::default()));
+        let audio_backend = state.borrow().settings_state.audio_player_backend;
         Self {
-            view_model,
+            state,
             action_handlers,
-            behavior_pipeline: provider.behavior_pipeline().clone(),
+            behaviors,
             audio_runtime: RefCell::new(AudioPlayerRuntime::new(audio_backend)),
         }
     }
 
     pub fn dispatch(&self, action: ChoreoMainAction) {
-        let mut view_model = self.view_model.borrow_mut();
+        let mut state = self.state.borrow_mut();
         let mut audio_runtime = self.audio_runtime.borrow_mut();
-        let should_apply_interaction_mode = matches!(
-            action,
-            ChoreoMainAction::ApplyInteractionMode { .. } | ChoreoMainAction::SelectMode { .. }
-        );
-        let mode_to_apply = match &action {
-            ChoreoMainAction::ApplyInteractionMode { mode, .. } => Some(*mode),
-            ChoreoMainAction::SelectMode { .. } => None,
-            _ => None,
-        };
-
-        view_model.dispatch(action.clone());
-        apply_audio_action_side_effects(&mut view_model, &mut audio_runtime, &action);
-
-        if should_apply_interaction_mode
-            && let Some(behavior) = self
-                .behavior_pipeline
-                .apply_interaction_mode_behavior
-                .as_ref()
-        {
-            if let Some(mode) = mode_to_apply {
-                behavior.apply(map_interaction_mode(mode));
-            } else {
-                let current_mode = view_model.state().interaction_mode;
-                behavior.apply(map_interaction_mode(current_mode));
-            }
-        }
+        reduce_with_behaviors(&mut state, action.clone(), Some(&self.behaviors));
+        apply_audio_action_side_effects(&mut state, &mut audio_runtime, &action);
 
         consume_outgoing_commands(
-            &mut view_model,
+            &mut state,
             &self.action_handlers,
-            &self.behavior_pipeline,
+            &self.behaviors,
             &mut audio_runtime,
         );
     }
 
     #[must_use]
     pub fn tick_audio_runtime(&self) -> bool {
-        let mut view_model = self.view_model.borrow_mut();
+        let mut state = self.state.borrow_mut();
         let mut audio_runtime = self.audio_runtime.borrow_mut();
-        poll_audio_runtime(&mut view_model, &mut audio_runtime)
+        poll_audio_runtime(&mut state, &mut audio_runtime)
     }
 
     #[must_use]
     pub fn audio_runtime_is_active(&self) -> bool {
-        let view_model = self.view_model.borrow();
-        let audio_state = &view_model.state().audio_player_state;
+        let state = self.state.borrow();
+        let audio_state = &state.audio_player_state;
         audio_state.has_player
             && (audio_state.is_playing || audio_state.pending_seek_position.is_some())
     }
 
     pub fn show_dialog(&self, command: ShowDialogCommand) {
-        let mut view_model = self.view_model.borrow_mut();
-        ShowDialogBehavior::apply(&mut view_model, command);
+        let mut state = self.state.borrow_mut();
+        super::ShowDialogBehavior::apply(&mut state, command);
     }
 
     pub fn hide_dialog(&self, command: CloseDialogCommand) {
-        let mut view_model = self.view_model.borrow_mut();
-        HideDialogBehavior::apply(&mut view_model, command);
+        let mut state = self.state.borrow_mut();
+        super::HideDialogBehavior::apply(&mut state, command);
     }
 
     pub fn request_open_audio(&self, request: OpenAudioRequested) {
-        let mut view_model = self.view_model.borrow_mut();
+        let mut state = self.state.borrow_mut();
         let mut audio_runtime = self.audio_runtime.borrow_mut();
-        enqueue_open_audio_request(&mut view_model, request);
+        enqueue_open_audio_request(&mut state, request);
         consume_outgoing_commands(
-            &mut view_model,
+            &mut state,
             &self.action_handlers,
-            &self.behavior_pipeline,
+            &self.behaviors,
             &mut audio_runtime,
         );
     }
 
     pub fn request_open_image(&self, request: OpenImageRequested) {
-        let mut view_model = self.view_model.borrow_mut();
-        let command = if let Some(behavior) = self.behavior_pipeline.open_image_behavior.as_ref() {
-            behavior.apply(request)
-        } else {
-            OpenSvgFileCommand {
+        let mut state = self.state.borrow_mut();
+        let mut audio_runtime = self.audio_runtime.borrow_mut();
+        reduce_with_behaviors(
+            &mut state,
+            ChoreoMainAction::RequestOpenImage {
                 file_path: request.file_path,
-            }
-        };
-
-        if let Some(behavior) = self.behavior_pipeline.open_svg_file_behavior.as_ref() {
-            behavior.apply(&mut view_model, command.clone());
-        } else {
-            view_model.open_svg_file(command.clone());
-        }
-
-        if let Some(request_open_image) = self.action_handlers.request_open_image.as_ref() {
-            request_open_image(command.file_path);
-            return;
-        }
-
-        if let Some(pick_image_path) = self.action_handlers.pick_image_path.as_ref() {
-            let _ = pick_image_path();
-        }
+            },
+            Some(&self.behaviors),
+        );
+        consume_outgoing_commands(
+            &mut state,
+            &self.action_handlers,
+            &self.behaviors,
+            &mut audio_runtime,
+        );
     }
 
     pub fn open_svg_file(&self, command: OpenSvgFileCommand) {
-        let mut view_model = self.view_model.borrow_mut();
-        if let Some(behavior) = self.behavior_pipeline.open_svg_file_behavior.as_ref() {
-            behavior.apply(&mut view_model, command);
-            return;
-        }
-
-        view_model.open_svg_file(command);
+        let mut state = self.state.borrow_mut();
+        reduce_with_behaviors(&mut state, ChoreoMainAction::ApplyOpenSvgFile(command), Some(&self.behaviors));
     }
 
     pub fn route_external_file_path(&self, file_path: &str) {
@@ -207,13 +156,17 @@ impl MainPageBinding {
                 file_name,
                 contents,
             };
-            let mut view_model = self.view_model.borrow_mut();
+            let mut state = self.state.borrow_mut();
             let mut audio_runtime = self.audio_runtime.borrow_mut();
-            view_model.dispatch(ChoreoMainAction::RequestOpenChoreo(command));
+            reduce_with_behaviors(
+                &mut state,
+                ChoreoMainAction::RequestOpenChoreo(command),
+                Some(&self.behaviors),
+            );
             consume_outgoing_commands(
-                &mut view_model,
+                &mut state,
                 &self.action_handlers,
-                &self.behavior_pipeline,
+                &self.behaviors,
                 &mut audio_runtime,
             );
             return;
@@ -234,22 +187,7 @@ impl MainPageBinding {
         }
     }
 
-    pub fn view_model(&self) -> Rc<RefCell<MainViewModel>> {
-        Rc::clone(&self.view_model)
-    }
-}
-
-fn map_interaction_mode(mode: super::state::InteractionMode) -> crate::global::InteractionMode {
-    match mode {
-        super::state::InteractionMode::View => crate::global::InteractionMode::View,
-        super::state::InteractionMode::Move => crate::global::InteractionMode::Move,
-        super::state::InteractionMode::RotateAroundCenter => {
-            crate::global::InteractionMode::RotateAroundCenter
-        }
-        super::state::InteractionMode::RotateAroundDancer => {
-            crate::global::InteractionMode::RotateAroundDancer
-        }
-        super::state::InteractionMode::Scale => crate::global::InteractionMode::Scale,
-        super::state::InteractionMode::LineOfSight => crate::global::InteractionMode::LineOfSight,
+    pub fn state(&self) -> Rc<RefCell<ChoreoMainState>> {
+        Rc::clone(&self.state)
     }
 }

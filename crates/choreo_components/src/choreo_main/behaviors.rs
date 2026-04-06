@@ -11,14 +11,12 @@ use crate::global::GlobalStateActor;
 use crate::preferences::Preferences;
 
 use super::apply_interaction_mode_behavior::ApplyInteractionModeBehavior;
-use super::hide_dialog_behavior::HideDialogBehavior;
 use super::open_audio_behavior::OpenAudioBehavior;
-use super::open_image_behavior::OpenImageBehavior;
+use super::open_choreo_file_behavior::OpenChoreoFileBehavior;
 use super::open_svg_file_behavior::OpenSvgFileBehavior;
-use super::show_dialog_behavior::ShowDialogBehavior;
 
 #[derive(Clone, Default)]
-pub struct MainBehaviorDependencies {
+pub struct ChoreoMainBehaviorDependencies {
     pub global_state_store: Option<Rc<GlobalStateActor>>,
     pub state_machine: Option<Rc<RefCell<ApplicationStateMachine>>>,
     pub open_audio_sender: Option<Sender<OpenAudioFileCommand>>,
@@ -27,24 +25,26 @@ pub struct MainBehaviorDependencies {
 }
 
 #[derive(Clone, Default)]
-pub struct MainBehaviorPipeline {
-    pub apply_interaction_mode_behavior: Option<ApplyInteractionModeBehavior>,
-    pub open_audio_behavior: Option<OpenAudioBehavior>,
-    pub open_image_behavior: Option<OpenImageBehavior>,
-    pub open_svg_file_behavior: Option<OpenSvgFileBehavior>,
-    pub show_dialog_behavior: ShowDialogBehavior,
-    pub hide_dialog_behavior: HideDialogBehavior,
+pub struct ChoreoMainBehaviors {
+    pub apply_interaction_mode: Option<ApplyInteractionModeBehavior>,
+    pub open_audio: Option<OpenAudioBehavior>,
+    pub open_choreo_file: Option<OpenChoreoFileBehavior>,
+    pub open_svg_file: Option<OpenSvgFileBehavior>,
 }
 
-impl MainBehaviorPipeline {
-    pub fn from_dependencies(deps: MainBehaviorDependencies) -> Self {
-        let apply_interaction_mode_behavior = deps.global_state_store.as_ref().and_then(|store| {
+impl ChoreoMainBehaviors {
+    #[must_use]
+    pub fn from_dependencies(deps: ChoreoMainBehaviorDependencies) -> Self {
+        let apply_interaction_mode = deps.global_state_store.as_ref().and_then(|store| {
             deps.state_machine.as_ref().map(|state_machine| {
                 ApplyInteractionModeBehavior::new(Rc::clone(store), Rc::clone(state_machine))
             })
         });
-        let open_audio_behavior = deps.open_audio_sender.map(OpenAudioBehavior::new);
-        let open_svg_file_behavior = deps.global_state_store.as_ref().and_then(|store| {
+        let open_audio = deps.open_audio_sender.map(OpenAudioBehavior::new);
+        let open_choreo_file = deps.preferences.as_ref().map(|preferences| {
+            OpenChoreoFileBehavior::new(Rc::clone(preferences))
+        });
+        let open_svg_file = deps.global_state_store.as_ref().and_then(|store| {
             deps.preferences.as_ref().and_then(|preferences| {
                 deps.draw_floor_sender.as_ref().map(|draw_floor_sender| {
                     OpenSvgFileBehavior::new(
@@ -57,12 +57,10 @@ impl MainBehaviorPipeline {
         });
 
         Self {
-            apply_interaction_mode_behavior,
-            open_audio_behavior,
-            open_image_behavior: Some(OpenImageBehavior),
-            open_svg_file_behavior,
-            show_dialog_behavior: ShowDialogBehavior,
-            hide_dialog_behavior: HideDialogBehavior,
+            apply_interaction_mode,
+            open_audio,
+            open_choreo_file,
+            open_svg_file,
         }
     }
 }

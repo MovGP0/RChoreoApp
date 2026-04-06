@@ -31,7 +31,7 @@ impl Default for AppShellViewModel {
 impl AppShellViewModel {
     #[must_use]
     pub fn new(title: impl Into<String>) -> Self {
-        Self::new_with_dependencies(title, MainPageDependencies::default())
+        Self::new_with_dependencies(title, crate::shell::default_main_page_dependencies())
     }
 
     #[must_use]
@@ -70,8 +70,8 @@ impl AppShellViewModel {
         if self.show_splash_screen {
             if let Some(binding) = self.main_page_binding.as_ref() {
                 let state = {
-                    let view_model = binding.view_model();
-                    view_model.borrow().state().clone()
+                    let state = binding.state();
+                    state.borrow().clone()
                 };
                 apply_material_visuals(
                     context,
@@ -96,8 +96,8 @@ impl AppShellViewModel {
 
         if let Some(binding) = self.main_page_binding.as_ref() {
             let state = {
-                let view_model = binding.view_model();
-                view_model.borrow().state().clone()
+                let state = binding.state();
+                state.borrow().clone()
             };
             apply_material_visuals(
                 context,
@@ -231,11 +231,11 @@ mod app_shell_splash_spec {
         ));
 
         let expected = {
-            let view_model = binding.view_model();
-            let view_model = view_model.borrow();
+            let state = binding.state();
+            let state = state.borrow();
             crate::material::styling::material_palette::material_palette_for_theme(
-                &view_model.state().settings_state.material_scheme,
-                view_model.state().settings_state.theme_mode,
+                &state.settings_state.material_scheme,
+                state.settings_state.theme_mode,
             )
         };
 

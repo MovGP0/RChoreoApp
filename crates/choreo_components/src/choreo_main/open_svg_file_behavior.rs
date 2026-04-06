@@ -5,16 +5,12 @@ use std::sync::mpsc::SyncSender;
 
 use nject::injectable;
 
-use crate::behavior::Behavior;
-use crate::behavior::CompositeDisposable;
 use crate::floor::DrawFloorCommand;
 use crate::global::GlobalStateActor;
-use crate::logging::BehaviorLog;
 use crate::preferences::Preferences;
 
-use super::actions::ChoreoMainAction;
-use super::main_view_model::MainViewModel;
 use super::messages::OpenSvgFileCommand;
+use super::state::ChoreoMainState;
 
 #[injectable]
 #[inject(
@@ -44,38 +40,7 @@ impl OpenSvgFileBehavior {
         }
     }
 
-    pub fn apply(&self, view_model: &mut MainViewModel, command: OpenSvgFileCommand) {
-        let path = command.file_path.trim().to_string();
-        if path.is_empty() {
-            view_model.dispatch(ChoreoMainAction::ApplyOpenSvgFile(OpenSvgFileCommand {
-                file_path: String::new(),
-            }));
-            self.global_state_store.dispatch(|state| {
-                state.svg_file_path = None;
-            });
-            self.preferences
-                .remove(choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE);
-            let _ = self.draw_floor_sender.try_send(DrawFloorCommand);
-            return;
-        }
-
-        view_model.dispatch(ChoreoMainAction::ApplyOpenSvgFile(OpenSvgFileCommand {
-            file_path: path.clone(),
-        }));
-        self.global_state_store.dispatch({
-            let path = path.clone();
-            move |state| {
-                state.svg_file_path = Some(path);
-            }
-        });
-        self.preferences.set_string(
-            choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE,
-            path,
-        );
-        let _ = self.draw_floor_sender.try_send(DrawFloorCommand);
-    }
-
-    fn restore_last_opened_svg(&self, view_model: &mut MainViewModel) {
+    pub fn initialize(&self, state: &mut ChoreoMainState) {
         let path = self.preferences.get_string(
             choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE,
             "",
@@ -88,23 +53,54 @@ impl OpenSvgFileBehavior {
         if !Self::path_exists(normalized.as_str()) {
             self.preferences
                 .remove(choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE);
-            view_model.dispatch(ChoreoMainAction::RestoreLastOpenedSvg {
-                file_path: Some(normalized),
-                path_exists: false,
-            });
+            restore_last_opened_svg(state, Some(normalized), false);
             return;
         }
 
-        view_model.dispatch(ChoreoMainAction::RestoreLastOpenedSvg {
-            file_path: Some(normalized.clone()),
-            path_exists: true,
-        });
+        restore_last_opened_svg(state, Some(normalized.clone()), true);
         self.global_state_store.dispatch({
             let normalized = normalized.clone();
-            move |state| {
-                state.svg_file_path = Some(normalized);
+            move |global_state| {
+                global_state.svg_file_path = Some(normalized);
             }
         });
+        let _ = self.draw_floor_sender.try_send(DrawFloorCommand);
+    }
+
+    pub fn apply_to_state(&self, state: &mut ChoreoMainState, command: OpenSvgFileCommand) {
+        let path = command.file_path.trim().to_string();
+        if path.is_empty() {
+            apply_open_svg_file(
+                state,
+                OpenSvgFileCommand {
+                    file_path: String::new(),
+                },
+            );
+            self.global_state_store.dispatch(|global_state| {
+                global_state.svg_file_path = None;
+            });
+            self.preferences
+                .remove(choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE);
+            let _ = self.draw_floor_sender.try_send(DrawFloorCommand);
+            return;
+        }
+
+        apply_open_svg_file(
+            state,
+            OpenSvgFileCommand {
+                file_path: path.clone(),
+            },
+        );
+        self.global_state_store.dispatch({
+            let path = path.clone();
+            move |global_state| {
+                global_state.svg_file_path = Some(path);
+            }
+        });
+        self.preferences.set_string(
+            choreo_models::SettingsPreferenceKeys::LAST_OPENED_SVG_FILE,
+            path,
+        );
         let _ = self.draw_floor_sender.try_send(DrawFloorCommand);
     }
 
@@ -119,9 +115,40 @@ impl OpenSvgFileBehavior {
     }
 }
 
-impl Behavior<MainViewModel> for OpenSvgFileBehavior {
-    fn activate(&self, view_model: &mut MainViewModel, _disposables: &mut CompositeDisposable) {
-        BehaviorLog::behavior_activated("OpenSvgFileBehavior", "MainViewModel");
-        self.restore_last_opened_svg(view_model);
+pub(super) fn apply_open_svg_file(state: &mut ChoreoMainState, command: OpenSvgFileCommand) {
+    let path = command.file_path.trim();
+    if path.is_empty() {
+        state.svg_file_path = None;
+        state.last_opened_svg_preference = None;
+    } else {
+        let normalized = path.to_string();
+        state.svg_file_path = Some(normalized.clone());
+        state.last_opened_svg_preference = Some(normalized);
     }
+
+    super::reducer::refresh_floor_projection(state);
+    state.draw_floor_request_count += 1;
+}
+
+pub(super) fn restore_last_opened_svg(
+    state: &mut ChoreoMainState,
+    file_path: Option<String>,
+    path_exists: bool,
+) {
+    let Some(path) = file_path.map(|value| value.trim().to_string()) else {
+        return;
+    };
+    if path.is_empty() {
+        return;
+    }
+
+    if !path_exists {
+        state.last_opened_svg_preference = None;
+        return;
+    }
+
+    state.svg_file_path = Some(path.clone());
+    state.last_opened_svg_preference = Some(path);
+    super::reducer::refresh_floor_projection(state);
+    state.draw_floor_request_count += 1;
 }

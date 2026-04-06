@@ -23,7 +23,21 @@ use choreo_models::SceneModel;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+use super::behaviors::ChoreoMainBehaviors;
+use super::open_audio_behavior;
+use super::open_choreo_file_behavior;
+use super::open_image_behavior;
+use super::open_svg_file_behavior;
+
 pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
+    reduce_with_behaviors(state, action, None);
+}
+
+pub fn reduce_with_behaviors(
+    state: &mut ChoreoMainState,
+    action: ChoreoMainAction,
+    behaviors: Option<&ChoreoMainBehaviors>,
+) {
     match action {
         ChoreoMainAction::Initialize => {
             state.content = MainContent::Main;
@@ -31,6 +45,12 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             state.is_choreography_settings_open = false;
             state.is_audio_player_open = false;
             sync_choreography_settings_projection(state);
+            if let Some(behavior) = behaviors.and_then(|value| value.open_choreo_file.as_ref()) {
+                behavior.initialize(state);
+            }
+            if let Some(behavior) = behaviors.and_then(|value| value.open_svg_file.as_ref()) {
+                behavior.initialize(state);
+            }
         }
         ChoreoMainAction::ToggleNav => {
             state.is_nav_open = !state.is_nav_open;
@@ -54,6 +74,11 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             state.selected_mode_index = index;
             if let Some(mode) = interaction_mode_from_index(index) {
                 state.interaction_mode = mode;
+                if let Some(behavior) =
+                    behaviors.and_then(|value| value.apply_interaction_mode.as_ref())
+                {
+                    behavior.apply(map_global_interaction_mode(mode));
+                }
             }
         }
         ChoreoMainAction::ResetFloorViewport => {
@@ -82,7 +107,7 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             state.is_dialog_open = false;
         }
         ChoreoMainAction::RequestOpenChoreo(request) => {
-            state.outgoing_open_choreo_requests.push(request);
+            open_choreo_file_behavior::request_open_choreo(state, request);
         }
         ChoreoMainAction::RequestSaveChoreo => {
             if let Some(file_path) = state.last_opened_choreo_file.as_ref().filter(|path| {
@@ -96,46 +121,23 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             }
         }
         ChoreoMainAction::RequestOpenAudio(request) => {
-            state.outgoing_audio_requests.push(request);
+            open_audio_behavior::request_open_audio(state, request);
         }
         ChoreoMainAction::RequestOpenImage { file_path } => {
-            state
-                .outgoing_open_svg_commands
-                .push(super::actions::OpenSvgFileCommand { file_path });
+            open_image_behavior::request_open_image(state, file_path);
         }
         ChoreoMainAction::ApplyOpenSvgFile(command) => {
-            let path = command.file_path.trim();
-            if path.is_empty() {
-                state.svg_file_path = None;
-                state.last_opened_svg_preference = None;
+            if let Some(behavior) = behaviors.and_then(|value| value.open_svg_file.as_ref()) {
+                behavior.apply_to_state(state, command);
             } else {
-                let normalized = path.to_string();
-                state.svg_file_path = Some(normalized.clone());
-                state.last_opened_svg_preference = Some(normalized);
+                open_svg_file_behavior::apply_open_svg_file(state, command);
             }
-            refresh_floor_projection(state);
-            state.draw_floor_request_count += 1;
         }
         ChoreoMainAction::RestoreLastOpenedSvg {
             file_path,
             path_exists,
         } => {
-            let Some(path) = file_path.map(|value| value.trim().to_string()) else {
-                return;
-            };
-            if path.is_empty() {
-                return;
-            }
-
-            if !path_exists {
-                state.last_opened_svg_preference = None;
-                return;
-            }
-
-            state.svg_file_path = Some(path.clone());
-            state.last_opened_svg_preference = Some(path);
-            refresh_floor_projection(state);
-            state.draw_floor_request_count += 1;
+            open_svg_file_behavior::restore_last_opened_svg(state, file_path, path_exists);
         }
         ChoreoMainAction::ApplyInteractionMode {
             mode,
@@ -145,6 +147,10 @@ pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
             state.selected_mode_index = interaction_mode_index(mode);
             state.selected_positions_count = selected_positions_count;
             state.interaction_state_machine = map_interaction_state(mode, selected_positions_count);
+            if let Some(behavior) = behaviors.and_then(|value| value.apply_interaction_mode.as_ref())
+            {
+                behavior.apply(map_global_interaction_mode(mode));
+            }
         }
         ChoreoMainAction::SetScenes { scenes } => {
             state.scenes = scenes;
@@ -262,6 +268,17 @@ fn interaction_mode_index(mode: InteractionMode) -> i32 {
         InteractionMode::RotateAroundDancer => 3,
         InteractionMode::Scale => 4,
         InteractionMode::LineOfSight => 5,
+    }
+}
+
+fn map_global_interaction_mode(mode: InteractionMode) -> crate::global::InteractionMode {
+    match mode {
+        InteractionMode::View => crate::global::InteractionMode::View,
+        InteractionMode::Move => crate::global::InteractionMode::Move,
+        InteractionMode::RotateAroundCenter => crate::global::InteractionMode::RotateAroundCenter,
+        InteractionMode::RotateAroundDancer => crate::global::InteractionMode::RotateAroundDancer,
+        InteractionMode::Scale => crate::global::InteractionMode::Scale,
+        InteractionMode::LineOfSight => crate::global::InteractionMode::LineOfSight,
     }
 }
 
@@ -527,7 +544,7 @@ fn sync_main_state_from_dancers(state: &mut ChoreoMainState) {
     sync_dancers_projection(state);
 }
 
-fn refresh_floor_projection(state: &mut ChoreoMainState) {
+pub(crate) fn refresh_floor_projection(state: &mut ChoreoMainState) {
     let choreography = &state.choreography_settings_state.choreography;
     state.floor_state.floor_front = state.choreography_settings_state.floor_front;
     state.floor_state.floor_back = state.choreography_settings_state.floor_back;

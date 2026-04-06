@@ -2,13 +2,9 @@ use crossbeam_channel::Sender;
 use nject::injectable;
 
 use crate::audio_player::OpenAudioFileCommand;
-use crate::behavior::Behavior;
-use crate::behavior::CompositeDisposable;
-use crate::logging::BehaviorLog;
 
-use super::main_view_model::MainViewModel;
-use super::messages::OpenAudioRequested;
-
+use super::actions::OpenAudioRequested;
+use super::state::ChoreoMainState;
 #[injectable]
 #[inject(|sender: Sender<OpenAudioFileCommand>| Self::new(sender))]
 #[derive(Clone)]
@@ -29,8 +25,6 @@ impl OpenAudioBehavior {
     }
 }
 
-impl Behavior<MainViewModel> for OpenAudioBehavior {
-    fn activate(&self, _view_model: &mut MainViewModel, _disposables: &mut CompositeDisposable) {
-        BehaviorLog::behavior_activated("OpenAudioBehavior", "MainViewModel");
-    }
+pub(super) fn request_open_audio(state: &mut ChoreoMainState, request: OpenAudioRequested) {
+    state.outgoing_audio_requests.push(request);
 }

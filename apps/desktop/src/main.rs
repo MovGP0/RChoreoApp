@@ -92,15 +92,14 @@ fn create_desktop_shell_host() -> AppShellViewModel {
 }
 
 fn desktop_main_page_dependencies() -> MainPageDependencies {
-    MainPageDependencies {
-        action_handlers: MainPageActionHandlers {
-            pick_choreo_file: Some(Rc::new(pick_choreo_file)),
-            pick_audio_path: Some(Rc::new(pick_audio_path)),
-            pick_image_path: Some(Rc::new(pick_image_path)),
-            ..MainPageActionHandlers::default()
-        },
-        ..MainPageDependencies::default()
-    }
+    let mut dependencies = shell::default_main_page_dependencies();
+    dependencies.action_handlers = MainPageActionHandlers {
+        pick_choreo_file: Some(Rc::new(pick_choreo_file)),
+        pick_audio_path: Some(Rc::new(pick_audio_path)),
+        pick_image_path: Some(Rc::new(pick_image_path)),
+        ..MainPageActionHandlers::default()
+    };
+    dependencies
 }
 
 fn pick_audio_path() -> Option<String> {
@@ -165,6 +164,12 @@ mod desktop_open_choreo_spec {
     fn desktop_host_wires_open_choreo_handler() {
         let dependencies = desktop_main_page_dependencies();
         assert!(dependencies.action_handlers.pick_choreo_file.is_some());
+    }
+
+    #[test]
+    fn desktop_host_preserves_preferences_wiring_for_startup_restore() {
+        let dependencies = desktop_main_page_dependencies();
+        assert!(dependencies.behavior_dependencies.preferences.is_some());
     }
 
     #[test]

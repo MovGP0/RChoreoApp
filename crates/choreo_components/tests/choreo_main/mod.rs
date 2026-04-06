@@ -41,5 +41,6 @@ pub mod open_audio_behavior_spec;
 pub mod open_image_behavior_spec;
 pub mod open_svg_file_behavior_spec;
 pub mod show_dialog_behavior_spec;
+pub mod startup_open_choreo_behavior_spec;
 pub mod timestamp_sync_spec;
 pub mod ui_main_page_spec;

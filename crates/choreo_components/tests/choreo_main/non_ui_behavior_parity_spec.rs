@@ -4,7 +4,7 @@ use std::sync::mpsc::sync_channel;
 
 use crate::choreo_main::Report;
 use choreo_components::audio_player::OpenAudioFileCommand;
-use choreo_components::choreo_main::MainBehaviorDependencies;
+use choreo_components::choreo_main::ChoreoMainBehaviorDependencies;
 use choreo_components::choreo_main::MainPageBinding;
 use choreo_components::choreo_main::MainPageDependencies;
 use choreo_components::choreo_main::OpenAudioRequested;
@@ -29,9 +29,9 @@ fn non_ui_behavior_parity_spec() {
                     let (open_audio_sender, open_audio_receiver) =
                         bounded::<OpenAudioFileCommand>(8);
                     let binding = MainPageBinding::new(MainPageDependencies {
-                        behavior_dependencies: MainBehaviorDependencies {
+                        behavior_dependencies: ChoreoMainBehaviorDependencies {
                             open_audio_sender: Some(open_audio_sender),
-                            ..MainBehaviorDependencies::default()
+                            ..ChoreoMainBehaviorDependencies::default()
                         },
                         ..MainPageDependencies::default()
                     });
@@ -55,11 +55,11 @@ fn non_ui_behavior_parity_spec() {
                 let preferences: Rc<dyn Preferences> = Rc::new(InMemoryPreferences::new());
                 let (draw_floor_sender, draw_floor_receiver) = sync_channel(8);
                 let binding = MainPageBinding::new(MainPageDependencies {
-                    behavior_dependencies: MainBehaviorDependencies {
+                    behavior_dependencies: ChoreoMainBehaviorDependencies {
                         global_state_store: Some(Rc::clone(&global_state_store)),
                         preferences: Some(Rc::clone(&preferences)),
                         draw_floor_sender: Some(draw_floor_sender),
-                        ..MainBehaviorDependencies::default()
+                        ..ChoreoMainBehaviorDependencies::default()
                     },
                     ..MainPageDependencies::default()
                 });
@@ -68,8 +68,8 @@ fn non_ui_behavior_parity_spec() {
                     file_path: "C:/floor.svg".to_string(),
                 });
 
-                let state = binding.view_model();
-                assert_eq!(state.borrow().state().svg_file_path.as_deref(), Some("C:/floor.svg"));
+                let state = binding.state();
+                assert_eq!(state.borrow().svg_file_path.as_deref(), Some("C:/floor.svg"));
                 global_state_store.drain();
                 let global_svg = global_state_store
                     .try_with_state(|state| state.svg_file_path.clone())
@@ -93,10 +93,10 @@ fn non_ui_behavior_parity_spec() {
                         )),
                     ));
                     let binding = MainPageBinding::new(MainPageDependencies {
-                        behavior_dependencies: MainBehaviorDependencies {
+                        behavior_dependencies: ChoreoMainBehaviorDependencies {
                             global_state_store: Some(global_state_store),
                             state_machine: Some(Rc::clone(&state_machine)),
-                            ..MainBehaviorDependencies::default()
+                            ..ChoreoMainBehaviorDependencies::default()
                         },
                         ..MainPageDependencies::default()
                     });

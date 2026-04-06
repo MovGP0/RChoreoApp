@@ -10,7 +10,7 @@ use std::time::UNIX_EPOCH;
 
 use choreo_components::audio_player::OpenAudioFileCommand;
 use choreo_components::audio_player::actions::AudioPlayerAction;
-use choreo_components::choreo_main::MainBehaviorDependencies;
+use choreo_components::choreo_main::ChoreoMainBehaviorDependencies;
 use choreo_components::choreo_main::MainPageActionHandlers;
 use choreo_components::choreo_main::MainPageBinding;
 use choreo_components::choreo_main::MainPageDependencies;
@@ -90,11 +90,11 @@ fn binding_updates_dialog_and_interaction_mode_state() {
     });
     binding.dispatch(ChoreoMainAction::SelectMode { index: 5 });
 
-    let view_model = binding.view_model();
-    let state = view_model.borrow();
-    assert!(state.state().is_dialog_open);
-    assert_eq!(state.state().dialog_content.as_deref(), Some("Confirm"));
-    assert_eq!(state.state().interaction_mode, InteractionMode::LineOfSight);
+    let state = binding.state();
+    let state = state.borrow();
+    assert!(state.is_dialog_open);
+    assert_eq!(state.dialog_content.as_deref(), Some("Confirm"));
+    assert_eq!(state.interaction_mode, InteractionMode::LineOfSight);
 }
 
 #[test]
@@ -139,16 +139,13 @@ fn binding_uses_pick_choreo_handler_to_load_selected_file() {
         contents: String::new(),
     }));
 
-    let view_model = binding.view_model();
-    let state = view_model.borrow();
-    assert_eq!(state.state().scenes.len(), 1);
-    assert_eq!(state.state().scenes[0].name, "Intro");
-    assert_eq!(state.state().selected_scene_index, Some(0));
-    assert_eq!(state.state().floor_scene_name.as_deref(), Some("Intro"));
-    assert_eq!(
-        state.state().choreography_settings_state.name,
-        "Loaded choreo"
-    );
+    let state = binding.state();
+    let state = state.borrow();
+    assert_eq!(state.scenes.len(), 1);
+    assert_eq!(state.scenes[0].name, "Intro");
+    assert_eq!(state.selected_scene_index, Some(0));
+    assert_eq!(state.floor_scene_name.as_deref(), Some("Intro"));
+    assert_eq!(state.choreography_settings_state.name, "Loaded choreo");
 }
 
 #[test]
@@ -233,11 +230,10 @@ fn binding_uses_pick_audio_handler_to_open_selected_file_and_show_audio_panel() 
             pick_audio_path: Some(Rc::new(|| Some("C:/music.mp3".to_string()))),
             ..MainPageActionHandlers::default()
         },
-        behavior_dependencies: MainBehaviorDependencies {
+        behavior_dependencies: ChoreoMainBehaviorDependencies {
             open_audio_sender: Some(open_audio_sender),
-            ..MainBehaviorDependencies::default()
+            ..ChoreoMainBehaviorDependencies::default()
         },
-        ..MainPageDependencies::default()
     });
 
     binding.dispatch(ChoreoMainAction::RequestOpenAudio(OpenAudioRequested {
@@ -249,7 +245,7 @@ fn binding_uses_pick_audio_handler_to_open_selected_file_and_show_audio_panel() 
         .try_recv()
         .expect("picker fallback should forward selected audio file");
     assert_eq!(forwarded.file_path, "C:/music.mp3");
-    assert!(binding.view_model().borrow().state().is_audio_player_open);
+    assert!(binding.state().borrow().is_audio_player_open);
 }
 
 #[test]
@@ -266,14 +262,10 @@ fn binding_opens_audio_file_and_toggles_play_pause_from_main_audio_actions() {
     });
 
     {
-        let view_model = binding.view_model();
-        let state = view_model.borrow();
-        let state = state.state();
+        let state = binding.state();
+        let state = state.borrow();
         assert_eq!(
-            state
-                .audio_player_state
-                .last_opened_audio_file_path
-                .as_deref(),
+            state.audio_player_state.last_opened_audio_file_path.as_deref(),
             Some(file_path.as_str())
         );
         assert!(state.audio_player_state.has_player);
@@ -289,18 +281,12 @@ fn binding_opens_audio_file_and_toggles_play_pause_from_main_audio_actions() {
         Duration::from_millis(20),
         || {
             let _ = binding.tick_audio_runtime();
-            binding
-                .view_model()
-                .borrow()
-                .state()
-                .audio_player_state
-                .is_playing
+            binding.state().borrow().audio_player_state.is_playing
         },
     );
 
-    let view_model = binding.view_model();
-    let state = view_model.borrow();
-    let state = state.state();
+    let state = binding.state();
+    let state = state.borrow();
     assert!(state.audio_player_state.has_player);
     assert!(became_playing);
     assert!(state.audio_player_state.is_playing);
@@ -326,12 +312,9 @@ fn binding_tick_clears_pending_seek_only_after_runtime_acknowledges_position() {
     ));
 
     {
-        let view_model = binding.view_model();
-        let state = view_model.borrow();
-        assert_eq!(
-            state.state().audio_player_state.pending_seek_position,
-            Some(0.25)
-        );
+        let state = binding.state();
+        let state = state.borrow();
+        assert_eq!(state.audio_player_state.pending_seek_position, Some(0.25));
     }
 
     let acknowledged = wait_until(
@@ -340,26 +323,19 @@ fn binding_tick_clears_pending_seek_only_after_runtime_acknowledges_position() {
         || {
             let _ = binding.tick_audio_runtime();
             binding
-                .view_model()
-                .borrow()
                 .state()
+                .borrow()
                 .audio_player_state
                 .pending_seek_position
                 .is_none()
         },
     );
 
-    let view_model = binding.view_model();
-    let state = view_model.borrow();
+    let state = binding.state();
+    let state = state.borrow();
     assert!(acknowledged);
-    assert!(
-        state
-            .state()
-            .audio_player_state
-            .pending_seek_position
-            .is_none()
-    );
-    assert_eq!(state.state().audio_player_state.position, 0.25);
+    assert!(state.audio_player_state.pending_seek_position.is_none());
+    assert_eq!(state.audio_player_state.position, 0.25);
 
     let _ = fs::remove_file(temp_file);
 }
