@@ -24,6 +24,8 @@ use super::actions::OpenSvgFileCommand;
 use super::behaviors::ChoreoMainBehaviors;
 use super::main_page_binding::MainPageActionHandlers;
 use super::open_audio_behavior;
+use super::reducer::interaction_mode_from_index;
+use super::reducer::map_global_interaction_mode;
 use super::reducer::reduce;
 use super::reducer::reduce_with_behaviors;
 use super::reducer::sync_audio_position_internal;
@@ -117,29 +119,44 @@ fn apply_open_choreo_request(
             }
         });
 
-    reduce(state, ChoreoMainAction::UpdateSceneSearchText(String::new()));
-    reduce(state, ChoreoMainAction::ChoreographySettingsAction(
-        ChoreographySettingsAction::LoadChoreography {
-            choreography: Box::new(choreography.clone()),
-            selected_scene,
-        },
-    ));
-    reduce(state, ChoreoMainAction::AudioPlayerAction(
-        AudioPlayerAction::SetScenes {
+    reduce(
+        state,
+        ChoreoMainAction::UpdateSceneSearchText(String::new()),
+    );
+    reduce(
+        state,
+        ChoreoMainAction::ChoreographySettingsAction(
+            ChoreographySettingsAction::LoadChoreography {
+                choreography: Box::new(choreography.clone()),
+                selected_scene,
+            },
+        ),
+    );
+    reduce(
+        state,
+        ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::SetScenes {
             scenes: map_audio_player_scenes(&choreography),
             selected_scene_id: choreography.scenes.first().map(|scene| scene.scene_id.0),
             choreography_scenes: map_audio_player_choreography_scenes(&choreography),
-        },
-    ));
-    reduce(state, ChoreoMainAction::AudioPlayerAction(
-        AudioPlayerAction::UpdateTicksAndLinkState,
-    ));
+        }),
+    );
+    reduce(
+        state,
+        ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::UpdateTicksAndLinkState),
+    );
     let last_opened_choreo_file = request.file_path.clone().or(request.file_name.clone());
     state.last_opened_choreo_file = last_opened_choreo_file;
     state.draw_floor_request_count += 1;
 
     if let Some(audio_request) = audio_request {
-        route_open_audio_request(state, audio_runtime, audio_request, handlers, behaviors, false);
+        route_open_audio_request(
+            state,
+            audio_runtime,
+            audio_request,
+            handlers,
+            behaviors,
+            false,
+        );
     }
 
     true
@@ -151,11 +168,9 @@ fn route_open_svg_command(
     handlers: &MainPageActionHandlers,
     behaviors: &ChoreoMainBehaviors,
 ) {
-    reduce_with_behaviors(
-        state,
-        ChoreoMainAction::ApplyOpenSvgFile(command.clone()),
-        Some(behaviors),
-    );
+    let action = ChoreoMainAction::ApplyOpenSvgFile(command.clone());
+    reduce_with_behaviors(state, action.clone());
+    apply_action_behaviors(state, &action, behaviors);
 
     if let Some(request_open_image) = handlers.request_open_image.as_ref() {
         request_open_image(command.file_path);
@@ -164,6 +179,41 @@ fn route_open_svg_command(
 
     if let Some(pick_image_path) = handlers.pick_image_path.as_ref() {
         let _ = pick_image_path();
+    }
+}
+
+pub(crate) fn apply_action_behaviors(
+    state: &mut ChoreoMainState,
+    action: &ChoreoMainAction,
+    behaviors: &ChoreoMainBehaviors,
+) {
+    match action {
+        ChoreoMainAction::Initialize => {
+            if let Some(behavior) = behaviors.open_choreo_file.as_ref() {
+                behavior.initialize(state);
+            }
+            if let Some(behavior) = behaviors.open_svg_file.as_ref() {
+                behavior.initialize(state);
+            }
+        }
+        ChoreoMainAction::SelectMode { index } => {
+            if let Some(mode) = interaction_mode_from_index(*index)
+                && let Some(behavior) = behaviors.apply_interaction_mode.as_ref()
+            {
+                behavior.apply(map_global_interaction_mode(mode));
+            }
+        }
+        ChoreoMainAction::ApplyOpenSvgFile(command) => {
+            if let Some(behavior) = behaviors.open_svg_file.as_ref() {
+                behavior.sync_external_state(command.file_path.as_str());
+            }
+        }
+        ChoreoMainAction::ApplyInteractionMode { mode, .. } => {
+            if let Some(behavior) = behaviors.apply_interaction_mode.as_ref() {
+                behavior.apply(map_global_interaction_mode(*mode));
+            }
+        }
+        _ => {}
     }
 }
 
@@ -228,12 +278,13 @@ fn apply_open_audio_request(
         audio_runtime.close();
     }
 
-    reduce(state, ChoreoMainAction::AudioPlayerAction(
-        AudioPlayerAction::OpenAudioFile {
+    reduce(
+        state,
+        ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::OpenAudioFile {
             file_path: file_path.to_string(),
             file_exists,
-        },
-    ));
+        }),
+    );
 
     if file_exists && let Some(sample) = audio_runtime.sample() {
         crate::audio_player::runtime::apply_player_sample(&mut state.audio_player_state, sample);
@@ -297,11 +348,7 @@ fn switch_audio_backend(
         return;
     }
 
-    let Some(file_path) = state
-        .audio_player_state
-        .last_opened_audio_file_path
-        .clone()
-    else {
+    let Some(file_path) = state.audio_player_state.last_opened_audio_file_path.clone() else {
         return;
     };
 
@@ -447,13 +494,13 @@ fn apply_save_choreo_request(state: &mut ChoreoMainState, file_path: &str) {
         return;
     }
 
-    state.choreography_settings_state.choreography.last_save_date = choreography.last_save_date;
+    state
+        .choreography_settings_state
+        .choreography
+        .last_save_date = choreography.last_save_date;
 }
 
-pub(crate) fn enqueue_open_audio_request(
-    state: &mut ChoreoMainState,
-    request: OpenAudioRequested,
-) {
+pub(crate) fn enqueue_open_audio_request(state: &mut ChoreoMainState, request: OpenAudioRequested) {
     open_audio_behavior::request_open_audio(state, request);
 }
 
@@ -467,8 +514,8 @@ mod tests {
 
     use crate::audio_player::AudioPlayerBackend;
     use crate::audio_player::runtime::AudioPlayerRuntime;
-    use crate::choreo_main::state::ChoreoMainState;
     use crate::choreo_main::reducer::reduce;
+    use crate::choreo_main::state::ChoreoMainState;
     use crate::settings::actions::SettingsAction;
 
     use super::apply_audio_action_side_effects;

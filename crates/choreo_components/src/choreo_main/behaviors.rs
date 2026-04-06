@@ -41,9 +41,10 @@ impl ChoreoMainBehaviors {
             })
         });
         let open_audio = deps.open_audio_sender.map(OpenAudioBehavior::new);
-        let open_choreo_file = deps.preferences.as_ref().map(|preferences| {
-            OpenChoreoFileBehavior::new(Rc::clone(preferences))
-        });
+        let open_choreo_file = deps
+            .preferences
+            .as_ref()
+            .map(|preferences| OpenChoreoFileBehavior::new(Rc::clone(preferences)));
         let open_svg_file = deps.global_state_store.as_ref().and_then(|store| {
             deps.preferences.as_ref().and_then(|preferences| {
                 deps.draw_floor_sender.as_ref().map(|draw_floor_sender| {

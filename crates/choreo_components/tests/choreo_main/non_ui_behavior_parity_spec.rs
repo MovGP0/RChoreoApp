@@ -9,6 +9,7 @@ use choreo_components::choreo_main::MainPageBinding;
 use choreo_components::choreo_main::MainPageDependencies;
 use choreo_components::choreo_main::OpenAudioRequested;
 use choreo_components::choreo_main::OpenImageRequested;
+use choreo_components::choreo_main::OpenSvgFileCommand;
 use choreo_components::choreo_main::actions::ChoreoMainAction;
 use choreo_components::global::GlobalStateActor;
 use choreo_components::global::GlobalStateModel;
@@ -82,6 +83,44 @@ fn non_ui_behavior_parity_spec() {
                 assert!(draw_floor_receiver.try_recv().is_ok());
             },
         );
+
+            spec.it(
+                "applies direct open-svg actions through external side effects outside the reducer",
+                |_| {
+                    let global_state_store = GlobalStateActor::new();
+                    let preferences: Rc<dyn Preferences> = Rc::new(InMemoryPreferences::new());
+                    let (draw_floor_sender, draw_floor_receiver) = sync_channel(8);
+                    let binding = MainPageBinding::new(MainPageDependencies {
+                        behavior_dependencies: ChoreoMainBehaviorDependencies {
+                            global_state_store: Some(Rc::clone(&global_state_store)),
+                            preferences: Some(Rc::clone(&preferences)),
+                            draw_floor_sender: Some(draw_floor_sender),
+                            ..ChoreoMainBehaviorDependencies::default()
+                        },
+                        ..MainPageDependencies::default()
+                    });
+
+                    binding.dispatch(ChoreoMainAction::ApplyOpenSvgFile(OpenSvgFileCommand {
+                        file_path: "C:/direct-floor.svg".to_string(),
+                    }));
+
+                    let state = binding.state();
+                    assert_eq!(
+                        state.borrow().svg_file_path.as_deref(),
+                        Some("C:/direct-floor.svg")
+                    );
+                    global_state_store.drain();
+                    let global_svg = global_state_store
+                        .try_with_state(|state| state.svg_file_path.clone())
+                        .expect("global state should be readable");
+                    assert_eq!(global_svg.as_deref(), Some("C:/direct-floor.svg"));
+                    assert_eq!(
+                        preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_SVG_FILE, ""),
+                        "C:/direct-floor.svg"
+                    );
+                    assert!(draw_floor_receiver.try_recv().is_ok());
+                },
+            );
 
             spec.it(
                 "applies interaction mode transitions to the state machine",

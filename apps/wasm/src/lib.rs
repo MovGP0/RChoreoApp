@@ -7,7 +7,7 @@
 #![deny(clippy::all)]
 
 #[cfg(target_arch = "wasm32")]
-use choreo_components::AppShellViewModel;
+use choreo_components::AppShellStore;
 #[cfg(target_arch = "wasm32")]
 use choreo_components::material;
 #[cfg(target_arch = "wasm32")]
@@ -26,7 +26,7 @@ const CANVAS_ID: &str = "rchoreo-wasm-egui-canvas";
 #[cfg(target_arch = "wasm32")]
 #[derive(Default)]
 struct WasmEguiApp {
-    shell: AppShellViewModel,
+    shell: AppShellStore,
 }
 
 #[cfg(target_arch = "wasm32")]

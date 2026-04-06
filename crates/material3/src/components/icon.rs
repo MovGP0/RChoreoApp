@@ -289,10 +289,8 @@ mod tests {
             egui::CentralPanel::default().show(ctx, |ui| {
                 style = Some(MaterialIconStyle::for_ui(ui));
                 expected_tint = Some(
-                    crate::styling::material_palette::material_palette_for_visuals(
-                        ui.visuals(),
-                    )
-                    .on_background,
+                    crate::styling::material_palette::material_palette_for_visuals(ui.visuals())
+                        .on_background,
                 );
             });
         });

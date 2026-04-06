@@ -3,6 +3,7 @@ use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::actions::OpenAudioRequested;
 use crate::choreo_main::actions::OpenSvgFileCommand;
 use crate::choreo_main::reducer::reduce;
+use crate::choreo_main::reducer::reduce_with_behaviors;
 use crate::choreo_main::state::ChoreoMainState;
 
 #[test]
@@ -12,7 +13,7 @@ fn open_svg_file_behavior_spec() {
             "opens svg path, stores preference, and requests draw",
             |_| {
                 let mut state = ChoreoMainState::default();
-                reduce(
+                reduce_with_behaviors(
                     &mut state,
                     ChoreoMainAction::ApplyOpenSvgFile(OpenSvgFileCommand {
                         file_path: "C:/image.svg".to_string(),

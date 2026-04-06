@@ -4,7 +4,7 @@ use crate::choreo_main;
 use crate::floor;
 
 pub type MaterialPalette = crate::shell::MaterialScheme;
-pub type ShellHost = crate::shell_host::ShellHostViewModel;
+pub type ShellHost = crate::AppShellStore;
 pub type ScenesInfo = crate::scenes::state::ScenesState;
 pub type SceneListItem = crate::scenes::state::SceneItemState;
 pub type ChoreoInfo = crate::choreo_info::state::ChoreoInfoState;

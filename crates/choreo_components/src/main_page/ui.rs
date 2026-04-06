@@ -1,9 +1,9 @@
+use egui::Color32;
 use egui::Layout;
-use egui::StrokeKind;
 use egui::Stroke;
+use egui::StrokeKind;
 use egui::Ui;
 use egui::UiBuilder;
-use egui::Color32;
 use egui::vec2;
 
 use crate::audio_player;
@@ -81,11 +81,8 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
         .fixed_pos(top_bar_rect.min)
         .show(ui.ctx(), |ui| {
             ui.set_clip_rect(top_bar_rect);
-            ui.painter().rect_filled(
-                top_bar_rect,
-                0.0,
-                ui.visuals().panel_fill,
-            );
+            ui.painter()
+                .rect_filled(top_bar_rect, 0.0, ui.visuals().panel_fill);
             if cfg!(debug_assertions) {
                 ui.painter().rect_stroke(
                     top_bar_rect,
@@ -123,13 +120,11 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
         "main_page",
         &drawer_state,
         |ui| {
-            slot_actions
-                .borrow_mut()
-                .extend(draw_floor_host_content(
-                    ui,
-                    &state.floor_state,
-                    state.is_choreography_settings_open,
-                ));
+            slot_actions.borrow_mut().extend(draw_floor_host_content(
+                ui,
+                &state.floor_state,
+                state.is_choreography_settings_open,
+            ));
         },
         |ui| {
             let mut slot_actions = slot_actions.borrow_mut();
@@ -158,11 +153,8 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
                 ui.set_clip_rect(audio_rect);
                 ui.set_width(audio_rect.width());
                 ui.set_min_height(audio_rect.height());
-                ui.painter().rect_filled(
-                    audio_rect,
-                    0.0,
-                    ui.visuals().panel_fill,
-                );
+                ui.painter()
+                    .rect_filled(audio_rect, 0.0, ui.visuals().panel_fill);
                 if cfg!(debug_assertions) {
                     ui.painter().rect_stroke(
                         audio_rect,
@@ -186,10 +178,8 @@ pub fn floor_content_rect(slot_rect: egui::Rect, is_right_drawer_open: bool) -> 
         return slot_rect;
     }
 
-    let right = (
-        slot_rect.max.x - choreography_settings::ui::drawer_width_token()
-    )
-        .max(slot_rect.min.x);
+    let right =
+        (slot_rect.max.x - choreography_settings::ui::drawer_width_token()).max(slot_rect.min.x);
     egui::Rect::from_min_max(slot_rect.min, egui::pos2(right, slot_rect.max.y))
 }
 
@@ -238,7 +228,11 @@ fn draw_settings_drawer(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainA
             StrokeKind::Inside,
         );
         ui.painter().text(
-            panel_rect.left_top() + vec2(PANEL_DEBUG_CONTENT_PADDING_PX, PANEL_DEBUG_CONTENT_PADDING_PX),
+            panel_rect.left_top()
+                + vec2(
+                    PANEL_DEBUG_CONTENT_PADDING_PX,
+                    PANEL_DEBUG_CONTENT_PADDING_PX,
+                ),
             egui::Align2::LEFT_TOP,
             format!("{:.0} x {:.0}", panel_rect.width(), panel_rect.height()),
             egui::TextStyle::Monospace.resolve(ui.style()),
@@ -247,7 +241,8 @@ fn draw_settings_drawer(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainA
     }
     let inner_rect = panel_rect.shrink(PANEL_DEBUG_CONTENT_PADDING_PX);
     let _ = ui.scope_builder(UiBuilder::new().max_rect(inner_rect), |ui| {
-        let settings_actions = choreography_settings::ui::draw(ui, &state.choreography_settings_state);
+        let settings_actions =
+            choreography_settings::ui::draw(ui, &state.choreography_settings_state);
         actions.extend(
             settings_actions
                 .into_iter()

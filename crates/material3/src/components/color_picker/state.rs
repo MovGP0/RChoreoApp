@@ -1,8 +1,7 @@
 use egui::Color32;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ColorPickerDock
-{
+pub enum ColorPickerDock {
     Left,
     Top,
     Right,
@@ -10,20 +9,16 @@ pub enum ColorPickerDock
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Hsb
-{
+pub struct Hsb {
     pub hue: f64,
     pub saturation: f64,
     pub brightness: f64,
 }
 
-impl Hsb
-{
+impl Hsb {
     #[must_use]
-    pub fn new(hue: f64, saturation: f64, brightness: f64) -> Self
-    {
-        Self
-        {
+    pub fn new(hue: f64, saturation: f64, brightness: f64) -> Self {
+        Self {
             hue,
             saturation,
             brightness,
@@ -31,16 +26,13 @@ impl Hsb
     }
 
     #[must_use]
-    pub fn normalized(self) -> Self
-    {
+    pub fn normalized(self) -> Self {
         let mut hue = self.hue % 360.0;
-        if hue < 0.0
-        {
+        if hue < 0.0 {
             hue += 360.0;
         }
 
-        Self
-        {
+        Self {
             hue,
             saturation: self.saturation.clamp(0.0, 1.0),
             brightness: self.brightness.clamp(0.0, 1.0),
@@ -48,8 +40,7 @@ impl Hsb
     }
 
     #[must_use]
-    pub fn from_color(color: Color32) -> Self
-    {
+    pub fn from_color(color: Color32) -> Self {
         let red = f64::from(color.r()) / 255.0;
         let green = f64::from(color.g()) / 255.0;
         let blue = f64::from(color.b()) / 255.0;
@@ -58,34 +49,23 @@ impl Hsb
         let min_channel = red.min(green).min(blue);
         let delta = max_channel - min_channel;
 
-        let hue = if delta <= f64::EPSILON
-        {
+        let hue = if delta <= f64::EPSILON {
             0.0
-        }
-        else if (max_channel - red).abs() <= f64::EPSILON
-        {
+        } else if (max_channel - red).abs() <= f64::EPSILON {
             60.0 * ((green - blue) / delta).rem_euclid(6.0)
-        }
-        else if (max_channel - green).abs() <= f64::EPSILON
-        {
+        } else if (max_channel - green).abs() <= f64::EPSILON {
             60.0 * (((blue - red) / delta) + 2.0)
-        }
-        else
-        {
+        } else {
             60.0 * (((red - green) / delta) + 4.0)
         };
 
-        let saturation = if max_channel <= f64::EPSILON
-        {
+        let saturation = if max_channel <= f64::EPSILON {
             0.0
-        }
-        else
-        {
+        } else {
             delta / max_channel
         };
 
-        Self
-        {
+        Self {
             hue,
             saturation,
             brightness: max_channel,
@@ -93,8 +73,7 @@ impl Hsb
     }
 
     #[must_use]
-    pub fn to_color(self) -> Color32
-    {
+    pub fn to_color(self) -> Color32 {
         let normalized = self.normalized();
         let hue_section = normalized.hue / 60.0;
         let section_index = hue_section.floor();
@@ -104,36 +83,23 @@ impl Hsb
         let q = normalized.brightness * (1.0 - normalized.saturation * section_fraction);
         let t = normalized.brightness * (1.0 - normalized.saturation * (1.0 - section_fraction));
 
-        let (red, green, blue) = if normalized.saturation <= f64::EPSILON
-        {
+        let (red, green, blue) = if normalized.saturation <= f64::EPSILON {
             (
                 normalized.brightness,
                 normalized.brightness,
                 normalized.brightness,
             )
-        }
-        else if section_index < 1.0
-        {
+        } else if section_index < 1.0 {
             (normalized.brightness, t, p)
-        }
-        else if section_index < 2.0
-        {
+        } else if section_index < 2.0 {
             (q, normalized.brightness, p)
-        }
-        else if section_index < 3.0
-        {
+        } else if section_index < 3.0 {
             (p, normalized.brightness, t)
-        }
-        else if section_index < 4.0
-        {
+        } else if section_index < 4.0 {
             (p, q, normalized.brightness)
-        }
-        else if section_index < 5.0
-        {
+        } else if section_index < 5.0 {
             (t, p, normalized.brightness)
-        }
-        else
-        {
+        } else {
             (normalized.brightness, p, q)
         };
 
@@ -146,19 +112,15 @@ impl Hsb
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ColorChangedEvent
-{
+pub struct ColorChangedEvent {
     pub old_color: Color32,
     pub new_color: Color32,
 }
 
-impl ColorChangedEvent
-{
+impl ColorChangedEvent {
     #[must_use]
-    pub fn new(old_color: Color32, new_color: Color32) -> Self
-    {
-        Self
-        {
+    pub fn new(old_color: Color32, new_color: Color32) -> Self {
+        Self {
             old_color,
             new_color,
         }
@@ -166,8 +128,7 @@ impl ColorChangedEvent
 }
 
 #[derive(Debug, Clone)]
-pub struct ColorPickerState
-{
+pub struct ColorPickerState {
     pub selected_color: Color32,
     pub hsb: Hsb,
     pub wheel_minimum_width: f32,
@@ -178,20 +139,17 @@ pub struct ColorPickerState
     pub selection_stroke_color: Color32,
 }
 
-impl ColorPickerState
-{
+impl ColorPickerState {
     pub const DEFAULT_WHEEL_MINIMUM_SIZE: f32 = 160.0;
     pub const DEFAULT_SELECTION_THUMB_SIZE: f32 = 18.0;
     pub const DEFAULT_SELECTION_STROKE_THICKNESS: f32 = 2.0;
 
     #[must_use]
-    pub fn new() -> Self
-    {
+    pub fn new() -> Self {
         let selected_color = Color32::BLACK;
         let hsb = Hsb::from_color(selected_color);
 
-        Self
-        {
+        Self {
             selected_color,
             hsb,
             wheel_minimum_width: Self::DEFAULT_WHEEL_MINIMUM_SIZE,
@@ -204,10 +162,8 @@ impl ColorPickerState
     }
 }
 
-impl Default for ColorPickerState
-{
-    fn default() -> Self
-    {
+impl Default for ColorPickerState {
+    fn default() -> Self {
         Self::new()
     }
 }

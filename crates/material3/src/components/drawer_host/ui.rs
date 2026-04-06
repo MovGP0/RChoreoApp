@@ -249,13 +249,11 @@ pub fn draw_with_slots_in_rect(
                 ui.set_min_size(layout.bottom_panel_rect.size());
                 ui.painter()
                     .rect_filled(layout.bottom_panel_rect, 0.0, state.drawer_background);
-                let _ = ui.scope_builder(
-                    UiBuilder::new().max_rect(layout.bottom_panel_rect),
-                    |ui| {
+                let _ =
+                    ui.scope_builder(UiBuilder::new().max_rect(layout.bottom_panel_rect), |ui| {
                         ui.set_clip_rect(layout.bottom_panel_rect);
                         draw_bottom_panel(ui);
-                    },
-                );
+                    });
             });
     }
 
@@ -282,13 +280,11 @@ pub fn draw_with_slots_in_rect(
                 ui.set_min_size(layout.right_panel_rect.size());
                 ui.painter()
                     .rect_filled(layout.right_panel_rect, 0.0, state.drawer_background);
-                let _ = ui.scope_builder(
-                    UiBuilder::new().max_rect(layout.right_panel_rect),
-                    |ui| {
+                let _ =
+                    ui.scope_builder(UiBuilder::new().max_rect(layout.right_panel_rect), |ui| {
                         ui.set_clip_rect(layout.right_panel_rect);
                         draw_right_panel(ui);
-                    },
-                );
+                    });
             });
     }
 

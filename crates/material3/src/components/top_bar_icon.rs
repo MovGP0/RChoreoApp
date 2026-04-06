@@ -37,9 +37,7 @@ pub fn icon_image(icon: TopBarIcon) -> Image<'static> {
         TopBarIcon::Settings => Image::new(egui::include_image!("../../assets/icons/Pen.svg")),
         TopBarIcon::Home => Image::new(egui::include_image!("../../assets/icons/Home.svg")),
         TopBarIcon::Image => Image::new(egui::include_image!("../../assets/icons/Svg.svg")),
-        TopBarIcon::Audio => {
-            Image::new(egui::include_image!("../../assets/icons/PlayCircle.svg"))
-        }
+        TopBarIcon::Audio => Image::new(egui::include_image!("../../assets/icons/PlayCircle.svg")),
     }
 }
 

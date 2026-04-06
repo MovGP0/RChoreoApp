@@ -2,8 +2,8 @@ use egui::Color32;
 use egui::CornerRadius;
 use egui::Frame;
 use egui::Id;
-use egui::Layout;
 use egui::LayerId;
+use egui::Layout;
 use egui::Margin;
 use egui::Order;
 use egui::Stroke;
@@ -439,15 +439,15 @@ fn draw_settings_card(
                 vec2(content_width, 0.0),
                 Layout::top_down(egui::Align::Min),
                 |ui| {
-                ui.set_width(content_width);
-                ui.set_min_width(content_width);
-                ui.set_max_width(content_width);
-                ui.spacing_mut().item_spacing.y = metrics.spacings.spacing_8;
-                ui.label(typography::rich_text_for_role(
-                    title,
-                    settings_card_title_role(),
-                ));
-                add_contents(ui);
+                    ui.set_width(content_width);
+                    ui.set_min_width(content_width);
+                    ui.set_max_width(content_width);
+                    ui.spacing_mut().item_spacing.y = metrics.spacings.spacing_8;
+                    ui.label(typography::rich_text_for_role(
+                        title,
+                        settings_card_title_role(),
+                    ));
+                    add_contents(ui);
                 },
             );
         });

@@ -23,21 +23,16 @@ use choreo_models::SceneModel;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use super::behaviors::ChoreoMainBehaviors;
 use super::open_audio_behavior;
 use super::open_choreo_file_behavior;
 use super::open_image_behavior;
 use super::open_svg_file_behavior;
 
 pub fn reduce(state: &mut ChoreoMainState, action: ChoreoMainAction) {
-    reduce_with_behaviors(state, action, None);
+    reduce_with_behaviors(state, action);
 }
 
-pub fn reduce_with_behaviors(
-    state: &mut ChoreoMainState,
-    action: ChoreoMainAction,
-    behaviors: Option<&ChoreoMainBehaviors>,
-) {
+pub fn reduce_with_behaviors(state: &mut ChoreoMainState, action: ChoreoMainAction) {
     match action {
         ChoreoMainAction::Initialize => {
             state.content = MainContent::Main;
@@ -45,12 +40,6 @@ pub fn reduce_with_behaviors(
             state.is_choreography_settings_open = false;
             state.is_audio_player_open = false;
             sync_choreography_settings_projection(state);
-            if let Some(behavior) = behaviors.and_then(|value| value.open_choreo_file.as_ref()) {
-                behavior.initialize(state);
-            }
-            if let Some(behavior) = behaviors.and_then(|value| value.open_svg_file.as_ref()) {
-                behavior.initialize(state);
-            }
         }
         ChoreoMainAction::ToggleNav => {
             state.is_nav_open = !state.is_nav_open;
@@ -74,11 +63,6 @@ pub fn reduce_with_behaviors(
             state.selected_mode_index = index;
             if let Some(mode) = interaction_mode_from_index(index) {
                 state.interaction_mode = mode;
-                if let Some(behavior) =
-                    behaviors.and_then(|value| value.apply_interaction_mode.as_ref())
-                {
-                    behavior.apply(map_global_interaction_mode(mode));
-                }
             }
         }
         ChoreoMainAction::ResetFloorViewport => {
@@ -127,11 +111,7 @@ pub fn reduce_with_behaviors(
             open_image_behavior::request_open_image(state, file_path);
         }
         ChoreoMainAction::ApplyOpenSvgFile(command) => {
-            if let Some(behavior) = behaviors.and_then(|value| value.open_svg_file.as_ref()) {
-                behavior.apply_to_state(state, command);
-            } else {
-                open_svg_file_behavior::apply_open_svg_file(state, command);
-            }
+            open_svg_file_behavior::apply_open_svg_file(state, command);
         }
         ChoreoMainAction::RestoreLastOpenedSvg {
             file_path,
@@ -147,10 +127,6 @@ pub fn reduce_with_behaviors(
             state.selected_mode_index = interaction_mode_index(mode);
             state.selected_positions_count = selected_positions_count;
             state.interaction_state_machine = map_interaction_state(mode, selected_positions_count);
-            if let Some(behavior) = behaviors.and_then(|value| value.apply_interaction_mode.as_ref())
-            {
-                behavior.apply(map_global_interaction_mode(mode));
-            }
         }
         ChoreoMainAction::SetScenes { scenes } => {
             state.scenes = scenes;
@@ -248,7 +224,7 @@ pub fn reduce_with_behaviors(
     }
 }
 
-fn interaction_mode_from_index(index: i32) -> Option<InteractionMode> {
+pub(crate) fn interaction_mode_from_index(index: i32) -> Option<InteractionMode> {
     match index {
         0 => Some(InteractionMode::View),
         1 => Some(InteractionMode::Move),
@@ -271,7 +247,7 @@ fn interaction_mode_index(mode: InteractionMode) -> i32 {
     }
 }
 
-fn map_global_interaction_mode(mode: InteractionMode) -> crate::global::InteractionMode {
+pub(crate) fn map_global_interaction_mode(mode: InteractionMode) -> crate::global::InteractionMode {
     match mode {
         InteractionMode::View => crate::global::InteractionMode::View,
         InteractionMode::Move => crate::global::InteractionMode::Move,

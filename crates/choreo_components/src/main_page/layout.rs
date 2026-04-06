@@ -3,8 +3,8 @@ use egui::Ui;
 use egui::pos2;
 use egui::vec2;
 
-use crate::choreography_settings;
 use crate::choreo_main::state::ChoreoMainState;
+use crate::choreography_settings;
 use crate::material::components::drawer_host::state::DrawerHostOpenMode;
 use crate::material::components::drawer_host::state::DrawerHostState;
 

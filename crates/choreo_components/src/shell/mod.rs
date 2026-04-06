@@ -5,11 +5,11 @@ pub use material_scheme_applier::MaterialSchemes;
 pub use material_scheme_applier::ShellMaterialSchemeApplier;
 pub use material_scheme_applier::ShellMaterialSchemeHost;
 
-use crate::choreo_main::MainPageDependencies;
+use crate::AppShellStore;
 use crate::choreo_main::ChoreoMainBehaviorDependencies;
+use crate::choreo_main::MainPageDependencies;
 use crate::preferences::PlatformPreferences;
 use crate::preferences::Preferences;
-use crate::shell_host::ShellHostViewModel;
 use std::rc::Rc;
 
 pub fn app_title() -> &'static str {
@@ -24,14 +24,14 @@ pub fn app_icon_svg() -> &'static str {
     include_str!("../../assets/app_icon.svg")
 }
 
-pub fn create_shell_host() -> ShellHostViewModel {
+pub fn create_shell_host() -> AppShellStore {
     create_shell_host_with_dependencies(default_main_page_dependencies())
 }
 
 pub fn create_shell_host_with_dependencies(
     main_page_dependencies: MainPageDependencies,
-) -> ShellHostViewModel {
-    ShellHostViewModel::new_with_dependencies(app_title(), main_page_dependencies)
+) -> AppShellStore {
+    AppShellStore::new_with_dependencies(app_title(), main_page_dependencies)
 }
 
 pub fn default_main_page_dependencies() -> MainPageDependencies {

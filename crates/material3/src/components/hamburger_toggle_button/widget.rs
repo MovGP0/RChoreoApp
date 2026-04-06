@@ -293,8 +293,7 @@ mod tests {
                     focused: false,
                 },
             ),
-            material_palette_for_theme(&schemes, theme_mode)
-                .surface_container_high
+            material_palette_for_theme(&schemes, theme_mode).surface_container_high
         );
     }
 

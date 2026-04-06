@@ -1,7 +1,7 @@
 use choreo_components::choreography_settings::translations::ChoreographySettingsTranslations;
 use choreo_components::choreography_settings::ui::drawer_width_token;
-use choreo_components::choreography_settings::ui::settings_section_titles;
 use choreo_components::choreography_settings::ui::settings_card_content_width;
+use choreo_components::choreography_settings::ui::settings_section_titles;
 use choreo_components::choreography_settings::ui::uses_vertical_scroll_container;
 
 const LOCALE: &str = "en";
@@ -30,5 +30,8 @@ fn choreography_settings_panel_exposes_a_fixed_drawer_width_token() {
 
 #[test]
 fn choreography_settings_cards_use_the_drawer_width_as_their_outer_width() {
-    assert_eq!(settings_card_content_width(drawer_width_token() - 8.0), 326.0);
+    assert_eq!(
+        settings_card_content_width(drawer_width_token() - 8.0),
+        326.0
+    );
 }

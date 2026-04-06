@@ -31,12 +31,11 @@ pub mod preferences;
 pub mod scenes;
 pub mod settings;
 pub mod shell;
-pub mod shell_host;
 pub mod slider_with_ticks;
 pub mod splash_screen;
 pub mod splash_screen_host;
 pub mod time;
 pub mod timestamp_state_machine;
 
-pub use app_shell::AppShellViewModel;
+pub use app_shell::AppShellStore;
 pub use material3 as material;

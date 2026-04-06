@@ -3,9 +3,9 @@ use crate::main_page::actions::ChoreoMainAction;
 use crate::main_page::reducer::reduce;
 use crate::main_page::state::ChoreoMainState;
 use crate::main_page::state::InteractionMode;
+use crate::main_page::ui::audio_panel_rect;
 use crate::main_page::ui::drawer_host_rect;
 use crate::main_page::ui::drawer_host_state;
-use crate::main_page::ui::audio_panel_rect;
 use crate::main_page::ui::floor_content_rect;
 use crate::main_page::ui::home_icon_name;
 use crate::main_page::ui::map_choreography_settings_action;
@@ -159,7 +159,10 @@ fn ui_parity_spec() {
                 let drawer_state = drawer_host_state(egui::vec2(1280.0, 720.0), &state);
 
                 assert_eq!(drawer_state.left_drawer_width, 324.0);
-                assert_eq!(drawer_state.right_drawer_width, settings_drawer_width_token());
+                assert_eq!(
+                    drawer_state.right_drawer_width,
+                    settings_drawer_width_token()
+                );
                 assert_eq!(drawer_state.responsive_breakpoint, 900.0);
                 assert_eq!(drawer_state.open_mode, DrawerHostOpenMode::Standard);
                 assert_eq!(drawer_state.top_inset, 0.0);

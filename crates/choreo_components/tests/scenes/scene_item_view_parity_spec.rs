@@ -7,9 +7,9 @@ use super::ui::build_scene_search_bar_view_model;
 use super::ui::scene_list_item_colors;
 use super::ui::scene_list_item_layout;
 use super::ui::scene_row_height_px;
-use super::ui::scene_toolbar_button_stroke_width_px;
 use super::ui::scene_timestamp_role;
 use super::ui::scene_title_role;
+use super::ui::scene_toolbar_button_stroke_width_px;
 use crate::scenes::Report;
 
 #[test]

@@ -1,5 +1,3 @@
-use egui::pos2;
-use egui::vec2;
 use egui::Area;
 use egui::Color32;
 use egui::CornerRadius;
@@ -11,6 +9,8 @@ use egui::Pos2;
 use egui::Rect;
 use egui::Sense;
 use egui::Ui;
+use egui::pos2;
+use egui::vec2;
 
 #[cfg_attr(test, allow(dead_code))]
 #[derive(Debug, Clone, Copy, PartialEq)]

@@ -7,7 +7,7 @@
 #![deny(clippy::all)]
 
 #[cfg(target_os = "android")]
-use choreo_components::AppShellViewModel;
+use choreo_components::AppShellStore;
 #[cfg(target_os = "android")]
 use choreo_components::material;
 #[cfg(target_os = "android")]
@@ -18,7 +18,7 @@ const APP_TITLE: &str = "ChoreoApp Android egui";
 
 #[cfg(target_os = "android")]
 struct AndroidEguiApp {
-    shell: AppShellViewModel,
+    shell: AppShellStore,
 }
 
 #[cfg(target_os = "android")]

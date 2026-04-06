@@ -2,22 +2,23 @@ use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
 
-use crate::audio_player::runtime::AudioPlayerRuntime;
-use super::behaviors::ChoreoMainBehaviorDependencies;
-use super::behaviors::ChoreoMainBehaviors;
 use super::actions::ChoreoMainAction;
 use super::actions::OpenAudioRequested;
 use super::actions::OpenChoreoRequested;
+use super::behaviors::ChoreoMainBehaviorDependencies;
+use super::behaviors::ChoreoMainBehaviors;
 use super::messages::CloseDialogCommand;
 use super::messages::OpenImageRequested;
 use super::messages::OpenSvgFileCommand;
 use super::messages::ShowDialogCommand;
 use super::reducer::reduce_with_behaviors;
-use super::state::ChoreoMainState;
+use super::runtime::apply_action_behaviors;
 use super::runtime::apply_audio_action_side_effects;
 use super::runtime::consume_outgoing_commands;
 use super::runtime::enqueue_open_audio_request;
 use super::runtime::poll_audio_runtime;
+use super::state::ChoreoMainState;
+use crate::audio_player::runtime::AudioPlayerRuntime;
 
 #[derive(Clone, Default)]
 pub struct MainPageActionHandlers {
@@ -62,7 +63,8 @@ impl MainPageBinding {
     pub fn dispatch(&self, action: ChoreoMainAction) {
         let mut state = self.state.borrow_mut();
         let mut audio_runtime = self.audio_runtime.borrow_mut();
-        reduce_with_behaviors(&mut state, action.clone(), Some(&self.behaviors));
+        reduce_with_behaviors(&mut state, action.clone());
+        apply_action_behaviors(&mut state, &action, &self.behaviors);
         apply_audio_action_side_effects(&mut state, &mut audio_runtime, &action);
 
         consume_outgoing_commands(
@@ -118,7 +120,6 @@ impl MainPageBinding {
             ChoreoMainAction::RequestOpenImage {
                 file_path: request.file_path,
             },
-            Some(&self.behaviors),
         );
         consume_outgoing_commands(
             &mut state,
@@ -130,7 +131,9 @@ impl MainPageBinding {
 
     pub fn open_svg_file(&self, command: OpenSvgFileCommand) {
         let mut state = self.state.borrow_mut();
-        reduce_with_behaviors(&mut state, ChoreoMainAction::ApplyOpenSvgFile(command), Some(&self.behaviors));
+        let action = ChoreoMainAction::ApplyOpenSvgFile(command);
+        reduce_with_behaviors(&mut state, action.clone());
+        apply_action_behaviors(&mut state, &action, &self.behaviors);
     }
 
     pub fn route_external_file_path(&self, file_path: &str) {
@@ -158,11 +161,7 @@ impl MainPageBinding {
             };
             let mut state = self.state.borrow_mut();
             let mut audio_runtime = self.audio_runtime.borrow_mut();
-            reduce_with_behaviors(
-                &mut state,
-                ChoreoMainAction::RequestOpenChoreo(command),
-                Some(&self.behaviors),
-            );
+            reduce_with_behaviors(&mut state, ChoreoMainAction::RequestOpenChoreo(command));
             consume_outgoing_commands(
                 &mut state,
                 &self.action_handlers,

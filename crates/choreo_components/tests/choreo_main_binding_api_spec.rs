@@ -265,7 +265,10 @@ fn binding_opens_audio_file_and_toggles_play_pause_from_main_audio_actions() {
         let state = binding.state();
         let state = state.borrow();
         assert_eq!(
-            state.audio_player_state.last_opened_audio_file_path.as_deref(),
+            state
+                .audio_player_state
+                .last_opened_audio_file_path
+                .as_deref(),
             Some(file_path.as_str())
         );
         assert!(state.audio_player_state.has_player);

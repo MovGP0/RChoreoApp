@@ -68,14 +68,13 @@ impl OpenSvgFileBehavior {
     }
 
     pub fn apply_to_state(&self, state: &mut ChoreoMainState, command: OpenSvgFileCommand) {
-        let path = command.file_path.trim().to_string();
+        apply_open_svg_file(state, command.clone());
+        self.sync_external_state(command.file_path.as_str());
+    }
+
+    pub fn sync_external_state(&self, file_path: &str) {
+        let path = file_path.trim().to_string();
         if path.is_empty() {
-            apply_open_svg_file(
-                state,
-                OpenSvgFileCommand {
-                    file_path: String::new(),
-                },
-            );
             self.global_state_store.dispatch(|global_state| {
                 global_state.svg_file_path = None;
             });
@@ -85,12 +84,6 @@ impl OpenSvgFileBehavior {
             return;
         }
 
-        apply_open_svg_file(
-            state,
-            OpenSvgFileCommand {
-                file_path: path.clone(),
-            },
-        );
         self.global_state_store.dispatch({
             let path = path.clone();
             move |global_state| {
@@ -116,14 +109,13 @@ impl OpenSvgFileBehavior {
 }
 
 pub(super) fn apply_open_svg_file(state: &mut ChoreoMainState, command: OpenSvgFileCommand) {
-    let path = command.file_path.trim();
+    let path = command.file_path.trim().to_string();
     if path.is_empty() {
         state.svg_file_path = None;
         state.last_opened_svg_preference = None;
     } else {
-        let normalized = path.to_string();
-        state.svg_file_path = Some(normalized.clone());
-        state.last_opened_svg_preference = Some(normalized);
+        state.svg_file_path = Some(path.clone());
+        state.last_opened_svg_preference = Some(path);
     }
 
     super::reducer::refresh_floor_projection(state);

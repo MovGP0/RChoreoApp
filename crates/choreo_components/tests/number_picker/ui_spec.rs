@@ -1,9 +1,9 @@
+use material3::components::number_picker::NumberPickerUiState;
 use material3::components::number_picker::ui::clamped_value;
-use material3::components::number_picker::ui::draw;
 use material3::components::number_picker::ui::decrease_value;
+use material3::components::number_picker::ui::draw;
 use material3::components::number_picker::ui::increase_value;
 use material3::components::number_picker::ui::normalized_step;
-use material3::components::number_picker::NumberPickerUiState;
 
 #[test]
 fn normalized_step_matches_slint_minimum_of_one() {
@@ -31,8 +31,7 @@ fn clamped_value_respects_reversed_bounds() {
 fn draw_stays_within_the_available_width() {
     let context = egui::Context::default();
     let mut observed_width = 0.0_f32;
-    let scoped_rect =
-        egui::Rect::from_min_size(egui::pos2(40.0, 24.0), egui::vec2(326.0, 120.0));
+    let scoped_rect = egui::Rect::from_min_size(egui::pos2(40.0, 24.0), egui::vec2(326.0, 120.0));
 
     let _ = context.run(egui::RawInput::default(), |ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {

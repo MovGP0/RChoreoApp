@@ -145,11 +145,7 @@ pub fn material_palette_for_theme(
     MaterialPalette::from_schemes(schemes, matches!(theme_mode, ThemeMode::Dark))
 }
 
-pub fn apply_material_visuals(
-    context: &Context,
-    schemes: &MaterialSchemes,
-    theme_mode: ThemeMode,
-) {
+pub fn apply_material_visuals(context: &Context, schemes: &MaterialSchemes, theme_mode: ThemeMode) {
     let palette = material_palette_for_theme(schemes, theme_mode);
     let is_dark = matches!(theme_mode, ThemeMode::Dark);
     sync_egui_material3_theme(palette, is_dark);

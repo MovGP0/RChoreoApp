@@ -1,5 +1,5 @@
-use egui::Color32;
 use egui::Align2;
+use egui::Color32;
 use egui::CornerRadius;
 use egui::FontSelection;
 use egui::Id;

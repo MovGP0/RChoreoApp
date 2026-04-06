@@ -6,7 +6,7 @@
 #![deny(elided_lifetimes_in_paths)]
 #![deny(clippy::all)]
 
-use choreo_components::AppShellViewModel;
+use choreo_components::AppShellStore;
 use choreo_components::choreo_main::MainPageActionHandlers;
 use choreo_components::choreo_main::MainPageDependencies;
 use choreo_components::choreo_main::actions::OpenChoreoRequested;
@@ -25,7 +25,7 @@ const APP_TITLE: &str = "ChoreoApp";
 
 #[derive(Default)]
 struct DesktopEguiApp {
-    shell: AppShellViewModel,
+    shell: AppShellStore,
 }
 
 impl DesktopEguiApp {
@@ -74,7 +74,7 @@ fn main() -> eframe::Result<()> {
         APP_TITLE,
         native_options,
         Box::new(move |creation_context| {
-            let app = DesktopEguiApp::new(creation_context);
+            let mut app = DesktopEguiApp::new(creation_context);
             for file_path in &external_paths {
                 app.shell.route_external_file_path(file_path);
             }
@@ -87,7 +87,7 @@ fn apply_desktop_theme(context: &egui::Context) {
     context.set_visuals(egui::Visuals::light());
 }
 
-fn create_desktop_shell_host() -> AppShellViewModel {
+fn create_desktop_shell_host() -> AppShellStore {
     shell::create_shell_host_with_dependencies(desktop_main_page_dependencies())
 }
 
