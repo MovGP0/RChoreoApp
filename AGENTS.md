@@ -43,12 +43,6 @@ Rules:
 - When a bug is reported, first reproduce it with a spec; the fix is complete only when that spec passes and remains in the suite.
 - If essential logic required by a spec is missing (for example a class/function does not exist yet), first create a clear `TODO:` list in the spec file that documents the planned implementation steps and required seams; once the classes/functions are in place, replace those `TODO:` entries with the actual spec code.
 
-## Model View Behavior Pattern
-See `docs/ModelViewBehavior.md` for detailed instructions.
-Key rules:
-- Activate behaviors before attaching the View-ViewModel adapter, since the adapter holds a mutable borrow.
-- Do not borrow the ViewModel inside subscription callbacks; the adapter is still attached with a mutable borrow.
-
 ## UI Translations
 
 - Use a dedicated translation module in the egui layer for all UI strings.
