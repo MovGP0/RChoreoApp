@@ -7,6 +7,7 @@ use super::ui::build_scene_search_bar_view_model;
 use super::ui::scene_list_item_colors;
 use super::ui::scene_list_item_layout;
 use super::ui::scene_row_height_px;
+use super::ui::scene_toolbar_button_stroke_width_px;
 use super::ui::scene_timestamp_role;
 use super::ui::scene_title_role;
 use crate::scenes::Report;
@@ -84,6 +85,13 @@ fn scene_item_view_parity_spec() {
                 assert_eq!(empty.clear_tooltip, "Cancel");
                 assert!(!empty.show_clear_button);
                 assert!(populated.show_clear_button);
+            },
+        );
+
+        spec.it(
+            "keeps scene toolbar buttons borderless so hover uses fill instead of an outline ring",
+            |_| {
+                assert_eq!(scene_toolbar_button_stroke_width_px(), 0.0);
             },
         );
     });

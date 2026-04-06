@@ -17,6 +17,7 @@ use crate::delete_scene_dialog::ui::draw_delete_scene_dialog;
 use crate::material::components::MaterialScrollArea;
 use crate::material::components::centered_icon_rect;
 use crate::material::components::paint_icon;
+use crate::material::components::top_bar_icon::top_bar_icon_button_enabled;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
@@ -277,6 +278,11 @@ pub fn scene_row_height_px(show_timestamps: bool) -> f32 {
     } else {
         SCENE_ROW_HEIGHT_PX
     }
+}
+
+#[must_use]
+pub const fn scene_toolbar_button_stroke_width_px() -> f32 {
+    0.0
 }
 
 #[must_use]
@@ -594,33 +600,9 @@ fn clear_search_icon() -> (&'static str, &'static str) {
     ("close", include_str!("../../assets/icons/Close.svg"))
 }
 
-fn scene_icon_button(icon: ui_icons::UiIconSpec) -> Button<'static> {
-    scene_inline_icon_button(icon.token, icon.svg)
-}
-
 fn add_scene_icon_button(ui: &mut Ui, icon: ui_icons::UiIconSpec, enabled: bool) -> Response {
     let image = Image::from_bytes(scene_icon_uri(icon.token), icon.svg.as_bytes());
-    let response = ui.add_enabled(enabled, scene_icon_button(icon));
-    let tint = ui.style().interact(&response).fg_stroke.color;
-    paint_icon(
-        ui,
-        &image,
-        centered_icon_rect(
-            response.rect,
-            vec2(TOOLBAR_ICON_GLYPH_SIZE_PX, TOOLBAR_ICON_GLYPH_SIZE_PX),
-        ),
-        tint,
-    );
-    response
-}
-
-fn scene_inline_icon_button(token: &'static str, svg: &'static str) -> Button<'static> {
-    let _ = (token, svg);
-    Button::new("")
-        .frame(true)
-        .frame_when_inactive(false)
-        .corner_radius(TOOLBAR_ROW_HEIGHT_PX / 2.0)
-        .min_size(vec2(TOOLBAR_ROW_HEIGHT_PX, TOOLBAR_ROW_HEIGHT_PX))
+    top_bar_icon_button_enabled(ui, image, false, enabled)
 }
 
 fn search_icon_image() -> Image<'static> {
