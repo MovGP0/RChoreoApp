@@ -2,6 +2,36 @@ use super::actions::ChoreographySettingsAction;
 use super::create_state;
 use super::reducer::reduce;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn update_grid_resolution_clamps_to_supported_range() {
     let mut state = create_state();
@@ -11,7 +41,11 @@ fn update_grid_resolution_clamps_to_supported_range() {
         ChoreographySettingsAction::UpdateGridResolution(42),
     );
 
-    assert_eq!(state.grid_resolution(), 16);
-    assert_eq!(state.choreography.settings.resolution, 16);
-    assert!(state.redraw_requested);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.grid_resolution(), 16);
+    check_eq!(errors, state.choreography.settings.resolution, 16);
+    check!(errors, state.redraw_requested);
+
+    assert_no_errors(errors);
 }

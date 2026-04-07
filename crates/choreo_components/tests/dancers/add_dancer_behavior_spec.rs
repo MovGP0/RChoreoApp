@@ -1,6 +1,36 @@
 use crate::dancers;
 use dancers::Report;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn add_dancer_behavior_spec() {
     let suite = rspec::describe("add dancer behavior", (), |spec| {
@@ -17,14 +47,18 @@ fn add_dancer_behavior_spec() {
             dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::LoadFromGlobal);
             dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::AddDancer);
 
-            assert_eq!(state.dancers.len(), 2);
+            let mut errors = Vec::new();
+
+            check_eq!(errors, state.dancers.len(), 2);
             let selected = state
                 .selected_dancer
                 .as_ref()
                 .expect("new dancer should be selected");
-            assert_eq!(selected.dancer_id, 2);
-            assert!(selected.name.is_empty());
-            assert_eq!(selected.role.name, "Lead");
+            check_eq!(errors, selected.dancer_id, 2);
+            check!(errors, selected.name.is_empty());
+            check_eq!(errors, selected.role.name, "Lead");
+
+            assert_no_errors(errors);
         });
     });
     let report = dancers::run_suite(&suite);

@@ -29,6 +29,36 @@ use choreo_models::ChoreographyModel;
 use choreo_models::ChoreographyModelMapper;
 use crossbeam_channel::bounded;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn binding_forwards_open_audio_request_with_typed_trace_context() {
     let routed_requests: Rc<RefCell<Vec<OpenAudioRequested>>> = Rc::new(RefCell::new(Vec::new()));
@@ -54,9 +84,13 @@ fn binding_forwards_open_audio_request_with_typed_trace_context() {
     });
 
     let routed_requests = routed_requests.borrow();
-    assert_eq!(routed_requests.len(), 1);
-    assert_eq!(routed_requests[0].file_path, "C:/track.mp3");
-    assert_eq!(routed_requests[0].trace_context, Some(trace_context));
+    let mut errors = Vec::new();
+
+    check_eq!(errors, routed_requests.len(), 1);
+    check_eq!(errors, routed_requests[0].file_path, "C:/track.mp3");
+    check_eq!(errors, routed_requests[0].trace_context, Some(trace_context));
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -92,9 +126,13 @@ fn binding_updates_dialog_and_interaction_mode_state() {
 
     let state = binding.state();
     let state = state.borrow();
-    assert!(state.is_dialog_open);
-    assert_eq!(state.dialog_content.as_deref(), Some("Confirm"));
-    assert_eq!(state.interaction_mode, InteractionMode::LineOfSight);
+    let mut errors = Vec::new();
+
+    check!(errors, state.is_dialog_open);
+    check_eq!(errors, state.dialog_content.as_deref(), Some("Confirm"));
+    check_eq!(errors, state.interaction_mode, InteractionMode::LineOfSight);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -141,11 +179,15 @@ fn binding_uses_pick_choreo_handler_to_load_selected_file() {
 
     let state = binding.state();
     let state = state.borrow();
-    assert_eq!(state.scenes.len(), 1);
-    assert_eq!(state.scenes[0].name, "Intro");
-    assert_eq!(state.selected_scene_index, Some(0));
-    assert_eq!(state.floor_scene_name.as_deref(), Some("Intro"));
-    assert_eq!(state.choreography_settings_state.name, "Loaded choreo");
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.scenes.len(), 1);
+    check_eq!(errors, state.scenes[0].name, "Intro");
+    check_eq!(errors, state.selected_scene_index, Some(0));
+    check_eq!(errors, state.floor_scene_name.as_deref(), Some("Intro"));
+    check_eq!(errors, state.choreography_settings_state.name, "Loaded choreo");
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -215,9 +257,13 @@ fn binding_saves_current_choreography_back_to_last_opened_file() {
         fs::read_to_string(&temp_file).expect("saved .choreo file should be readable");
     let saved_json = import(&saved_contents).expect("saved .choreo contents should import");
 
-    assert_eq!(saved_json.name, "Saved choreo");
-    assert_eq!(saved_json.scenes.len(), 1);
-    assert_eq!(saved_json.scenes[0].name, "Saved intro");
+    let mut errors = Vec::new();
+
+    check_eq!(errors, saved_json.name, "Saved choreo");
+    check_eq!(errors, saved_json.scenes.len(), 1);
+    check_eq!(errors, saved_json.scenes[0].name, "Saved intro");
+
+    assert_no_errors(errors);
 
     let _ = fs::remove_file(temp_file);
 }
@@ -244,8 +290,12 @@ fn binding_uses_pick_audio_handler_to_open_selected_file_and_show_audio_panel() 
     let forwarded = open_audio_receiver
         .try_recv()
         .expect("picker fallback should forward selected audio file");
-    assert_eq!(forwarded.file_path, "C:/music.mp3");
-    assert!(binding.state().borrow().is_audio_player_open);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, forwarded.file_path, "C:/music.mp3");
+    check!(errors, binding.state().borrow().is_audio_player_open);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -264,16 +314,21 @@ fn binding_opens_audio_file_and_toggles_play_pause_from_main_audio_actions() {
     {
         let state = binding.state();
         let state = state.borrow();
-        assert_eq!(
+        let mut errors = Vec::new();
+
+        check_eq!(
+            errors,
             state
                 .audio_player_state
                 .last_opened_audio_file_path
                 .as_deref(),
             Some(file_path.as_str())
         );
-        assert!(state.audio_player_state.has_player);
-        assert!(state.is_audio_player_open);
-        assert!(!state.audio_player_state.is_playing);
+        check!(errors, state.audio_player_state.has_player);
+        check!(errors, state.is_audio_player_open);
+        check!(errors, !state.audio_player_state.is_playing);
+
+        assert_no_errors(errors);
     }
 
     binding.dispatch(ChoreoMainAction::AudioPlayerAction(
@@ -290,9 +345,13 @@ fn binding_opens_audio_file_and_toggles_play_pause_from_main_audio_actions() {
 
     let state = binding.state();
     let state = state.borrow();
-    assert!(state.audio_player_state.has_player);
-    assert!(became_playing);
-    assert!(state.audio_player_state.is_playing);
+    let mut errors = Vec::new();
+
+    check!(errors, state.audio_player_state.has_player);
+    check!(errors, became_playing);
+    check!(errors, state.audio_player_state.is_playing);
+
+    assert_no_errors(errors);
 
     let _ = fs::remove_file(temp_file);
 }
@@ -317,7 +376,11 @@ fn binding_tick_clears_pending_seek_only_after_runtime_acknowledges_position() {
     {
         let state = binding.state();
         let state = state.borrow();
-        assert_eq!(state.audio_player_state.pending_seek_position, Some(0.25));
+        let mut errors = Vec::new();
+
+        check_eq!(errors, state.audio_player_state.pending_seek_position, Some(0.25));
+
+        assert_no_errors(errors);
     }
 
     let acknowledged = wait_until(
@@ -336,9 +399,13 @@ fn binding_tick_clears_pending_seek_only_after_runtime_acknowledges_position() {
 
     let state = binding.state();
     let state = state.borrow();
-    assert!(acknowledged);
-    assert!(state.audio_player_state.pending_seek_position.is_none());
-    assert_eq!(state.audio_player_state.position, 0.25);
+    let mut errors = Vec::new();
+
+    check!(errors, acknowledged);
+    check!(errors, state.audio_player_state.pending_seek_position.is_none());
+    check_eq!(errors, state.audio_player_state.position, 0.25);
+
+    assert_no_errors(errors);
 
     let _ = fs::remove_file(temp_file);
 }

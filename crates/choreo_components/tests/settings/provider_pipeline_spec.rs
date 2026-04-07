@@ -9,6 +9,33 @@ fn provider_pipeline_spec() {
             let provider = SettingsProvider::new();
             let view_model = provider.settings_view_model();
 
+            let mut errors = Vec::new();
+
+            macro_rules! check_eq {
+                ($left:expr, $right:expr) => {
+                    if $left != $right {
+                        errors.push(format!(
+                            "{} != {} (left = {:?}, right = {:?})",
+                            stringify!($left),
+                            stringify!($right),
+                            $left,
+                            $right
+                        ));
+                    }
+                };
+            }
+
+            macro_rules! check {
+                ($condition:expr) => {
+                    if !$condition {
+                        errors.push(format!(
+                            "condition failed: {}",
+                            stringify!($condition)
+                        ));
+                    }
+                };
+            }
+
             {
                 let mut view_model = view_model.borrow_mut();
                 view_model.update_use_primary_color(true);
@@ -18,11 +45,17 @@ fn provider_pipeline_spec() {
             }
 
             let view_model = view_model.borrow();
-            assert!(view_model.state.use_primary_color);
-            assert_eq!(view_model.state.primary_color_hex, "#FF010203");
-            assert_eq!(
+            check!(view_model.state.use_primary_color);
+            check_eq!(view_model.state.primary_color_hex, "#FF010203");
+            check_eq!(
                 view_model.state.audio_player_backend,
                 AudioPlayerBackend::Awedio
+            );
+
+            assert!(
+                errors.is_empty(),
+                "{}",
+                errors.join("\n")
             );
         });
     });

@@ -4,6 +4,36 @@ use super::effects::AppShellEffect;
 use super::reducer::reduce;
 use super::state::AppShellState;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn frame_lifecycle_spec() {
     let suite = rspec::describe("app shell frame lifecycle", (), |spec| {
@@ -13,17 +43,21 @@ fn frame_lifecycle_spec() {
                 let mut state = AppShellState::default();
 
                 let effects = reduce(&mut state, AppShellAction::FrameStarted);
+                let mut errors = Vec::new();
 
-                assert_eq!(
+                check_eq!(
+                    errors,
                     effects,
                     vec![
                         AppShellEffect::ApplyTypography,
                         AppShellEffect::InitializeMainPage,
                     ]
                 );
-                assert!(state.is_typography_initialized);
-                assert!(state.is_main_page_initialized);
-                assert!(state.show_splash_screen);
+                check!(errors, state.is_typography_initialized);
+                check!(errors, state.is_main_page_initialized);
+                check!(errors, state.show_splash_screen);
+
+                assert_no_errors(errors);
             },
         );
 
@@ -37,8 +71,11 @@ fn frame_lifecycle_spec() {
                 };
 
                 let effects = reduce(&mut state, AppShellAction::FrameStarted);
+                let mut errors = Vec::new();
 
-                assert!(effects.is_empty());
+                check!(errors, effects.is_empty());
+
+                assert_no_errors(errors);
             },
         );
 
@@ -48,9 +85,12 @@ fn frame_lifecycle_spec() {
                 let mut state = AppShellState::default();
 
                 let effects = reduce(&mut state, AppShellAction::SplashPresented);
+                let mut errors = Vec::new();
 
-                assert!(!state.show_splash_screen);
-                assert_eq!(effects, vec![AppShellEffect::RequestRepaint]);
+                check!(errors, !state.show_splash_screen);
+                check_eq!(errors, effects, vec![AppShellEffect::RequestRepaint]);
+
+                assert_no_errors(errors);
             },
         );
     });

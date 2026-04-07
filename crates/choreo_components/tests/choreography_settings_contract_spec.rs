@@ -4,6 +4,36 @@ use choreo_components::choreography_settings::messages::ChoreographySettingsComm
 use choreo_components::choreography_settings::reducer::reduce;
 use choreo_components::choreography_settings::state::ChoreographySettingsState;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn commands_are_mapped_and_reduced_through_current_contract() {
     let mut state = ChoreographySettingsState::default();
@@ -16,8 +46,10 @@ fn commands_are_mapped_and_reduced_through_current_contract() {
     reduce(&mut state, update_name);
     reduce(&mut state, update_comment);
 
-    assert_eq!(state.name, "Parity");
-    assert_eq!(state.comment, "test");
+    let mut errors = Vec::new();
+    check_eq!(errors, state.name, "Parity");
+    check_eq!(errors, state.comment, "test");
+    assert_no_errors(errors);
 }
 
 #[test]

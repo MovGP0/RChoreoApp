@@ -15,6 +15,36 @@ use choreo_components::global::GlobalStateActor;
 use choreo_components::preferences::InMemoryPreferences;
 use choreo_components::preferences::Preferences;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn open_audio_file_sets_stream_factory_flag_and_persists_last_opened_path() {
     let mut state = AudioPlayerState::default();
@@ -27,12 +57,17 @@ fn open_audio_file_sets_stream_factory_flag_and_persists_last_opened_path() {
         },
     );
 
-    assert!(state.has_stream_factory);
-    assert!(state.has_player);
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check!(errors, state.has_stream_factory);
+    check!(errors, state.has_player);
+    check_eq!(
+        errors,
         state.last_opened_audio_file_path.as_deref(),
         Some("C:\\temp\\audio.mp3")
     );
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -47,8 +82,12 @@ fn open_audio_file_ignores_empty_paths() {
         },
     );
 
-    assert!(!state.has_stream_factory);
-    assert!(state.last_opened_audio_file_path.is_none());
+    let mut errors = Vec::new();
+
+    check!(errors, !state.has_stream_factory);
+    check!(errors, state.last_opened_audio_file_path.is_none());
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -70,17 +109,22 @@ fn open_audio_file_keeps_player_disabled_when_file_does_not_exist() {
         },
     );
 
-    assert!(state.has_stream_factory);
-    assert!(!state.has_player);
-    assert!(!state.can_seek);
-    assert!(!state.can_set_speed);
-    assert_eq!(state.duration, 0.0);
-    assert_eq!(state.position, 0.0);
-    assert!(!state.is_playing);
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check!(errors, state.has_stream_factory);
+    check!(errors, !state.has_player);
+    check!(errors, !state.can_seek);
+    check!(errors, !state.can_set_speed);
+    check_eq!(errors, state.duration, 0.0);
+    check_eq!(errors, state.position, 0.0);
+    check!(errors, !state.is_playing);
+    check_eq!(
+        errors,
         state.last_opened_audio_file_path.as_deref(),
         Some("C:\\temp\\missing.mp3")
     );
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -118,11 +162,20 @@ fn open_behavior_reads_backend_and_persists_last_opened_path_for_missing_file() 
     let mut runtime = AudioPlayerRuntime::new(AudioPlayerBackend::Rodio);
     pipeline.open_audio_file.poll(&mut state, &mut runtime);
 
-    assert!(state.has_stream_factory);
-    assert!(!state.has_player);
-    assert_eq!(state.last_opened_audio_file_path, Some(file_path.clone()));
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check!(errors, state.has_stream_factory);
+    check!(errors, !state.has_player);
+    check_eq!(
+        errors,
+        state.last_opened_audio_file_path,
+        Some(file_path.clone())
+    );
+    check_eq!(
+        errors,
         preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_AUDIO_FILE, ""),
         file_path
     );
+
+    assert_no_errors(errors);
 }

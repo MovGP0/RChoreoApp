@@ -8,6 +8,36 @@ use choreo_components::behavior::CompositeDisposable;
 use choreo_components::behavior::Disposable;
 use choreo_components::behavior::TimerDisposable;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[derive(Default)]
 struct StubViewModel {
     activated: bool,
@@ -47,13 +77,17 @@ fn dispose_all_disposes_every_registered_item_once() {
     disposables.add(Box::new(CountingDisposable::new(Rc::clone(&first_count))));
     disposables.add(Box::new(CountingDisposable::new(Rc::clone(&second_count))));
 
-    assert_eq!(disposables.len(), 2);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, disposables.len(), 2);
 
     disposables.dispose_all();
 
-    assert_eq!(first_count.get(), 1);
-    assert_eq!(second_count.get(), 1);
-    assert!(disposables.is_empty());
+    check_eq!(errors, first_count.get(), 1);
+    check_eq!(errors, second_count.get(), 1);
+    check!(errors, disposables.is_empty());
+
+    assert_no_errors(errors);
 }
 
 #[test]

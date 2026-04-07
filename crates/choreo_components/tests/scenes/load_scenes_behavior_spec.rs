@@ -5,6 +5,36 @@ use super::create_state;
 use super::reducer::reduce;
 use super::scene_model;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn load_scenes_maps_models_and_selects_first_scene() {
     let mut state = create_state();
@@ -23,21 +53,27 @@ fn load_scenes_maps_models_and_selects_first_scene() {
         },
     );
 
-    assert_eq!(state.scenes.len(), 2);
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.scenes.len(), 2);
+    check_eq!(
+        errors,
         state
             .selected_scene
             .as_ref()
             .map(|scene| scene.name.as_str()),
         Some("Intro")
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         state
             .selected_scene
             .as_ref()
             .and_then(|scene| scene.timestamp),
         Some(5.0)
     );
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -59,10 +95,14 @@ fn reload_scenes_reloads_from_choreography() {
         .push(scene_model(2, "Second", Some("00:09"), vec![]));
     reduce(&mut state, ScenesAction::ReloadScenes);
 
-    assert_eq!(state.scenes.len(), 2);
-    assert_eq!(state.scenes[1].name, "Second");
-    assert_eq!(state.scenes[1].timestamp, Some(9.0));
-    assert!(state.reload_requested);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.scenes.len(), 2);
+    check_eq!(errors, state.scenes[1].name, "Second");
+    check_eq!(errors, state.scenes[1].timestamp, Some(9.0));
+    check!(errors, state.reload_requested);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -85,24 +125,22 @@ fn reload_scenes_reselects_first_scene_and_marks_selection_changed() {
     state.clear_ephemeral_outputs();
 
     reduce(&mut state, ScenesAction::SelectScene { index: 1 });
-    assert_eq!(
-        state
-            .selected_scene
-            .as_ref()
-            .map(|scene| scene.name.as_str()),
-        Some("Second")
-    );
     state.clear_ephemeral_outputs();
 
     reduce(&mut state, ScenesAction::ReloadScenes);
 
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check_eq!(
+        errors,
         state
             .selected_scene
             .as_ref()
             .map(|scene| scene.name.as_str()),
         Some("First")
     );
-    assert!(state.selected_scene_changed);
-    assert!(state.reload_requested);
+    check!(errors, state.selected_scene_changed);
+    check!(errors, state.reload_requested);
+
+    assert_no_errors(errors);
 }

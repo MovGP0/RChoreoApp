@@ -6,38 +6,93 @@ use choreo_components::choreo_info::ui::draw;
 use choreo_components::choreo_info::ui::draw_transparency;
 use choreo_components::choreo_info::ui::transparency_percentage_text;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn choreo_info_state_defaults_match_slint_global_defaults() {
     let state = ChoreoInfoState::default();
-    assert_eq!(state.choreo_name, "Lorem ipsum dolor sit amet");
-    assert_eq!(state.choreo_subtitle, "consectetur adipiscing elit");
-    assert_eq!(state.choreo_comment, "");
-    assert_eq!(state.choreo_variation, "");
-    assert_eq!(state.choreo_author, "");
-    assert_eq!(state.choreo_description, "");
-    assert_eq!(state.choreo_transparency, 0.0);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.choreo_name, "Lorem ipsum dolor sit amet");
+    check_eq!(errors, state.choreo_subtitle, "consectetur adipiscing elit");
+    check_eq!(errors, state.choreo_comment, "");
+    check_eq!(errors, state.choreo_variation, "");
+    check_eq!(errors, state.choreo_author, "");
+    check_eq!(errors, state.choreo_description, "");
+    check_eq!(errors, state.choreo_transparency, 0.0);
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn choreo_info_date_text_is_zero_padded_iso_like() {
     let text = choreo_date_text(2026, 3, 1);
-    assert_eq!(text, "2026-03-01");
+    let mut errors = Vec::new();
+
+    check_eq!(errors, text, "2026-03-01");
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn transparency_percentage_text_rounds_like_slint_math_round() {
-    assert_eq!(transparency_percentage_text(0.0), "Transparency: 0%");
-    assert_eq!(transparency_percentage_text(0.245), "Transparency: 25%");
-    assert_eq!(transparency_percentage_text(0.999), "Transparency: 100%");
+    let mut errors = Vec::new();
+
+    check_eq!(
+        errors,
+        transparency_percentage_text(0.0),
+        "Transparency: 0%"
+    );
+    check_eq!(
+        errors,
+        transparency_percentage_text(0.245),
+        "Transparency: 25%"
+    );
+    check_eq!(
+        errors,
+        transparency_percentage_text(0.999),
+        "Transparency: 100%"
+    );
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn transparency_draw_renders_shared_label_and_percentage() {
     let context = egui::Context::default();
+    let mut errors = Vec::new();
     let output = context.run(egui::RawInput::default(), |ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {
             let action = draw_transparency(ui, 0.42, "Transparency");
-            assert_eq!(action, None);
+            check_eq!(errors, action, None::<ChoreoInfoAction>);
         });
     });
 
@@ -49,13 +104,22 @@ fn transparency_draw_renders_shared_label_and_percentage() {
         }
     }
 
-    assert!(found_transparency);
+    check!(errors, found_transparency);
+    assert_no_errors(errors);
 }
 
 #[test]
 fn transparency_action_variant_preserves_fractional_value() {
     let action = ChoreoInfoAction::UpdateTransparency(0.42);
-    assert_eq!(action, ChoreoInfoAction::UpdateTransparency(0.42));
+    let mut errors = Vec::new();
+
+    check_eq!(
+        errors,
+        action,
+        ChoreoInfoAction::UpdateTransparency(0.42)
+    );
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -86,9 +150,15 @@ fn choreo_info_ui_draw_handles_all_information_inputs() {
     };
 
     let context = egui::Context::default();
+    let mut errors = Vec::new();
+    let mut actions = Vec::new();
+
     let _ = context.run(egui::RawInput::default(), |ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {
-            let _ = draw(ui, &state, &labels);
+            actions = draw(ui, &state, &labels);
         });
     });
+
+    check_eq!(errors, actions, Vec::<ChoreoInfoAction>::new());
+    assert_no_errors(errors);
 }

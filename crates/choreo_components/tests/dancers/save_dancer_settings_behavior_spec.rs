@@ -1,6 +1,28 @@
 use crate::dancers;
 use dancers::Report;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn save_dancer_settings_behavior_spec() {
     let suite = rspec::describe("save dancer settings behavior", (), |spec| {
@@ -43,16 +65,20 @@ fn save_dancer_settings_behavior_spec() {
 
             dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::SaveToGlobal);
 
-            assert_eq!(state.global.roles.len(), 1);
-            assert_eq!(state.global.dancers.len(), 1);
-            assert_eq!(state.global.dancers[0].name, "Updated Alice");
-            assert_eq!(state.global.scenes[0].positions.len(), 1);
-            assert_eq!(
+            let mut errors = Vec::new();
+
+            check_eq!(errors, state.global.roles.len(), 1);
+            check_eq!(errors, state.global.dancers.len(), 1);
+            check_eq!(errors, state.global.dancers[0].name, "Updated Alice");
+            check_eq!(errors, state.global.scenes[0].positions.len(), 1);
+            check_eq!(
+                errors,
                 state.global.scenes[0].positions[0].dancer_name.as_deref(),
                 Some("Updated Alice")
             );
-            assert_eq!(state.global.scene_views[0].positions.len(), 1);
-            assert_eq!(
+            check_eq!(errors, state.global.scene_views[0].positions.len(), 1);
+            check_eq!(
+                errors,
                 state
                     .global
                     .selected_scene
@@ -60,6 +86,8 @@ fn save_dancer_settings_behavior_spec() {
                     .map(|scene| scene.positions.len()),
                 Some(1)
             );
+
+            assert_no_errors(errors);
         });
     });
     let report = dancers::run_suite(&suite);

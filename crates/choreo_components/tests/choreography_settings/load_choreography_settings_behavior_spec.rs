@@ -4,6 +4,51 @@ use super::reducer::reduce;
 use super::scene_model;
 use super::selected_scene;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+macro_rules! check_close {
+    ($errors:expr, $left:expr, $right:expr, $tolerance:expr) => {
+        if ($left - $right).abs() > $tolerance {
+            $errors.push(format!(
+                "{} !~= {} (left = {:?}, right = {:?}, tolerance = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right,
+                $tolerance
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn load_choreography_settings_maps_choreography_and_selected_scene() {
     let mut state = create_state();
@@ -21,14 +66,18 @@ fn load_choreography_settings_maps_choreography_and_selected_scene() {
         },
     );
 
-    assert_eq!(state.name, "My Choreo");
-    assert_eq!(state.author, "Author");
-    assert_eq!(state.floor_front, 12);
-    assert!(state.show_timestamps);
-    assert!(state.has_selected_scene);
-    assert_eq!(state.scene_name, "Original");
-    assert!(state.scene_has_timestamp);
-    assert!((state.scene_timestamp_seconds - 3.0).abs() < 0.0001);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.name, "My Choreo");
+    check_eq!(errors, state.author, "Author");
+    check_eq!(errors, state.floor_front, 12);
+    check!(errors, state.show_timestamps);
+    check!(errors, state.has_selected_scene);
+    check_eq!(errors, state.scene_name, "Original");
+    check!(errors, state.scene_has_timestamp);
+    check_close!(errors, state.scene_timestamp_seconds, 3.0, 0.0001);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -54,6 +103,10 @@ fn load_choreography_settings_reloads_when_load_action_is_dispatched_again() {
         },
     );
 
-    assert_eq!(state.name, "After");
-    assert_eq!(state.floor_back, 77);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.name, "After");
+    check_eq!(errors, state.floor_back, 77);
+
+    assert_no_errors(errors);
 }

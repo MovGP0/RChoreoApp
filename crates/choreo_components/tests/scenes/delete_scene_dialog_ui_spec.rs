@@ -8,6 +8,20 @@ use crate::delete_scene_dialog::ui::draw_delete_scene_dialog;
 
 #[test]
 fn delete_scene_dialog_view_model_formats_message_with_scene_name() {
+    macro_rules! check_eq {
+        ($errors:expr, $left:expr, $right:expr) => {
+            if $left != $right {
+                $errors.push(format!(
+                    "{} != {} (left = {:?}, right = {:?})",
+                    stringify!($left),
+                    stringify!($right),
+                    $left,
+                    $right
+                ));
+            }
+        };
+    }
+
     let scene = SceneItemState::new(
         choreo_master_mobile_json::SceneId(7),
         "Bridge",
@@ -20,16 +34,37 @@ fn delete_scene_dialog_view_model_formats_message_with_scene_name() {
     );
 
     let view_model = build_delete_scene_dialog_view_model(&scene, "en");
+    let mut errors = Vec::new();
 
-    assert_eq!(view_model.title_text, "Delete scene");
-    assert_eq!(view_model.scene_name, "Bridge");
-    assert_eq!(view_model.message_text, "Delete scene \"Bridge\"?");
-    assert_eq!(view_model.confirm_text, "Yes");
-    assert_eq!(view_model.cancel_text, "No");
+    check_eq!(errors, view_model.title_text, "Delete scene");
+    check_eq!(errors, view_model.scene_name, "Bridge");
+    check_eq!(errors, view_model.message_text, "Delete scene \"Bridge\"?");
+    check_eq!(errors, view_model.confirm_text, "Yes");
+    check_eq!(errors, view_model.cancel_text, "No");
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]
 fn delete_scene_dialog_view_model_uses_default_name_when_scene_name_is_blank() {
+    macro_rules! check_eq {
+        ($errors:expr, $left:expr, $right:expr) => {
+            if $left != $right {
+                $errors.push(format!(
+                    "{} != {} (left = {:?}, right = {:?})",
+                    stringify!($left),
+                    stringify!($right),
+                    $left,
+                    $right
+                ));
+            }
+        };
+    }
+
     let scene = SceneItemState::new(
         choreo_master_mobile_json::SceneId(9),
         "   ",
@@ -37,9 +72,16 @@ fn delete_scene_dialog_view_model_uses_default_name_when_scene_name_is_blank() {
     );
 
     let view_model = build_delete_scene_dialog_view_model(&scene, "en");
+    let mut errors = Vec::new();
 
-    assert_eq!(view_model.scene_name, "this scene");
-    assert_eq!(view_model.message_text, "Delete scene \"this scene\"?");
+    check_eq!(errors, view_model.scene_name, "this scene");
+    check_eq!(errors, view_model.message_text, "Delete scene \"this scene\"?");
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]

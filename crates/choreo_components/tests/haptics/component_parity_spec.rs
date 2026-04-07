@@ -18,6 +18,36 @@ struct RecordingHaptics {
     count: Arc<AtomicUsize>,
 }
 
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr $(,)?) => {
+        if !($condition) {
+            $errors.push(format!("check failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr $(,)?) => {{
+        let left = &$left;
+        let right = &$right;
+
+        if left != right {
+            $errors.push(format!(
+                "assertion failed: left == right\n  left: `{:?}`\n right: `{:?}`",
+                left, right
+            ));
+        }
+    }};
+}
+
 impl HapticFeedback for RecordingHaptics {
     fn is_supported(&self) -> bool {
         true
@@ -64,6 +94,10 @@ fn shared_haptics_trait_drives_audio_player_and_nav_bar() {
 
     nav_view_model.dispatch(NavBarAction::OpenAudio);
 
-    assert!(audio_state.is_playing);
-    assert_eq!(count.load(Ordering::SeqCst), 2);
+    let mut errors = Vec::new();
+
+    check!(errors, audio_state.is_playing);
+    check_eq!(errors, count.load(Ordering::SeqCst), 2);
+
+    assert_no_errors(errors);
 }

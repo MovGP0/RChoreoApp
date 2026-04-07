@@ -8,6 +8,28 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 struct CounterDisposable {
     counter: Arc<AtomicUsize>,
 }
@@ -36,6 +58,8 @@ impl Behavior<DancersState> for LifecycleBehavior {
 fn provider_activates_behaviors_and_disposes_on_drop() {
     let activate_counter = Arc::new(AtomicUsize::new(0));
     let dispose_counter = Arc::new(AtomicUsize::new(0));
+    let mut errors = Vec::new();
+
     {
         let mut provider = DancersProvider::new(vec![Box::new(LifecycleBehavior {
             activate_counter: Arc::clone(&activate_counter),
@@ -45,6 +69,8 @@ fn provider_activates_behaviors_and_disposes_on_drop() {
         provider.reload();
     }
 
-    assert_eq!(activate_counter.load(Ordering::SeqCst), 1);
-    assert_eq!(dispose_counter.load(Ordering::SeqCst), 1);
+    check_eq!(errors, activate_counter.load(Ordering::SeqCst), 1);
+    check_eq!(errors, dispose_counter.load(Ordering::SeqCst), 1);
+
+    assert_no_errors(errors);
 }

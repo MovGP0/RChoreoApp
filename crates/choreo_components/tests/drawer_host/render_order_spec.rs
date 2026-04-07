@@ -5,6 +5,36 @@ use crate::drawer_host::state::DrawerHostState;
 use crate::drawer_host::ui::draw_with_slots;
 use crate::drawer_host::ui::overlay_visible;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn open_right_panel_still_renders_while_overlay_is_visible() {
     let state = DrawerHostState {
@@ -12,8 +42,6 @@ fn open_right_panel_still_renders_while_overlay_is_visible() {
         right_close_on_click_away: true,
         ..DrawerHostState::default()
     };
-    assert!(overlay_visible(&state, 1280.0));
-
     let calls: Rc<RefCell<Vec<&'static str>>> = Rc::new(RefCell::new(Vec::new()));
     let context = egui::Context::default();
     let _ = context.run(egui::RawInput::default(), |ctx| {
@@ -37,5 +65,10 @@ fn open_right_panel_still_renders_while_overlay_is_visible() {
         });
     });
 
-    assert_eq!(calls.borrow().as_slice(), &["content", "right"]);
+    let mut errors = Vec::new();
+
+    check!(errors, overlay_visible(&state, 1280.0));
+    check_eq!(errors, calls.borrow().as_slice(), &["content", "right"]);
+
+    assert_no_errors(errors);
 }

@@ -10,6 +10,28 @@ fn shared_preferences_delegate_to_inner_preferences() {
     shared.set_string("name", "shared".to_string());
     shared.set_bool("enabled", true);
 
-    assert_eq!(shared.get_string("name", "fallback"), "shared");
-    assert!(shared.get_bool("enabled", false));
+    macro_rules! check_eq {
+        ($errors:expr, $left:expr, $right:expr) => {
+            if $left != $right {
+                $errors.push(format!(
+                    "{} != {} (left = {:?}, right = {:?})",
+                    stringify!($left),
+                    stringify!($right),
+                    $left,
+                    $right
+                ));
+            }
+        };
+    }
+
+    let mut errors = Vec::new();
+
+    check_eq!(errors, shared.get_string("name", "fallback"), "shared");
+    check_eq!(errors, shared.get_bool("enabled", false), true);
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }

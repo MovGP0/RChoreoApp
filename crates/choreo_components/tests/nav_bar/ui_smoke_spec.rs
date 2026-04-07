@@ -27,8 +27,24 @@ fn nav_bar_ui_draw_executes_without_panicking() {
 
 #[test]
 fn nav_button_action_depends_on_nav_state() {
+    let mut errors = Vec::new();
+    macro_rules! check_eq {
+        ($errors:expr, $left:expr, $right:expr) => {
+            if $left != $right {
+                $errors.push(format!(
+                    "{} != {} (left = {:?}, right = {:?})",
+                    stringify!($left),
+                    stringify!($right),
+                    $left,
+                    $right
+                ));
+            }
+        };
+    }
+
     let closed = NavBarState::default();
-    assert_eq!(
+    check_eq!(
+        errors,
         nav_button(&closed),
         ("open_navigation", NavBarAction::ToggleNavigation)
     );
@@ -37,16 +53,39 @@ fn nav_button_action_depends_on_nav_state() {
         is_nav_open: true,
         ..NavBarState::default()
     };
-    assert_eq!(
+    check_eq!(
+        errors,
         nav_button(&open),
         ("close_navigation", NavBarAction::CloseNavigation)
+    );
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
     );
 }
 
 #[test]
 fn settings_button_action_depends_on_settings_state() {
+    let mut errors = Vec::new();
+    macro_rules! check_eq {
+        ($errors:expr, $left:expr, $right:expr) => {
+            if $left != $right {
+                $errors.push(format!(
+                    "{} != {} (left = {:?}, right = {:?})",
+                    stringify!($left),
+                    stringify!($right),
+                    $left,
+                    $right
+                ));
+            }
+        };
+    }
+
     let closed = NavBarState::default();
-    assert_eq!(
+    check_eq!(
+        errors,
         settings_button(&closed),
         ("open_settings", NavBarAction::ToggleChoreographySettings)
     );
@@ -55,47 +94,117 @@ fn settings_button_action_depends_on_settings_state() {
         is_choreography_settings_open: true,
         ..NavBarState::default()
     };
-    assert_eq!(
+    check_eq!(
+        errors,
         settings_button(&open),
         ("close_settings", NavBarAction::CloseChoreographySettings)
+    );
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
     );
 }
 
 #[test]
 fn toggle_icon_buttons_reflect_original_checked_state_mappings() {
+    let mut errors = Vec::new();
+    macro_rules! check {
+        ($errors:expr, $condition:expr) => {
+            if !$condition {
+                $errors.push(format!("assertion failed: {}", stringify!($condition)));
+            }
+        };
+    }
+
     let closed = NavBarState::default();
-    assert!(!settings_button_checked(&closed));
-    assert!(!image_button_checked(&closed));
+    check!(errors, !settings_button_checked(&closed));
+    check!(errors, !image_button_checked(&closed));
 
     let open = NavBarState {
         is_choreography_settings_open: true,
         is_floor_svg_overlay_open: true,
         ..NavBarState::default()
     };
-    assert!(settings_button_checked(&open));
-    assert!(image_button_checked(&open));
+    check!(errors, settings_button_checked(&open));
+    check!(errors, image_button_checked(&open));
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]
 fn mode_labels_map_to_translation_keys() {
-    assert_eq!(mode_label(InteractionMode::View), "ModeView");
-    assert_eq!(mode_label(InteractionMode::Move), "ModeMove");
-    assert_eq!(
+    let mut errors = Vec::new();
+    macro_rules! check_eq {
+        ($errors:expr, $left:expr, $right:expr) => {
+            if $left != $right {
+                $errors.push(format!(
+                    "{} != {} (left = {:?}, right = {:?})",
+                    stringify!($left),
+                    stringify!($right),
+                    $left,
+                    $right
+                ));
+            }
+        };
+    }
+
+    check_eq!(errors, mode_label(InteractionMode::View), "ModeView");
+    check_eq!(errors, mode_label(InteractionMode::Move), "ModeMove");
+    check_eq!(
+        errors,
         mode_label(InteractionMode::RotateAroundCenter),
         "ModeRotateAroundCenter"
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         mode_label(InteractionMode::RotateAroundDancer),
         "ModeRotateAroundDancer"
     );
-    assert_eq!(mode_label(InteractionMode::Scale), "ModeScale");
-    assert_eq!(mode_label(InteractionMode::LineOfSight), "ModeLineOfSight");
+    check_eq!(errors, mode_label(InteractionMode::Scale), "ModeScale");
+    check_eq!(
+        errors,
+        mode_label(InteractionMode::LineOfSight),
+        "ModeLineOfSight"
+    );
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]
 fn mode_selector_uses_original_top_bar_size_tokens() {
-    assert_eq!(mode_selector_width_token(), 180.0);
-    assert_eq!(mode_selector_height_token(), 56.0);
+    let mut errors = Vec::new();
+    macro_rules! check_eq {
+        ($errors:expr, $left:expr, $right:expr) => {
+            if $left != $right {
+                $errors.push(format!(
+                    "{} != {} (left = {:?}, right = {:?})",
+                    stringify!($left),
+                    stringify!($right),
+                    $left,
+                    $right
+                ));
+            }
+        };
+    }
+
+    check_eq!(errors, mode_selector_width_token(), 180.0);
+    check_eq!(errors, mode_selector_height_token(), 56.0);
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]

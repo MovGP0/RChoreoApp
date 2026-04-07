@@ -5,6 +5,28 @@ use crate::settings::state::AUDIO_PLAYER_BACKEND_KEY;
 use crate::settings::state::AudioPlayerBackend;
 use crate::settings::state::SettingsState;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn audio_backend_preferences_behavior_spec() {
     let suite = rspec::describe("audio backend preferences reducer behavior", (), |spec| {
@@ -18,14 +40,19 @@ fn audio_backend_preferences_behavior_spec() {
                 },
             );
 
-            assert_eq!(state.audio_player_backend, AudioPlayerBackend::Awedio);
-            assert_eq!(
+            let mut errors = Vec::new();
+
+            check_eq!(errors, state.audio_player_backend, AudioPlayerBackend::Awedio);
+            check_eq!(
+                errors,
                 state
                     .preferences
                     .get(AUDIO_PLAYER_BACKEND_KEY)
                     .map(String::as_str),
                 Some("awedio")
             );
+
+            assert_no_errors(errors);
         });
 
         spec.it(
@@ -40,9 +67,12 @@ fn audio_backend_preferences_behavior_spec() {
                     },
                 );
 
+                let mut errors = Vec::new();
+
                 if cfg!(target_arch = "wasm32") {
-                    assert_eq!(state.audio_player_backend, AudioPlayerBackend::Browser);
-                    assert_eq!(
+                    check_eq!(errors, state.audio_player_backend, AudioPlayerBackend::Browser);
+                    check_eq!(
+                        errors,
                         state
                             .preferences
                             .get(AUDIO_PLAYER_BACKEND_KEY)
@@ -50,8 +80,9 @@ fn audio_backend_preferences_behavior_spec() {
                         Some("browser")
                     );
                 } else {
-                    assert_eq!(state.audio_player_backend, AudioPlayerBackend::Rodio);
-                    assert_eq!(
+                    check_eq!(errors, state.audio_player_backend, AudioPlayerBackend::Rodio);
+                    check_eq!(
+                        errors,
                         state
                             .preferences
                             .get(AUDIO_PLAYER_BACKEND_KEY)
@@ -59,6 +90,8 @@ fn audio_backend_preferences_behavior_spec() {
                         Some("rodio")
                     );
                 }
+
+                assert_no_errors(errors);
             },
         );
     });

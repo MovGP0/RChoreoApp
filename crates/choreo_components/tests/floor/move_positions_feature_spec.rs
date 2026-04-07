@@ -7,6 +7,36 @@ use crate::floor::floor_component::state::Point;
 
 use floor::Report;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 fn setup_state() -> FloorState {
     let mut state = FloorState::default();
     reduce(
@@ -43,12 +73,16 @@ fn move_positions_feature_spec() {
             select_rectangle(&mut state, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
             move_selected(&mut state, 1.5, -1.0);
 
-            assert!(approx_eq(state.positions[0].x, 0.5));
-            assert!(approx_eq(state.positions[0].y, 0.0));
-            assert!(approx_eq(state.positions[1].x, 2.5));
-            assert!(approx_eq(state.positions[1].y, 0.0));
-            assert!(approx_eq(state.positions[2].x, 3.0));
-            assert!(approx_eq(state.positions[2].y, -2.0));
+            let mut errors = Vec::new();
+
+            check!(errors, approx_eq(state.positions[0].x, 0.5));
+            check!(errors, approx_eq(state.positions[0].y, 0.0));
+            check!(errors, approx_eq(state.positions[1].x, 2.5));
+            check!(errors, approx_eq(state.positions[1].y, 0.0));
+            check!(errors, approx_eq(state.positions[2].x, 3.0));
+            check!(errors, approx_eq(state.positions[2].y, -2.0));
+
+            assert_no_errors(errors);
         });
 
         spec.it("clears selection when clicking outside", |_| {
@@ -57,8 +91,12 @@ fn move_positions_feature_spec() {
             select_rectangle(&mut state, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
             reduce(&mut state, FloorAction::ClearSelection);
 
-            assert_eq!(state.selected_positions.len(), 0);
-            assert!(state.selection_rectangle.is_none());
+            let mut errors = Vec::new();
+
+            check_eq!(errors, state.selected_positions.len(), 0);
+            check!(errors, state.selection_rectangle.is_none());
+
+            assert_no_errors(errors);
         });
 
         spec.it("moves a single position when dragging", |_| {
@@ -67,13 +105,17 @@ fn move_positions_feature_spec() {
 
             move_selected(&mut state, -1.0, 2.0);
 
-            assert!(approx_eq(state.positions[0].x, -2.0));
-            assert!(approx_eq(state.positions[0].y, 3.0));
-            assert!(approx_eq(state.positions[1].x, 1.0));
-            assert!(approx_eq(state.positions[1].y, 1.0));
-            assert!(approx_eq(state.positions[2].x, 3.0));
-            assert!(approx_eq(state.positions[2].y, -2.0));
-            assert_eq!(state.selected_positions.len(), 1);
+            let mut errors = Vec::new();
+
+            check!(errors, approx_eq(state.positions[0].x, -2.0));
+            check!(errors, approx_eq(state.positions[0].y, 3.0));
+            check!(errors, approx_eq(state.positions[1].x, 1.0));
+            check!(errors, approx_eq(state.positions[1].y, 1.0));
+            check!(errors, approx_eq(state.positions[2].x, 3.0));
+            check!(errors, approx_eq(state.positions[2].y, -2.0));
+            check_eq!(errors, state.selected_positions.len(), 1);
+
+            assert_no_errors(errors);
         });
 
         spec.it("selects positions with mouse drag rectangle", |_| {
@@ -81,10 +123,14 @@ fn move_positions_feature_spec() {
 
             select_rectangle(&mut state, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
 
-            assert_eq!(state.selected_positions.len(), 2);
-            assert!(state.selected_positions.contains(&0));
-            assert!(state.selected_positions.contains(&1));
-            assert!(!state.selected_positions.contains(&2));
+            let mut errors = Vec::new();
+
+            check_eq!(errors, state.selected_positions.len(), 2);
+            check!(errors, state.selected_positions.contains(&0));
+            check!(errors, state.selected_positions.contains(&1));
+            check!(errors, !state.selected_positions.contains(&2));
+
+            assert_no_errors(errors);
         });
 
         spec.it(
@@ -95,10 +141,14 @@ fn move_positions_feature_spec() {
 
                 select_rectangle(&mut state, Point::new(-2.0, 2.0), Point::new(2.0, 0.0));
 
-                assert_eq!(state.selected_positions.len(), 2);
-                assert!(state.selected_positions.contains(&0));
-                assert!(state.selected_positions.contains(&1));
-                assert!(!state.selected_positions.contains(&2));
+                let mut errors = Vec::new();
+
+                check_eq!(errors, state.selected_positions.len(), 2);
+                check!(errors, state.selected_positions.contains(&0));
+                check!(errors, state.selected_positions.contains(&1));
+                check!(errors, !state.selected_positions.contains(&2));
+
+                assert_no_errors(errors);
             },
         );
     });

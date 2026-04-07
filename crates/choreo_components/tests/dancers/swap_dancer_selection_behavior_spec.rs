@@ -1,6 +1,36 @@
 use crate::dancers;
 use dancers::Report;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn swap_dancer_selection_behavior_spec() {
     let suite = rspec::describe("swap dancer selection behavior", (), |spec| {
@@ -17,19 +47,31 @@ fn swap_dancer_selection_behavior_spec() {
             );
 
             dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::LoadFromGlobal);
-            assert!(state.can_swap_dancers);
-            assert!(state.swap_from_dancer.is_some());
-            assert!(state.swap_to_dancer.is_some());
+            let can_swap_after_load = state.can_swap_dancers;
+            let swap_from_after_load = state.swap_from_dancer.is_some();
+            let swap_to_after_load = state.swap_to_dancer.is_some();
 
             dancers::reducer::reduce(
                 &mut state,
                 dancers::actions::DancersAction::DeleteSelectedDancer,
             );
 
-            assert_eq!(state.dancers.len(), 1);
-            assert!(!state.can_swap_dancers);
-            assert!(state.swap_to_dancer.is_none());
-            assert!(state.swap_from_dancer.is_some());
+            let remaining_dancers = state.dancers.len();
+            let can_swap_after_delete = state.can_swap_dancers;
+            let swap_to_after_delete = state.swap_to_dancer.is_none();
+            let swap_from_after_delete = state.swap_from_dancer.is_some();
+
+            let mut errors = Vec::new();
+
+            check!(errors, can_swap_after_load);
+            check!(errors, swap_from_after_load);
+            check!(errors, swap_to_after_load);
+            check_eq!(errors, remaining_dancers, 1);
+            check!(errors, !can_swap_after_delete);
+            check!(errors, swap_to_after_delete);
+            check!(errors, swap_from_after_delete);
+
+            assert_no_errors(errors);
         });
 
         spec.it("disables swap when from and to are identical", |_| {
@@ -45,7 +87,7 @@ fn swap_dancer_selection_behavior_spec() {
             );
 
             dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::LoadFromGlobal);
-            assert!(state.can_swap_dancers);
+            let can_swap_after_load = state.can_swap_dancers;
 
             dancers::reducer::reduce(
                 &mut state,
@@ -55,13 +97,21 @@ fn swap_dancer_selection_behavior_spec() {
                 &mut state,
                 dancers::actions::DancersAction::UpdateSwapTo { index: 0 },
             );
-            assert!(!state.can_swap_dancers);
+            let can_swap_when_identical = state.can_swap_dancers;
 
             dancers::reducer::reduce(
                 &mut state,
                 dancers::actions::DancersAction::UpdateSwapTo { index: 1 },
             );
-            assert!(state.can_swap_dancers);
+            let can_swap_after_adjusting = state.can_swap_dancers;
+
+            let mut errors = Vec::new();
+
+            check!(errors, can_swap_after_load);
+            check!(errors, !can_swap_when_identical);
+            check!(errors, can_swap_after_adjusting);
+
+            assert_no_errors(errors);
         });
     });
     let report = dancers::run_suite(&suite);

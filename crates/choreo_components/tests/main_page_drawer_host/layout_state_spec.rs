@@ -83,20 +83,42 @@ fn layout_state_spec() {
             let host_rect = Rect::from_min_max(pos2(20.0, 30.0), pos2(1620.0, 930.0));
             let layout = compute_layout(host_rect, &state);
 
-            assert_eq!(layout.content_rect.left(), 20.0);
-            assert_eq!(layout.content_rect.top(), 114.0);
-            assert_eq!(layout.content_rect.width(), 1600.0);
-            assert_eq!(layout.content_rect.height(), 816.0);
-            assert_eq!(layout.overlay_rect.left(), 20.0);
-            assert_eq!(layout.overlay_rect.top(), 30.0);
-            assert_eq!(layout.overlay_rect.width(), 1600.0);
-            assert_eq!(layout.overlay_rect.height(), 900.0);
-            assert_eq!(layout.panel_rect.left(), 20.0);
-            assert_eq!(layout.panel_rect.top(), 114.0);
-            assert_eq!(layout.left_panel_rect.left(), 20.0);
-            assert_eq!(layout.left_panel_rect.width(), 320.0);
-            assert_eq!(layout.right_panel_rect.left(), 1140.0);
-            assert_eq!(layout.right_panel_rect.width(), 480.0);
+            macro_rules! check_eq {
+                ($errors:expr, $left:expr, $right:expr) => {
+                    if $left != $right {
+                        $errors.push(format!(
+                            "{} != {} (left = {:?}, right = {:?})",
+                            stringify!($left),
+                            stringify!($right),
+                            $left,
+                            $right
+                        ));
+                    }
+                };
+            }
+
+            let mut errors = Vec::new();
+
+            check_eq!(errors, layout.content_rect.left(), 20.0);
+            check_eq!(errors, layout.content_rect.top(), 114.0);
+            check_eq!(errors, layout.content_rect.width(), 1600.0);
+            check_eq!(errors, layout.content_rect.height(), 816.0);
+            check_eq!(errors, layout.overlay_rect.left(), 20.0);
+            check_eq!(errors, layout.overlay_rect.top(), 30.0);
+            check_eq!(errors, layout.overlay_rect.width(), 1600.0);
+            check_eq!(errors, layout.overlay_rect.height(), 900.0);
+            check_eq!(errors, layout.panel_rect.left(), 20.0);
+            check_eq!(errors, layout.panel_rect.top(), 114.0);
+            check_eq!(errors, layout.left_panel_rect.left(), 20.0);
+            check_eq!(errors, layout.left_panel_rect.width(), 320.0);
+            check_eq!(errors, layout.right_panel_rect.left(), 1140.0);
+            check_eq!(errors, layout.right_panel_rect.width(), 480.0);
+
+            assert!(
+                errors.is_empty(),
+                "Assertion failures:\n{}",
+                errors.join("\n")
+            );
         });
     });
 

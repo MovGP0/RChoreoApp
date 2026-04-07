@@ -64,8 +64,30 @@ fn main_root_view_exports_spec() {
     let _shell_host: ShellHost = choreo_components::shell::create_shell_host();
     let _draw: fn(&mut egui::Ui, &MainRootState) -> Vec<MainRootAction> = main_root_view::draw;
 
-    assert_eq!(Translations::app_title("en"), "Choreography Viewer");
-    assert_eq!(Translations::text("en", "mode_view"), Some("View"));
-    assert_eq!(ZoomPanInfo::user_scale(0.0), 1.0);
-    assert_eq!(ZoomPanInfo::base_scale(4.0, 2.0), 2.0);
+    macro_rules! check_eq {
+        ($errors:expr, $left:expr, $right:expr) => {
+            if $left != $right {
+                $errors.push(format!(
+                    "{} != {} (left = {:?}, right = {:?})",
+                    stringify!($left),
+                    stringify!($right),
+                    $left,
+                    $right
+                ));
+            }
+        };
+    }
+
+    let mut errors = Vec::new();
+
+    check_eq!(errors, Translations::app_title("en"), "Choreography Viewer");
+    check_eq!(errors, Translations::text("en", "mode_view"), Some("View"));
+    check_eq!(errors, ZoomPanInfo::user_scale(0.0), 1.0);
+    check_eq!(errors, ZoomPanInfo::base_scale(4.0, 2.0), 2.0);
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }

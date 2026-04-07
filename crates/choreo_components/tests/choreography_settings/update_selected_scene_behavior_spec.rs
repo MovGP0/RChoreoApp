@@ -6,6 +6,36 @@ use super::reducer::reduce;
 use super::scene_model;
 use super::selected_scene;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn update_selected_scene_syncs_and_updates_name() {
     let mut state = create_state();
@@ -27,7 +57,9 @@ fn update_selected_scene_syncs_and_updates_name() {
         ),
     );
 
-    assert_eq!(state.scene_name, "Original");
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.scene_name, "Original");
 
     reduce(
         &mut state,
@@ -36,9 +68,11 @@ fn update_selected_scene_syncs_and_updates_name() {
         )),
     );
 
-    assert_eq!(state.scene_name, "Updated");
-    assert_eq!(state.choreography.scenes[0].name, "Updated");
-    assert!(state.redraw_requested);
+    check_eq!(errors, state.scene_name, "Updated");
+    check_eq!(errors, state.choreography.scenes[0].name, "Updated");
+    check!(errors, state.redraw_requested);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -61,8 +95,14 @@ fn update_selected_scene_updates_text_timestamp_and_color() {
             "  Note  ".to_string(),
         )),
     );
-    assert_eq!(state.choreography.scenes[0].text.as_deref(), Some("Note"));
-    assert!(state.redraw_requested);
+    let mut errors = Vec::new();
+
+    check_eq!(
+        errors,
+        state.choreography.scenes[0].text.as_deref(),
+        Some("Note")
+    );
+    check!(errors, state.redraw_requested);
 
     state.clear_ephemeral_outputs();
     reduce(
@@ -74,11 +114,12 @@ fn update_selected_scene_updates_text_timestamp_and_color() {
             },
         ),
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         state.choreography.scenes[0].timestamp.as_deref(),
         Some("12.5")
     );
-    assert!(state.redraw_requested);
+    check!(errors, state.redraw_requested);
 
     state.clear_ephemeral_outputs();
     reduce(
@@ -87,8 +128,8 @@ fn update_selected_scene_updates_text_timestamp_and_color() {
             UpdateSelectedSceneAction::SceneFixedPositions(true),
         ),
     );
-    assert!(state.choreography.scenes[0].fixed_positions);
-    assert!(state.redraw_requested);
+    check!(errors, state.choreography.scenes[0].fixed_positions);
+    check!(errors, state.redraw_requested);
 
     state.clear_ephemeral_outputs();
     let scene_color = color(255, 5, 6, 7);
@@ -98,6 +139,8 @@ fn update_selected_scene_updates_text_timestamp_and_color() {
             scene_color.clone(),
         )),
     );
-    assert_eq!(state.choreography.scenes[0].color, scene_color);
-    assert!(state.redraw_requested);
+    check_eq!(errors, state.choreography.scenes[0].color, scene_color);
+    check!(errors, state.redraw_requested);
+
+    assert_no_errors(errors);
 }

@@ -5,26 +5,81 @@ use material3::components::number_picker::ui::draw;
 use material3::components::number_picker::ui::increase_value;
 use material3::components::number_picker::ui::normalized_step;
 
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(errors.is_empty(), "{}", errors.join("\n"));
+}
+
 #[test]
 fn normalized_step_matches_slint_minimum_of_one() {
-    assert_eq!(normalized_step(-3), 1);
-    assert_eq!(normalized_step(0), 1);
-    assert_eq!(normalized_step(7), 7);
+    let mut errors = Vec::new();
+
+    macro_rules! check_eq {
+        ($errors:expr, $actual:expr, $expected:expr) => {{
+            let actual = $actual;
+            let expected = $expected;
+            if actual != expected {
+                $errors.push(format!(
+                    "assertion failed: left != right\n  left: `{:?}`\n right: `{:?}`",
+                    actual, expected
+                ));
+            }
+        }};
+    }
+
+    check_eq!(errors, normalized_step(-3), 1);
+    check_eq!(errors, normalized_step(0), 1);
+    check_eq!(errors, normalized_step(7), 7);
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn increase_and_decrease_clamp_to_bounds() {
-    assert_eq!(decrease_value(1, 1, 100, 1), None);
-    assert_eq!(increase_value(100, 1, 100, 1), None);
-    assert_eq!(decrease_value(11, 1, 100, 5), Some(6));
-    assert_eq!(increase_value(96, 1, 100, 5), Some(100));
+    let mut errors = Vec::new();
+
+    macro_rules! check_eq {
+        ($errors:expr, $actual:expr, $expected:expr) => {{
+            let actual = $actual;
+            let expected = $expected;
+            if actual != expected {
+                $errors.push(format!(
+                    "assertion failed: left != right\n  left: `{:?}`\n right: `{:?}`",
+                    actual, expected
+                ));
+            }
+        }};
+    }
+
+    check_eq!(errors, decrease_value(1, 1, 100, 1), None::<i32>);
+    check_eq!(errors, increase_value(100, 1, 100, 1), None::<i32>);
+    check_eq!(errors, decrease_value(11, 1, 100, 5), Some(6));
+    check_eq!(errors, increase_value(96, 1, 100, 5), Some(100));
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn clamped_value_respects_reversed_bounds() {
-    assert_eq!(clamped_value(50, 100, 1), 50);
-    assert_eq!(clamped_value(-5, 100, 1), 1);
-    assert_eq!(clamped_value(200, 100, 1), 100);
+    let mut errors = Vec::new();
+
+    macro_rules! check_eq {
+        ($errors:expr, $actual:expr, $expected:expr) => {{
+            let actual = $actual;
+            let expected = $expected;
+            if actual != expected {
+                $errors.push(format!(
+                    "assertion failed: left != right\n  left: `{:?}`\n right: `{:?}`",
+                    actual, expected
+                ));
+            }
+        }};
+    }
+
+    check_eq!(errors, clamped_value(50, 100, 1), 50);
+    check_eq!(errors, clamped_value(-5, 100, 1), 1);
+    check_eq!(errors, clamped_value(200, 100, 1), 100);
+
+    assert_no_errors(errors);
 }
 
 #[test]

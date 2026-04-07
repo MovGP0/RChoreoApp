@@ -8,6 +8,28 @@ use crate::settings::state::USE_SYSTEM_THEME_KEY;
 
 #[test]
 fn switch_dark_light_mode_behavior_spec() {
+    macro_rules! check_eq {
+        ($errors:expr, $left:expr, $right:expr) => {
+            if $left != $right {
+                $errors.push(format!(
+                    "{} != {} (left = {:?}, right = {:?})",
+                    stringify!($left),
+                    stringify!($right),
+                    $left,
+                    $right
+                ));
+            }
+        };
+    }
+
+    macro_rules! check {
+        ($errors:expr, $condition:expr) => {
+            if !$condition {
+                $errors.push(format!("condition failed: {}", stringify!($condition)));
+            }
+        };
+    }
+
     let suite = rspec::describe("switch dark light mode reducer behavior", (), |spec| {
         spec.it("updates use-system-theme flag and persists it", |_| {
             let mut state = SettingsState::default();
@@ -16,13 +38,18 @@ fn switch_dark_light_mode_behavior_spec() {
                 SettingsAction::UpdateUseSystemTheme { enabled: false },
             );
 
-            assert!(!state.use_system_theme);
-            assert_eq!(
-                state
-                    .preferences
-                    .get(USE_SYSTEM_THEME_KEY)
-                    .map(String::as_str),
+            let mut errors = Vec::new();
+            check!(errors, !state.use_system_theme);
+            check_eq!(
+                errors,
+                state.preferences.get(USE_SYSTEM_THEME_KEY).map(String::as_str),
                 Some("false")
+            );
+
+            assert!(
+                errors.is_empty(),
+                "Assertion failures:\n{}",
+                errors.join("\n")
             );
         });
 
@@ -33,10 +60,18 @@ fn switch_dark_light_mode_behavior_spec() {
                 SettingsAction::UpdateIsDarkMode { enabled: true },
             );
 
-            assert_eq!(state.theme_mode, ThemeMode::Dark);
-            assert_eq!(
+            let mut errors = Vec::new();
+            check_eq!(errors, state.theme_mode, ThemeMode::Dark);
+            check_eq!(
+                errors,
                 state.preferences.get(THEME_KEY).map(String::as_str),
                 Some("Dark")
+            );
+
+            assert!(
+                errors.is_empty(),
+                "Assertion failures:\n{}",
+                errors.join("\n")
             );
         });
     });

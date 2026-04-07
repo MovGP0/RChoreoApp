@@ -2,6 +2,36 @@ use super::actions::PreferencesAction;
 use super::create_state;
 use super::reducer::reduce;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn clear_pending_writes_only_clears_intents() {
     let mut state = create_state();
@@ -13,12 +43,16 @@ fn clear_pending_writes_only_clears_intents() {
             value: true,
         },
     );
-    assert_eq!(state.pending_writes.len(), 1);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.pending_writes.len(), 1);
 
     reduce(&mut state, PreferencesAction::ClearPendingWrites);
 
-    assert_eq!(state.pending_writes.len(), 0);
-    assert!(state.get_bool("legend", false));
+    check_eq!(errors, state.pending_writes.len(), 0);
+    check!(errors, state.get_bool("legend", false));
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -42,7 +76,11 @@ fn clear_all_resets_values_and_pending_writes() {
 
     reduce(&mut state, PreferencesAction::ClearAll);
 
-    assert_eq!(state.get_string("last_opened", ""), "");
-    assert!(!state.get_bool("legend", false));
-    assert!(state.pending_writes.is_empty());
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.get_string("last_opened", ""), "");
+    check!(errors, !state.get_bool("legend", false));
+    check!(errors, state.pending_writes.is_empty());
+
+    assert_no_errors(errors);
 }

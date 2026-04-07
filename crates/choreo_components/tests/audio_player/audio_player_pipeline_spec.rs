@@ -22,6 +22,36 @@ use choreo_components::global::SceneViewModel;
 use choreo_components::preferences::InMemoryPreferences;
 use choreo_components::preferences::Preferences;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn build_pipeline_handles_open_and_close_commands() {
     let (open_tx, open_rx) = channel();
@@ -50,6 +80,8 @@ fn build_pipeline_handles_open_and_close_commands() {
     let mut state = AudioPlayerState::default();
     let mut runtime = AudioPlayerRuntime::new(AudioPlayerBackend::Awedio);
 
+    let mut errors = Vec::new();
+
     open_tx
         .send(OpenAudioFileCommand {
             file_path: file_path.clone(),
@@ -58,17 +90,19 @@ fn build_pipeline_handles_open_and_close_commands() {
         .expect("open command should send");
     pipeline.open_audio_file.poll(&mut state, &mut runtime);
 
-    assert!(state.has_player);
-    assert!(state.has_stream_factory);
-    assert_eq!(
+    check!(errors, state.has_player);
+    check!(errors, state.has_stream_factory);
+    check_eq!(
+        errors,
         state.last_opened_audio_file_path.as_deref(),
         Some(file_path.as_str())
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         preferences
             .get_string(SettingsPreferenceKeys::LAST_OPENED_AUDIO_FILE, "")
             .as_str(),
-        file_path
+        file_path.as_str()
     );
 
     close_tx
@@ -78,8 +112,10 @@ fn build_pipeline_handles_open_and_close_commands() {
         .expect("close command should send");
     pipeline.close_audio_file.poll(&mut state, &mut runtime);
 
-    assert!(!state.has_player);
-    assert!(!runtime.has_player());
+    check!(errors, !state.has_player);
+    check!(errors, !runtime.has_player());
+
+    assert_no_errors(errors);
 
     let _ = fs::remove_file(file_path);
     let _ = link_tx;
@@ -126,6 +162,8 @@ fn pipeline_links_scene_and_publishes_position_changed_event() {
         ..AudioPlayerState::default()
     };
     let mut runtime = AudioPlayerRuntime::new(AudioPlayerBackend::Rodio);
+    let mut errors = Vec::new();
+
     pipeline.ticks.poll(&mut state, &mut runtime);
 
     link_tx
@@ -135,8 +173,9 @@ fn pipeline_links_scene_and_publishes_position_changed_event() {
         .expect("link command should send");
     pipeline.link_scene.poll(&mut state, None);
 
-    assert_eq!(state.scenes[1].timestamp, Some(2.1));
-    assert_eq!(
+    check_eq!(errors, state.scenes[1].timestamp, Some(2.1));
+    check_eq!(
+        errors,
         state.choreography_scenes[1].timestamp.as_deref(),
         Some("2.1")
     );
@@ -144,8 +183,10 @@ fn pipeline_links_scene_and_publishes_position_changed_event() {
     state.position = 3.0;
     pipeline.position_changed.poll(&mut state);
     let event = position_rx.recv().expect("position event should be sent");
-    assert_eq!(event.position_seconds, 3.0);
-    assert!(event.trace_context.is_none());
+    check_eq!(errors, event.position_seconds, 3.0);
+    check!(errors, event.trace_context.is_none());
+
+    assert_no_errors(errors);
 
     let _ = open_tx;
     let _ = close_tx;

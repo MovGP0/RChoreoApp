@@ -11,6 +11,36 @@ use choreo_components::audio_player::runtime::AudioPlayerRuntime;
 use choreo_components::audio_player::runtime::apply_player_sample;
 use choreo_components::audio_player::state::AudioPlayerState;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn runtime_creates_player_for_platform_backend() {
     let mut runtime = AudioPlayerRuntime::new(AudioPlayerBackend::Rodio);
@@ -74,18 +104,22 @@ fn runtime_sample_syncs_audio_state_from_player() {
     let mut state = AudioPlayerState::default();
     apply_player_sample(&mut state, sample);
 
-    assert!(state.has_player);
-    assert!(is_playing);
-    assert!(speed_applied);
-    assert!(volume_applied);
-    assert!(balance_applied);
-    assert!(loop_applied);
-    assert!(state.is_playing);
-    assert!(state.can_set_speed);
-    assert_eq!(state.speed, 1.05);
-    assert_eq!(state.volume, 0.8);
-    assert_eq!(state.balance, -0.2);
-    assert!(state.loop_enabled);
+    let mut errors = Vec::new();
+
+    check!(errors, state.has_player);
+    check!(errors, is_playing);
+    check!(errors, speed_applied);
+    check!(errors, volume_applied);
+    check!(errors, balance_applied);
+    check!(errors, loop_applied);
+    check!(errors, state.is_playing);
+    check!(errors, state.can_set_speed);
+    check_eq!(errors, state.speed, 1.05);
+    check_eq!(errors, state.volume, 0.8);
+    check_eq!(errors, state.balance, -0.2);
+    check!(errors, state.loop_enabled);
+
+    assert_no_errors(errors);
 
     let _ = fs::remove_file(path);
 }

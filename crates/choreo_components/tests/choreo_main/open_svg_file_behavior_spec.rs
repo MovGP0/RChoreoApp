@@ -6,6 +6,36 @@ use crate::choreo_main::reducer::reduce;
 use crate::choreo_main::reducer::reduce_with_behaviors;
 use crate::choreo_main::state::ChoreoMainState;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn open_svg_file_behavior_spec() {
     let suite = rspec::describe("open svg file behavior", (), |spec| {
@@ -20,12 +50,17 @@ fn open_svg_file_behavior_spec() {
                     }),
                 );
 
-                assert_eq!(state.svg_file_path.as_deref(), Some("C:/image.svg"));
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check_eq!(errors, state.svg_file_path.as_deref(), Some("C:/image.svg"));
+                check_eq!(
+                    errors,
                     state.last_opened_svg_preference.as_deref(),
                     Some("C:/image.svg")
                 );
-                assert_eq!(state.draw_floor_request_count, 1);
+                check_eq!(errors, state.draw_floor_request_count, 1);
+
+                assert_no_errors(errors);
             },
         );
 
@@ -40,12 +75,15 @@ fn open_svg_file_behavior_spec() {
                         path_exists: true,
                     },
                 );
-                assert_eq!(state.svg_file_path.as_deref(), Some("C:/restored.svg"));
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check_eq!(errors, state.svg_file_path.as_deref(), Some("C:/restored.svg"));
+                check_eq!(
+                    errors,
                     state.last_opened_svg_preference.as_deref(),
                     Some("C:/restored.svg")
                 );
-                assert_eq!(state.draw_floor_request_count, 1);
+                check_eq!(errors, state.draw_floor_request_count, 1);
 
                 reduce(
                     &mut state,
@@ -60,12 +98,14 @@ fn open_svg_file_behavior_spec() {
                         trace_context: None,
                     }),
                 );
-                assert_eq!(state.outgoing_open_svg_commands.len(), 1);
-                assert_eq!(state.outgoing_audio_requests.len(), 1);
+                check_eq!(errors, state.outgoing_open_svg_commands.len(), 1);
+                check_eq!(errors, state.outgoing_audio_requests.len(), 1);
 
                 reduce(&mut state, ChoreoMainAction::ClearOutgoingCommands);
-                assert!(state.outgoing_open_svg_commands.is_empty());
-                assert!(state.outgoing_audio_requests.is_empty());
+                check!(errors, state.outgoing_open_svg_commands.is_empty());
+                check!(errors, state.outgoing_audio_requests.is_empty());
+
+                assert_no_errors(errors);
             },
         );
     });

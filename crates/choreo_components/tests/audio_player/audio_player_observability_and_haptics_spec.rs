@@ -22,6 +22,36 @@ use choreo_components::global::SceneViewModel;
 use choreo_components::observability::TraceContext;
 use choreo_components::preferences::InMemoryPreferences;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 struct MockHaptic {
     click_count: Arc<AtomicUsize>,
 }
@@ -53,8 +83,12 @@ fn toggle_play_pause_triggers_haptic_click_side_effect() {
         Some(&haptic),
     );
 
-    assert!(state.is_playing);
-    assert_eq!(click_count.load(Ordering::Relaxed), 1);
+    let mut errors = Vec::new();
+
+    check!(errors, state.is_playing);
+    check_eq!(errors, click_count.load(Ordering::Relaxed), 1);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -67,9 +101,10 @@ fn link_command_keeps_trace_context_and_propagates_to_position_event() {
     let haptic = Box::new(MockHaptic {
         click_count: Arc::clone(&click_count),
     });
+    let mut errors = Vec::new();
 
     let global_state = GlobalStateActor::new();
-    assert!(global_state.try_update(|state| {
+    check!(errors, global_state.try_update(|state| {
         state.scenes = vec![
             scene_view_model(1, "A", Some(1.0)),
             scene_view_model(2, "B", None),
@@ -110,28 +145,41 @@ fn link_command_keeps_trace_context_and_propagates_to_position_event() {
     );
     pipeline.ticks.poll(&mut state, &mut runtime);
 
-    link_tx
-        .send(LinkSceneToPositionCommand {
-            trace_context: Some(trace_context.clone()),
-        })
-        .expect("link command should send");
+    check!(
+        errors,
+        link_tx
+            .send(LinkSceneToPositionCommand {
+                trace_context: Some(trace_context.clone()),
+            })
+            .is_ok()
+    );
     pipeline
         .link_scene
         .poll(&mut state, pipeline.haptic_feedback.as_deref());
 
-    assert_eq!(click_count.load(Ordering::Relaxed), 1);
-    assert_eq!(state.last_trace_context, Some(trace_context));
+    check_eq!(errors, click_count.load(Ordering::Relaxed), 1);
+    check_eq!(errors, state.last_trace_context, Some(trace_context.clone()));
 
     state.position = 3.0;
     pipeline.position_changed.poll(&mut state);
-    let event = position_rx.recv().expect("position event should be sent");
-    assert_eq!(
-        event.trace_context,
-        Some(TraceContext {
+    let event = match position_rx.recv() {
+        Ok(event) => Some(event),
+        Err(err) => {
+            errors.push(format!("position event should be sent: {err}"));
+            None
+        }
+    };
+
+    check_eq!(
+        errors,
+        event.as_ref().map(|event| event.trace_context.clone()),
+        Some(Some(TraceContext {
             trace_id_hex: Some("abc123".to_string()),
             span_id_hex: Some("def456".to_string()),
-        })
+        }))
     );
+
+    assert_no_errors(errors);
 
     let _ = open_tx;
     let _ = close_tx;

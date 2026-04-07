@@ -7,6 +7,31 @@ fn update_dancer_details_behavior_spec() {
         spec.it(
             "updates selected dancer name shortcut and color and propagates to list",
             |_| {
+                macro_rules! check_eq {
+                    ($errors:expr, $left:expr, $right:expr) => {
+                        if $left != $right {
+                            $errors.push(format!(
+                                "{} != {} (left = {:?}, right = {:?})",
+                                stringify!($left),
+                                stringify!($right),
+                                $left,
+                                $right
+                            ));
+                        }
+                    };
+                }
+
+                macro_rules! check {
+                    ($errors:expr, $condition:expr) => {
+                        if !$condition {
+                            $errors.push(format!(
+                                "condition failed: {}",
+                                stringify!($condition)
+                            ));
+                        }
+                    };
+                }
+
                 let role = dancers::role("Gentleman");
                 let mut state = dancers::state::DancersState::default().with_global(
                     dancers::state::DancersGlobalState {
@@ -38,20 +63,29 @@ fn update_dancer_details_behavior_spec() {
                     },
                 );
 
-                let selected = state
-                    .selected_dancer
-                    .as_ref()
-                    .expect("selected dancer should exist");
-                assert_eq!(selected.name, "Alice Updated");
-                assert_eq!(selected.shortcut, "AU");
-                assert_eq!(selected.color.r, 10);
-                assert_eq!(selected.color.g, 20);
-                assert_eq!(selected.color.b, 30);
-                assert_eq!(state.dancers[0].name, "Alice Updated");
-                assert_eq!(state.dancers[0].shortcut, "AU");
-                assert_eq!(state.dancers[0].color.r, 10);
-                assert_eq!(state.dancers[0].color.g, 20);
-                assert_eq!(state.dancers[0].color.b, 30);
+                let mut errors = Vec::new();
+
+                check!(errors, state.selected_dancer.is_some());
+
+                if let Some(selected) = state.selected_dancer.as_ref() {
+                    check_eq!(errors, selected.name, "Alice Updated");
+                    check_eq!(errors, selected.shortcut, "AU");
+                    check_eq!(errors, selected.color.r, 10);
+                    check_eq!(errors, selected.color.g, 20);
+                    check_eq!(errors, selected.color.b, 30);
+                }
+
+                check_eq!(errors, state.dancers[0].name, "Alice Updated");
+                check_eq!(errors, state.dancers[0].shortcut, "AU");
+                check_eq!(errors, state.dancers[0].color.r, 10);
+                check_eq!(errors, state.dancers[0].color.g, 20);
+                check_eq!(errors, state.dancers[0].color.b, 30);
+
+                assert!(
+                    errors.is_empty(),
+                    "Assertion failures:\n{}",
+                    errors.join("\n")
+                );
             },
         );
     });

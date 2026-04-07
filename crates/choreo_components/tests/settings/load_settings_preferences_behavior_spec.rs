@@ -16,6 +16,36 @@ use crate::settings::state::USE_SECONDARY_COLOR_KEY;
 use crate::settings::state::USE_SYSTEM_THEME_KEY;
 use crate::settings::state::USE_TERTIARY_COLOR_KEY;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "expected no errors, but found:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn load_settings_preferences_behavior_spec() {
     let suite = rspec::describe("load settings preferences reducer behavior", (), |spec| {
@@ -39,12 +69,14 @@ fn load_settings_preferences_behavior_spec() {
                 },
             );
 
-            assert_eq!(state.theme_mode, ThemeMode::Dark);
-            assert!(!state.use_system_theme);
-            assert!(state.use_primary_color);
-            assert!(state.use_secondary_color);
-            assert!(state.use_tertiary_color);
-            assert_eq!(state.audio_player_backend, AudioPlayerBackend::Awedio);
+            let mut errors = Vec::new();
+            check_eq!(errors, state.theme_mode, ThemeMode::Dark);
+            check!(errors, !state.use_system_theme);
+            check!(errors, state.use_primary_color);
+            check!(errors, state.use_secondary_color);
+            check!(errors, state.use_tertiary_color);
+            check_eq!(errors, state.audio_player_backend, AudioPlayerBackend::Awedio);
+            assert_no_errors(errors);
         });
 
         spec.it(
@@ -64,10 +96,12 @@ fn load_settings_preferences_behavior_spec() {
                 );
                 reduce(&mut state, SettingsAction::Reload);
 
-                assert_eq!(state.theme_mode, ThemeMode::Dark);
-                assert!(!state.use_primary_color);
-                assert!(!state.use_secondary_color);
-                assert_eq!(state.primary_color_hex, "#FF1976D2");
+                let mut errors = Vec::new();
+                check_eq!(errors, state.theme_mode, ThemeMode::Dark);
+                check!(errors, !state.use_primary_color);
+                check!(errors, !state.use_secondary_color);
+                check_eq!(errors, state.primary_color_hex, "#FF1976D2");
+                assert_no_errors(errors);
             },
         );
 
@@ -92,11 +126,13 @@ fn load_settings_preferences_behavior_spec() {
                     },
                 );
 
+                let mut errors = Vec::new();
                 if cfg!(target_arch = "wasm32") {
-                    assert_eq!(state.audio_player_backend, AudioPlayerBackend::Browser);
+                    check_eq!(errors, state.audio_player_backend, AudioPlayerBackend::Browser);
                 } else {
-                    assert_eq!(state.audio_player_backend, AudioPlayerBackend::Rodio);
+                    check_eq!(errors, state.audio_player_backend, AudioPlayerBackend::Rodio);
                 }
+                assert_no_errors(errors);
             },
         );
     });

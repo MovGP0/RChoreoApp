@@ -4,6 +4,36 @@ use super::create_state;
 use super::reducer::reduce;
 use super::scene_model;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn open_choreo_updates_state_and_audio_request() {
     let mut state = create_state();
@@ -20,22 +50,32 @@ fn open_choreo_updates_state_and_audio_request() {
         },
     );
 
-    assert_eq!(state.choreography.name, "FromFile");
-    assert!(state.reload_requested);
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.choreography.name, "FromFile");
+    check!(errors, state.reload_requested);
+    check_eq!(
+        errors,
         state.last_opened_choreo_file.as_deref(),
         Some("C:/tmp/test.choreo")
     );
-    assert!(state.selected_scene_changed);
-    assert_eq!(
+    check!(errors, state.selected_scene_changed);
+    check_eq!(
+        errors,
         state
             .selected_scene
             .as_ref()
             .map(|scene| scene.name.as_str()),
         Some("Intro")
     );
-    assert_eq!(state.pending_open_audio.as_deref(), Some("C:/tmp/test.mp3"));
-    assert!(!state.close_audio_requested);
+    check_eq!(
+        errors,
+        state.pending_open_audio.as_deref(),
+        Some("C:/tmp/test.mp3")
+    );
+    check!(errors, !state.close_audio_requested);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -53,13 +93,19 @@ fn open_choreo_without_audio_requests_close_audio() {
         },
     );
 
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check_eq!(
+        errors,
         state.last_opened_choreo_file.as_deref(),
         Some("browser-import.choreo")
     );
-    assert!(state.close_audio_requested);
+    check!(errors, state.close_audio_requested);
 
     reduce(&mut state, ScenesAction::ClearEphemeralOutputs);
-    assert!(!state.close_audio_requested);
-    assert!(state.pending_open_audio.is_none());
+
+    check!(errors, !state.close_audio_requested);
+    check!(errors, state.pending_open_audio.is_none());
+
+    assert_no_errors(errors);
 }

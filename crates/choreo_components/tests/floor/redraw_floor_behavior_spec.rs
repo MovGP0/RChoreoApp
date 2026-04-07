@@ -46,8 +46,30 @@ fn redraws_when_selection_changes() {
     );
     reduce(&mut state, FloorAction::RedrawFloor);
 
-    assert_eq!(state.selected_positions, vec![0, 1]);
-    assert_eq!(state.draw_count, 1);
+    macro_rules! check_eq {
+        ($errors:expr, $left:expr, $right:expr) => {
+            if $left != $right {
+                $errors.push(format!(
+                    "{} != {} (left = {:?}, right = {:?})",
+                    stringify!($left),
+                    stringify!($right),
+                    $left,
+                    $right
+                ));
+            }
+        };
+    }
+
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.selected_positions, vec![0, 1]);
+    check_eq!(errors, state.draw_count, 1);
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]

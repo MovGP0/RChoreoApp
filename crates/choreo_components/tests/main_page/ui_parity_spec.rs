@@ -41,6 +41,36 @@ use material3::components::drawer_host::state::DrawerHostOpenMode;
 use material3::components::drawer_host::ui::compute_layout as compute_drawer_host_layout;
 use material3::components::drawer_host::ui::overlay_visible as drawer_host_overlay_visible;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn ui_parity_spec() {
     let suite = rspec::describe("main page component parity", (), |spec| {
@@ -56,61 +86,85 @@ fn ui_parity_spec() {
         });
 
         spec.it("exposes all mode labels", |_| {
-            assert_eq!(mode_count(), 6);
-            assert_eq!(mode_label(0), "View");
-            assert_eq!(mode_label(1), "Move");
-            assert_eq!(mode_label(2), "Rotate around center");
-            assert_eq!(mode_label(3), "Rotate around dancer");
-            assert_eq!(mode_label(4), "Scale");
-            assert_eq!(mode_label(5), "Line of sight");
+            let mut errors = Vec::new();
+
+            check_eq!(errors, mode_count(), 6);
+            check_eq!(errors, mode_label(0), "View");
+            check_eq!(errors, mode_label(1), "Move");
+            check_eq!(errors, mode_label(2), "Rotate around center");
+            check_eq!(errors, mode_label(3), "Rotate around dancer");
+            check_eq!(errors, mode_label(4), "Scale");
+            check_eq!(errors, mode_label(5), "Line of sight");
+
+            assert_no_errors(errors);
         });
 
         spec.it(
             "maps top bar toggles and audio open to parity actions",
             |_| {
-                assert_eq!(top_bar_nav_action(false), ChoreoMainAction::ToggleNav);
-                assert_eq!(top_bar_nav_action(true), ChoreoMainAction::CloseNav);
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check_eq!(errors, top_bar_nav_action(false), ChoreoMainAction::ToggleNav);
+                check_eq!(errors, top_bar_nav_action(true), ChoreoMainAction::CloseNav);
+                check_eq!(
+                    errors,
                     top_bar_settings_action(false),
                     ChoreoMainAction::OpenSettings
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     top_bar_settings_action(true),
                     ChoreoMainAction::CloseSettings
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     top_bar_open_audio_action(),
                     ChoreoMainAction::RequestOpenAudio(OpenAudioRequested {
                         file_path: String::new(),
                         trace_context: None,
                     })
                 );
+
+                assert_no_errors(errors);
             },
         );
 
         spec.it("uses parity icon tokens for top bar actions", |_| {
-            assert_eq!(nav_icon_name(false), "menu");
-            assert_eq!(nav_icon_name(true), "close");
-            assert_eq!(top_bar_settings_icon_name(), "edit");
-            assert_eq!(home_icon_name(), "home");
-            assert_eq!(open_image_icon_name(), "image");
-            assert_eq!(open_audio_icon_name(), "play_circle");
+            let mut errors = Vec::new();
+
+            check_eq!(errors, nav_icon_name(false), "menu");
+            check_eq!(errors, nav_icon_name(true), "close");
+            check_eq!(errors, top_bar_settings_icon_name(), "edit");
+            check_eq!(errors, home_icon_name(), "home");
+            check_eq!(errors, open_image_icon_name(), "image");
+            check_eq!(errors, open_audio_icon_name(), "play_circle");
+
+            assert_no_errors(errors);
         });
 
         spec.it("keeps the expected top bar action order", |_| {
-            assert_eq!(top_bar_action_count(), 6);
-            assert_eq!(
+            let mut errors = Vec::new();
+
+            check_eq!(errors, top_bar_action_count(), 6);
+            check_eq!(
+                errors,
                 top_bar_action_icon_tokens(false),
                 ["menu", "edit", "home", "image", "play_circle"]
             );
-            assert_eq!(
+            check_eq!(
+                errors,
                 top_bar_action_icon_tokens(true),
                 ["close", "edit", "home", "image", "play_circle"]
             );
+
+            assert_no_errors(errors);
         });
 
         spec.it("maps trailing actions to distinct svg sources", |_| {
-            assert_eq!(
+            let mut errors = Vec::new();
+
+            check_eq!(
+                errors,
                 top_bar_action_icon_uris(),
                 [
                     "bytes://top_bar/settings.svg",
@@ -119,11 +173,16 @@ fn ui_parity_spec() {
                     "bytes://top_bar/audio.svg",
                 ]
             );
+
+            assert_no_errors(errors);
         });
 
         spec.it("exposes all translated mode options", |_| {
             let strings = nav_bar_translations("en");
-            assert_eq!(
+            let mut errors = Vec::new();
+
+            check_eq!(
+                errors,
                 translated_mode_labels(&strings),
                 [
                     "View",
@@ -134,6 +193,8 @@ fn ui_parity_spec() {
                     "Line of sight",
                 ]
             );
+
+            assert_no_errors(errors);
         });
 
         spec.it(
@@ -142,8 +203,16 @@ fn ui_parity_spec() {
                 let mut state = ChoreoMainState::default();
                 reduce(&mut state, ChoreoMainAction::SelectMode { index: 2 });
 
-                assert_eq!(state.selected_mode_index, 2);
-                assert_eq!(state.interaction_mode, InteractionMode::RotateAroundCenter);
+                let mut errors = Vec::new();
+
+                check_eq!(errors, state.selected_mode_index, 2);
+                check_eq!(
+                    errors,
+                    state.interaction_mode,
+                    InteractionMode::RotateAroundCenter
+                );
+
+                assert_no_errors(errors);
             },
         );
 
@@ -158,19 +227,24 @@ fn ui_parity_spec() {
 
                 let drawer_state = drawer_host_state(egui::vec2(1280.0, 720.0), &state);
 
-                assert_eq!(drawer_state.left_drawer_width, 324.0);
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check_eq!(errors, drawer_state.left_drawer_width, 324.0);
+                check_eq!(
+                    errors,
                     drawer_state.right_drawer_width,
                     settings_drawer_width_token()
                 );
-                assert_eq!(drawer_state.responsive_breakpoint, 900.0);
-                assert_eq!(drawer_state.open_mode, DrawerHostOpenMode::Standard);
-                assert_eq!(drawer_state.top_inset, 0.0);
-                assert!(!drawer_state.left_close_on_click_away);
-                assert!(!drawer_state.right_close_on_click_away);
-                assert!(drawer_state.is_left_open);
-                assert!(drawer_state.is_right_open);
-                assert!(!drawer_host_overlay_visible(&drawer_state, 1280.0));
+                check_eq!(errors, drawer_state.responsive_breakpoint, 900.0);
+                check_eq!(errors, drawer_state.open_mode, DrawerHostOpenMode::Standard);
+                check_eq!(errors, drawer_state.top_inset, 0.0);
+                check!(errors, !drawer_state.left_close_on_click_away);
+                check!(errors, !drawer_state.right_close_on_click_away);
+                check!(errors, drawer_state.is_left_open);
+                check!(errors, drawer_state.is_right_open);
+                check!(errors, !drawer_host_overlay_visible(&drawer_state, 1280.0));
+
+                assert_no_errors(errors);
             },
         );
 
@@ -183,14 +257,18 @@ fn ui_parity_spec() {
                 let top_bar = top_bar_rect(page_rect);
                 let drawer_host = drawer_host_rect(page_rect, 0.0);
 
-                assert_eq!(top_bar.top(), 30.0);
-                assert_eq!(top_bar.bottom(), 114.0);
-                assert_eq!(top_bar.bottom(), drawer_host.top());
-                assert_eq!(drawer_host.top(), 114.0);
-                assert_eq!(drawer_host.bottom(), 750.0);
-                assert_eq!(drawer_host.bottom(), page_rect.bottom());
-                assert_eq!(drawer_host.left(), 20.0);
-                assert_eq!(drawer_host.right(), 1300.0);
+                let mut errors = Vec::new();
+
+                check_eq!(errors, top_bar.top(), 30.0);
+                check_eq!(errors, top_bar.bottom(), 114.0);
+                check_eq!(errors, top_bar.bottom(), drawer_host.top());
+                check_eq!(errors, drawer_host.top(), 114.0);
+                check_eq!(errors, drawer_host.bottom(), 750.0);
+                check_eq!(errors, drawer_host.bottom(), page_rect.bottom());
+                check_eq!(errors, drawer_host.left(), 20.0);
+                check_eq!(errors, drawer_host.right(), 1300.0);
+
+                assert_no_errors(errors);
             },
         );
 
@@ -203,12 +281,16 @@ fn ui_parity_spec() {
                 let drawer_host = drawer_host_rect(page_rect, 84.0);
                 let audio_panel = audio_panel_rect(page_rect, 84.0);
 
-                assert_eq!(drawer_host.top(), 114.0);
-                assert_eq!(drawer_host.bottom(), 666.0);
-                assert_eq!(drawer_host.bottom(), audio_panel.top());
-                assert_eq!(audio_panel.top(), 666.0);
-                assert_eq!(audio_panel.bottom(), 750.0);
-                assert_eq!(audio_panel.bottom(), page_rect.bottom());
+                let mut errors = Vec::new();
+
+                check_eq!(errors, drawer_host.top(), 114.0);
+                check_eq!(errors, drawer_host.bottom(), 666.0);
+                check_eq!(errors, drawer_host.bottom(), audio_panel.top());
+                check_eq!(errors, audio_panel.top(), 666.0);
+                check_eq!(errors, audio_panel.bottom(), 750.0);
+                check_eq!(errors, audio_panel.bottom(), page_rect.bottom());
+
+                assert_no_errors(errors);
             },
         );
 
@@ -226,22 +308,28 @@ fn ui_parity_spec() {
                 let drawer_state = drawer_host_state(host_rect.size(), &state);
                 let layout = compute_drawer_host_layout(host_rect, &drawer_state);
 
-                assert_eq!(layout.left_panel_rect.left(), host_rect.left());
-                assert_eq!(layout.left_panel_rect.right(), host_rect.left() + 324.0);
-                assert_eq!(layout.right_panel_rect.right(), host_rect.right());
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check_eq!(errors, layout.left_panel_rect.left(), host_rect.left());
+                check_eq!(errors, layout.left_panel_rect.right(), host_rect.left() + 324.0);
+                check_eq!(errors, layout.right_panel_rect.right(), host_rect.right());
+                check_eq!(
+                    errors,
                     layout.right_panel_rect.left(),
                     host_rect.right() - settings_drawer_width_token()
                 );
-                assert_eq!(layout.content_rect.left(), host_rect.left() + 324.0);
-                assert_eq!(layout.content_rect.right(), host_rect.right());
+                check_eq!(errors, layout.content_rect.left(), host_rect.left() + 324.0);
+                check_eq!(errors, layout.content_rect.right(), host_rect.right());
 
                 let floor_rect = floor_content_rect(layout.content_rect, true);
-                assert_eq!(floor_rect.left(), host_rect.left() + 324.0);
-                assert_eq!(
+                check_eq!(errors, floor_rect.left(), host_rect.left() + 324.0);
+                check_eq!(
+                    errors,
                     floor_rect.right(),
                     host_rect.right() - settings_drawer_width_token()
                 );
+
+                assert_no_errors(errors);
             },
         );
 
@@ -268,7 +356,11 @@ fn ui_parity_spec() {
                     });
                 });
 
-                assert_eq!(observed_shell, Some(scoped_rect));
+                let mut errors = Vec::new();
+
+                check_eq!(errors, observed_shell, Some(scoped_rect));
+
+                assert_no_errors(errors);
             },
         );
 
@@ -289,10 +381,15 @@ fn ui_parity_spec() {
                 &state,
             );
 
-            assert_eq!(
+            let mut errors = Vec::new();
+
+            check_eq!(
+                errors,
                 actions,
                 vec![ChoreoMainAction::CloseNav, ChoreoMainAction::CloseSettings]
             );
+
+            assert_no_errors(errors);
         });
 
         spec.it(
@@ -314,14 +411,21 @@ fn ui_parity_spec() {
                     &state,
                 );
 
-                assert_eq!(actions, vec![ChoreoMainAction::CloseSettings]);
+                let mut errors = Vec::new();
+
+                check_eq!(errors, actions, vec![ChoreoMainAction::CloseSettings]);
+
+                assert_no_errors(errors);
             },
         );
 
         spec.it(
             "maps choreography settings drawer actions into main actions",
             |_| {
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check_eq!(
+                    errors,
                     map_choreography_settings_action(ChoreographySettingsAction::UpdateShowLegend(
                         true
                     )),
@@ -329,6 +433,8 @@ fn ui_parity_spec() {
                         ChoreographySettingsAction::UpdateShowLegend(true)
                     )
                 );
+
+                assert_no_errors(errors);
             },
         );
 
@@ -411,19 +517,23 @@ fn ui_parity_spec() {
 
                 let pane_state = scene_pane_state(&state);
 
-                assert_eq!(pane_state.search_text, "sec");
-                assert!(pane_state.show_timestamps);
-                assert_eq!(pane_state.scenes.len(), 2);
-                assert_eq!(pane_state.visible_scenes.len(), 1);
-                assert_eq!(pane_state.visible_scenes[0].name, "Second");
-                assert!(pane_state.visible_scenes[0].is_selected);
-                assert!(pane_state.choreography.scenes.is_empty());
-                assert!(pane_state.scenes[0].positions.is_empty());
-                assert!(pane_state.scenes[0].variations.is_empty());
-                assert!(pane_state.scenes[0].current_variation.is_empty());
-                assert!(!pane_state.can_save_choreo);
-                assert!(pane_state.can_navigate_to_settings);
-                assert!(pane_state.can_navigate_to_dancer_settings);
+                let mut errors = Vec::new();
+
+                check_eq!(errors, pane_state.search_text, "sec");
+                check!(errors, pane_state.show_timestamps);
+                check_eq!(errors, pane_state.scenes.len(), 2);
+                check_eq!(errors, pane_state.visible_scenes.len(), 1);
+                check_eq!(errors, pane_state.visible_scenes[0].name, "Second");
+                check!(errors, pane_state.visible_scenes[0].is_selected);
+                check!(errors, pane_state.choreography.scenes.is_empty());
+                check!(errors, pane_state.scenes[0].positions.is_empty());
+                check!(errors, pane_state.scenes[0].variations.is_empty());
+                check!(errors, pane_state.scenes[0].current_variation.is_empty());
+                check!(errors, !pane_state.can_save_choreo);
+                check!(errors, pane_state.can_navigate_to_settings);
+                check!(errors, pane_state.can_navigate_to_dancer_settings);
+
+                assert_no_errors(errors);
             },
         );
 
@@ -441,9 +551,13 @@ fn ui_parity_spec() {
                 state.last_opened_choreo_file = Some(file_path.to_string_lossy().into_owned());
                 state.choreography_settings_state.choreography.name = "Demo".to_string();
 
-                let pane_state = scene_pane_state(&state);
+            let pane_state = scene_pane_state(&state);
 
-                assert!(pane_state.can_save_choreo);
+                let mut errors = Vec::new();
+
+                check!(errors, pane_state.can_save_choreo);
+
+                assert_no_errors(errors);
 
                 let _ = std::fs::remove_file(file_path);
                 let _ = std::fs::remove_dir(temp_root);
@@ -453,19 +567,25 @@ fn ui_parity_spec() {
         spec.it(
             "maps shared scenes pane actions into main page actions",
             |_| {
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check_eq!(
+                    errors,
                     map_scene_pane_action(ScenesAction::SelectScene { index: 2 }),
                     Some(ChoreoMainAction::SelectScene { index: 2 })
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     map_scene_pane_action(ScenesAction::NavigateToSettings),
                     Some(ChoreoMainAction::NavigateToSettings)
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     map_scene_pane_action(ScenesAction::NavigateToDancerSettings),
                     Some(ChoreoMainAction::NavigateToDancers)
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     map_scene_pane_action(ScenesAction::RequestOpenChoreography),
                     Some(ChoreoMainAction::RequestOpenChoreo(OpenChoreoRequested {
                         file_path: None,
@@ -473,11 +593,13 @@ fn ui_parity_spec() {
                         contents: String::new(),
                     }))
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     map_scene_pane_action(ScenesAction::RequestSaveChoreography),
                     Some(ChoreoMainAction::RequestSaveChoreo)
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     map_scene_pane_action(ScenesAction::InsertScene {
                         insert_after: false
                     }),
@@ -485,10 +607,13 @@ fn ui_parity_spec() {
                         insert_after: false
                     })
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     map_scene_pane_action(ScenesAction::OpenDeleteSceneDialog),
                     Some(ChoreoMainAction::DeleteSelectedScene)
                 );
+
+                assert_no_errors(errors);
             },
         );
     });

@@ -2,6 +2,36 @@ use choreo_components::audio_player::actions::AudioPlayerAction;
 use choreo_components::audio_player::reducer::reduce;
 use choreo_components::audio_player::state::AudioPlayerState;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn audio_player_view_state_restores_playback_after_drag_when_previously_playing() {
     let mut state = AudioPlayerState {
@@ -17,10 +47,14 @@ fn audio_player_view_state_restores_playback_after_drag_when_previously_playing(
         AudioPlayerAction::PositionDragCompleted { position: 12.0 },
     );
 
-    assert!(!state.is_user_dragging);
-    assert_eq!(state.pending_seek_position, Some(12.0));
-    assert_eq!(state.position, 12.0);
-    assert!(state.is_playing);
+    let mut errors = Vec::new();
+
+    check!(errors, !state.is_user_dragging);
+    check_eq!(errors, state.pending_seek_position, Some(12.0));
+    check_eq!(errors, state.position, 12.0);
+    check!(errors, state.is_playing);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -41,16 +75,20 @@ fn audio_player_view_state_ignores_stale_player_position_until_target_is_acknowl
         AudioPlayerAction::PlayerPositionSampled { position: 4.0 },
     );
 
-    assert_eq!(state.position, 18.0);
-    assert_eq!(state.pending_seek_position, Some(18.0));
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.position, 18.0);
+    check_eq!(errors, state.pending_seek_position, Some(18.0));
 
     reduce(
         &mut state,
         AudioPlayerAction::PlayerPositionSampled { position: 18.0 },
     );
 
-    assert_eq!(state.position, 18.0);
-    assert!(state.pending_seek_position.is_none());
+    check_eq!(errors, state.position, 18.0);
+    check!(errors, state.pending_seek_position.is_none());
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -68,8 +106,12 @@ fn audio_player_view_state_keeps_dragged_position_after_commit_if_actor_is_stale
         AudioPlayerAction::PositionDragCompleted { position: 18.0 },
     );
 
-    assert_eq!(state.position, 18.0);
-    assert_eq!(state.pending_seek_position, Some(18.0));
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.position, 18.0);
+    check_eq!(errors, state.pending_seek_position, Some(18.0));
+
+    assert_no_errors(errors);
 }
 
 #[test]

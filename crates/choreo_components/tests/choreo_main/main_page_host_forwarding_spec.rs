@@ -7,6 +7,36 @@ use choreo_components::floor::actions::FloorAction;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn main_page_host_forwarding_spec() {
     let suite = rspec::describe("main page host forwarding", (), |spec| {
@@ -27,18 +57,28 @@ fn main_page_host_forwarding_spec() {
                 });
 
                 let actions = captured.borrow();
-                assert!(actions.iter().any(|action| {
-                    matches!(
-                        action,
-                        ChoreoMainAction::FloorAction(FloorAction::SetLayout { .. })
-                    )
-                }));
-                assert!(actions.iter().any(|action| {
-                    matches!(
-                        action,
-                        ChoreoMainAction::FloorAction(FloorAction::DrawFloor)
-                    )
-                }));
+                let mut errors = Vec::new();
+
+                check!(
+                    errors,
+                    actions.iter().any(|action| {
+                        matches!(
+                            action,
+                            ChoreoMainAction::FloorAction(FloorAction::SetLayout { .. })
+                        )
+                    })
+                );
+                check!(
+                    errors,
+                    actions.iter().any(|action| {
+                        matches!(
+                            action,
+                            ChoreoMainAction::FloorAction(FloorAction::DrawFloor)
+                        )
+                    })
+                );
+
+                assert_no_errors(errors);
             },
         );
 
@@ -47,7 +87,12 @@ fn main_page_host_forwarding_spec() {
             |_| {
                 let seek_actions =
                     map_audio_host_action(AudioPlayerAction::SeekToPosition { position: 12.3 });
-                assert_eq!(
+                let link_actions = map_audio_host_action(AudioPlayerAction::LinkSceneToPosition);
+
+                let mut errors = Vec::new();
+
+                check_eq!(
+                    errors,
                     seek_actions,
                     vec![
                         ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::SeekToPosition {
@@ -56,15 +101,16 @@ fn main_page_host_forwarding_spec() {
                         ChoreoMainAction::UpdateAudioPosition { seconds: 12.3 }
                     ]
                 );
-
-                let link_actions = map_audio_host_action(AudioPlayerAction::LinkSceneToPosition);
-                assert_eq!(
+                check_eq!(
+                    errors,
                     link_actions,
                     vec![
                         ChoreoMainAction::AudioPlayerAction(AudioPlayerAction::LinkSceneToPosition),
                         ChoreoMainAction::LinkSelectedSceneToAudioPosition
                     ]
                 );
+
+                assert_no_errors(errors);
             },
         );
     });

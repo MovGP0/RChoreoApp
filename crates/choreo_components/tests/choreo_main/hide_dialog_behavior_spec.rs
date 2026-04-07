@@ -3,6 +3,22 @@ use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::reducer::reduce;
 use crate::choreo_main::state::ChoreoMainState;
 
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn hide_dialog_behavior_spec() {
     let suite = rspec::describe("hide dialog reducer behavior", (), |spec| {
@@ -16,8 +32,12 @@ fn hide_dialog_behavior_spec() {
             );
             reduce(&mut state, ChoreoMainAction::HideDialog);
 
-            assert!(!state.is_dialog_open);
-            assert!(state.dialog_content.is_none());
+            let mut errors = Vec::new();
+
+            check!(errors, !state.is_dialog_open);
+            check!(errors, state.dialog_content.is_none());
+
+            assert_no_errors(errors);
         });
     });
 

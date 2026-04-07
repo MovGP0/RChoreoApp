@@ -10,6 +10,36 @@ use crate::floor::floor_component::state::TouchAction;
 use crate::floor::floor_component::state::TouchDeviceType;
 use crate::floor::floor_component::state::TouchEventArgs;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn pointer_event_args_exposes_position_and_button() {
     let args = PointerEventArgs {
@@ -18,8 +48,12 @@ fn pointer_event_args_exposes_position_and_button() {
         is_in_contact: true,
     };
 
-    assert_eq!(args.position, Point::new(12.0, 34.0));
-    assert_eq!(args.button, PointerButton::Primary);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, args.position, Point::new(12.0, 34.0));
+    check_eq!(errors, args.button, PointerButton::Primary);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -72,7 +106,10 @@ fn floor_variants_and_ui_are_exercised_for_reducer_coverage() {
         button: PointerButton::Secondary,
         is_in_contact: false,
     };
-    assert_eq!(secondary_args.button, PointerButton::Secondary);
+
+    let mut errors = Vec::new();
+
+    check_eq!(errors, secondary_args.button, PointerButton::Secondary);
 
     let canvas = CanvasViewHandle { id: 7 };
     reduce(
@@ -131,11 +168,13 @@ fn floor_variants_and_ui_are_exercised_for_reducer_coverage() {
             },
         },
     );
-    assert_eq!(state.last_canvas_view, Some(canvas));
-    assert!(state.last_pointer_pressed.is_some());
-    assert!(state.last_pointer_moved.is_some());
-    assert!(state.last_pointer_released.is_some());
-    assert!(state.last_touch_event.is_some());
+    check_eq!(errors, state.last_canvas_view, Some(canvas));
+    check!(errors, state.last_pointer_pressed.is_some());
+    check!(errors, state.last_pointer_moved.is_some());
+    check!(errors, state.last_pointer_released.is_some());
+    check!(errors, state.last_touch_event.is_some());
+
+    assert_no_errors(errors);
 
     let context = egui::Context::default();
     let _ = context.run(egui::RawInput::default(), |ctx| {
@@ -165,9 +204,13 @@ fn pointer_pressed_with_secondary_button_preserves_event_contract() {
     let last_pressed = state
         .last_pointer_pressed
         .expect("pointer context should store latest pointer args");
-    assert_eq!(last_pressed.button, PointerButton::Secondary);
-    assert!(!last_pressed.is_in_contact);
-    assert_eq!(state.last_canvas_view, Some(canvas));
+    let mut errors = Vec::new();
+
+    check_eq!(errors, last_pressed.button, PointerButton::Secondary);
+    check!(errors, !last_pressed.is_in_contact);
+    check_eq!(errors, state.last_canvas_view, Some(canvas));
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -198,9 +241,13 @@ fn secondary_pointer_does_not_start_pan_anchor() {
         },
     );
 
-    assert!(state.pointer_anchor.is_none());
-    assert_eq!(state.transformation_matrix.trans_x, 0.0);
-    assert_eq!(state.transformation_matrix.trans_y, 0.0);
+    let mut errors = Vec::new();
+
+    check!(errors, state.pointer_anchor.is_none());
+    check_eq!(errors, state.transformation_matrix.trans_x, 0.0);
+    check_eq!(errors, state.transformation_matrix.trans_y, 0.0);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -219,11 +266,15 @@ fn pointer_wheel_context_stores_metadata_and_applies_pan() {
         },
     );
 
-    assert_eq!(state.last_canvas_view, Some(canvas));
-    assert!(!state.last_wheel_control_modifier);
-    assert_eq!(state.last_wheel_position, Some(Point::new(120.0, 132.0)));
-    assert_eq!(state.transformation_matrix.trans_x, 12.0);
-    assert_eq!(state.transformation_matrix.trans_y, -24.0);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.last_canvas_view, Some(canvas));
+    check!(errors, !state.last_wheel_control_modifier);
+    check_eq!(errors, state.last_wheel_position, Some(Point::new(120.0, 132.0)));
+    check_eq!(errors, state.transformation_matrix.trans_x, 12.0);
+    check_eq!(errors, state.transformation_matrix.trans_y, -24.0);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -256,7 +307,9 @@ fn cancelled_touch_clears_active_touch_state_and_keeps_context() {
             device: TouchDeviceType::Touch,
         },
     );
-    assert!(!state.active_touches.is_empty());
+    let mut errors = Vec::new();
+
+    check!(errors, !state.active_touches.is_empty());
 
     reduce(
         &mut state,
@@ -272,15 +325,17 @@ fn cancelled_touch_clears_active_touch_state_and_keeps_context() {
         },
     );
 
-    assert_eq!(state.last_canvas_view, Some(canvas));
     let last_touch = state
         .last_touch_event
         .expect("cancelled touch event should be retained");
-    assert_eq!(last_touch.action, TouchAction::Cancelled);
-    assert_eq!(last_touch.device_type, TouchDeviceType::Pen);
-    assert!(state.active_touches.is_empty());
-    assert!(state.pinch_distance.is_none());
-    assert!(state.pointer_anchor.is_none());
+    check_eq!(errors, state.last_canvas_view, Some(canvas));
+    check_eq!(errors, last_touch.action, TouchAction::Cancelled);
+    check_eq!(errors, last_touch.device_type, TouchDeviceType::Pen);
+    check!(errors, state.active_touches.is_empty());
+    check!(errors, state.pinch_distance.is_none());
+    check!(errors, state.pointer_anchor.is_none());
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -307,7 +362,11 @@ fn non_touch_device_touch_events_do_not_mutate_active_gesture_state() {
         },
     );
 
-    assert_eq!(state.last_touch_device, Some(TouchDeviceType::Pen));
-    assert!(state.active_touches.is_empty());
-    assert!(state.pinch_distance.is_none());
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.last_touch_device, Some(TouchDeviceType::Pen));
+    check!(errors, state.active_touches.is_empty());
+    check!(errors, state.pinch_distance.is_none());
+
+    assert_no_errors(errors);
 }

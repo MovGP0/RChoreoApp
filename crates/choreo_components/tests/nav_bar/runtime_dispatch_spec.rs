@@ -6,6 +6,20 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
 #[test]
 fn runtime_dispatch_consumes_each_effect_once() {
     let open_audio_count = Arc::new(AtomicUsize::new(0));
@@ -52,8 +66,16 @@ fn runtime_dispatch_consumes_each_effect_once() {
         &mut handlers,
     );
 
-    assert_eq!(open_audio_count.load(Ordering::SeqCst), 1);
-    assert_eq!(open_image_count.load(Ordering::SeqCst), 1);
-    assert_eq!(reset_count.load(Ordering::SeqCst), 1);
-    assert_eq!(mode_count.load(Ordering::SeqCst), 1);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, open_audio_count.load(Ordering::SeqCst), 1);
+    check_eq!(errors, open_image_count.load(Ordering::SeqCst), 1);
+    check_eq!(errors, reset_count.load(Ordering::SeqCst), 1);
+    check_eq!(errors, mode_count.load(Ordering::SeqCst), 1);
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }

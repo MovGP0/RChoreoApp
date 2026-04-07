@@ -24,6 +24,36 @@ use choreo_components::dancers::state::transparent_color;
 use choreo_components::settings::actions::SettingsAction;
 use choreo_components::settings::state::AudioPlayerBackend;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn ui_main_page_spec() {
     let suite = rspec::describe("main page egui view model", (), |spec| {
@@ -39,45 +69,64 @@ fn ui_main_page_spec() {
         });
 
         spec.it("exposes all main page interaction labels", |_| {
-            assert_eq!(mode_count(), 6);
-            assert_eq!(mode_label(0), "View");
-            assert_eq!(mode_label(1), "Move");
-            assert_eq!(mode_label(2), "Rotate around center");
-            assert_eq!(mode_label(3), "Rotate around dancer");
-            assert_eq!(mode_label(4), "Scale");
-            assert_eq!(mode_label(5), "Line of sight");
+            let mut errors = Vec::new();
+
+            check_eq!(errors, mode_count(), 6);
+            check_eq!(errors, mode_label(0), "View");
+            check_eq!(errors, mode_label(1), "Move");
+            check_eq!(errors, mode_label(2), "Rotate around center");
+            check_eq!(errors, mode_label(3), "Rotate around dancer");
+            check_eq!(errors, mode_label(4), "Scale");
+            check_eq!(errors, mode_label(5), "Line of sight");
+
+            assert_no_errors(errors);
         });
 
         spec.it(
             "maps top bar toggles and audio open to parity actions",
             |_| {
-                assert_eq!(top_bar_nav_action(false), ChoreoMainAction::ToggleNav);
-                assert_eq!(top_bar_nav_action(true), ChoreoMainAction::CloseNav);
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check_eq!(
+                    errors,
+                    top_bar_nav_action(false),
+                    ChoreoMainAction::ToggleNav
+                );
+                check_eq!(errors, top_bar_nav_action(true), ChoreoMainAction::CloseNav);
+                check_eq!(
+                    errors,
                     top_bar_settings_action(false),
                     ChoreoMainAction::OpenSettings
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     top_bar_settings_action(true),
                     ChoreoMainAction::CloseSettings
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     top_bar_open_audio_action(),
                     ChoreoMainAction::RequestOpenAudio(OpenAudioRequested {
                         file_path: String::new(),
                         trace_context: None,
                     })
                 );
+
+                assert_no_errors(errors);
             },
         );
 
         spec.it("uses parity icon tokens for top bar actions", |_| {
-            assert_eq!(nav_icon_name(false), "menu");
-            assert_eq!(nav_icon_name(true), "close");
-            assert_eq!(top_bar_settings_icon_name(), "edit");
-            assert_eq!(home_icon_name(), "home");
-            assert_eq!(open_image_icon_name(), "image");
-            assert_eq!(open_audio_icon_name(), "play_circle");
+            let mut errors = Vec::new();
+
+            check_eq!(errors, nav_icon_name(false), "menu");
+            check_eq!(errors, nav_icon_name(true), "close");
+            check_eq!(errors, top_bar_settings_icon_name(), "edit");
+            check_eq!(errors, home_icon_name(), "home");
+            check_eq!(errors, open_image_icon_name(), "image");
+            check_eq!(errors, open_audio_icon_name(), "play_circle");
+
+            assert_no_errors(errors);
         });
 
         spec.it(
@@ -86,8 +135,16 @@ fn ui_main_page_spec() {
                 let mut state = ChoreoMainState::default();
                 reduce(&mut state, ChoreoMainAction::SelectMode { index: 2 });
 
-                assert_eq!(state.selected_mode_index, 2);
-                assert_eq!(state.interaction_mode, InteractionMode::RotateAroundCenter);
+                let mut errors = Vec::new();
+
+                check_eq!(errors, state.selected_mode_index, 2);
+                check_eq!(
+                    errors,
+                    state.interaction_mode,
+                    InteractionMode::RotateAroundCenter
+                );
+
+                assert_no_errors(errors);
             },
         );
 
@@ -99,17 +156,21 @@ fn ui_main_page_spec() {
                 reduce(&mut state, ChoreoMainAction::OpenSettings);
                 reduce(&mut state, ChoreoMainAction::OpenAudioPanel);
 
-                assert!(state.is_nav_open);
-                assert!(state.is_choreography_settings_open);
-                assert!(state.is_audio_player_open);
+                let mut errors = Vec::new();
+
+                check!(errors, state.is_nav_open);
+                check!(errors, state.is_choreography_settings_open);
+                check!(errors, state.is_audio_player_open);
 
                 reduce(&mut state, ChoreoMainAction::CloseNav);
                 reduce(&mut state, ChoreoMainAction::CloseSettings);
                 reduce(&mut state, ChoreoMainAction::CloseAudioPanel);
 
-                assert!(!state.is_nav_open);
-                assert!(!state.is_choreography_settings_open);
-                assert!(!state.is_audio_player_open);
+                check!(errors, !state.is_nav_open);
+                check!(errors, !state.is_choreography_settings_open);
+                check!(errors, !state.is_audio_player_open);
+
+                assert_no_errors(errors);
             },
         );
 
@@ -134,12 +195,24 @@ fn ui_main_page_spec() {
                 );
                 reduce(&mut state, ChoreoMainAction::SelectScene { index: 1 });
 
-                assert_eq!(state.choreography_settings_state.scene_name, "Finale");
-                assert!(state.choreography_settings_state.scene_has_timestamp);
-                assert!(
+                let mut errors = Vec::new();
+
+                check_eq!(
+                    errors,
+                    state.choreography_settings_state.scene_name,
+                    "Finale"
+                );
+                check!(
+                    errors,
+                    state.choreography_settings_state.scene_has_timestamp
+                );
+                check!(
+                    errors,
                     (state.choreography_settings_state.scene_timestamp_seconds - 3.0).abs()
                         < 0.0001
                 );
+
+                assert_no_errors(errors);
             },
         );
 
@@ -166,10 +239,18 @@ fn ui_main_page_spec() {
                     ),
                 );
 
-                assert_eq!(state.choreography_settings_state.scene_name, "Updated");
-                assert_eq!(state.scenes[0].name, "Updated");
-                assert_eq!(state.floor_scene_name.as_deref(), Some("Updated"));
-                assert_eq!(state.draw_floor_request_count, 1);
+                let mut errors = Vec::new();
+
+                check_eq!(
+                    errors,
+                    state.choreography_settings_state.scene_name,
+                    "Updated"
+                );
+                check_eq!(errors, state.scenes[0].name, "Updated");
+                check_eq!(errors, state.floor_scene_name.as_deref(), Some("Updated"));
+                check_eq!(errors, state.draw_floor_request_count, 1);
+
+                assert_no_errors(errors);
             },
         );
 
@@ -218,7 +299,10 @@ fn ui_main_page_spec() {
                         backend: AudioPlayerBackend::Awedio,
                     }),
                 );
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check_eq!(
+                    errors,
                     state.settings_state.audio_player_backend,
                     AudioPlayerBackend::Awedio
                 );
@@ -227,7 +311,9 @@ fn ui_main_page_spec() {
                     &mut state,
                     ChoreoMainAction::SettingsAction(SettingsAction::NavigateBack),
                 );
-                assert_eq!(state.content, MainContent::Main);
+                check_eq!(errors, state.content, MainContent::Main);
+
+                assert_no_errors(errors);
             },
         );
     });

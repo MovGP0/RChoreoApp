@@ -20,6 +20,36 @@ use choreo_state_machine::ApplicationStateMachine;
 use choreo_state_machine::StateKind;
 use crossbeam_channel::bounded;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn non_ui_behavior_parity_spec() {
     let suite =
@@ -50,39 +80,48 @@ fn non_ui_behavior_parity_spec() {
             );
 
             spec.it(
-            "applies open-image through open-svg behavior with global/preference/draw side effects",
-            |_| {
-                let global_state_store = GlobalStateActor::new();
-                let preferences: Rc<dyn Preferences> = Rc::new(InMemoryPreferences::new());
-                let (draw_floor_sender, draw_floor_receiver) = sync_channel(8);
-                let binding = MainPageBinding::new(MainPageDependencies {
-                    behavior_dependencies: ChoreoMainBehaviorDependencies {
-                        global_state_store: Some(Rc::clone(&global_state_store)),
-                        preferences: Some(Rc::clone(&preferences)),
-                        draw_floor_sender: Some(draw_floor_sender),
-                        ..ChoreoMainBehaviorDependencies::default()
-                    },
-                    ..MainPageDependencies::default()
-                });
+                "applies open-image through open-svg behavior with global/preference/draw side effects",
+                |_| {
+                    let global_state_store = GlobalStateActor::new();
+                    let preferences: Rc<dyn Preferences> = Rc::new(InMemoryPreferences::new());
+                    let (draw_floor_sender, draw_floor_receiver) = sync_channel(8);
+                    let binding = MainPageBinding::new(MainPageDependencies {
+                        behavior_dependencies: ChoreoMainBehaviorDependencies {
+                            global_state_store: Some(Rc::clone(&global_state_store)),
+                            preferences: Some(Rc::clone(&preferences)),
+                            draw_floor_sender: Some(draw_floor_sender),
+                            ..ChoreoMainBehaviorDependencies::default()
+                        },
+                        ..MainPageDependencies::default()
+                    });
 
-                binding.request_open_image(OpenImageRequested {
-                    file_path: "C:/floor.svg".to_string(),
-                });
+                    binding.request_open_image(OpenImageRequested {
+                        file_path: "C:/floor.svg".to_string(),
+                    });
 
-                let state = binding.state();
-                assert_eq!(state.borrow().svg_file_path.as_deref(), Some("C:/floor.svg"));
-                global_state_store.drain();
-                let global_svg = global_state_store
-                    .try_with_state(|state| state.svg_file_path.clone())
-                    .expect("global state should be readable");
-                assert_eq!(global_svg.as_deref(), Some("C:/floor.svg"));
-                assert_eq!(
-                    preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_SVG_FILE, ""),
-                    "C:/floor.svg"
-                );
-                assert!(draw_floor_receiver.try_recv().is_ok());
-            },
-        );
+                    let state = binding.state();
+                    let mut errors = Vec::new();
+
+                    check_eq!(
+                        errors,
+                        state.borrow().svg_file_path.as_deref(),
+                        Some("C:/floor.svg")
+                    );
+                    global_state_store.drain();
+                    let global_svg = global_state_store
+                        .try_with_state(|state| state.svg_file_path.clone())
+                        .expect("global state should be readable");
+                    check_eq!(errors, global_svg.as_deref(), Some("C:/floor.svg"));
+                    check_eq!(
+                        errors,
+                        preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_SVG_FILE, ""),
+                        "C:/floor.svg"
+                    );
+                    check!(errors, draw_floor_receiver.try_recv().is_ok());
+
+                    assert_no_errors(errors);
+                },
+            );
 
             spec.it(
                 "applies direct open-svg actions through external side effects outside the reducer",
@@ -105,7 +144,10 @@ fn non_ui_behavior_parity_spec() {
                     }));
 
                     let state = binding.state();
-                    assert_eq!(
+                    let mut errors = Vec::new();
+
+                    check_eq!(
+                        errors,
                         state.borrow().svg_file_path.as_deref(),
                         Some("C:/direct-floor.svg")
                     );
@@ -113,12 +155,15 @@ fn non_ui_behavior_parity_spec() {
                     let global_svg = global_state_store
                         .try_with_state(|state| state.svg_file_path.clone())
                         .expect("global state should be readable");
-                    assert_eq!(global_svg.as_deref(), Some("C:/direct-floor.svg"));
-                    assert_eq!(
+                    check_eq!(errors, global_svg.as_deref(), Some("C:/direct-floor.svg"));
+                    check_eq!(
+                        errors,
                         preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_SVG_FILE, ""),
                         "C:/direct-floor.svg"
                     );
-                    assert!(draw_floor_receiver.try_recv().is_ok());
+                    check!(errors, draw_floor_receiver.try_recv().is_ok());
+
+                    assert_no_errors(errors);
                 },
             );
 

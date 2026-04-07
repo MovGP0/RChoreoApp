@@ -9,18 +9,52 @@ use super::state::ColorPickerState;
 use super::state::Hsb;
 use super::ui;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn color_picker_defaults_match_source_component() {
     let state = ColorPickerState::new();
 
-    assert_eq!(state.selected_color, Color32::BLACK);
-    assert_eq!(state.hsb, Hsb::new(0.0, 0.0, 0.0));
-    assert_eq!(state.wheel_minimum_width, 160.0);
-    assert_eq!(state.wheel_minimum_height, 160.0);
-    assert_eq!(state.value_slider_position, ColorPickerDock::Bottom);
-    assert_eq!(state.selection_thumb_size, 18.0);
-    assert_eq!(state.selection_stroke_thickness, 2.0);
-    assert_eq!(state.selection_stroke_color, Color32::WHITE);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.selected_color, Color32::BLACK);
+    check_eq!(errors, state.hsb, Hsb::new(0.0, 0.0, 0.0));
+    check_eq!(errors, state.wheel_minimum_width, 160.0);
+    check_eq!(errors, state.wheel_minimum_height, 160.0);
+    check_eq!(errors, state.value_slider_position, ColorPickerDock::Bottom);
+    check_eq!(errors, state.selection_thumb_size, 18.0);
+    check_eq!(errors, state.selection_stroke_thickness, 2.0);
+    check_eq!(errors, state.selection_stroke_color, Color32::WHITE);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -35,10 +69,14 @@ fn set_color_updates_hsb_and_emits_event() {
     );
 
     let event = event.expect("expected color changed event");
-    assert_eq!(event.old_color, Color32::BLACK);
-    assert_eq!(event.new_color, Color32::from_rgb(255, 0, 0));
-    assert_eq!(state.selected_color, Color32::from_rgb(255, 0, 0));
-    assert_eq!(state.hsb, Hsb::new(0.0, 1.0, 1.0));
+    let mut errors = Vec::new();
+
+    check_eq!(errors, event.old_color, Color32::BLACK);
+    check_eq!(errors, event.new_color, Color32::from_rgb(255, 0, 0));
+    check_eq!(errors, state.selected_color, Color32::from_rgb(255, 0, 0));
+    check_eq!(errors, state.hsb, Hsb::new(0.0, 1.0, 1.0));
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -52,9 +90,13 @@ fn set_hsb_normalizes_values_and_updates_color() {
         },
     );
 
-    assert!(event.is_none());
-    assert_eq!(state.hsb, Hsb::new(330.0, 1.0, 0.0));
-    assert_eq!(state.selected_color, Color32::BLACK);
+    let mut errors = Vec::new();
+
+    check!(errors, event.is_none());
+    check_eq!(errors, state.hsb, Hsb::new(330.0, 1.0, 0.0));
+    check_eq!(errors, state.selected_color, Color32::BLACK);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -71,7 +113,11 @@ fn update_from_wheel_preserves_brightness() {
         },
     );
 
-    assert_eq!(state.hsb, Hsb::new(120.0, 1.0, 0.25));
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.hsb, Hsb::new(120.0, 1.0, 0.25));
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -91,9 +137,13 @@ fn update_from_wheel_point_maps_angle_and_clamps_saturation() {
         },
     );
 
-    assert!((state.hsb.hue - 0.0).abs() < f64::EPSILON);
-    assert!((state.hsb.saturation - 1.0).abs() < f64::EPSILON);
-    assert!((state.hsb.brightness - 0.5).abs() < f64::EPSILON);
+    let mut errors = Vec::new();
+
+    check!(errors, (state.hsb.hue - 0.0).abs() < f64::EPSILON);
+    check!(errors, (state.hsb.saturation - 1.0).abs() < f64::EPSILON);
+    check!(errors, (state.hsb.brightness - 0.5).abs() < f64::EPSILON);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -113,8 +163,12 @@ fn update_from_wheel_point_wraps_negative_angles_to_hue_range() {
         },
     );
 
-    assert!((state.hsb.hue - 315.0).abs() < 0.001);
-    assert!((state.hsb.saturation - FRAC_1_SQRT_2).abs() < 0.001);
+    let mut errors = Vec::new();
+
+    check!(errors, (state.hsb.hue - 315.0).abs() < 0.001);
+    check!(errors, (state.hsb.saturation - FRAC_1_SQRT_2).abs() < 0.001);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -128,7 +182,11 @@ fn update_from_slider_only_changes_brightness() {
         ColorPickerAction::UpdateFromSlider { brightness: 0.5 },
     );
 
-    assert_eq!(state.hsb, Hsb::new(240.0, 1.0, 0.5));
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.hsb, Hsb::new(240.0, 1.0, 0.5));
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -141,7 +199,9 @@ fn slider_position_actions_are_supported() {
             position: ColorPickerDock::Left,
         },
     );
-    assert_eq!(state.value_slider_position, ColorPickerDock::Left);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.value_slider_position, ColorPickerDock::Left);
 
     let _ = reduce(
         &mut state,
@@ -149,7 +209,7 @@ fn slider_position_actions_are_supported() {
             position: ColorPickerDock::Top,
         },
     );
-    assert_eq!(state.value_slider_position, ColorPickerDock::Top);
+    check_eq!(errors, state.value_slider_position, ColorPickerDock::Top);
 
     let _ = reduce(
         &mut state,
@@ -157,7 +217,10 @@ fn slider_position_actions_are_supported() {
             position: ColorPickerDock::Right,
         },
     );
-    assert_eq!(state.value_slider_position, ColorPickerDock::Right);
+
+    check_eq!(errors, state.value_slider_position, ColorPickerDock::Right);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -192,6 +255,10 @@ fn draw_uses_selection_thumb_size_and_stroke_settings() {
         }
     }
 
-    assert!(saw_thumb_fill);
-    assert!(saw_thumb_stroke);
+    let mut errors = Vec::new();
+
+    check!(errors, saw_thumb_fill);
+    check!(errors, saw_thumb_stroke);
+
+    assert_no_errors(errors);
 }

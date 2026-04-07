@@ -8,6 +8,36 @@ use crate::floor::floor_component::state::SceneRenderPosition;
 use crate::floor::floor_component::state::TouchAction;
 use crate::floor::floor_component::state::TouchDeviceType;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn draw_floor_builds_expected_layer_order_and_primitives() {
     let mut state = FloorState {
@@ -57,7 +87,10 @@ fn draw_floor_builds_expected_layer_order_and_primitives() {
     );
     reduce(&mut state, FloorAction::DrawFloor);
 
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check_eq!(
+        errors,
         state.layer_order,
         vec![
             FloorLayer::Background,
@@ -70,19 +103,21 @@ fn draw_floor_builds_expected_layer_order_and_primitives() {
             FloorLayer::HeaderOverlay,
         ]
     );
-    assert!(state.background_rect.is_some());
-    assert!(state.header_overlay_rect.is_some());
-    assert!(state.svg_overlay_bounds.is_some());
-    assert!(!state.grid_lines.is_empty());
-    assert!(!state.path_segments.is_empty());
-    assert!(!state.dashed_path_segments.is_empty());
-    assert_eq!(state.position_circles.len(), 3);
-    assert_eq!(state.position_labels.len(), 3);
-    assert_eq!(state.selection_segments.len(), 4);
-    assert_eq!(state.center_mark_segments.len(), 2);
-    assert_eq!(state.axis_labels.len(), 2);
-    assert_eq!(state.legend_entries.len(), 1);
-    assert_eq!(state.legend_entries[0].name, "Couple A");
+    check!(errors, state.background_rect.is_some());
+    check!(errors, state.header_overlay_rect.is_some());
+    check!(errors, state.svg_overlay_bounds.is_some());
+    check!(errors, !state.grid_lines.is_empty());
+    check!(errors, !state.path_segments.is_empty());
+    check!(errors, !state.dashed_path_segments.is_empty());
+    check_eq!(errors, state.position_circles.len(), 3);
+    check_eq!(errors, state.position_labels.len(), 3);
+    check_eq!(errors, state.selection_segments.len(), 4);
+    check_eq!(errors, state.center_mark_segments.len(), 2);
+    check_eq!(errors, state.axis_labels.len(), 2);
+    check_eq!(errors, state.legend_entries.len(), 1);
+    check_eq!(errors, state.legend_entries[0].name, "Couple A");
+
+    assert_no_errors(errors);
     assert_eq!(state.placement_remaining, Some(2));
 }
 
@@ -101,10 +136,17 @@ fn layout_reserves_header_and_binds_overlay_to_floor_coordinates() {
     let header = state
         .header_overlay_rect
         .expect("header overlay should be built from layout");
-    assert!(state.floor_y >= state.header_height_px);
-    assert_eq!(header.x, state.floor_x);
-    assert_eq!(header.width, state.floor_width);
-    assert!((header.y - (state.floor_y - state.header_height_px)).abs() < 0.001);
+    let mut errors = Vec::new();
+
+    check!(errors, state.floor_y >= state.header_height_px);
+    check_eq!(errors, header.x, state.floor_x);
+    check_eq!(errors, header.width, state.floor_width);
+    check!(
+        errors,
+        (header.y - (state.floor_y - state.header_height_px)).abs() < 0.001
+    );
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -132,9 +174,19 @@ fn legend_panel_uses_layout_metrics_and_sits_right_of_floor() {
     let legend = state
         .legend_panel_rect
         .expect("legend panel rect should be built when entries are present");
-    assert!(legend.x >= state.floor_x + state.floor_width);
-    assert!((legend.width - state.metrics.legend_panel_width).abs() < 0.001);
-    assert!((legend.height - state.metrics.legend_panel_height).abs() < 0.001);
+    let mut errors = Vec::new();
+
+    check!(errors, legend.x >= state.floor_x + state.floor_width);
+    check!(
+        errors,
+        (legend.width - state.metrics.legend_panel_width).abs() < 0.001
+    );
+    check!(
+        errors,
+        (legend.height - state.metrics.legend_panel_height).abs() < 0.001
+    );
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -220,12 +272,16 @@ fn draw_floor_projects_scene_render_positions_into_labels_legend_and_paths() {
     );
     reduce(&mut state, FloorAction::DrawFloor);
 
-    assert_eq!(state.rendered_positions.len(), 2);
-    assert_eq!(state.position_labels[0].text, "L");
-    assert!(state.axis_labels.len() >= 4);
-    assert_eq!(state.legend_entries[0].shortcut, "F");
-    assert_eq!(state.legend_entries[0].position_text, "(1.00, -1.00)");
-    assert!(!state.path_segments.is_empty());
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.rendered_positions.len(), 2);
+    check_eq!(errors, state.position_labels[0].text, "L");
+    check!(errors, state.axis_labels.len() >= 4);
+    check_eq!(errors, state.legend_entries[0].shortcut, "F");
+    check_eq!(errors, state.legend_entries[0].position_text, "(1.00, -1.00)");
+    check!(errors, !state.path_segments.is_empty());
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -242,7 +298,9 @@ fn touch_cancelled_clears_active_gesture_state() {
             device: TouchDeviceType::Touch,
         },
     );
-    assert_eq!(state.active_touches.len(), 1);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.active_touches.len(), 1);
 
     reduce(
         &mut state,
@@ -255,9 +313,11 @@ fn touch_cancelled_clears_active_gesture_state() {
         },
     );
 
-    assert!(state.active_touches.is_empty());
-    assert!(state.pinch_distance.is_none());
-    assert!(state.pointer_anchor.is_none());
+    check!(errors, state.active_touches.is_empty());
+    check!(errors, state.pinch_distance.is_none());
+    check!(errors, state.pointer_anchor.is_none());
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -285,7 +345,11 @@ fn touch_device_variants_are_covered_for_contract_parity() {
         },
     );
 
-    assert_eq!(state.last_touch_device, Some(TouchDeviceType::Pen));
-    assert!(state.active_touches.is_empty());
-    assert!(state.pinch_distance.is_none());
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.last_touch_device, Some(TouchDeviceType::Pen));
+    check!(errors, state.active_touches.is_empty());
+    check!(errors, state.pinch_distance.is_none());
+
+    assert_no_errors(errors);
 }

@@ -7,17 +7,81 @@ use choreo_components::choreo_info::ui::uses_calendar_date_picker;
 use choreo_components::choreography_settings::translations::ChoreographySettingsTranslations;
 use choreo_components::material::components::DatePickerValue;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check_ne {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left == $right {
+            $errors.push(format!(
+                "{} == {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn choreo_info_date_text_is_zero_padded_iso_like() {
     let text = choreo_date_text(2026, 3, 1);
-    assert_eq!(text, "2026-03-01");
+    let mut errors = Vec::new();
+
+    check_eq!(errors, text, "2026-03-01");
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn transparency_percentage_text_rounds_like_slint_math_round() {
-    assert_eq!(transparency_percentage_text(0.0), "Transparency: 0%");
-    assert_eq!(transparency_percentage_text(0.245), "Transparency: 25%");
-    assert_eq!(transparency_percentage_text(0.999), "Transparency: 100%");
+    let mut errors = Vec::new();
+
+    check_eq!(
+        errors,
+        transparency_percentage_text(0.0),
+        "Transparency: 0%"
+    );
+    check_eq!(
+        errors,
+        transparency_percentage_text(0.245),
+        "Transparency: 25%"
+    );
+    check_eq!(
+        errors,
+        transparency_percentage_text(0.999),
+        "Transparency: 100%"
+    );
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -92,47 +156,78 @@ fn selected_scene_section_renders_even_without_selected_scene() {
 #[test]
 fn selected_scene_controls_enabled_matches_scene_selection_state() {
     let mut state = create_state();
+    let mut errors = Vec::new();
+
     state.has_selected_scene = false;
-    assert!(!crate::choreography_settings::ui::selected_scene_controls_enabled(&state));
+    check!(
+        errors,
+        !crate::choreography_settings::ui::selected_scene_controls_enabled(&state)
+    );
 
     state.has_selected_scene = true;
-    assert!(crate::choreography_settings::ui::selected_scene_controls_enabled(&state));
+    check!(
+        errors,
+        crate::choreography_settings::ui::selected_scene_controls_enabled(&state)
+    );
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn scene_timestamp_controls_enabled_requires_selected_scene_and_timestamp() {
     let mut state = create_state();
+    let mut errors = Vec::new();
 
     state.has_selected_scene = false;
     state.scene_has_timestamp = false;
-    assert!(!crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state));
+    check!(
+        errors,
+        !crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state)
+    );
 
     state.has_selected_scene = true;
     state.scene_has_timestamp = false;
-    assert!(!crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state));
+    check!(
+        errors,
+        !crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state)
+    );
 
     state.has_selected_scene = false;
     state.scene_has_timestamp = true;
-    assert!(!crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state));
+    check!(
+        errors,
+        !crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state)
+    );
 
     state.has_selected_scene = true;
     state.scene_has_timestamp = true;
-    assert!(crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state));
+    check!(
+        errors,
+        crate::choreography_settings::ui::scene_timestamp_controls_enabled(&state)
+    );
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn floor_size_maximum_uses_last_floor_option_like_slint_card() {
     let mut state = create_state();
+    let mut errors = Vec::new();
+
     state.floor_size_options = vec![12, 24, 36, 48];
 
-    assert_eq!(
+    check_eq!(
+        errors,
         crate::choreography_settings::ui::floor_size_maximum(&state),
         48
     );
 
     state.floor_size_options.clear();
-    assert_eq!(
+    check_eq!(
+        errors,
         crate::choreography_settings::ui::floor_size_maximum(&state),
         100
     );
+
+    assert_no_errors(errors);
 }

@@ -3,6 +3,20 @@ use super::choreography_with_scenes;
 use super::create_state;
 use super::reducer::reduce;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
 #[test]
 fn show_scene_timestamps_syncs_from_choreography() {
     let mut state = create_state();
@@ -37,6 +51,12 @@ fn show_scene_timestamps_updates_view_and_model() {
 
     reduce(&mut state, ScenesAction::UpdateShowTimestamps(true));
 
-    assert!(state.show_timestamps);
-    assert!(state.choreography.settings.show_timestamps);
+    let mut errors = Vec::new();
+    check_eq!(errors, state.show_timestamps, true);
+    check_eq!(errors, state.choreography.settings.show_timestamps, true);
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }

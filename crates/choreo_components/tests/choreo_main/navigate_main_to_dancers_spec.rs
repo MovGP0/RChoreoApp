@@ -16,6 +16,28 @@ use choreo_models::RoleModel;
 use choreo_models::SceneModel;
 use std::rc::Rc;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn navigate_main_to_dancers_spec() {
     let suite = rspec::describe("navigate from main page to dancers page", (), |spec| {
@@ -23,32 +45,39 @@ fn navigate_main_to_dancers_spec() {
             "shows dancers when navigation to dancer settings is requested",
             |_| {
                 let mut state = ChoreoMainState::default();
+                let mut errors = Vec::new();
+                let initial_content = state.content.clone();
 
-                assert_eq!(state.content, MainContent::Main);
+                check_eq!(errors, initial_content, MainContent::Main);
                 reduce(&mut state, ChoreoMainAction::NavigateToDancers);
-
-                assert_eq!(state.content, MainContent::Dancers);
+                check_eq!(errors, state.content, MainContent::Dancers);
+                assert_no_errors(errors);
             },
         );
         spec.it(
             "loads dancers from the selected choreography when dancer settings opens",
             |_| {
                 let mut state = state_with_loaded_choreography();
+                let mut errors = Vec::new();
+
                 reduce(&mut state, ChoreoMainAction::NavigateToDancers);
 
-                assert_eq!(state.content, MainContent::Dancers);
-                assert_eq!(state.dancers_state.dancers.len(), 2);
-                assert_eq!(state.dancers_state.dancers[0].name, "Alice");
-                assert_eq!(state.dancers_state.dancers[1].name, "Bob");
-                assert_eq!(state.dancers_state.global.roles.len(), 2);
-                assert_eq!(state.dancers_state.global.scenes.len(), 1);
-                assert_eq!(state.dancers_state.global.scenes[0].positions.len(), 2);
+                check_eq!(errors, state.content, MainContent::Dancers);
+                check_eq!(errors, state.dancers_state.dancers.len(), 2);
+                check_eq!(errors, state.dancers_state.dancers[0].name, "Alice");
+                check_eq!(errors, state.dancers_state.dancers[1].name, "Bob");
+                check_eq!(errors, state.dancers_state.global.roles.len(), 2);
+                check_eq!(errors, state.dancers_state.global.scenes.len(), 1);
+                check_eq!(errors, state.dancers_state.global.scenes[0].positions.len(), 2);
+
+                assert_no_errors(errors);
             },
         );
         spec.it(
             "saves edited dancers back into the loaded choreography",
             |_| {
                 let mut state = state_with_loaded_choreography();
+                let mut errors = Vec::new();
 
                 reduce(&mut state, ChoreoMainAction::NavigateToDancers);
                 reduce(
@@ -60,20 +89,25 @@ fn navigate_main_to_dancers_spec() {
                     ChoreoMainAction::DancersAction(DancersAction::SaveToGlobal),
                 );
 
-                assert_eq!(
+                check_eq!(
+                    errors,
                     state.choreography_settings_state.choreography.dancers.len(),
                     1
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     state.choreography_settings_state.choreography.dancers[0].name,
                     "Bob"
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     state.choreography_settings_state.choreography.scenes[0]
                         .positions
                         .len(),
                     1
                 );
+
+                assert_no_errors(errors);
             },
         );
     });

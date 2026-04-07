@@ -7,6 +7,28 @@ use serde_json::Value;
 use std::io;
 use std::sync::Arc;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
 fn run_suite<T>(suite: &rspec::block::Suite<T>) -> rspec::report::SuiteReport
 where
     T: Clone + Send + Sync + std::fmt::Debug,
@@ -35,8 +57,16 @@ fn three_scene_assignment_spec() {
                 let min_cost =
                     solve_three_scene_assignment(&scene_a, &scene_b, &scene_c).expect("min cost");
 
-                assert_eq!(hungarian, vec![1, 0]);
-                assert_eq!(min_cost, vec![1, 0]);
+                let mut errors = Vec::new();
+
+                check_eq!(errors, hungarian, vec![1, 0]);
+                check_eq!(errors, min_cost, vec![1, 0]);
+
+                assert!(
+                    errors.is_empty(),
+                    "Assertion failures:\n{}",
+                    errors.join("\n")
+                );
             },
         );
 
@@ -50,8 +80,16 @@ fn three_scene_assignment_spec() {
             let min_cost = solve_three_scene_assignment(&scene_a, &scene_b, &scene_c)
                 .expect_err("expected size mismatch");
 
-            assert!(matches!(hungarian, AlgorithmError::SizeMismatch(_)));
-            assert!(matches!(min_cost, AlgorithmError::SizeMismatch(_)));
+            let mut errors = Vec::new();
+
+            check_size_mismatch(&mut errors, &hungarian);
+            check_size_mismatch(&mut errors, &min_cost);
+
+            assert!(
+                errors.is_empty(),
+                "Assertion failures:\n{}",
+                errors.join("\n")
+            );
         });
 
         spec.it(
@@ -64,8 +102,16 @@ fn three_scene_assignment_spec() {
                 let min_cost =
                     solve_three_scene_assignment(&scene_a, &scene_b, &scene_c).expect("min cost");
 
-                assert_is_permutation(&hungarian, scene_a.len());
-                assert_is_permutation(&min_cost, scene_a.len());
+                let mut errors = Vec::new();
+
+                check_is_permutation(&mut errors, &hungarian, scene_a.len());
+                check_is_permutation(&mut errors, &min_cost, scene_a.len());
+
+                assert!(
+                    errors.is_empty(),
+                    "Assertion failures:\n{}",
+                    errors.join("\n")
+                );
             },
         );
     });
@@ -122,13 +168,19 @@ fn load_first_three_scenes() -> (Vec<Vector2>, Vec<Vector2>, Vec<Vector2>) {
     (scene_a, scene_b, scene_c)
 }
 
-fn assert_is_permutation(values: &[usize], expected_len: usize) {
-    assert_eq!(values.len(), expected_len);
+fn check_is_permutation(errors: &mut Vec<String>, values: &[usize], expected_len: usize) {
+    check_eq!(errors, values.len(), expected_len);
 
     let mut seen = vec![false; expected_len];
     for &value in values {
-        assert!(value < expected_len);
-        assert!(!seen[value]);
+        check!(errors, value < expected_len);
+        if value < expected_len {
+            check!(errors, !seen[value]);
+        }
         seen[value] = true;
     }
+}
+
+fn check_size_mismatch(errors: &mut Vec<String>, value: &AlgorithmError) {
+    check!(errors, matches!(value, AlgorithmError::SizeMismatch(_)));
 }

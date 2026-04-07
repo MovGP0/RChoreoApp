@@ -3,14 +3,48 @@ use egui::Color32;
 use super::state;
 use super::ui;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn state_for_color_keeps_selected_color_and_syncs_hsb() {
     let selected_color = Color32::from_rgb(12, 128, 200);
 
     let state = ui::state_for_color(selected_color);
 
-    assert_eq!(state.selected_color, selected_color);
-    assert_eq!(state.hsb, state::Hsb::from_color(selected_color));
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.selected_color, selected_color);
+    check_eq!(errors, state.hsb, state::Hsb::from_color(selected_color));
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -76,8 +110,12 @@ fn draw_uses_selection_thumb_size_and_stroke_settings() {
         }
     }
 
-    assert!(saw_thumb_fill);
-    assert!(saw_thumb_stroke);
+    let mut errors = Vec::new();
+
+    check!(errors, saw_thumb_fill);
+    check!(errors, saw_thumb_stroke);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -86,8 +124,18 @@ fn vertical_slider_mapping_is_identity_for_left_dock() {
     let slider_value = ui::slider_value_from_brightness(brightness, false);
     let mapped_back = ui::brightness_from_slider_value(slider_value, false);
 
-    assert!((slider_value - 0.25).abs() < f64::EPSILON);
-    assert!((mapped_back - brightness).abs() < f64::EPSILON);
+    let mut errors = Vec::new();
+
+    check!(
+        errors,
+        (slider_value - 0.25).abs() < f64::EPSILON
+    );
+    check!(
+        errors,
+        (mapped_back - brightness).abs() < f64::EPSILON
+    );
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -96,6 +144,16 @@ fn vertical_slider_mapping_is_inverted_for_right_dock() {
     let slider_value = ui::slider_value_from_brightness(brightness, true);
     let mapped_back = ui::brightness_from_slider_value(slider_value, true);
 
-    assert!((slider_value - 0.75).abs() < f64::EPSILON);
-    assert!((mapped_back - brightness).abs() < f64::EPSILON);
+    let mut errors = Vec::new();
+
+    check!(
+        errors,
+        (slider_value - 0.75).abs() < f64::EPSILON
+    );
+    check!(
+        errors,
+        (mapped_back - brightness).abs() < f64::EPSILON
+    );
+
+    assert_no_errors(errors);
 }

@@ -12,6 +12,28 @@ use choreo_components::choreo_main::MainPageDependencies;
 use choreo_components::choreo_main::OpenAudioRequested;
 use choreo_components::choreo_main::actions::OpenChoreoRequested;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn external_file_routing_spec() {
     let suite = rspec::describe("external file routing", (), |spec| {
@@ -39,16 +61,22 @@ fn external_file_routing_spec() {
                 binding.route_external_file_path(&choreo_file.to_string_lossy());
 
                 let routed = routed_choreo.borrow();
-                assert_eq!(routed.len(), 1);
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check_eq!(errors, routed.len(), 1);
+                check_eq!(
+                    errors,
                     routed[0].file_path.as_deref(),
                     Some(choreo_file.to_string_lossy().as_ref())
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     routed[0].file_name.as_deref(),
                     choreo_file.file_name().and_then(|value| value.to_str())
                 );
-                assert_eq!(routed[0].contents, contents);
+                check_eq!(errors, routed[0].contents, contents);
+
+                assert_no_errors(errors);
 
                 let _ = fs::remove_file(choreo_file);
             },
@@ -80,10 +108,14 @@ fn external_file_routing_spec() {
 
             let routed_images = routed_images.borrow();
             let routed_audio = routed_audio.borrow();
-            assert_eq!(routed_images.as_slice(), ["C:/floor.svg"]);
-            assert_eq!(routed_audio.len(), 1);
-            assert_eq!(routed_audio[0].file_path, "C:/track.mp3");
-            assert_eq!(routed_audio[0].trace_context, None);
+            let mut errors = Vec::new();
+
+            check_eq!(errors, routed_images.as_slice(), ["C:/floor.svg"]);
+            check_eq!(errors, routed_audio.len(), 1);
+            check_eq!(errors, routed_audio[0].file_path, "C:/track.mp3");
+            check_eq!(errors, routed_audio[0].trace_context, None::<TraceContext>);
+
+            assert_no_errors(errors);
         });
     });
 

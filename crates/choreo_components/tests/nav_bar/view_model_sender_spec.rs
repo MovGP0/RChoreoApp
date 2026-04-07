@@ -4,6 +4,24 @@ use std::sync::mpsc::channel;
 
 #[test]
 fn view_model_with_senders_forwards_commands() {
+    macro_rules! check {
+        ($errors:ident, $expr:expr) => {{
+            if !$expr {
+                $errors.push(stringify!($expr).to_string());
+            }
+        }};
+    }
+
+    macro_rules! assert_no_errors {
+        ($errors:ident) => {
+            assert!(
+                $errors.is_empty(),
+                "expected no assertion errors, found:\n{}",
+                $errors.join("\n")
+            );
+        };
+    }
+
     let (open_audio_sender, open_audio_receiver) = channel();
     let (open_image_sender, open_image_receiver) = channel();
     let (reset_sender, reset_receiver) = channel();
@@ -25,8 +43,10 @@ fn view_model_with_senders_forwards_commands() {
         mode: choreo_components::nav_bar::state::InteractionMode::Move,
     });
 
-    assert!(open_audio_receiver.try_recv().is_ok());
-    assert!(open_image_receiver.try_recv().is_ok());
-    assert!(reset_receiver.try_recv().is_ok());
-    assert!(mode_receiver.try_recv().is_ok());
+    let mut errors = Vec::new();
+    check!(errors, open_audio_receiver.try_recv().is_ok());
+    check!(errors, open_image_receiver.try_recv().is_ok());
+    check!(errors, reset_receiver.try_recv().is_ok());
+    check!(errors, mode_receiver.try_recv().is_ok());
+    assert_no_errors!(errors);
 }

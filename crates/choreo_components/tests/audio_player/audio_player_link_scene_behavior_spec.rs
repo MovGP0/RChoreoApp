@@ -4,6 +4,28 @@ use choreo_components::audio_player::state::AudioPlayerChoreographyScene;
 use choreo_components::audio_player::state::AudioPlayerScene;
 use choreo_components::audio_player::state::AudioPlayerState;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn audio_player_link_scene_updates_selected_scene_timestamp_with_neighbor_bounds() {
     let mut state = AudioPlayerState {
@@ -52,17 +74,22 @@ fn audio_player_link_scene_updates_selected_scene_timestamp_with_neighbor_bounds
     reduce(&mut state, AudioPlayerAction::UpdateTicksAndLinkState);
     reduce(&mut state, AudioPlayerAction::LinkSceneToPosition);
 
+    let mut errors = Vec::new();
+
     let selected = state
         .scenes
         .iter()
         .find(|scene| scene.scene_id == 2)
         .expect("selected scene should exist");
-    assert_eq!(selected.timestamp, Some(5.2));
+    check_eq!(errors, selected.timestamp, Some(5.2));
 
     let selected_model = state
         .choreography_scenes
         .iter()
         .find(|scene| scene.scene_id == 2)
         .expect("selected model scene should exist");
-    assert_eq!(selected_model.timestamp.as_deref(), Some("5.2"));
+
+    check_eq!(errors, selected_model.timestamp.as_deref(), Some("5.2"));
+
+    assert_no_errors(errors);
 }

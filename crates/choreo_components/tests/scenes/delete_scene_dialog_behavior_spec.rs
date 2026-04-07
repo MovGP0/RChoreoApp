@@ -2,7 +2,38 @@ use super::actions::ScenesAction;
 use super::choreography_with_scenes;
 use super::create_state;
 use super::reducer::reduce;
+use super::state::SceneItemState;
 use super::scene_model;
+
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
 
 #[test]
 fn show_delete_scene_dialog_opens_for_selected_scene() {
@@ -18,14 +49,19 @@ fn show_delete_scene_dialog_opens_for_selected_scene() {
 
     reduce(&mut state, ScenesAction::OpenDeleteSceneDialog);
 
-    assert!(state.show_delete_scene_dialog);
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check!(errors, state.show_delete_scene_dialog);
+    check_eq!(
+        errors,
         state
             .delete_scene_dialog_scene
             .as_ref()
             .map(|scene| (scene.scene_id, scene.name.as_str())),
         Some((choreo_master_mobile_json::SceneId(1), "Alpha"))
     );
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -40,8 +76,12 @@ fn cancel_delete_scene_dialog_closes_dialog() {
 
     reduce(&mut state, ScenesAction::CancelDeleteSceneDialog);
 
-    assert!(!state.show_delete_scene_dialog);
-    assert_eq!(state.delete_scene_dialog_scene, None);
+    let mut errors = Vec::new();
+
+    check!(errors, !state.show_delete_scene_dialog);
+    check_eq!(errors, state.delete_scene_dialog_scene, None::<SceneItemState>);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -57,13 +97,18 @@ fn confirm_delete_scene_dialog_requests_delete_and_closes_dialog() {
 
     reduce(&mut state, ScenesAction::ConfirmDeleteSceneDialog);
 
-    assert!(!state.show_delete_scene_dialog);
-    assert_eq!(state.delete_scene_dialog_scene, None);
-    assert!(state.delete_scene_requested);
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check!(errors, !state.show_delete_scene_dialog);
+    check_eq!(errors, state.delete_scene_dialog_scene, None::<SceneItemState>);
+    check!(errors, state.delete_scene_requested);
+    check_eq!(
+        errors,
         state.delete_scene_requested_scene_id,
         Some(choreo_master_mobile_json::SceneId(7))
     );
+
+    assert_no_errors(errors);
 }
 
 #[test]

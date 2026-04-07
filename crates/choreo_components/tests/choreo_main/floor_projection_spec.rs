@@ -17,6 +17,36 @@ use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::reducer::reduce;
 use crate::choreo_main::state::ChoreoMainState;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn load_choreography_projects_floor_renderer_state_from_scene_models() {
     let lead_role = Rc::new(RoleModel {
@@ -178,19 +208,29 @@ fn load_choreography_projects_floor_renderer_state_from_scene_models() {
         ChoreoMainAction::UpdateAudioPosition { seconds: 2.0 },
     );
 
-    assert_eq!(state.floor_state.choreography_name, "Viennese Waltz");
-    assert_eq!(state.floor_state.scene_name, "Opening");
-    assert!(state.floor_state.show_grid_lines);
-    assert!(state.floor_state.positions_at_side);
-    assert!(state.floor_state.show_legend);
-    assert_eq!(state.floor_state.floor_color, [240, 230, 200, 255]);
-    assert_eq!(state.floor_state.source_positions.len(), 2);
-    assert_eq!(state.floor_state.source_positions[0].shortcut, "L");
-    assert_eq!(state.floor_state.previous_source_positions.len(), 0);
-    assert_eq!(state.floor_state.next_source_positions.len(), 2);
-    assert_eq!(state.floor_state.legend_entries.len(), 2);
-    assert!((state.floor_state.interpolated_positions[0].x - 0.0).abs() < 0.001);
-    assert!((state.floor_state.interpolated_positions[0].y - 1.5).abs() < 0.001);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.floor_state.choreography_name, "Viennese Waltz");
+    check_eq!(errors, state.floor_state.scene_name, "Opening");
+    check!(errors, state.floor_state.show_grid_lines);
+    check!(errors, state.floor_state.positions_at_side);
+    check!(errors, state.floor_state.show_legend);
+    check_eq!(errors, state.floor_state.floor_color, [240, 230, 200, 255]);
+    check_eq!(errors, state.floor_state.source_positions.len(), 2);
+    check_eq!(errors, state.floor_state.source_positions[0].shortcut, "L");
+    check_eq!(errors, state.floor_state.previous_source_positions.len(), 0);
+    check_eq!(errors, state.floor_state.next_source_positions.len(), 2);
+    check_eq!(errors, state.floor_state.legend_entries.len(), 2);
+    check!(
+        errors,
+        (state.floor_state.interpolated_positions[0].x - 0.0).abs() < 0.001
+    );
+    check!(
+        errors,
+        (state.floor_state.interpolated_positions[0].y - 1.5).abs() < 0.001
+    );
+
+    assert_no_errors(errors);
 }
 
 fn rgba(a: u8, r: u8, g: u8, b: u8) -> Color {

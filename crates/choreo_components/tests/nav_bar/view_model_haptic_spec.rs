@@ -8,6 +8,22 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 struct TestHaptics {
     count: Arc<AtomicUsize>,
 }
@@ -44,26 +60,39 @@ fn nav_view_model_triggers_haptic_feedback_for_click_actions() {
 
 #[test]
 fn nav_view_model_documents_which_actions_emit_click_feedback_for_parity() {
-    assert!(emits_click_feedback(&NavBarAction::OpenAudio));
-    assert!(emits_click_feedback(&NavBarAction::OpenImage));
-    assert!(emits_click_feedback(
-        &NavBarAction::ToggleChoreographySettings
-    ));
-    assert!(emits_click_feedback(
-        &NavBarAction::CloseChoreographySettings
-    ));
-    assert!(emits_click_feedback(&NavBarAction::ResetFloorViewport));
+    let mut errors = Vec::new();
 
-    assert!(!emits_click_feedback(&NavBarAction::ToggleNavigation));
-    assert!(!emits_click_feedback(&NavBarAction::CloseNavigation));
-    assert!(!emits_click_feedback(&NavBarAction::Initialize));
-    assert!(!emits_click_feedback(
-        &NavBarAction::SetModeSelectionEnabled { enabled: true }
-    ));
-    assert!(!emits_click_feedback(&NavBarAction::SetAudioPlayerOpened {
-        is_open: true,
-    }));
-    assert!(!emits_click_feedback(&NavBarAction::SetSelectedMode {
-        mode: choreo_components::nav_bar::state::InteractionMode::View,
-    }));
+    check!(errors, emits_click_feedback(&NavBarAction::OpenAudio));
+    check!(errors, emits_click_feedback(&NavBarAction::OpenImage));
+    check!(
+        errors,
+        emits_click_feedback(&NavBarAction::ToggleChoreographySettings)
+    );
+    check!(
+        errors,
+        emits_click_feedback(&NavBarAction::CloseChoreographySettings)
+    );
+    check!(errors, emits_click_feedback(&NavBarAction::ResetFloorViewport));
+
+    check!(errors, !emits_click_feedback(&NavBarAction::ToggleNavigation));
+    check!(errors, !emits_click_feedback(&NavBarAction::CloseNavigation));
+    check!(errors, !emits_click_feedback(&NavBarAction::Initialize));
+    check!(
+        errors,
+        !emits_click_feedback(&NavBarAction::SetModeSelectionEnabled { enabled: true })
+    );
+    check!(
+        errors,
+        !emits_click_feedback(&NavBarAction::SetAudioPlayerOpened {
+            is_open: true,
+        })
+    );
+    check!(
+        errors,
+        !emits_click_feedback(&NavBarAction::SetSelectedMode {
+            mode: choreo_components::nav_bar::state::InteractionMode::View,
+        })
+    );
+
+    assert_no_errors(errors);
 }

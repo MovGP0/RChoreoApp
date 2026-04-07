@@ -3,6 +3,36 @@ use crate::floor::floor_component::reducer::reduce;
 use crate::floor::floor_component::state::FloorState;
 use crate::floor::floor_component::state::Point;
 
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 fn draw_actions(state: &FloorState, raw_input: egui::RawInput) -> Vec<FloorAction> {
     let context = egui::Context::default();
     let mut actions: Vec<FloorAction> = Vec::new();
@@ -63,33 +93,44 @@ fn draw_emits_pointer_wheel_and_touch_actions_for_canvas_events() {
 
     let actions = draw_actions(&state, raw_input);
 
-    assert!(
+    let mut errors = Vec::new();
+
+    check!(
+        errors,
         actions
             .iter()
             .any(|action| matches!(action, FloorAction::PointerPressedWithContext { .. }))
     );
-    assert!(
+    check!(
+        errors,
         actions
             .iter()
             .any(|action| matches!(action, FloorAction::PointerMovedWithContext { .. }))
     );
-    assert!(
+    check!(
+        errors,
         actions
             .iter()
             .any(|action| matches!(action, FloorAction::PointerReleasedWithContext { .. }))
     );
-    assert!(actions.iter().any(|action| matches!(
-        action,
-        FloorAction::PointerWheelChangedWithContext {
-            control_modifier: true,
-            ..
-        }
-    )));
-    assert!(
+    check!(
+        errors,
+        actions.iter().any(|action| matches!(
+            action,
+            FloorAction::PointerWheelChangedWithContext {
+                control_modifier: true,
+                ..
+            }
+        ))
+    );
+    check!(
+        errors,
         actions
             .iter()
             .any(|action| matches!(action, FloorAction::TouchWithContext { .. }))
     );
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -135,10 +176,14 @@ fn pan_and_zoom_recompute_layout_bounds() {
         },
     );
 
-    assert!(state.floor_x > floor_x_after_zoom);
-    assert!(state.floor_y > floor_y_after_zoom);
-    assert_ne!(state.floor_x, base_floor_x);
-    assert_ne!(state.floor_y, base_floor_y);
+    let mut errors = Vec::new();
+
+    check!(errors, state.floor_x > floor_x_after_zoom);
+    check!(errors, state.floor_y > floor_y_after_zoom);
+    check_eq!(errors, state.floor_x, base_floor_x);
+    check_eq!(errors, state.floor_y, base_floor_y);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -183,11 +228,17 @@ fn secondary_pointer_input_keeps_button_context_and_does_not_start_pan() {
     let last_pressed = reduced
         .last_pointer_pressed
         .expect("secondary press metadata should be preserved");
-    assert_eq!(
+
+    let mut errors = Vec::new();
+
+    check_eq!(
+        errors,
         last_pressed.button,
         crate::floor::floor_component::state::PointerButton::Secondary
     );
-    assert_eq!(reduced.transformation_matrix.trans_x, 0.0);
-    assert_eq!(reduced.transformation_matrix.trans_y, 0.0);
-    assert!(reduced.pointer_anchor.is_none());
+    check_eq!(errors, reduced.transformation_matrix.trans_x, 0.0);
+    check_eq!(errors, reduced.transformation_matrix.trans_y, 0.0);
+    check!(errors, reduced.pointer_anchor.is_none());
+
+    assert_no_errors(errors);
 }

@@ -4,6 +4,42 @@ use crate::choreo_main::reducer::reduce;
 use crate::choreo_main::state::ChoreoMainState;
 use crate::choreo_main::state::SceneState;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check_close {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if ($left - $right).abs() >= f64::EPSILON {
+            $errors.push(format!(
+                "{} ~= {} failed (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn timestamp_sync_spec() {
     let suite = rspec::describe("timestamp synchronization", (), |spec| {
@@ -29,9 +65,13 @@ fn timestamp_sync_spec() {
 
                 reduce(&mut state, ChoreoMainAction::SelectScene { index: 1 });
 
-                assert_eq!(state.floor_scene_name.as_deref(), Some("Scene 2"));
-                assert_eq!(state.selected_scene_index, Some(1));
-                assert!((state.audio_position_seconds - 10.0).abs() < f64::EPSILON);
+                let mut errors = Vec::new();
+
+                check_eq!(errors, state.floor_scene_name.as_deref(), Some("Scene 2"));
+                check_eq!(errors, state.selected_scene_index, Some(1));
+                check_close!(errors, state.audio_position_seconds, 10.0);
+
+                assert_no_errors(errors);
             },
         );
 
@@ -54,13 +94,18 @@ fn timestamp_sync_spec() {
                         ],
                     },
                 );
-                assert!((state.audio_position_seconds - 5.0).abs() < f64::EPSILON);
+
+                let mut errors = Vec::new();
+
+                check_close!(errors, state.audio_position_seconds, 5.0);
 
                 reduce(&mut state, ChoreoMainAction::SelectScene { index: 1 });
 
-                assert_eq!(state.floor_scene_name.as_deref(), Some("Scene 2"));
-                assert_eq!(state.selected_scene_index, Some(1));
-                assert!((state.audio_position_seconds - 5.0).abs() < f64::EPSILON);
+                check_eq!(errors, state.floor_scene_name.as_deref(), Some("Scene 2"));
+                check_eq!(errors, state.selected_scene_index, Some(1));
+                check_close!(errors, state.audio_position_seconds, 5.0);
+
+                assert_no_errors(errors);
             },
         );
 
@@ -92,11 +137,19 @@ fn timestamp_sync_spec() {
                     ChoreoMainAction::UpdateAudioPosition { seconds: 12.0 },
                 );
 
-                assert_eq!(state.floor_scene_name.as_deref(), Some("Scene 2"));
-                assert_eq!(state.selected_scene_index, Some(1));
+                let mut errors = Vec::new();
+
+                check_eq!(errors, state.floor_scene_name.as_deref(), Some("Scene 2"));
+                check_eq!(errors, state.selected_scene_index, Some(1));
+                check_close!(errors, state.audio_position_seconds, 12.0);
 
                 reduce(&mut state, ChoreoMainAction::SelectScene { index: 2 });
-                assert_eq!(state.floor_scene_name.as_deref(), Some("Scene 3"));
+
+                check_eq!(errors, state.floor_scene_name.as_deref(), Some("Scene 3"));
+                check_eq!(errors, state.selected_scene_index, Some(2));
+                check_close!(errors, state.audio_position_seconds, 12.0);
+
+                assert_no_errors(errors);
             },
         );
 
@@ -130,13 +183,18 @@ fn timestamp_sync_spec() {
                     ChoreoMainAction::LinkSelectedSceneToAudioPosition,
                 );
 
-                assert_eq!(state.floor_scene_name.as_deref(), Some("Scene 2"));
-                assert_eq!(state.selected_scene_index, Some(1));
-                assert!((state.audio_position_seconds - 12.3).abs() < f64::EPSILON);
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check_eq!(errors, state.floor_scene_name.as_deref(), Some("Scene 2"));
+                check_eq!(errors, state.selected_scene_index, Some(1));
+                check_close!(errors, state.audio_position_seconds, 12.3);
+                check_eq!(
+                    errors,
                     state.scenes[1].timestamp_seconds,
                     Some(state.audio_position_seconds)
                 );
+
+                assert_no_errors(errors);
             },
         );
     });

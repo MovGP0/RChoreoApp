@@ -30,16 +30,40 @@ fn save_choreo_maps_scene_view_state_back_to_model() {
 
     reduce(&mut state, ScenesAction::SaveChoreography);
 
-    assert_eq!(state.choreography.scenes[0].name, "Intro");
-    assert_eq!(
+    macro_rules! check_eq {
+        ($errors:expr, $left:expr, $right:expr) => {
+            if $left != $right {
+                $errors.push(format!(
+                    "{} != {} (left = {:?}, right = {:?})",
+                    stringify!($left),
+                    stringify!($right),
+                    $left,
+                    $right
+                ));
+            }
+        };
+    }
+
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.choreography.scenes[0].name, "Intro");
+    check_eq!(
+        errors,
         state.choreography.scenes[0].timestamp.as_deref(),
         Some("12")
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         state.choreography.scenes[0].text.as_deref(),
         Some("details")
     );
-    assert!(state.can_save_choreo);
+    check_eq!(errors, state.can_save_choreo, true);
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 
     let _ = fs::remove_file(existing_path);
     let _ = fs::remove_dir(temp_root);
@@ -82,7 +106,7 @@ fn save_choreo_requires_existing_file_for_enablement_parity() {
 
     reduce(&mut state, ScenesAction::SaveChoreography);
 
-    assert!(!state.can_save_choreo);
+    let can_save_after_missing_file = state.can_save_choreo;
 
     let existing_path = temp_root.join("existing.choreo");
     fs::write(&existing_path, "{}").expect("temp file should be created");
@@ -90,7 +114,26 @@ fn save_choreo_requires_existing_file_for_enablement_parity() {
 
     reduce(&mut state, ScenesAction::SaveChoreography);
 
-    assert!(state.can_save_choreo);
+    let can_save_after_existing_file = state.can_save_choreo;
+
+    macro_rules! check {
+        ($errors:expr, $condition:expr) => {
+            if !$condition {
+                $errors.push(format!("{} is false", stringify!($condition)));
+            }
+        };
+    }
+
+    let mut errors = Vec::new();
+
+    check!(errors, !can_save_after_missing_file);
+    check!(errors, can_save_after_existing_file);
+
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 
     let _ = fs::remove_file(existing_path);
     let _ = fs::remove_dir(temp_root);

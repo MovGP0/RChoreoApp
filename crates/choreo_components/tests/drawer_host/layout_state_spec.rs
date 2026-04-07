@@ -5,6 +5,28 @@ use crate::drawer_host::ui::compute_layout;
 use egui::Rect;
 use egui::pos2;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn layout_state_spec() {
     let suite = rspec::describe("drawer host layout state", (), |spec| {
@@ -18,9 +40,13 @@ fn layout_state_spec() {
                 let host_rect = Rect::from_min_max(pos2(20.0, 30.0), pos2(1620.0, 930.0));
                 let layout = compute_layout(host_rect, &state);
 
-                assert_eq!(layout.overlay_rect, host_rect);
-                assert_eq!(layout.panel_rect.min.y, 114.0);
-                assert_eq!(layout.panel_rect.height(), 816.0);
+                let mut errors = Vec::new();
+
+                check_eq!(errors, layout.overlay_rect, host_rect);
+                check_eq!(errors, layout.panel_rect.min.y, 114.0);
+                check_eq!(errors, layout.panel_rect.height(), 816.0);
+
+                assert_no_errors(errors);
             },
         );
 
@@ -38,10 +64,14 @@ fn layout_state_spec() {
                 let host_rect = Rect::from_min_max(pos2(20.0, 30.0), pos2(1220.0, 930.0));
                 let layout = compute_layout(host_rect, &state);
 
-                assert_eq!(layout.left_panel_rect.left(), -300.0);
-                assert_eq!(layout.right_panel_rect.left(), 1220.0);
-                assert_eq!(layout.top_panel_rect.top(), -174.0);
-                assert_eq!(layout.bottom_panel_rect.top(), 930.0);
+                let mut errors = Vec::new();
+
+                check_eq!(errors, layout.left_panel_rect.left(), -300.0);
+                check_eq!(errors, layout.right_panel_rect.left(), 1220.0);
+                check_eq!(errors, layout.top_panel_rect.top(), -174.0);
+                check_eq!(errors, layout.bottom_panel_rect.top(), 930.0);
+
+                assert_no_errors(errors);
             },
         );
 
@@ -57,9 +87,13 @@ fn layout_state_spec() {
                 let host_rect = Rect::from_min_max(pos2(20.0, 30.0), pos2(1220.0, 930.0));
                 let layout = compute_layout(host_rect, &state);
 
-                assert_eq!(layout.left_panel_rect.left(), 20.0);
-                assert_eq!(layout.content_rect.left(), 340.0);
-                assert_eq!(layout.overlay_rect, host_rect);
+                let mut errors = Vec::new();
+
+                check_eq!(errors, layout.left_panel_rect.left(), 20.0);
+                check_eq!(errors, layout.content_rect.left(), 340.0);
+                check_eq!(errors, layout.overlay_rect, host_rect);
+
+                assert_no_errors(errors);
             },
         );
 
@@ -75,8 +109,12 @@ fn layout_state_spec() {
                 let host_rect = Rect::from_min_max(pos2(20.0, 30.0), pos2(1220.0, 930.0));
                 let layout = compute_layout(host_rect, &state);
 
-                assert_eq!(layout.left_panel_rect.right(), host_rect.left());
-                assert_eq!(layout.content_rect.left(), host_rect.left());
+                let mut errors = Vec::new();
+
+                check_eq!(errors, layout.left_panel_rect.right(), host_rect.left());
+                check_eq!(errors, layout.content_rect.left(), host_rect.left());
+
+                assert_no_errors(errors);
             },
         );
 
@@ -98,14 +136,18 @@ fn layout_state_spec() {
                 let host_rect = Rect::from_min_max(pos2(120.0, 84.0), pos2(1320.0, 780.0));
                 let layout = compute_layout(host_rect, &state);
 
-                assert_eq!(layout.content_rect.left(), 444.0);
-                assert_eq!(layout.content_rect.right(), 1320.0);
-                assert_eq!(layout.right_panel_rect.right(), host_rect.right());
-                assert_eq!(layout.right_panel_rect.left(), 840.0);
-                assert_eq!(layout.top_panel_rect.left(), host_rect.left());
-                assert_eq!(layout.top_panel_rect.right(), host_rect.right());
-                assert_eq!(layout.bottom_panel_rect.left(), host_rect.left());
-                assert_eq!(layout.bottom_panel_rect.right(), host_rect.right());
+                let mut errors = Vec::new();
+
+                check_eq!(errors, layout.content_rect.left(), 444.0);
+                check_eq!(errors, layout.content_rect.right(), 1320.0);
+                check_eq!(errors, layout.right_panel_rect.right(), host_rect.right());
+                check_eq!(errors, layout.right_panel_rect.left(), 840.0);
+                check_eq!(errors, layout.top_panel_rect.left(), host_rect.left());
+                check_eq!(errors, layout.top_panel_rect.right(), host_rect.right());
+                check_eq!(errors, layout.bottom_panel_rect.left(), host_rect.left());
+                check_eq!(errors, layout.bottom_panel_rect.right(), host_rect.right());
+
+                assert_no_errors(errors);
             },
         );
     });

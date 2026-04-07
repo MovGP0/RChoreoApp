@@ -4,6 +4,36 @@ use crate::main_page_drawer_host::reducer::MainPageDrawerHostEffect;
 use crate::main_page_drawer_host::reducer::reduce;
 use crate::main_page_drawer_host::state::MainPageDrawerHostState;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn overlay_click_behavior_spec() {
     let suite = rspec::describe("main page drawer host overlay click", (), |spec| {
@@ -36,9 +66,12 @@ fn overlay_click_behavior_spec() {
 
                 let effects = reduce(&mut state, MainPageDrawerHostAction::OverlayClicked);
 
-                assert!(!state.is_left_open);
-                assert!(!state.is_right_open);
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check!(errors, !state.is_left_open);
+                check!(errors, !state.is_right_open);
+                check_eq!(
+                    errors,
                     effects,
                     vec![
                         MainPageDrawerHostEffect::LeftCloseRequested,
@@ -46,6 +79,8 @@ fn overlay_click_behavior_spec() {
                         MainPageDrawerHostEffect::OverlayClicked,
                     ]
                 );
+
+                assert_no_errors(errors);
             },
         );
 
@@ -60,9 +95,13 @@ fn overlay_click_behavior_spec() {
 
             let effects = reduce(&mut state, MainPageDrawerHostAction::OverlayClicked);
 
-            assert!(state.is_left_open);
-            assert!(state.is_right_open);
-            assert_eq!(effects, vec![MainPageDrawerHostEffect::OverlayClicked]);
+            let mut errors = Vec::new();
+
+            check!(errors, state.is_left_open);
+            check!(errors, state.is_right_open);
+            check_eq!(errors, effects, vec![MainPageDrawerHostEffect::OverlayClicked]);
+
+            assert_no_errors(errors);
         });
     });
 

@@ -7,22 +7,66 @@ use crate::settings::state::THEME_KEY;
 use crate::settings::state::ThemeMode;
 use crate::settings::state::USE_SYSTEM_THEME_KEY;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check_ne {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left == $right {
+            $errors.push(format!(
+                "{} == {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn material_theme_application_spec() {
     let suite = rspec::describe("material theme reducer integration", (), |spec| {
         spec.it("applies dark and light theme from toggle inputs", |_| {
             let mut state = SettingsState::default();
             let baseline = state.material_update_count;
+            let mut errors = Vec::new();
+
             reduce(
                 &mut state,
                 SettingsAction::UpdateUseSystemTheme { enabled: false },
             );
-            assert!(!state.use_system_theme);
-            assert_eq!(
-                state
-                    .preferences
-                    .get(USE_SYSTEM_THEME_KEY)
-                    .map(String::as_str),
+            check!(&mut errors, !state.use_system_theme);
+            check_eq!(
+                errors,
+                state.preferences.get(USE_SYSTEM_THEME_KEY).map(String::as_str),
                 Some("false")
             );
 
@@ -30,12 +74,14 @@ fn material_theme_application_spec() {
                 &mut state,
                 SettingsAction::UpdateIsDarkMode { enabled: true },
             );
-            assert_eq!(state.theme_mode, ThemeMode::Dark);
-            assert_eq!(
+            check_eq!(errors, state.theme_mode, ThemeMode::Dark);
+            check_eq!(
+                errors,
                 state.preferences.get(THEME_KEY).map(String::as_str),
                 Some("Dark")
             );
-            assert_eq!(
+            check_eq!(
+                errors,
                 choreo_components::material::styling::material_palette::material_palette_for_theme(
                     &state.material_scheme,
                     state.theme_mode,
@@ -48,12 +94,14 @@ fn material_theme_application_spec() {
                 &mut state,
                 SettingsAction::UpdateIsDarkMode { enabled: false },
             );
-            assert_eq!(state.theme_mode, ThemeMode::Light);
-            assert_eq!(
+            check_eq!(errors, state.theme_mode, ThemeMode::Light);
+            check_eq!(
+                errors,
                 state.preferences.get(THEME_KEY).map(String::as_str),
                 Some("Light")
             );
-            assert_eq!(
+            check_eq!(
+                errors,
                 choreo_components::material::styling::material_palette::material_palette_for_theme(
                     &state.material_scheme,
                     state.theme_mode,
@@ -62,7 +110,9 @@ fn material_theme_application_spec() {
                 state.material_scheme.light.background
             );
 
-            assert_eq!(state.material_update_count, baseline + 3);
+            check_eq!(errors, state.material_update_count, baseline + 3);
+
+            assert_no_errors(errors);
         });
 
         spec.it(
@@ -71,6 +121,7 @@ fn material_theme_application_spec() {
                 let mut state = SettingsState::default();
                 let baseline_primary = state.material_scheme.light.primary;
                 let baseline_secondary = state.material_scheme.dark.secondary;
+                let mut errors = Vec::new();
 
                 reduce(
                     &mut state,
@@ -83,11 +134,12 @@ fn material_theme_application_spec() {
                     },
                 );
 
-                assert_eq!(
+                check_eq!(
+                    errors,
                     state.preferences.get(PRIMARY_COLOR_KEY).map(String::as_str),
                     Some("#FF336699")
                 );
-                assert_ne!(state.material_scheme.light.primary, baseline_primary);
+                check_ne!(errors, state.material_scheme.light.primary, baseline_primary);
 
                 reduce(
                     &mut state,
@@ -100,7 +152,13 @@ fn material_theme_application_spec() {
                     },
                 );
 
-                assert_ne!(state.material_scheme.dark.secondary, baseline_secondary);
+                check_ne!(
+                    errors,
+                    state.material_scheme.dark.secondary,
+                    baseline_secondary
+                );
+
+                assert_no_errors(errors);
             },
         );
     });

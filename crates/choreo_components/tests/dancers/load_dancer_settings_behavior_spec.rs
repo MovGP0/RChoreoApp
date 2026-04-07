@@ -1,6 +1,28 @@
 use crate::dancers;
 use dancers::Report;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn load_dancer_settings_behavior_spec() {
     let suite = rspec::describe("load dancer settings behavior", (), |spec| {
@@ -20,17 +42,22 @@ fn load_dancer_settings_behavior_spec() {
 
             dancers::reducer::reduce(&mut state, dancers::actions::DancersAction::LoadFromGlobal);
 
-            assert_eq!(state.roles.len(), 2);
-            assert_eq!(state.roles[0].name, "Lead");
-            assert_eq!(state.dancers.len(), 2);
-            assert_eq!(state.dancers[0].name, "Alice");
-            assert_eq!(
+            let mut errors = Vec::new();
+
+            check_eq!(errors, state.roles.len(), 2);
+            check_eq!(errors, state.roles[0].name, "Lead");
+            check_eq!(errors, state.dancers.len(), 2);
+            check_eq!(errors, state.dancers[0].name, "Alice");
+            check_eq!(
+                errors,
                 state
                     .selected_dancer
                     .as_ref()
                     .map(|dancer| dancer.dancer_id),
                 Some(1)
             );
+
+            assert_no_errors(errors);
         });
     });
     let report = dancers::run_suite(&suite);

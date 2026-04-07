@@ -21,6 +21,28 @@ use choreo_models::SettingsPreferenceKeys;
 
 use crate::choreo_main::Report;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn startup_open_choreo_behavior_spec() {
     let suite = rspec::describe("startup open choreo behavior", (), |spec| {
@@ -47,10 +69,22 @@ fn startup_open_choreo_behavior_spec() {
 
                 let state = binding.state();
                 let state = state.borrow();
-                assert_eq!(state.choreography_settings_state.name, "Remembered choreo");
-                assert_eq!(state.scenes.len(), 1);
-                assert_eq!(state.scenes[0].name, "Remembered Intro");
-                assert_eq!(state.last_opened_choreo_file.as_deref(), Some(file_path.as_str()));
+                let mut errors = Vec::new();
+
+                check_eq!(
+                    errors,
+                    state.choreography_settings_state.name,
+                    "Remembered choreo"
+                );
+                check_eq!(errors, state.scenes.len(), 1);
+                check_eq!(errors, state.scenes[0].name, "Remembered Intro");
+                check_eq!(
+                    errors,
+                    state.last_opened_choreo_file.as_deref(),
+                    Some(file_path.as_str())
+                );
+
+                assert_no_errors(errors);
 
                 let _ = fs::remove_file(temp_file);
             },
@@ -78,16 +112,22 @@ fn startup_open_choreo_behavior_spec() {
 
                 let state = binding.state();
                 let state = state.borrow();
-                assert_eq!(
+                let mut errors = Vec::new();
+
+                check_eq!(
+                    errors,
                     state.choreography_settings_state.name,
                     "Choreo erstellt mit JDC ChoreoMaster"
                 );
-                assert_eq!(state.scenes.len(), 1);
-                assert_eq!(state.scenes[0].name, "Bild");
-                assert_eq!(
+                check_eq!(errors, state.scenes.len(), 1);
+                check_eq!(errors, state.scenes[0].name, "Bild");
+                check_eq!(
+                    errors,
                     preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_CHOREO_FILE, ""),
                     ""
                 );
+
+                assert_no_errors(errors);
             },
         );
 

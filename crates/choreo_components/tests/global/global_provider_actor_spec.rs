@@ -9,6 +9,36 @@ use choreo_components::global::SceneViewModel;
 use choreo_master_mobile_json::Color;
 use choreo_master_mobile_json::SceneId;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn dispatch_queues_mutations_until_drain_then_notifies_subscribers_once() {
     let actor = GlobalStateActor::new();
@@ -24,12 +54,14 @@ fn dispatch_queues_mutations_until_drain_then_notifies_subscribers_once() {
         state.interaction_mode = InteractionMode::Move;
     });
 
+    let mut errors = Vec::new();
+
     let is_place_mode_before_drain = actor
         .try_with_state(|state| state.is_place_mode)
         .expect("state should be readable");
 
-    assert!(!is_place_mode_before_drain);
-    assert_eq!(notifications.get(), 0);
+    check!(errors, !is_place_mode_before_drain);
+    check_eq!(errors, notifications.get(), 0);
 
     actor.drain();
 
@@ -40,9 +72,11 @@ fn dispatch_queues_mutations_until_drain_then_notifies_subscribers_once() {
         .try_with_state(|state| state.interaction_mode)
         .expect("state should be readable");
 
-    assert!(is_place_mode);
-    assert_eq!(interaction_mode, InteractionMode::Move);
-    assert_eq!(notifications.get(), 1);
+    check!(errors, is_place_mode);
+    check_eq!(errors, interaction_mode, InteractionMode::Move);
+    check_eq!(errors, notifications.get(), 1);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -68,9 +102,13 @@ fn drain_applies_all_queued_commands_before_notifying_subscribers() {
         .try_with_state(|state| (state.redraw_floor, state.is_rendering_floor))
         .expect("state should be readable");
 
-    assert!(redraw_floor);
-    assert!(is_rendering_floor);
-    assert_eq!(notifications.get(), 1);
+    let mut errors = Vec::new();
+
+    check!(errors, redraw_floor);
+    check!(errors, is_rendering_floor);
+    check_eq!(errors, notifications.get(), 1);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -85,23 +123,32 @@ fn provider_exposes_shared_actor_state_and_state_machine() {
     });
     actor.drain();
 
-    assert!(global_state.borrow().redraw_floor);
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check!(errors, global_state.borrow().redraw_floor);
+    check_eq!(
+        errors,
         state_machine.borrow().state().kind(),
         choreo_state_machine::StateKind::ViewSceneState
     );
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn global_state_defaults_and_scene_view_fields_match_original_responsibilities() {
     let state = GlobalStateModel::default();
 
-    assert!(state.scenes.is_empty());
-    assert!(state.selected_scene.is_none());
-    assert!(state.selected_scene_model.is_none());
-    assert!(state.main_canvas_view.is_none());
-    assert!(!state.redraw_floor);
-    assert_eq!(state.interaction_mode, InteractionMode::View);
+    let mut errors = Vec::new();
+
+    check!(errors, state.scenes.is_empty());
+    check!(errors, state.selected_scene.is_none());
+    check!(errors, state.selected_scene_model.is_none());
+    check!(errors, state.main_canvas_view.is_none());
+    check!(errors, !state.redraw_floor);
+    check_eq!(errors, state.interaction_mode, InteractionMode::View);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -143,7 +190,11 @@ fn actor_stores_scene_view_models_separately_from_selected_scene_model() {
         })
         .expect("state should be readable");
 
-    assert_eq!(snapshot.0, Some(12.3));
-    assert_eq!(snapshot.1, Some(12.3));
-    assert_eq!(snapshot.2.as_deref(), Some("12.3"));
+    let mut errors = Vec::new();
+
+    check_eq!(errors, snapshot.0, Some(12.3));
+    check_eq!(errors, snapshot.1, Some(12.3));
+    check_eq!(errors, snapshot.2.as_deref(), Some("12.3"));
+
+    assert_no_errors(errors);
 }

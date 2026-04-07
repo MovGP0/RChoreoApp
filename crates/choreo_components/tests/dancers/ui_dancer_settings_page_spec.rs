@@ -11,6 +11,36 @@ use crate::dancers::ui::selected_icon_index;
 use crate::dancers::ui::selected_role_index;
 use choreo_i18n::icon_names;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn dancer_settings_page_draw_executes_without_panicking() {
     let state = sample_state();
@@ -25,9 +55,13 @@ fn dancer_settings_page_draw_executes_without_panicking() {
 #[test]
 fn selected_indices_follow_current_state_selection() {
     let state = sample_state();
-    assert_eq!(selected_dancer_index(&state), Some(1));
-    assert_eq!(selected_role_index(&state), Some(1));
-    assert_eq!(selected_icon_index(&state), Some(1));
+    let mut errors = Vec::new();
+
+    check_eq!(errors, selected_dancer_index(&state), Some(1));
+    check_eq!(errors, selected_role_index(&state), Some(1));
+    check_eq!(errors, selected_icon_index(&state), Some(1));
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -40,32 +74,43 @@ fn selected_dancer_index_returns_none_when_missing() {
 #[test]
 fn icon_options_are_loaded_from_i18n_catalog() {
     let state = DancersState::default();
-    assert_eq!(state.icon_options.len(), icon_names().len());
-    assert!(state.icon_options.len() > 3);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.icon_options.len(), icon_names().len());
+    check!(errors, state.icon_options.len() > 3);
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn dropdown_helpers_follow_shared_material_dropdown_contract() {
     let state = sample_state();
-
-    assert_eq!(crate::dancers::ui::dropdown_height_token(), 60.0);
-    assert_eq!(
-        crate::dancers::ui::role_option_labels(&state),
-        vec!["Leader".to_string(), "Follower".to_string()]
-    );
-    assert_eq!(
-        crate::dancers::ui::dancer_option_labels(&state),
-        vec!["Alex".to_string(), "Blake".to_string()]
-    );
     let expected_icon_labels = state
         .icon_options
         .iter()
         .map(|option| option.display_name.clone())
         .collect::<Vec<_>>();
-    assert_eq!(
+
+    let mut errors = Vec::new();
+
+    check_eq!(errors, crate::dancers::ui::dropdown_height_token(), 60.0);
+    check_eq!(
+        errors,
+        crate::dancers::ui::role_option_labels(&state),
+        vec!["Leader".to_string(), "Follower".to_string()]
+    );
+    check_eq!(
+        errors,
+        crate::dancers::ui::dancer_option_labels(&state),
+        vec!["Alex".to_string(), "Blake".to_string()]
+    );
+    check_eq!(
+        errors,
         crate::dancers::ui::icon_option_labels(&state),
         expected_icon_labels
     );
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -77,23 +122,30 @@ fn swap_dialog_view_model_formats_translated_message_from_selected_dancers() {
     let view_model =
         build_swap_dialog_view_model(&state, "en").expect("swap dialog should be visible");
 
-    assert_eq!(view_model.title_text, "Swap dancers");
-    assert_eq!(view_model.first_dancer_name, "Alex");
-    assert_eq!(view_model.second_dancer_name, "Blake");
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check_eq!(errors, view_model.title_text, "Swap dancers");
+    check_eq!(errors, view_model.first_dancer_name, "Alex");
+    check_eq!(errors, view_model.second_dancer_name, "Blake");
+    check_eq!(
+        errors,
         view_model.message_text,
         "Swap dancers \"Alex\" and \"Blake\"?"
     );
-    assert_eq!(view_model.cancel_text, "Cancel");
-    assert_eq!(view_model.confirm_text, "Swap");
-    assert_eq!(
+    check_eq!(errors, view_model.cancel_text, "Cancel");
+    check_eq!(errors, view_model.confirm_text, "Swap");
+    check_eq!(
+        errors,
         view_model.first_dancer_color,
         egui::Color32::from_rgba_unmultiplied(255, 0, 0, 255)
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         view_model.second_dancer_color,
         egui::Color32::from_rgba_unmultiplied(0, 0, 255, 255)
     );
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -120,14 +172,20 @@ fn swap_dialog_panel_returns_no_action_without_click() {
 
 #[test]
 fn swap_dialog_actions_map_to_dancer_reducer_actions() {
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check_eq!(
+        errors,
         map_swap_dialog_action(SwapDialogAction::Cancel),
         crate::dancers::actions::DancersAction::HideDialog
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         map_swap_dialog_action(SwapDialogAction::Confirm),
         crate::dancers::actions::DancersAction::ConfirmSwapDancers
     );
+
+    assert_no_errors(errors);
 }
 
 #[test]

@@ -23,6 +23,36 @@ use crate::settings::ui::theme_mode_dropdown_labels;
 use crate::settings::ui::visible_settings_card_headers;
 use choreo_components::material::styling::material_style_metrics::material_style_metrics;
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
+fn assert_no_errors(errors: Vec<String>) {
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
+}
+
 #[test]
 fn settings_ui_draw_executes_without_panicking() {
     let state = SettingsState::default();
@@ -37,50 +67,70 @@ fn settings_ui_draw_executes_without_panicking() {
 #[test]
 fn audio_backend_labels_match_expected_values() {
     let strings = settings_translations("en");
-    assert_eq!(
+    let mut errors = Vec::new();
+
+    check_eq!(
+        errors,
         audio_backend_label(AudioPlayerBackend::Rodio, &strings),
         "Rodio"
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         audio_backend_label(AudioPlayerBackend::Awedio, &strings),
         "Awedio"
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         audio_backend_label(AudioPlayerBackend::Browser, &strings),
         "Browser"
     );
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn audio_backend_visibility_matches_current_target() {
     let backends = available_audio_backends_for_current_target();
+    let mut errors = Vec::new();
 
     if cfg!(target_arch = "wasm32") {
-        assert_eq!(backends, vec![AudioPlayerBackend::Browser]);
-        assert!(!shows_audio_backend_card());
+        check_eq!(errors, backends, vec![AudioPlayerBackend::Browser]);
+        check!(errors, !shows_audio_backend_card());
     } else {
-        assert_eq!(
+        check_eq!(
+            errors,
             backends,
             vec![AudioPlayerBackend::Rodio, AudioPlayerBackend::Awedio]
         );
-        assert!(shows_audio_backend_card());
+        check!(errors, shows_audio_backend_card());
     }
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn settings_translations_bind_slint_catalog_values() {
     let strings = settings_translations("de");
+    let mut errors = Vec::new();
 
-    assert_eq!(strings.title, "Einstellungen");
-    assert_eq!(strings.use_system_theme, "Systemdesign verwenden");
+    check_eq!(errors, strings.title, "Einstellungen");
+    check_eq!(
+        errors,
+        strings.use_system_theme,
+        "Systemdesign verwenden"
+    );
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn theme_mode_dropdown_labels_follow_requested_selection_order() {
     let strings = settings_translations("en");
     let mut state = SettingsState::default();
+    let mut errors = Vec::new();
 
-    assert_eq!(
+    check_eq!(
+        errors,
         theme_mode_dropdown_labels(&state, &strings),
         vec![
             "Use system theme".to_string(),
@@ -88,19 +138,22 @@ fn theme_mode_dropdown_labels_follow_requested_selection_order() {
             "Light mode".to_string(),
         ]
     );
-    assert_eq!(selected_theme_mode_dropdown_index(&state), 0);
+    check_eq!(errors, selected_theme_mode_dropdown_index(&state), 0);
 
     state.use_system_theme = false;
     state.theme_mode = crate::settings::state::ThemeMode::Dark;
-    assert_eq!(selected_theme_mode_dropdown_index(&state), 1);
+    check_eq!(errors, selected_theme_mode_dropdown_index(&state), 1);
 
     state.can_use_system_theme = false;
     state.theme_mode = crate::settings::state::ThemeMode::Light;
-    assert_eq!(
+    check_eq!(
+        errors,
         theme_mode_dropdown_labels(&state, &strings),
         vec!["Dark mode".to_string(), "Light mode".to_string()]
     );
-    assert_eq!(selected_theme_mode_dropdown_index(&state), 1);
+    check_eq!(errors, selected_theme_mode_dropdown_index(&state), 1);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -141,29 +194,40 @@ fn format_argb_hex_round_trips_with_parse_helper() {
 #[test]
 fn color_picker_state_uses_parsed_argb_value() {
     let picker_state = color_picker_state_from_argb_hex("#FF336699");
+    let mut errors = Vec::new();
 
-    assert_eq!(
+    check_eq!(
+        errors,
         picker_state.selected_color,
         egui::Color32::from_rgba_unmultiplied(0x33, 0x66, 0x99, 0xFF)
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         picker_state.value_slider_position,
         material3::components::color_picker::state::ColorPickerDock::Bottom
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         picker_state.wheel_minimum_width,
         color_picker_wheel_size_token()
     );
-    assert_eq!(
+    check_eq!(
+        errors,
         picker_state.wheel_minimum_height,
         color_picker_wheel_size_token()
     );
+
+    assert_no_errors(errors);
 }
 
 #[test]
 fn navigate_back_control_uses_icon_catalog_mapping() {
-    assert_eq!(navigate_back_icon_name(), "arrow_back");
-    assert!(navigate_back_icon_svg().contains("<svg"));
+    let mut errors = Vec::new();
+
+    check_eq!(errors, navigate_back_icon_name(), "arrow_back");
+    check!(errors, navigate_back_icon_svg().contains("<svg"));
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -177,16 +241,20 @@ fn settings_spacing_uses_shared_material_metrics_token() {
 #[test]
 fn settings_layout_tokens_match_slint_card_structure() {
     let metrics = material_style_metrics();
+    let mut errors = Vec::new();
 
-    assert_eq!(card_spacing_token(), metrics.spacings.spacing_12);
-    assert_eq!(card_padding_token(), metrics.paddings.padding_12);
-    assert_eq!(
+    check_eq!(errors, card_spacing_token(), metrics.spacings.spacing_12);
+    check_eq!(errors, card_padding_token(), metrics.paddings.padding_12);
+    check_eq!(
+        errors,
         card_corner_radius_token(),
         metrics.corner_radii.border_radius_8
     );
-    assert_eq!(content_max_width_token(), 720.0);
-    assert_eq!(dropdown_height_token(), metrics.sizes.size_56);
-    assert_eq!(color_swatch_width_token(), 108.0);
-    assert_eq!(color_swatch_height_token(), 36.0);
-    assert_eq!(color_picker_wheel_size_token(), 168.0);
+    check_eq!(errors, content_max_width_token(), 720.0);
+    check_eq!(errors, dropdown_height_token(), metrics.sizes.size_56);
+    check_eq!(errors, color_swatch_width_token(), 108.0);
+    check_eq!(errors, color_swatch_height_token(), 36.0);
+    check_eq!(errors, color_picker_wheel_size_token(), 168.0);
+
+    assert_no_errors(errors);
 }

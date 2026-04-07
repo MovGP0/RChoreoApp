@@ -27,6 +27,28 @@ where
     runner.run(suite)
 }
 
+macro_rules! check_eq {
+    ($errors:expr, $left:expr, $right:expr) => {
+        if $left != $right {
+            $errors.push(format!(
+                "{} != {} (left = {:?}, right = {:?})",
+                stringify!($left),
+                stringify!($right),
+                $left,
+                $right
+            ));
+        }
+    };
+}
+
+macro_rules! check {
+    ($errors:expr, $condition:expr) => {
+        if !$condition {
+            $errors.push(format!("condition failed: {}", stringify!($condition)));
+        }
+    };
+}
+
 #[test]
 fn ui_style_tokens_spec() {
     let suite = rspec::describe("ui style metrics token parity", (), |spec| {
@@ -34,40 +56,81 @@ fn ui_style_tokens_spec() {
             "maps source Slint size, padding, and corner-radius tokens",
             |_| {
                 let metrics = material_style_metrics();
-                assert_eq!(metrics.sizes.size_1, 1.0);
-                assert_eq!(metrics.sizes.size_56, 56.0);
-                assert_eq!(metrics.sizes.size_90, 96.0);
-                assert_eq!(metrics.paddings.padding_12, 12.0);
-                assert_eq!(metrics.paddings.padding_24, 24.0);
-                assert_eq!(metrics.corner_radii.border_radius_12, 12.0);
-                assert_eq!(metrics.corner_radii.border_radius_28, 28.0);
+                let mut errors = Vec::new();
+
+                check_eq!(errors, metrics.sizes.size_1, 1.0);
+                check_eq!(errors, metrics.sizes.size_56, 56.0);
+                check_eq!(errors, metrics.sizes.size_90, 96.0);
+                check_eq!(errors, metrics.paddings.padding_12, 12.0);
+                check_eq!(errors, metrics.paddings.padding_24, 24.0);
+                check_eq!(errors, metrics.corner_radii.border_radius_12, 12.0);
+                check_eq!(errors, metrics.corner_radii.border_radius_28, 28.0);
+
+                assert!(
+                    errors.is_empty(),
+                    "Assertion failures:\n{}",
+                    errors.join("\n")
+                );
             },
         );
 
         spec.it("maps stroke, elevation, and state-opacity tokens", |_| {
             let metrics = material_style_metrics();
-            assert_eq!(metrics.strokes.outline, 1.0);
-            assert_eq!(metrics.strokes.focus, 2.0);
-            assert_eq!(metrics.elevations.level_4.outer.offset_y, 6.0);
-            assert_eq!(metrics.elevations.level_4.outer.blur, 10.0);
-            assert!((metrics.state_opacities.hover - 0.08).abs() < f32::EPSILON);
-            assert!((metrics.state_opacities.pressed - 0.10).abs() < f32::EPSILON);
-            assert!((metrics.state_opacities.disabled - 0.12).abs() < f32::EPSILON);
-            assert!((metrics.state_opacities.drag - 0.16).abs() < f32::EPSILON);
-            assert!((metrics.state_opacities.content_disabled - 0.38).abs() < f32::EPSILON);
+            let mut errors = Vec::new();
+
+            check_eq!(errors, metrics.strokes.outline, 1.0);
+            check_eq!(errors, metrics.strokes.focus, 2.0);
+            check_eq!(errors, metrics.elevations.level_4.outer.offset_y, 6.0);
+            check_eq!(errors, metrics.elevations.level_4.outer.blur, 10.0);
+            check!(
+                errors,
+                (metrics.state_opacities.hover - 0.08).abs() < f32::EPSILON
+            );
+            check!(
+                errors,
+                (metrics.state_opacities.pressed - 0.10).abs() < f32::EPSILON
+            );
+            check!(
+                errors,
+                (metrics.state_opacities.disabled - 0.12).abs() < f32::EPSILON
+            );
+            check!(
+                errors,
+                (metrics.state_opacities.drag - 0.16).abs() < f32::EPSILON
+            );
+            check!(
+                errors,
+                (metrics.state_opacities.content_disabled - 0.38).abs() < f32::EPSILON
+            );
+
+            assert!(
+                errors.is_empty(),
+                "Assertion failures:\n{}",
+                errors.join("\n")
+            );
         });
 
         spec.it("dialog host consumes shared dialog metrics tokens", |_| {
             let metrics = material_style_metrics();
             let dialog_metrics = dialog_host::dialog_metrics_tokens();
-            assert_eq!(
+            let mut errors = Vec::new();
+
+            check_eq!(
+                errors,
                 dialog_metrics.dialog_padding,
                 metrics.paddings.padding_24 as i8
             );
-            assert_eq!(dialog_metrics.dialog_margin, metrics.paddings.padding_24);
-            assert_eq!(
+            check_eq!(errors, dialog_metrics.dialog_margin, metrics.paddings.padding_24);
+            check_eq!(
+                errors,
                 dialog_metrics.dialog_corner_radius,
                 metrics.corner_radii.border_radius_12 as u8
+            );
+
+            assert!(
+                errors.is_empty(),
+                "Assertion failures:\n{}",
+                errors.join("\n")
             );
         });
 
@@ -75,45 +138,61 @@ fn ui_style_tokens_spec() {
             "component UIs consume shared spacing/radius/state-opacity tokens",
             |_| {
                 let metrics = material_style_metrics();
+                let mut errors = Vec::new();
 
-                assert_eq!(
+                check_eq!(
+                    errors,
                     choreo_main::ui::content_spacing_token(),
                     metrics.spacings.spacing_12
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     dancers_pane_view::ui::pane_corner_radius_token(),
                     metrics.corner_radii.border_radius_12
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     dancer_settings_page::ui::card_corner_radius_token(),
                     metrics.corner_radii.border_radius_12
                 );
 
                 let state_opacity_tokens = nav_bar::hamburger_toggle_button::state_opacity_tokens();
-                assert!(
+                check!(
+                    errors,
                     (state_opacity_tokens.disabled - metrics.state_opacities.content_disabled)
                         .abs()
                         < f32::EPSILON
                 );
-                assert!(
+                check!(
+                    errors,
                     (state_opacity_tokens.hover - metrics.state_opacities.hover).abs()
                         < f32::EPSILON
                 );
-                assert!(
+                check!(
+                    errors,
                     (state_opacity_tokens.pressed - metrics.state_opacities.pressed).abs()
                         < f32::EPSILON
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     settings::ui::content_spacing_token(),
                     metrics.spacings.spacing_12
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     nav_bar::hamburger_toggle_button::minimum_button_size_token(),
                     metrics.sizes.size_40
                 );
-                assert_eq!(
+                check_eq!(
+                    errors,
                     nav_bar::hamburger_toggle_button::content_padding_token(),
                     metrics.paddings.padding_10
+                );
+
+                assert!(
+                    errors.is_empty(),
+                    "Assertion failures:\n{}",
+                    errors.join("\n")
                 );
             },
         );
