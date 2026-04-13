@@ -2,6 +2,8 @@ use egui::Color32;
 use egui::Ui;
 use egui_material3::MaterialSlider;
 
+use crate::material::styling::material_palette::material_palette_for_visuals;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct SliderWithTicksUiState<'a> {
     pub enabled: bool,
@@ -47,9 +49,9 @@ pub fn draw(ui: &mut Ui, state: SliderWithTicksUiState<'_>) -> Vec<SliderWithTic
         state.minimum,
         state.maximum,
         state.tick_values,
-        state
-            .tick_color
-            .unwrap_or(ui.visuals().widgets.noninteractive.fg_stroke.color),
+        state.tick_color.unwrap_or_else(|| {
+            material_palette_for_visuals(ui.visuals()).on_surface_variant
+        }),
     );
 
     let clamped_value = if has_valid_range {

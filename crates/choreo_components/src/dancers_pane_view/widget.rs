@@ -7,6 +7,7 @@ use crate::dancers_pane_view::ui::DancersPaneViewAction;
 use crate::dancers_pane_view::ui::DancersPaneViewUiState;
 use crate::material::icons as ui_icons;
 use crate::material::icons::UiIconKey;
+use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
 use egui::CornerRadius;
@@ -67,11 +68,12 @@ fn allocate_list_rect(ui: &mut Ui) -> egui::Rect {
 }
 
 fn pane_list_frame(ui: &Ui) -> Frame {
+    let palette = material_palette_for_visuals(ui.visuals());
     Frame::new()
-        .fill(ui.visuals().faint_bg_color)
+        .fill(palette.surface_container_low)
         .stroke(Stroke::new(
             material_style_metrics().strokes.outline,
-            ui.visuals().widgets.noninteractive.bg_stroke.color,
+            palette.outline_variant,
         ))
         .corner_radius(CornerRadius::same(pane_corner_radius_token() as u8))
         .inner_margin(Margin::same(pane_inner_padding_token()))

@@ -13,6 +13,7 @@ use crate::dancers::dancer_list_item_view::tokens::swatch_size_token;
 use crate::dancers::dancer_list_item_view::tokens::swatch_x_token;
 use crate::dancers::dancer_list_item_view::tokens::title_x_token;
 use crate::dancers::dancer_list_item_view::tokens::title_y_token;
+use crate::material::styling::material_palette::MaterialPalette;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct DancerListItemLayout {
@@ -51,18 +52,18 @@ pub fn layout_for_row_rect(row_rect: Rect) -> DancerListItemLayout {
 }
 
 #[must_use]
-pub fn colors_for_selection(visuals: &egui::Visuals, is_selected: bool) -> DancerListItemColors {
+pub fn colors_for_selection(palette: MaterialPalette, is_selected: bool) -> DancerListItemColors {
     let (background, border, title) = if is_selected {
         (
-            visuals.selection.bg_fill,
-            visuals.selection.stroke.color,
-            visuals.strong_text_color(),
+            palette.surface_container_high,
+            palette.secondary,
+            palette.on_surface,
         )
     } else {
         (
-            visuals.extreme_bg_color,
-            visuals.widgets.noninteractive.bg_stroke.color,
-            visuals.text_color(),
+            palette.surface_container_low,
+            palette.outline_variant,
+            palette.on_surface,
         )
     };
 
@@ -70,7 +71,7 @@ pub fn colors_for_selection(visuals: &egui::Visuals, is_selected: bool) -> Dance
         background,
         border,
         title,
-        subtitle: visuals.weak_text_color(),
+        subtitle: palette.on_surface_variant,
     }
 }
 

@@ -4,6 +4,8 @@ use egui::TouchPhase;
 use egui::Ui;
 use egui::epaint::PathShape;
 
+use crate::material::styling::material_palette::material_palette_for_visuals;
+
 use super::actions::FloorAction;
 use super::state::CanvasViewHandle;
 use super::state::FloorState;
@@ -27,6 +29,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
     let (rect, response) = ui.allocate_exact_size(available, egui::Sense::drag());
     let painter = ui.painter_at(rect);
     collect_interactions(ui, rect, response.hovered(), &mut actions);
+    let palette = material_palette_for_visuals(ui.visuals());
 
     let to_screen_point = |point: Point| -> egui::Pos2 {
         egui::pos2(rect.min.x + point.x as f32, rect.min.y + point.y as f32)
@@ -37,7 +40,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
             egui::vec2(width as f32, height as f32),
         )
     };
-    let floor_stroke = egui::Stroke::new(2.0, ui.visuals().selection.bg_fill);
+    let floor_stroke = egui::Stroke::new(2.0, palette.secondary);
     let floor_fill = color32_from_rgba(state.floor_color);
     let radius = floor_position_radius(state).max(6.0);
 
@@ -48,7 +51,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
             background.width,
             background.height,
         );
-        painter.rect_filled(fill_rect, 0.0, ui.visuals().extreme_bg_color);
+        painter.rect_filled(fill_rect, 0.0, palette.surface_container_highest);
     }
     let floor_rect = to_screen_rect(
         state.floor_x,
@@ -61,7 +64,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
     for segment in &state.grid_lines {
         painter.line_segment(
             [to_screen_point(segment.from), to_screen_point(segment.to)],
-            egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
+            egui::Stroke::new(1.0, palette.outline_variant),
         );
     }
     for segment in &state.center_mark_segments {
@@ -73,7 +76,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
     painter.circle_filled(
         to_screen_point(Point::new(state.center_x, state.center_y)),
         4.0,
-        ui.visuals().selection.bg_fill,
+        palette.secondary,
     );
     painter.rect_stroke(floor_rect, 0.0, floor_stroke, egui::StrokeKind::Middle);
 
@@ -81,7 +84,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
         painter.rect_stroke(
             to_screen_rect(bounds.x, bounds.y, bounds.width, bounds.height),
             0.0,
-            egui::Stroke::new(1.0, ui.visuals().widgets.active.bg_fill),
+            egui::Stroke::new(1.0, palette.primary),
             egui::StrokeKind::Middle,
         );
     }
@@ -95,7 +98,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
     for segment in &state.dashed_path_segments {
         painter.add(PathShape::line(
             vec![to_screen_point(segment.from), to_screen_point(segment.to)],
-            egui::Stroke::new(1.0, ui.visuals().selection.stroke.color),
+            egui::Stroke::new(1.0, palette.secondary),
         ));
     }
 
@@ -104,7 +107,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
             painter.circle_filled(
                 to_screen_point(*point),
                 6.0,
-                ui.visuals().widgets.active.bg_fill,
+                palette.primary_container,
             );
         }
 
@@ -114,7 +117,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
                 egui::Align2::LEFT_TOP,
                 &label.text,
                 egui::TextStyle::Body.resolve(ui.style()),
-                ui.visuals().strong_text_color(),
+                palette.on_surface,
             );
         }
     } else {
@@ -124,7 +127,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
                 painter.circle_stroke(
                     center,
                     radius + 4.0,
-                    egui::Stroke::new(3.0, ui.visuals().selection.bg_fill),
+                    egui::Stroke::new(3.0, palette.secondary),
                 );
             }
             painter.circle_filled(center, radius, color32_from_rgba(position.fill_color));
@@ -150,14 +153,14 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
             egui::Align2::CENTER_CENTER,
             &axis.text,
             egui::TextStyle::Button.resolve(ui.style()),
-            ui.visuals().widgets.noninteractive.fg_stroke.color,
+            palette.on_surface_variant,
         );
     }
 
     for segment in &state.selection_segments {
         painter.line_segment(
             [to_screen_point(segment.from), to_screen_point(segment.to)],
-            egui::Stroke::new(1.0, ui.visuals().selection.bg_fill),
+            egui::Stroke::new(1.0, palette.secondary),
         );
     }
 
@@ -168,14 +171,14 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
             header_rect.width,
             header_rect.height,
         );
-        painter.rect_filled(overlay, 0.0, ui.visuals().faint_bg_color);
+        painter.rect_filled(overlay, 0.0, palette.surface_container_low);
         if !state.choreography_name.trim().is_empty() {
             painter.text(
                 egui::pos2(overlay.center().x, overlay.top() + 12.0),
                 egui::Align2::CENTER_TOP,
                 &state.choreography_name,
                 egui::TextStyle::Heading.resolve(ui.style()),
-                ui.visuals().strong_text_color(),
+                palette.on_surface,
             );
         }
         if !state.scene_name.trim().is_empty() {
@@ -184,7 +187,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
                 egui::Align2::CENTER_TOP,
                 &state.scene_name,
                 egui::TextStyle::Body.resolve(ui.style()),
-                ui.visuals().widgets.noninteractive.fg_stroke.color,
+                palette.on_surface_variant,
             );
         }
     }
@@ -198,12 +201,12 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
         painter.rect_filled(
             legend_rect,
             6.0,
-            ui.visuals().widgets.noninteractive.bg_fill,
+            palette.surface_container,
         );
         painter.rect_stroke(
             legend_rect,
             6.0,
-            egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
+            egui::Stroke::new(1.0, palette.outline_variant),
             egui::StrokeKind::Middle,
         );
         let padding = 12.0;
@@ -223,7 +226,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
                     egui::Align2::LEFT_TOP,
                     &entry.shortcut,
                     egui::TextStyle::Body.resolve(ui.style()),
-                    ui.visuals().strong_text_color(),
+                    palette.on_surface,
                 );
             }
             painter.text(
@@ -231,7 +234,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
                 egui::Align2::LEFT_TOP,
                 &entry.name,
                 egui::TextStyle::Body.resolve(ui.style()),
-                ui.visuals().strong_text_color(),
+                palette.on_surface,
             );
             if !entry.position_text.trim().is_empty() {
                 painter.text(
@@ -239,7 +242,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
                     egui::Align2::RIGHT_TOP,
                     &entry.position_text,
                     egui::TextStyle::Small.resolve(ui.style()),
-                    ui.visuals().widgets.noninteractive.fg_stroke.color,
+                    palette.on_surface_variant,
                 );
             }
         }
@@ -254,21 +257,21 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
             egui::Align2::LEFT_TOP,
             strings.placement_title,
             egui::TextStyle::Button.resolve(ui.style()),
-            ui.visuals().strong_text_color(),
+            palette.on_surface,
         );
         painter.text(
             egui::pos2(start.x, start.y + 24.0),
             egui::Align2::LEFT_TOP,
             strings.placement_hint,
             egui::TextStyle::Body.resolve(ui.style()),
-            ui.visuals().text_color(),
+            palette.on_surface_variant,
         );
         painter.text(
             egui::pos2(start.x, start.y + 48.0),
             egui::Align2::LEFT_TOP,
             format!("{}{}", strings.placement_remaining_prefix, remaining),
             egui::TextStyle::Body.resolve(ui.style()),
-            ui.visuals().selection.bg_fill,
+            palette.secondary,
         );
     }
 

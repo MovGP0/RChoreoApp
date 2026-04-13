@@ -510,7 +510,8 @@ fn draw_color_picker_row(
     actions: &mut Vec<SettingsAction>,
 ) {
     ui.vertical(|ui| {
-        let swatch_color = parse_argb_hex(color_hex).unwrap_or(ui.visuals().faint_bg_color);
+        let swatch_color = parse_argb_hex(color_hex)
+            .unwrap_or(material_palette_for_visuals(ui.visuals()).surface_container_low);
         let (swatch_rect, _) = ui.allocate_exact_size(
             vec2(color_swatch_width_token(), color_swatch_height_token()),
             Sense::hover(),

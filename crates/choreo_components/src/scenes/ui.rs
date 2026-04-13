@@ -15,6 +15,7 @@ use crate::material::components::MaterialScrollArea;
 use crate::material::components::centered_icon_rect;
 use crate::material::components::paint_icon;
 use crate::material::components::top_bar_icon::top_bar_icon_button_enabled;
+use crate::material::styling::material_palette::MaterialPalette;
 use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::scene_list_item;
@@ -45,10 +46,9 @@ pub use crate::scene_list_item::title_role as scene_title_role;
 
 #[must_use]
 pub fn scene_list_item_colors(
-    visuals: &egui::Visuals,
+    palette: MaterialPalette,
     is_selected: bool,
 ) -> crate::scene_list_item::SceneListItemColors {
-    let palette = material_palette_for_visuals(visuals);
     crate::scene_list_item::colors_for_selection(palette, is_selected)
 }
 
@@ -90,6 +90,7 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
     let metrics = material_style_metrics();
     let strings = scenes_translations(DEFAULT_LOCALE);
     let panel_width = ui.available_width().max(0.0);
+    let palette = material_palette_for_visuals(ui.visuals());
 
     ui.spacing_mut().item_spacing = vec2(metrics.spacings.spacing_12, metrics.spacings.spacing_12);
     ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
@@ -109,10 +110,10 @@ pub fn draw(ui: &mut Ui, state: &ScenesState) -> Vec<ScenesAction> {
             |ui| {
                 ui.set_min_width(panel_width);
                 Frame::new()
-                    .fill(ui.visuals().faint_bg_color)
+                    .fill(palette.surface_container_low)
                     .stroke(Stroke::new(
                         metrics.strokes.outline,
-                        ui.visuals().widgets.noninteractive.bg_stroke.color,
+                        palette.outline_variant,
                     ))
                     .corner_radius(CornerRadius::same(
                         metrics.corner_radii.border_radius_12 as u8,
@@ -288,6 +289,7 @@ fn draw_search_bar(
     let horizontal_spacing = metrics.spacings.spacing_12;
     let left_padding = metrics.paddings.padding_10;
     let right_padding = metrics.paddings.padding_4;
+    let palette = material_palette_for_visuals(ui.visuals());
     let view_model = build_scene_search_bar_view_model(&state.search_text, locale);
     let clear_icon = clear_search_icon();
     let content_width =
@@ -295,10 +297,10 @@ fn draw_search_bar(
 
     // Keep 44px to match the original Material search bar control geometry.
     Frame::new()
-        .fill(ui.visuals().widgets.inactive.weak_bg_fill)
+        .fill(palette.surface_container)
         .stroke(Stroke::new(
             metrics.strokes.outline,
-            ui.visuals().widgets.noninteractive.bg_stroke.color,
+            palette.outline_variant,
         ))
         .corner_radius(CornerRadius::same(
             metrics.corner_radii.border_radius_12 as u8,
@@ -459,7 +461,12 @@ fn search_bar_clear_button(token: &'static str, svg: &'static str) -> Button<'st
 fn add_search_bar_clear_button(ui: &mut Ui, token: &'static str, svg: &'static str) -> Response {
     let image = Image::from_bytes(scene_icon_uri(token), svg.as_bytes());
     let response = ui.add(search_bar_clear_button(token, svg));
-    let tint = ui.style().interact(&response).fg_stroke.color;
+    let palette = material_palette_for_visuals(ui.visuals());
+    let tint = if response.hovered() || response.has_focus() {
+        palette.on_surface
+    } else {
+        palette.on_surface_variant
+    };
     paint_icon(
         ui,
         &image,

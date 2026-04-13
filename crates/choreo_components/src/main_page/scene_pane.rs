@@ -7,6 +7,7 @@ use egui::UiBuilder;
 use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::state::ChoreoMainState;
 use crate::choreo_main::state::InteractionMode;
+use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::scene_list_item::SceneItemState;
 use crate::scenes;
 use crate::scenes::state::ScenesState;
@@ -33,7 +34,11 @@ pub(super) fn draw_scenes_drawer(
     ui.set_width(DRAWER_WIDTH_LEFT_PX);
     ui.set_min_width(DRAWER_WIDTH_LEFT_PX);
     ui.painter()
-        .rect_filled(panel_rect, 0.0, ui.visuals().window_fill);
+        .rect_filled(
+            panel_rect,
+            0.0,
+            material_palette_for_visuals(ui.visuals()).surface_container,
+        );
     if cfg!(debug_assertions) {
         ui.painter().rect_stroke(
             panel_rect,

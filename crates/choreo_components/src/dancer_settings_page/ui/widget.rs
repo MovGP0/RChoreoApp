@@ -29,6 +29,7 @@ use crate::material::components::drawer_host::actions::DrawerHostAction;
 use crate::material::components::drawer_host::state::DrawerHostOpenMode;
 use crate::material::components::drawer_host::state::DrawerHostState;
 use crate::material::components::drawer_host::ui::draw_with_slots_in_rect;
+use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
@@ -67,6 +68,7 @@ pub fn draw(ui: &mut Ui, state: &DancerSettingsPageState) -> Vec<DancerSettingsP
     let mut dialog_action = None;
     let locale = "en";
     let dialog_metrics = dialog_metrics_tokens();
+    let palette = material_palette_for_visuals(ui.visuals());
 
     let close_requested = draw_dialog_host_with_panel(
         ui,
@@ -74,9 +76,9 @@ pub fn draw(ui: &mut Ui, state: &DancerSettingsPageState) -> Vec<DancerSettingsP
             id_source: "dancer_settings_page_dialog_host",
             is_open: state.is_dialog_open,
             close_on_click_away: true,
-            overlay_color: ui.visuals().window_fill().linear_multiply(0.7),
-            dialog_background: ui.visuals().widgets.noninteractive.bg_fill,
-            dialog_text_color: ui.visuals().text_color(),
+            overlay_color: palette.background_modal,
+            dialog_background: palette.surface_container_low,
+            dialog_text_color: palette.on_surface,
             dialog_padding: dialog_metrics.dialog_padding,
             dialog_margin: dialog_metrics.dialog_margin,
             dialog_corner_radius: dialog_metrics.dialog_corner_radius,
@@ -92,7 +94,7 @@ pub fn draw(ui: &mut Ui, state: &DancerSettingsPageState) -> Vec<DancerSettingsP
                 .show(ui.ctx(), |ui| {
                     let local_rect = Rect::from_min_size(egui::Pos2::ZERO, top_bar_rect.size());
                     ui.painter()
-                        .rect_filled(local_rect, 0.0, ui.visuals().panel_fill);
+                        .rect_filled(local_rect, 0.0, palette.background);
                     let _ = ui.scope_builder(UiBuilder::new().max_rect(local_rect), |ui| {
                         draw_top_bar(ui, state, &mut page_actions, locale);
                     });
@@ -223,10 +225,11 @@ fn draw_main_content(
     actions: &mut Vec<DancerSettingsPageAction>,
     locale: &str,
 ) {
+    let palette = material_palette_for_visuals(ui.visuals());
     let drawer_state = drawer_host_state(
         state,
-        ui.visuals().window_fill().linear_multiply(0.7),
-        ui.visuals().panel_fill,
+        palette.background_modal,
+        palette.background,
     );
 
     let mut content_actions: Vec<DancerSettingsPageAction> = Vec::new();
@@ -280,8 +283,9 @@ fn draw_top_bar(
 }
 
 fn draw_footer(ui: &mut Ui, actions: &mut Vec<DancerSettingsPageAction>, locale: &str) {
+    let palette = material_palette_for_visuals(ui.visuals());
     ui.painter()
-        .rect_filled(ui.max_rect(), 0.0, ui.visuals().window_fill);
+        .rect_filled(ui.max_rect(), 0.0, palette.surface_container);
     ui.set_width(ui.max_rect().width());
     ui.set_min_height(footer_height_token());
     ui.spacing_mut().item_spacing = vec2(
@@ -309,12 +313,10 @@ fn draw_content(
     actions: &mut Vec<DancerSettingsPageAction>,
     locale: &str,
 ) {
+    let palette = material_palette_for_visuals(ui.visuals());
     let surface_rect = main_content_rect(ui.max_rect());
-    ui.painter().rect_filled(
-        surface_rect,
-        CornerRadius::ZERO,
-        ui.visuals().faint_bg_color,
-    );
+    ui.painter()
+        .rect_filled(surface_rect, CornerRadius::ZERO, palette.surface_container_low);
 
     let footer_rect = footer_rect(surface_rect);
     let scroll_rect = scroll_rect(surface_rect);
@@ -571,11 +573,12 @@ fn draw_swap_dialog_dancer_row(ui: &mut Ui, dancer_name: &str, dancer_color: Col
 }
 
 fn settings_card_frame(ui: &Ui) -> Frame {
+    let palette = material_palette_for_visuals(ui.visuals());
     Frame::new()
-        .fill(ui.visuals().window_fill)
+        .fill(palette.surface_container)
         .stroke(Stroke::new(
             material_style_metrics().strokes.outline,
-            ui.visuals().widgets.noninteractive.bg_stroke.color,
+            palette.outline_variant,
         ))
         .corner_radius(CornerRadius::same(card_corner_radius_token() as u8))
         .inner_margin(Margin::same(content_spacing_token() as i8))

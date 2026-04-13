@@ -143,7 +143,7 @@ pub(super) fn draw_response(
 
     if hover_progress > 0.0 {
         let overlay_fill = state_layer_fill(
-            ui.visuals(),
+            palette,
             checked,
             StateLayerVisualState {
                 interactive: enabled,
@@ -184,24 +184,18 @@ fn disabled_bar_color(palette: MaterialPalette) -> Color32 {
 
 #[must_use]
 fn state_layer_fill(
-    visuals: &egui::Visuals,
+    palette: MaterialPalette,
     checked: bool,
     state: StateLayerVisualState,
 ) -> Color32 {
-    let widget_visuals = if !state.interactive {
-        visuals.widgets.noninteractive
-    } else if state.pressed || state.focused {
-        visuals.widgets.active
-    } else if state.hovered {
-        visuals.widgets.hovered
-    } else {
-        visuals.widgets.inactive
-    };
-
     if checked {
-        visuals.selection.bg_fill
+        palette.secondary_container
+    } else if !state.interactive {
+        palette.surface_container_low
+    } else if state.pressed || state.focused || state.hovered {
+        palette.surface_container_high
     } else {
-        widget_visuals.weak_bg_fill
+        palette.surface_container
     }
 }
 
@@ -232,7 +226,6 @@ mod tests {
     use crate::ThemeMode;
     use crate::styling::material_animations::MaterialAnimation;
     use crate::styling::material_animations::MaterialAnimations;
-    use crate::styling::material_palette::apply_material_visuals;
     use crate::styling::material_palette::material_palette_for_theme;
     use crate::styling::material_schemes::MaterialSchemes;
 
@@ -250,16 +243,13 @@ mod tests {
 
     #[test]
     fn checked_hover_fill_uses_material_selection_background() {
-        let context = egui::Context::default();
         let schemes = MaterialSchemes::default();
         let theme_mode = ThemeMode::Dark;
-        apply_material_visuals(&context, &schemes, theme_mode);
-        let visuals = context.style().visuals.clone();
         let palette = material_palette_for_theme(&schemes, theme_mode);
 
         assert_eq!(
             state_layer_fill(
-                &visuals,
+                palette,
                 true,
                 StateLayerVisualState {
                     interactive: true,
@@ -274,17 +264,14 @@ mod tests {
 
     #[test]
     fn unchecked_hover_fill_uses_hover_container_in_dark_mode() {
-        let context = egui::Context::default();
         let schemes = MaterialSchemes::default();
         let theme_mode = ThemeMode::Dark;
-        apply_material_visuals(&context, &schemes, theme_mode);
-        let visuals = context.style().visuals.clone();
         let palette = palette_fixture();
 
         assert_eq!(checked_bar_color(palette), palette.secondary);
         assert_eq!(
             state_layer_fill(
-                &visuals,
+                material_palette_for_theme(&schemes, theme_mode),
                 false,
                 StateLayerVisualState {
                     interactive: true,

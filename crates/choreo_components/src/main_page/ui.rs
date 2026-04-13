@@ -12,6 +12,7 @@ use crate::choreo_main::state::ChoreoMainState;
 use crate::choreography_settings;
 use crate::floor;
 use crate::material::components::drawer_host::ui::draw_with_slots_in_rect;
+use crate::material::styling::material_palette::material_palette_for_visuals;
 
 pub use super::layout::audio_panel_height_px;
 pub use super::layout::audio_panel_rect;
@@ -71,6 +72,7 @@ pub const fn audio_panel_layer_order() -> egui::Order {
 
 pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     let mut actions: Vec<ChoreoMainAction> = Vec::new();
+    let palette = material_palette_for_visuals(ui.visuals());
     ui.spacing_mut().item_spacing = vec2(GRID_12_PX, GRID_12_PX);
     let page_rect = shell_rect(ui);
     let audio_panel_height = audio_panel_height_px(state.is_audio_player_open);
@@ -82,7 +84,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
         .show(ui.ctx(), |ui| {
             ui.set_clip_rect(top_bar_rect);
             ui.painter()
-                .rect_filled(top_bar_rect, 0.0, ui.visuals().panel_fill);
+                .rect_filled(top_bar_rect, 0.0, palette.background);
             if cfg!(debug_assertions) {
                 ui.painter().rect_stroke(
                     top_bar_rect,
@@ -154,7 +156,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
                 ui.set_width(audio_rect.width());
                 ui.set_min_height(audio_rect.height());
                 ui.painter()
-                    .rect_filled(audio_rect, 0.0, ui.visuals().panel_fill);
+                    .rect_filled(audio_rect, 0.0, palette.background);
                 if cfg!(debug_assertions) {
                     ui.painter().rect_stroke(
                         audio_rect,
@@ -193,7 +195,11 @@ fn draw_floor_host_content(
     ui.set_clip_rect(host_rect);
     ui.set_min_size(host_rect.size());
     ui.painter()
-        .rect_filled(host_rect, 0.0, ui.visuals().faint_bg_color);
+        .rect_filled(
+            host_rect,
+            0.0,
+            material_palette_for_visuals(ui.visuals()).surface_container_low,
+        );
     if cfg!(debug_assertions) {
         ui.painter().rect_stroke(
             host_rect,
@@ -219,7 +225,11 @@ fn draw_settings_drawer(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainA
     ui.set_width(panel_width);
     ui.set_min_width(panel_width);
     ui.painter()
-        .rect_filled(panel_rect, 0.0, ui.visuals().window_fill);
+        .rect_filled(
+            panel_rect,
+            0.0,
+            material_palette_for_visuals(ui.visuals()).surface_container,
+        );
     if cfg!(debug_assertions) {
         ui.painter().rect_stroke(
             panel_rect,

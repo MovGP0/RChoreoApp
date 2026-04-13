@@ -5,6 +5,7 @@ use crate::main_page;
 use crate::material::components::dialog_host::DialogHostProps;
 use crate::material::components::dialog_host::dialog_metrics_tokens;
 use crate::material::components::dialog_host::draw_dialog_host;
+use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::settings;
 
@@ -20,6 +21,7 @@ pub const fn content_spacing_token() -> f32 {
 pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
     let mut actions: Vec<ChoreoMainAction> = Vec::new();
     let dialog_metrics = dialog_metrics_tokens();
+    let palette = material_palette_for_visuals(ui.visuals());
 
     let close_requested = draw_dialog_host(
         ui,
@@ -27,9 +29,9 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
             id_source: "choreo_main_dialog_host",
             is_open: state.is_dialog_open,
             close_on_click_away: true,
-            overlay_color: ui.visuals().window_fill().linear_multiply(0.7),
-            dialog_background: ui.visuals().widgets.noninteractive.bg_fill,
-            dialog_text_color: ui.visuals().text_color(),
+            overlay_color: palette.background_modal,
+            dialog_background: palette.surface_container_low,
+            dialog_text_color: palette.on_surface,
             dialog_padding: dialog_metrics.dialog_padding,
             dialog_margin: dialog_metrics.dialog_margin,
             dialog_corner_radius: dialog_metrics.dialog_corner_radius,

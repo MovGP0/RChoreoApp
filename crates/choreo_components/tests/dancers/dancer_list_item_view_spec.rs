@@ -5,6 +5,7 @@ use egui::vec2;
 
 use crate::dancers;
 use crate::dancers::Report;
+use choreo_components::material::styling::material_palette::MaterialPalette;
 use choreo_components::material::styling::material_typography::TypographyRole;
 
 macro_rules! check_eq {
@@ -97,25 +98,21 @@ fn dancer_list_item_view_spec() {
         });
 
         spec.it("maps selected state to selection colors", |_| {
-            let visuals = egui::Visuals::dark();
+            let palette = MaterialPalette::dark();
 
-            let selected = dancers::dancer_list_item_view::colors_for_selection(&visuals, true);
-            let unselected = dancers::dancer_list_item_view::colors_for_selection(&visuals, false);
+            let selected = dancers::dancer_list_item_view::colors_for_selection(palette, true);
+            let unselected = dancers::dancer_list_item_view::colors_for_selection(palette, false);
 
             let mut errors = Vec::new();
 
-            check_eq!(errors, selected.background, visuals.selection.bg_fill);
-            check_eq!(errors, selected.border, visuals.selection.stroke.color);
-            check_eq!(errors, selected.title, visuals.strong_text_color());
-            check_eq!(errors, selected.subtitle, visuals.weak_text_color());
-            check_eq!(errors, unselected.background, visuals.extreme_bg_color);
-            check_eq!(
-                errors,
-                unselected.border,
-                visuals.widgets.noninteractive.bg_stroke.color
-            );
-            check_eq!(errors, unselected.title, visuals.text_color());
-            check_eq!(errors, unselected.subtitle, visuals.weak_text_color());
+            check_eq!(errors, selected.background, palette.surface_container_high);
+            check_eq!(errors, selected.border, palette.secondary);
+            check_eq!(errors, selected.title, palette.on_surface);
+            check_eq!(errors, selected.subtitle, palette.on_surface_variant);
+            check_eq!(errors, unselected.background, palette.surface_container_low);
+            check_eq!(errors, unselected.border, palette.outline_variant);
+            check_eq!(errors, unselected.title, palette.on_surface);
+            check_eq!(errors, unselected.subtitle, palette.on_surface_variant);
             check_ne!(errors, selected.background, Color32::TRANSPARENT);
 
             assert_no_errors(errors);

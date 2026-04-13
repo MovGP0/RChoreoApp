@@ -21,6 +21,7 @@ use crate::material::components::color_picker::state::ColorPickerState;
 use crate::material::components::color_picker::ui as color_picker_ui;
 use crate::material::components::number_picker;
 use crate::material::components::number_picker::NumberPickerUiState;
+use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_style_metrics::material_style_metrics;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
@@ -420,15 +421,16 @@ fn draw_settings_card(
     add_contents: impl FnOnce(&mut Ui),
 ) {
     let metrics = material_style_metrics();
+    let palette = material_palette_for_visuals(ui.visuals());
     let content_width = settings_card_content_width(outer_width);
     ui.set_width(outer_width);
     ui.set_min_width(outer_width);
     ui.set_max_width(outer_width);
     let response = Frame::new()
-        .fill(ui.visuals().window_fill)
+        .fill(palette.surface_container)
         .stroke(Stroke::new(
             metrics.strokes.outline,
-            ui.visuals().widgets.noninteractive.bg_stroke.color,
+            palette.outline_variant,
         ))
         .corner_radius(CornerRadius::same(
             metrics.corner_radii.border_radius_8 as u8,
@@ -469,7 +471,7 @@ fn draw_settings_card(
             egui::Align2::LEFT_TOP,
             format!("{:.0} x {:.0}", rect.width(), rect.height()),
             egui::TextStyle::Monospace.resolve(ui.style()),
-            ui.visuals().widgets.noninteractive.bg_stroke.color,
+            palette.outline_variant,
         );
     }
 }

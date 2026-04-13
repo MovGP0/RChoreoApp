@@ -1,10 +1,12 @@
 use egui::Context;
+use egui::Visuals;
 
 use crate::choreo_main::MainPageBinding;
 use crate::choreo_main::MainPageDependencies;
 use crate::choreo_main::actions::ChoreoMainAction;
 use crate::choreo_main::state::ChoreoMainState;
-use crate::material::styling::material_palette::apply_material_visuals;
+use crate::material::ThemeMode;
+use crate::material::styling::material_palette::sync_material_theme;
 use crate::material::styling::material_typography as typography;
 
 use super::effects::AppShellEffect;
@@ -42,12 +44,17 @@ impl AppShellRuntime {
         state.borrow().clone()
     }
 
-    pub fn apply_main_page_visuals(&self, context: &Context, main_page_state: &ChoreoMainState) {
-        apply_material_visuals(
-            context,
+    pub fn apply_main_page_theme(&self, context: &Context, main_page_state: &ChoreoMainState) {
+        sync_material_theme(
             &main_page_state.settings_state.material_scheme,
             main_page_state.settings_state.theme_mode,
         );
+        context.set_visuals(if matches!(main_page_state.settings_state.theme_mode, ThemeMode::Dark)
+        {
+            Visuals::dark()
+        } else {
+            Visuals::light()
+        });
     }
 
     pub fn dispatch_main_page_actions(&self, actions: Vec<ChoreoMainAction>) {

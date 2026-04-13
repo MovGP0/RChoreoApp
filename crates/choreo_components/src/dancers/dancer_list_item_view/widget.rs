@@ -13,6 +13,7 @@ use crate::dancers::dancer_list_item_view::title_role;
 use crate::dancers::dancer_list_item_view::tokens::item_corner_radius_token;
 use crate::dancers::dancer_list_item_view::tokens::swatch_corner_radius_token;
 use crate::dancers::state::DancerState;
+use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_typography as typography;
 
 #[must_use]
@@ -24,7 +25,7 @@ pub fn draw(ui: &mut Ui, dancer: &DancerState, is_selected: bool) -> Response {
     }
 
     let layout = layout_for_row_rect(row_rect);
-    let colors = colors_for_selection(&ui.style().visuals, is_selected);
+    let colors = colors_for_selection(material_palette_for_visuals(ui.visuals()), is_selected);
 
     ui.painter().rect(
         layout.content_rect,

@@ -115,14 +115,10 @@ fn scene_item_view_parity_spec() {
         spec.it(
             "maps selected state to source-aligned selection colors",
             |_| {
-                let visuals = egui::Visuals::dark();
-                let palette =
-                    crate::material::styling::material_palette::MaterialPalette::from_visuals(
-                        &visuals,
-                    );
+                let palette = crate::material::styling::material_palette::MaterialPalette::dark();
 
-                let selected = scene_list_item_colors(&visuals, true);
-                let unselected = scene_list_item_colors(&visuals, false);
+                let selected = scene_list_item_colors(palette, true);
+                let unselected = scene_list_item_colors(palette, false);
 
                 let mut errors = Vec::new();
 

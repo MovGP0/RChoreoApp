@@ -8,6 +8,7 @@ use egui_material3::MaterialSlider;
 use crate::material::components;
 use crate::material::icons as ui_icons;
 use crate::material::icons::UiIconKey;
+use crate::material::styling::material_palette::material_palette_for_visuals;
 use crate::material::styling::material_typography as typography;
 use crate::material::styling::material_typography::TypographyRole;
 use crate::slider_with_ticks::ui::SliderWithTicksInteraction;
@@ -184,6 +185,7 @@ fn draw_position_slider(
     position_slider_width: f32,
     actions: &mut Vec<AudioPlayerAction>,
 ) {
+    let palette = material_palette_for_visuals(ui.visuals());
     let position = state.pending_seek_position.unwrap_or(state.position);
     let interactions = crate::slider_with_ticks::ui::draw(
         ui,
@@ -193,7 +195,7 @@ fn draw_position_slider(
             maximum: state.duration.max(0.0),
             value: position,
             tick_values: &state.tick_values,
-            tick_color: Some(ui.visuals().selection.bg_fill),
+            tick_color: Some(palette.secondary),
             width: position_slider_width,
         },
     );

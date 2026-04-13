@@ -2,7 +2,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use egui::Color32;
-use egui::Context;
 use egui::Visuals;
 
 use crate::ThemeMode;
@@ -110,6 +109,15 @@ impl MaterialPalette {
     pub fn from_schemes(schemes: &MaterialSchemes, is_dark: bool) -> Self {
         Self::from_scheme(schemes.for_dark_mode(is_dark))
     }
+
+    #[must_use]
+    pub fn is_dark(self) -> bool {
+        let red = f32::from(self.background.r()) / 255.0;
+        let green = f32::from(self.background.g()) / 255.0;
+        let blue = f32::from(self.background.b()) / 255.0;
+        let luminance = (0.2126 * red) + (0.7152 * green) + (0.0722 * blue);
+        luminance < 0.5
+    }
 }
 
 impl Default for MaterialPalette {
@@ -138,6 +146,15 @@ pub fn material_palette_for_visuals(visuals: &Visuals) -> MaterialPalette {
 }
 
 #[must_use]
+pub fn material_is_dark_for_visuals(visuals: &Visuals) -> bool {
+    CURRENT_MATERIAL_PALETTE.with(|current| {
+        current
+            .borrow()
+            .map_or(visuals.dark_mode, MaterialPalette::is_dark)
+    })
+}
+
+#[must_use]
 pub fn material_palette_for_theme(
     schemes: &MaterialSchemes,
     theme_mode: ThemeMode,
@@ -145,55 +162,10 @@ pub fn material_palette_for_theme(
     MaterialPalette::from_schemes(schemes, matches!(theme_mode, ThemeMode::Dark))
 }
 
-pub fn apply_material_visuals(context: &Context, schemes: &MaterialSchemes, theme_mode: ThemeMode) {
+pub fn sync_material_theme(schemes: &MaterialSchemes, theme_mode: ThemeMode) {
     let palette = material_palette_for_theme(schemes, theme_mode);
     let is_dark = matches!(theme_mode, ThemeMode::Dark);
     sync_egui_material3_theme(palette, is_dark);
-    let mut visuals = if is_dark {
-        Visuals::dark()
-    } else {
-        Visuals::light()
-    };
-
-    visuals.override_text_color = Some(palette.on_background);
-    visuals.hyperlink_color = palette.primary;
-    visuals.faint_bg_color = palette.surface_container_low;
-    visuals.extreme_bg_color = palette.surface_container_highest;
-    visuals.code_bg_color = palette.surface_container_high;
-    visuals.warn_fg_color = palette.error;
-    visuals.error_fg_color = palette.error;
-    visuals.window_fill = palette.surface_container;
-    visuals.panel_fill = palette.background;
-    visuals.window_stroke.color = palette.outline_variant;
-    visuals.selection.bg_fill = palette.secondary_container;
-    visuals.selection.stroke.color = palette.on_secondary_container;
-
-    visuals.widgets.noninteractive.bg_fill = palette.surface_container_low;
-    visuals.widgets.noninteractive.weak_bg_fill = palette.surface_container_low;
-    visuals.widgets.noninteractive.bg_stroke.color = palette.outline_variant;
-    visuals.widgets.noninteractive.fg_stroke.color = palette.on_surface;
-
-    visuals.widgets.inactive.bg_fill = palette.surface_container;
-    visuals.widgets.inactive.weak_bg_fill = palette.surface_container;
-    visuals.widgets.inactive.bg_stroke.color = palette.outline_variant;
-    visuals.widgets.inactive.fg_stroke.color = palette.on_surface;
-
-    visuals.widgets.hovered.bg_fill = palette.surface_container_high;
-    visuals.widgets.hovered.weak_bg_fill = palette.surface_container_high;
-    visuals.widgets.hovered.bg_stroke.color = palette.outline;
-    visuals.widgets.hovered.fg_stroke.color = palette.on_surface;
-
-    visuals.widgets.active.bg_fill = palette.primary_container;
-    visuals.widgets.active.weak_bg_fill = palette.primary_container;
-    visuals.widgets.active.bg_stroke.color = palette.primary;
-    visuals.widgets.active.fg_stroke.color = palette.on_primary_container;
-
-    visuals.widgets.open.bg_fill = palette.secondary_container;
-    visuals.widgets.open.weak_bg_fill = palette.secondary_container;
-    visuals.widgets.open.bg_stroke.color = palette.secondary;
-    visuals.widgets.open.fg_stroke.color = palette.on_secondary_container;
-
-    context.set_visuals(visuals);
 }
 
 fn sync_egui_material3_theme(palette: MaterialPalette, is_dark: bool) {
@@ -351,15 +323,14 @@ fn rgba(red: u8, green: u8, blue: u8, alpha: u8) -> Color32 {
 
 #[cfg(test)]
 mod tests {
-    use egui::Context;
-
     use crate::ThemeMode;
 
     use super::MaterialPalette;
-    use super::apply_material_visuals;
+    use super::material_is_dark_for_visuals;
     use super::material_palette;
     use super::material_palette_for_theme;
     use super::material_palette_for_visuals;
+    use super::sync_material_theme;
     use super::with_current_material_palette;
     use crate::styling::material_schemes::MaterialSchemes;
 
@@ -430,13 +401,24 @@ mod tests {
     }
 
     #[test]
-    fn apply_material_visuals_updates_egui_material3_global_theme_colors() {
-        let context = Context::default();
+    fn current_palette_darkness_overrides_visual_dark_mode_fallback() {
+        let custom_palette = MaterialPalette {
+            background: egui::Color32::from_rgb(10, 10, 10),
+            ..MaterialPalette::light()
+        };
+
+        with_current_material_palette(custom_palette, || {
+            assert!(material_is_dark_for_visuals(&egui::Visuals::light()));
+        });
+    }
+
+    #[test]
+    fn sync_material_theme_updates_egui_material3_global_theme_colors() {
         let schemes = MaterialSchemes::from_seed_colors(Some("#FF336699"), None, None);
         let theme_mode = ThemeMode::Dark;
         let expected = material_palette_for_theme(&schemes, theme_mode);
 
-        apply_material_visuals(&context, &schemes, theme_mode);
+        sync_material_theme(&schemes, theme_mode);
 
         assert_eq!(
             egui_material3::get_global_color("primary"),

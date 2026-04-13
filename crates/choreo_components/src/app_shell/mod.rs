@@ -60,8 +60,8 @@ impl AppShellStore {
         if self.state.show_splash_screen {
             let main_page_state = self.runtime.snapshot_main_page_state();
             self.runtime
-                .apply_main_page_visuals(context, &main_page_state);
-            ui::draw_splash(context, &self.state);
+                .apply_main_page_theme(context, &main_page_state);
+            ui::draw_splash(context, &self.state, &main_page_state);
             self.dispatch_with_context(AppShellAction::SplashPresented, context);
             return;
         }
@@ -69,7 +69,7 @@ impl AppShellStore {
         let mut request_audio_repaint = self.runtime.tick_audio_runtime();
         let main_page_state = self.runtime.snapshot_main_page_state();
         self.runtime
-            .apply_main_page_visuals(context, &main_page_state);
+            .apply_main_page_theme(context, &main_page_state);
         let actions = ui::draw_main_page(context, &main_page_state);
         self.runtime.dispatch_main_page_actions(actions);
 
@@ -164,7 +164,7 @@ mod app_shell_store_spec {
     }
 
     #[test]
-    fn ui_applies_dynamic_material_visuals_from_settings_state() {
+    fn ui_syncs_dynamic_material_theme_from_settings_state() {
         let context = egui::Context::default();
         let mut shell = AppShellStore::new("ChoreoApp");
 
@@ -201,8 +201,6 @@ mod app_shell_store_spec {
 
         let visuals = context.style().visuals.clone();
         assert!(visuals.dark_mode);
-        assert_eq!(visuals.panel_fill, expected.background);
-        assert_eq!(visuals.selection.bg_fill, expected.secondary_container);
         assert_eq!(
             egui_material3::get_global_color("primary"),
             expected.primary
