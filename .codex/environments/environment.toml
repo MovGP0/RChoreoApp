@@ -6,6 +6,16 @@ name = "RChoreoApp"
 script = ""
 
 [[actions]]
+name = "Run macOS Desktop"
+icon = "run"
+command = "zsh -lc 'cargo run --package rchoreo_desktop'"
+
+[[actions]]
+name = "Build macOS Desktop"
+icon = "run"
+command = "zsh -lc 'cargo build --package rchoreo_desktop'"
+
+[[actions]]
 name = "Run Desktop"
 icon = "run"
 command = "cargo run --package rchoreo_desktop"
