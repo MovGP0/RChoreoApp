@@ -1,4 +1,7 @@
 {
-  "database": "beads.db",
-  "jsonl_export": "issues.jsonl"
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "ChoreoAppRS",
+  "project_id": "a20790d0-b119-40c9-97b9-218c87736ffd"
 }

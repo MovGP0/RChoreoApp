@@ -60,3 +60,7 @@
 # - linear.api-key
 # - github.org
 # - github.repo
+
+sync.remote: "git+https://github.com/MovGP0/RChoreoApp.git"
+
+export.auto: true
