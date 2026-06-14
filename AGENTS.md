@@ -45,6 +45,8 @@ Rules:
 
 ## UI Translations
 
+See `docs/Internationalization.md` for the regional translation workflow and validation rules.
+
 - Use a dedicated translation module in the egui layer for all UI strings.
 - Bind labels/text in egui from centralized translation lookups.
 - ViewModels must not contain UI strings or translation keys.
