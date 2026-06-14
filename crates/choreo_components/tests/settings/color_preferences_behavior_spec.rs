@@ -72,9 +72,18 @@ fn color_preferences_behavior_spec() {
                 check!(&mut errors, !state.use_primary_color);
                 check!(&mut errors, !state.use_secondary_color);
                 check!(&mut errors, !state.use_tertiary_color);
-                check!(&mut errors, !state.preferences.contains_key(PRIMARY_COLOR_KEY));
-                check!(&mut errors, !state.preferences.contains_key(SECONDARY_COLOR_KEY));
-                check!(&mut errors, !state.preferences.contains_key(TERTIARY_COLOR_KEY));
+                check!(
+                    &mut errors,
+                    !state.preferences.contains_key(PRIMARY_COLOR_KEY)
+                );
+                check!(
+                    &mut errors,
+                    !state.preferences.contains_key(SECONDARY_COLOR_KEY)
+                );
+                check!(
+                    &mut errors,
+                    !state.preferences.contains_key(TERTIARY_COLOR_KEY)
+                );
 
                 assert_no_errors!(&errors);
             },

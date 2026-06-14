@@ -76,10 +76,7 @@ fn overlay_visibility_respects_open_drawers_and_click_away_flags() {
     let mut errors = Vec::new();
 
     check!(errors, !overlay_visible(&hidden, 1280.0));
-    check!(
-        errors,
-        !overlay_visible(&left_without_click_away, 1280.0)
-    );
+    check!(errors, !overlay_visible(&left_without_click_away, 1280.0));
     check!(errors, overlay_visible(&right_with_click_away, 1280.0));
 
     assert_no_errors(errors);

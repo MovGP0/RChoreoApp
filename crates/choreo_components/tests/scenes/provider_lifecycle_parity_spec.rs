@@ -88,7 +88,11 @@ fn provider_activates_behaviors_and_dispatches_actions() {
 
     let mut errors = Vec::new();
 
-    check_eq!(errors, provider.activation_order[0], ScenesBehaviorKind::Load);
+    check_eq!(
+        errors,
+        provider.activation_order[0],
+        ScenesBehaviorKind::Load
+    );
     check_eq!(
         errors,
         provider.activation_order[1],

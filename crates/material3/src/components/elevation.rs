@@ -49,32 +49,32 @@ pub fn elevation_shadows(
         (false, 1) => (
             tokens.elevations.level_1.outer,
             tokens.elevations.level_1.inner,
-            palette.shadow_30,
-            palette.shadow_15,
+            palette.elevation.shadow_30,
+            palette.elevation.shadow_15,
         ),
         (false, 2) => (
             tokens.elevations.level_2.outer,
             tokens.elevations.level_2.inner,
-            palette.shadow_30,
-            palette.shadow_15,
+            palette.elevation.shadow_30,
+            palette.elevation.shadow_15,
         ),
         (false, 3) => (
             tokens.elevations.level_3.outer,
             tokens.elevations.level_3.inner,
-            palette.shadow_15,
-            palette.shadow_30,
+            palette.elevation.shadow_15,
+            palette.elevation.shadow_30,
         ),
         (false, 4) => (
             tokens.elevations.level_4.outer,
             tokens.elevations.level_4.inner,
-            palette.shadow_15,
-            palette.shadow_30,
+            palette.elevation.shadow_15,
+            palette.elevation.shadow_30,
         ),
         (false, _) => (
             tokens.elevations.level_5.outer,
             tokens.elevations.level_5.inner,
-            palette.shadow_15,
-            palette.shadow_30,
+            palette.elevation.shadow_15,
+            palette.elevation.shadow_30,
         ),
         (true, 1) => (
             ElevationShadow {
@@ -87,8 +87,8 @@ pub fn elevation_shadows(
                 blur: 2.0,
                 opacity: 0.30,
             },
-            palette.shadow_15,
-            palette.shadow_30,
+            palette.elevation.shadow_15,
+            palette.elevation.shadow_30,
         ),
         (true, 2) => (
             ElevationShadow {
@@ -101,26 +101,26 @@ pub fn elevation_shadows(
                 blur: 2.0,
                 opacity: 0.30,
             },
-            palette.shadow_15,
-            palette.shadow_30,
+            palette.elevation.shadow_15,
+            palette.elevation.shadow_30,
         ),
         (true, 3) => (
             tokens.elevations.level_3.outer,
             tokens.elevations.level_3.inner,
-            palette.shadow_15,
-            palette.shadow_30,
+            palette.elevation.shadow_15,
+            palette.elevation.shadow_30,
         ),
         (true, 4) => (
             tokens.elevations.level_4.outer,
             tokens.elevations.level_4.inner,
-            palette.shadow_15,
-            palette.shadow_30,
+            palette.elevation.shadow_15,
+            palette.elevation.shadow_30,
         ),
         (true, _) => (
             tokens.elevations.level_5.outer,
             tokens.elevations.level_5.inner,
-            palette.shadow_15,
-            palette.shadow_30,
+            palette.elevation.shadow_15,
+            palette.elevation.shadow_30,
         ),
     };
     [
@@ -174,8 +174,8 @@ mod tests {
     fn dark_mode_swaps_shadow_opacity_order() {
         let palette = MaterialPalette::dark();
         let shadows = elevation_shadows(elevation_spec(Color32::WHITE, 12.0, 1, true), palette);
-        assert_eq!(shadows[0].color, palette.shadow_15);
-        assert_eq!(shadows[1].color, palette.shadow_30);
+        assert_eq!(shadows[0].color, palette.elevation.shadow_15);
+        assert_eq!(shadows[1].color, palette.elevation.shadow_30);
         assert_eq!(shadows[0].blur, 3.0);
         assert_eq!(shadows[1].blur, 2.0);
     }

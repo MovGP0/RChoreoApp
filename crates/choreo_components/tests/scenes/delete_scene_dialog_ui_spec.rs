@@ -75,7 +75,11 @@ fn delete_scene_dialog_view_model_uses_default_name_when_scene_name_is_blank() {
     let mut errors = Vec::new();
 
     check_eq!(errors, view_model.scene_name, "this scene");
-    check_eq!(errors, view_model.message_text, "Delete scene \"this scene\"?");
+    check_eq!(
+        errors,
+        view_model.message_text,
+        "Delete scene \"this scene\"?"
+    );
 
     assert!(
         errors.is_empty(),

@@ -21,11 +21,7 @@ macro_rules! check_eq {
 }
 
 fn assert_no_errors(errors: Vec<String>) {
-    assert!(
-        errors.is_empty(),
-        "{}",
-        errors.join("\n")
-    );
+    assert!(errors.is_empty(), "{}", errors.join("\n"));
 }
 
 #[derive(Clone)]

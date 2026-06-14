@@ -48,8 +48,14 @@ fn audio_position_interpolation_updates_interpolated_positions() {
     let mut errors = Vec::new();
 
     check_eq!(errors, state.interpolated_positions.len(), 1);
-    check!(errors, (state.interpolated_positions[0].x - 5.0).abs() < 0.0001);
-    check!(errors, (state.interpolated_positions[0].y - 0.0).abs() < 0.0001);
+    check!(
+        errors,
+        (state.interpolated_positions[0].x - 5.0).abs() < 0.0001
+    );
+    check!(
+        errors,
+        (state.interpolated_positions[0].y - 0.0).abs() < 0.0001
+    );
 
     assert_no_errors(errors);
 }

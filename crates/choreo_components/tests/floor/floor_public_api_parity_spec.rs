@@ -63,7 +63,11 @@ fn floor_view_model_public_api_matches_non_ui_pipeline_contract() {
     let mut errors = Vec::new();
 
     check_eq!(errors, command.canvas_view.id, 7);
-    check_eq!(errors, command.event_args.position, Point::new(120.0, 144.0));
+    check_eq!(
+        errors,
+        command.event_args.position,
+        Point::new(120.0, 144.0)
+    );
 
     assert_no_errors(errors);
 }

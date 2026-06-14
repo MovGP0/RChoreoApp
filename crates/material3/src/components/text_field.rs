@@ -320,7 +320,7 @@ pub fn filled_text_field_container_color(
     } else {
         palette
             .surface_container_low
-            .gamma_multiply(palette.disable_opacity)
+            .gamma_multiply(palette.state_layer_opacities.content_disabled)
     }
 }
 
@@ -374,7 +374,7 @@ mod tests {
             filled_text_field_container_color(palette, false),
             palette
                 .surface_container_low
-                .gamma_multiply(palette.disable_opacity)
+                .gamma_multiply(palette.state_layer_opacities.content_disabled)
         );
     }
 

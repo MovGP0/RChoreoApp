@@ -61,7 +61,7 @@ impl<'a> BaseDialog<'a> {
         let overlay_rect = ui.max_rect();
         let modal_response = ui.allocate_rect(overlay_rect, Sense::click());
         ui.painter()
-            .rect_filled(overlay_rect, 0.0, palette.background_modal);
+            .rect_filled(overlay_rect, 0.0, palette.overlay.background_modal);
 
         let mut action_clicked = None;
         let mut action_button_clicked = None;

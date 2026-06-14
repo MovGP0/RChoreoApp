@@ -24,10 +24,7 @@ fn update_dancer_details_behavior_spec() {
                 macro_rules! check {
                     ($errors:expr, $condition:expr) => {
                         if !$condition {
-                            $errors.push(format!(
-                                "condition failed: {}",
-                                stringify!($condition)
-                            ));
+                            $errors.push(format!("condition failed: {}", stringify!($condition)));
                         }
                     };
                 }

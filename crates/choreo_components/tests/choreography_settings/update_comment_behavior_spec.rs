@@ -43,7 +43,11 @@ fn update_comment_trims_and_sets_optional_comment() {
 
     let mut errors = Vec::new();
 
-    check_eq!(errors, state.choreography.comment.as_deref(), Some("comment text"));
+    check_eq!(
+        errors,
+        state.choreography.comment.as_deref(),
+        Some("comment text")
+    );
     check_eq!(errors, state.comment, "comment text");
     check!(errors, state.redraw_requested);
 

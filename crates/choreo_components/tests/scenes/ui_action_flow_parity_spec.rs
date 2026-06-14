@@ -99,8 +99,16 @@ fn scene_pane_action_flow_excludes_non_parity_controls() {
 fn scene_toolbar_icons_match_original_slint_catalog() {
     let mut errors = Vec::new();
 
-    check_eq!(errors, scene_add_before_icon().slint_name, "TableRowPlusBefore");
-    check_eq!(errors, scene_add_after_icon().slint_name, "TableRowPlusAfter");
+    check_eq!(
+        errors,
+        scene_add_before_icon().slint_name,
+        "TableRowPlusBefore"
+    );
+    check_eq!(
+        errors,
+        scene_add_after_icon().slint_name,
+        "TableRowPlusAfter"
+    );
     check_eq!(errors, scene_delete_icon().slint_name, "Delete");
     check_eq!(errors, open_choreography_icon().slint_name, "FolderOpen");
     check_eq!(errors, save_choreography_icon().slint_name, "ContentSave");
@@ -125,12 +133,32 @@ fn scene_pane_layout_reserves_space_for_search_and_toolbar_rows() {
 fn scene_search_bar_text_width_is_anchored_to_panel_width() {
     let mut errors = Vec::new();
 
-    check_eq!(errors, scene_search_bar_content_width(300.0, 10.0, 4.0), 286.0);
-    check_eq!(errors, scene_search_bar_text_edit_width(286.0, 12.0, 24.0), 214.0);
-    check_eq!(errors, scene_search_bar_content_width(180.0, 10.0, 4.0), 166.0);
-    check_eq!(errors, scene_search_bar_text_edit_width(166.0, 12.0, 24.0), 94.0);
+    check_eq!(
+        errors,
+        scene_search_bar_content_width(300.0, 10.0, 4.0),
+        286.0
+    );
+    check_eq!(
+        errors,
+        scene_search_bar_text_edit_width(286.0, 12.0, 24.0),
+        214.0
+    );
+    check_eq!(
+        errors,
+        scene_search_bar_content_width(180.0, 10.0, 4.0),
+        166.0
+    );
+    check_eq!(
+        errors,
+        scene_search_bar_text_edit_width(166.0, 12.0, 24.0),
+        94.0
+    );
     check_eq!(errors, scene_search_bar_content_width(12.0, 10.0, 4.0), 0.0);
-    check_eq!(errors, scene_search_bar_text_edit_width(60.0, 12.0, 24.0), 0.0);
+    check_eq!(
+        errors,
+        scene_search_bar_text_edit_width(60.0, 12.0, 24.0),
+        0.0
+    );
 
     assert_no_errors(errors);
 }

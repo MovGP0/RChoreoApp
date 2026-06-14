@@ -68,7 +68,11 @@ fn navigate_main_to_dancers_spec() {
                 check_eq!(errors, state.dancers_state.dancers[1].name, "Bob");
                 check_eq!(errors, state.dancers_state.global.roles.len(), 2);
                 check_eq!(errors, state.dancers_state.global.scenes.len(), 1);
-                check_eq!(errors, state.dancers_state.global.scenes[0].positions.len(), 2);
+                check_eq!(
+                    errors,
+                    state.dancers_state.global.scenes[0].positions.len(),
+                    2
+                );
 
                 assert_no_errors(errors);
             },

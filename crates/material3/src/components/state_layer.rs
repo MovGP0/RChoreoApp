@@ -55,16 +55,16 @@ impl<'a> StateLayerStyle<'a> {
 #[must_use]
 pub fn state_layer_opacity(style: StateLayerStyle<'_>, palette: MaterialPalette) -> f32 {
     if !style.enabled && style.display_background {
-        return palette.state_layer_opacity_focus;
+        return palette.state_layer_opacities.focus;
     }
     if style.enabled && style.pressed_or_enter() {
-        return palette.state_layer_opacity_press;
+        return palette.state_layer_opacities.press;
     }
     if style.enabled && style.has_focus {
-        return palette.state_layer_opacity_focus;
+        return palette.state_layer_opacities.focus;
     }
     if style.enabled && style.has_hover && !style.disable_hover {
-        return palette.state_layer_opacity_hover;
+        return palette.state_layer_opacities.hover;
     }
     0.0
 }
@@ -96,7 +96,7 @@ pub fn paint_state_layer(
                 ripple_radius,
                 style
                     .color
-                    .gamma_multiply(palette.state_layer_opacity_press),
+                    .gamma_multiply(palette.state_layer_opacities.press),
             );
         } else {
             painter.circle_filled(
@@ -104,7 +104,7 @@ pub fn paint_state_layer(
                 ripple_radius,
                 style
                     .color
-                    .gamma_multiply(palette.state_layer_opacity_press),
+                    .gamma_multiply(palette.state_layer_opacities.press),
             );
         }
     }
@@ -185,7 +185,7 @@ mod tests {
                 opacity = state_layer_opacity(style, palette);
             });
         });
-        assert_eq!(opacity, palette.state_layer_opacity_press);
+        assert_eq!(opacity, palette.state_layer_opacities.press);
     }
 
     #[test]

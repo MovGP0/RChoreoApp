@@ -25,7 +25,11 @@ fn next_checked_state_matches_enabled_and_toggle_on_click_semantics() {
     check_eq!(errors, next_checked_state(true, true, false, true), true);
     check_eq!(errors, next_checked_state(false, true, true, false), false);
 
-    assert!(errors.is_empty(), "Assertion failures:\n{}", errors.join("\n"));
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]
@@ -55,5 +59,9 @@ fn widget_show_clamps_size_to_slint_minimum_without_click_side_effects() {
     check_eq!(errors, size.x, minimum_button_size_token());
     check_eq!(errors, size.y, minimum_button_size_token());
 
-    assert!(errors.is_empty(), "Assertion failures:\n{}", errors.join("\n"));
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }

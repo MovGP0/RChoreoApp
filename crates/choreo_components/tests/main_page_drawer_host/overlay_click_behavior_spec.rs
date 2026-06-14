@@ -99,7 +99,11 @@ fn overlay_click_behavior_spec() {
 
             check!(errors, state.is_left_open);
             check!(errors, state.is_right_open);
-            check_eq!(errors, effects, vec![MainPageDrawerHostEffect::OverlayClicked]);
+            check_eq!(
+                errors,
+                effects,
+                vec![MainPageDrawerHostEffect::OverlayClicked]
+            );
 
             assert_no_errors(errors);
         });

@@ -28,10 +28,7 @@ fn provider_pipeline_spec() {
             macro_rules! check {
                 ($condition:expr) => {
                     if !$condition {
-                        errors.push(format!(
-                            "condition failed: {}",
-                            stringify!($condition)
-                        ));
+                        errors.push(format!("condition failed: {}", stringify!($condition)));
                     }
                 };
             }
@@ -52,11 +49,7 @@ fn provider_pipeline_spec() {
                 AudioPlayerBackend::Awedio
             );
 
-            assert!(
-                errors.is_empty(),
-                "{}",
-                errors.join("\n")
-            );
+            assert!(errors.is_empty(), "{}", errors.join("\n"));
         });
     });
 

@@ -165,8 +165,11 @@ impl<'a> ModalDrawer<'a> {
             .show(ctx, |ui| {
                 let (rect, response) =
                     ui.allocate_exact_size(available_rect.size(), Sense::click());
-                ui.painter()
-                    .rect_filled(rect, CornerRadius::ZERO, palette.background_modal);
+                ui.painter().rect_filled(
+                    rect,
+                    CornerRadius::ZERO,
+                    palette.overlay.background_modal,
+                );
                 response
             })
             .inner;

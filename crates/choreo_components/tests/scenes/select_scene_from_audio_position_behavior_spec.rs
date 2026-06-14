@@ -60,7 +60,10 @@ fn select_scene_from_audio_position_selects_matching_range() {
     let mut errors = Vec::new();
     check_eq!(
         errors,
-        state.selected_scene.as_ref().map(|scene| scene.name.as_str()),
+        state
+            .selected_scene
+            .as_ref()
+            .map(|scene| scene.name.as_str()),
         Some("Second")
     );
     check!(errors, state.selected_scene_changed);
@@ -131,7 +134,10 @@ fn select_scene_from_audio_position_does_not_emit_when_scene_does_not_change() {
     let mut errors = Vec::new();
     check_eq!(
         errors,
-        state.selected_scene.as_ref().map(|scene| scene.name.as_str()),
+        state
+            .selected_scene
+            .as_ref()
+            .map(|scene| scene.name.as_str()),
         Some("First")
     );
     check!(errors, !state.selected_scene_changed);
@@ -168,7 +174,10 @@ fn select_scene_from_audio_position_ignores_non_increasing_next_timestamp() {
     let mut errors = Vec::new();
     check_eq!(
         errors,
-        state.selected_scene.as_ref().map(|scene| scene.name.as_str()),
+        state
+            .selected_scene
+            .as_ref()
+            .map(|scene| scene.name.as_str()),
         Some("First")
     );
     check!(errors, !state.selected_scene_changed);

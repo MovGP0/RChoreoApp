@@ -49,9 +49,9 @@ pub fn draw(ui: &mut Ui, state: SliderWithTicksUiState<'_>) -> Vec<SliderWithTic
         state.minimum,
         state.maximum,
         state.tick_values,
-        state.tick_color.unwrap_or_else(|| {
-            material_palette_for_visuals(ui.visuals()).on_surface_variant
-        }),
+        state
+            .tick_color
+            .unwrap_or_else(|| material_palette_for_visuals(ui.visuals()).on_surface_variant),
     );
 
     let clamped_value = if has_valid_range {

@@ -104,22 +104,25 @@ fn link_command_keeps_trace_context_and_propagates_to_position_event() {
     let mut errors = Vec::new();
 
     let global_state = GlobalStateActor::new();
-    check!(errors, global_state.try_update(|state| {
-        state.scenes = vec![
-            scene_view_model(1, "A", Some(1.0)),
-            scene_view_model(2, "B", None),
-            scene_view_model(3, "C", Some(5.0)),
-        ];
-        state.selected_scene = state.scenes.get(1).cloned();
-        state.choreography = ChoreographyModel {
-            scenes: vec![
-                scene_model(1, "A", Some("1.0")),
-                scene_model(2, "B", None),
-                scene_model(3, "C", Some("5.0")),
-            ],
-            ..ChoreographyModel::default()
-        };
-    }));
+    check!(
+        errors,
+        global_state.try_update(|state| {
+            state.scenes = vec![
+                scene_view_model(1, "A", Some(1.0)),
+                scene_view_model(2, "B", None),
+                scene_view_model(3, "C", Some(5.0)),
+            ];
+            state.selected_scene = state.scenes.get(1).cloned();
+            state.choreography = ChoreographyModel {
+                scenes: vec![
+                    scene_model(1, "A", Some("1.0")),
+                    scene_model(2, "B", None),
+                    scene_model(3, "C", Some("5.0")),
+                ],
+                ..ChoreographyModel::default()
+            };
+        })
+    );
 
     let pipeline = build_audio_player_pipeline(AudioPlayerPipelineDependencies {
         global_state_store: Rc::clone(&global_state),
@@ -158,7 +161,11 @@ fn link_command_keeps_trace_context_and_propagates_to_position_event() {
         .poll(&mut state, pipeline.haptic_feedback.as_deref());
 
     check_eq!(errors, click_count.load(Ordering::Relaxed), 1);
-    check_eq!(errors, state.last_trace_context, Some(trace_context.clone()));
+    check_eq!(
+        errors,
+        state.last_trace_context,
+        Some(trace_context.clone())
+    );
 
     state.position = 3.0;
     pipeline.position_changed.poll(&mut state);

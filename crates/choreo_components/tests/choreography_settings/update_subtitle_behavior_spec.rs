@@ -35,7 +35,11 @@ fn update_subtitle_trims_and_sets_optional_subtitle() {
 
     let mut errors = Vec::new();
 
-    check_eq!(errors, state.choreography.subtitle.as_deref(), Some("Subtitle"));
+    check_eq!(
+        errors,
+        state.choreography.subtitle.as_deref(),
+        Some("Subtitle")
+    );
     check_eq!(errors, state.subtitle.as_str(), "Subtitle");
     check_eq!(errors, state.redraw_requested, true);
 

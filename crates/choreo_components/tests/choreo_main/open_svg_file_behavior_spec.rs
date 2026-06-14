@@ -77,7 +77,11 @@ fn open_svg_file_behavior_spec() {
                 );
                 let mut errors = Vec::new();
 
-                check_eq!(errors, state.svg_file_path.as_deref(), Some("C:/restored.svg"));
+                check_eq!(
+                    errors,
+                    state.svg_file_path.as_deref(),
+                    Some("C:/restored.svg")
+                );
                 check_eq!(
                     errors,
                     state.last_opened_svg_preference.as_deref(),

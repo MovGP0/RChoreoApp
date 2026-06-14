@@ -33,12 +33,11 @@ pub(super) fn draw_scenes_drawer(
     ui.set_min_size(panel_rect.size());
     ui.set_width(DRAWER_WIDTH_LEFT_PX);
     ui.set_min_width(DRAWER_WIDTH_LEFT_PX);
-    ui.painter()
-        .rect_filled(
-            panel_rect,
-            0.0,
-            material_palette_for_visuals(ui.visuals()).surface_container,
-        );
+    ui.painter().rect_filled(
+        panel_rect,
+        0.0,
+        material_palette_for_visuals(ui.visuals()).surface_container,
+    );
     if cfg!(debug_assertions) {
         ui.painter().rect_stroke(
             panel_rect,

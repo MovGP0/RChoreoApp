@@ -30,9 +30,21 @@ fn nav_bar_translations_bind_user_facing_strings() {
 
     let mut errors = Vec::new();
 
-    check_eq!(errors, strings.toggle_navigation_tooltip, "Toggle navigation");
-    check_eq!(errors, strings.open_settings_tooltip, "Choreography Settings");
-    check_eq!(errors, strings.reset_floor_viewport_tooltip, "Reset floor viewport");
+    check_eq!(
+        errors,
+        strings.toggle_navigation_tooltip,
+        "Toggle navigation"
+    );
+    check_eq!(
+        errors,
+        strings.open_settings_tooltip,
+        "Choreography Settings"
+    );
+    check_eq!(
+        errors,
+        strings.reset_floor_viewport_tooltip,
+        "Reset floor viewport"
+    );
     check_eq!(errors, strings.open_image_tooltip, "Open floor SVG");
     check_eq!(errors, strings.open_audio_tooltip, "Open audio file");
     check_eq!(errors, strings.mode_label, "Mode");

@@ -113,11 +113,7 @@ fn transparency_action_variant_preserves_fractional_value() {
     let action = ChoreoInfoAction::UpdateTransparency(0.42);
     let mut errors = Vec::new();
 
-    check_eq!(
-        errors,
-        action,
-        ChoreoInfoAction::UpdateTransparency(0.42)
-    );
+    check_eq!(errors, action, ChoreoInfoAction::UpdateTransparency(0.42));
 
     assert_no_errors(errors);
 }

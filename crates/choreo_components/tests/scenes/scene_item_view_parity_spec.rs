@@ -131,8 +131,16 @@ fn scene_item_view_parity_spec() {
                 check_eq!(errors, unselected.border, palette.outline_variant);
                 check_eq!(errors, unselected.title, palette.on_surface);
                 check_eq!(errors, unselected.timestamp, palette.on_surface_variant);
-                check_eq!(errors, selected.border_width, material_style_metrics().strokes.focus);
-                check_eq!(errors, unselected.border_width, material_style_metrics().strokes.outline);
+                check_eq!(
+                    errors,
+                    selected.border_width,
+                    material_style_metrics().strokes.focus
+                );
+                check_eq!(
+                    errors,
+                    unselected.border_width,
+                    material_style_metrics().strokes.outline
+                );
                 check_ne!(errors, selected.background, Color32::TRANSPARENT);
 
                 assert_no_errors(errors);

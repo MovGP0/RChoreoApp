@@ -2,8 +2,8 @@ use super::actions::ScenesAction;
 use super::choreography_with_scenes;
 use super::create_state;
 use super::reducer::reduce;
-use super::state::SceneItemState;
 use super::scene_model;
+use super::state::SceneItemState;
 
 macro_rules! check_eq {
     ($errors:expr, $left:expr, $right:expr) => {
@@ -79,7 +79,11 @@ fn cancel_delete_scene_dialog_closes_dialog() {
     let mut errors = Vec::new();
 
     check!(errors, !state.show_delete_scene_dialog);
-    check_eq!(errors, state.delete_scene_dialog_scene, None::<SceneItemState>);
+    check_eq!(
+        errors,
+        state.delete_scene_dialog_scene,
+        None::<SceneItemState>
+    );
 
     assert_no_errors(errors);
 }
@@ -100,7 +104,11 @@ fn confirm_delete_scene_dialog_requests_delete_and_closes_dialog() {
     let mut errors = Vec::new();
 
     check!(errors, !state.show_delete_scene_dialog);
-    check_eq!(errors, state.delete_scene_dialog_scene, None::<SceneItemState>);
+    check_eq!(
+        errors,
+        state.delete_scene_dialog_scene,
+        None::<SceneItemState>
+    );
     check!(errors, state.delete_scene_requested);
     check_eq!(
         errors,

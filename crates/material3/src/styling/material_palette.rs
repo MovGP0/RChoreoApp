@@ -1,5 +1,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::ops::Deref;
+use std::ops::DerefMut;
 
 use egui::Color32;
 use egui::Visuals;
@@ -9,72 +11,87 @@ use crate::styling::material_schemes::MaterialScheme;
 use crate::styling::material_schemes::MaterialSchemes;
 
 thread_local! {
-    static CURRENT_MATERIAL_PALETTE: RefCell<Option<MaterialPalette>> = const { RefCell::new(None) };
+    static CURRENT_MATERIAL_THEME: RefCell<Option<MaterialTheme>> = const { RefCell::new(None) };
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct MaterialPalette {
-    pub primary: Color32,
-    pub surface_tint: Color32,
-    pub on_primary: Color32,
-    pub primary_container: Color32,
-    pub on_primary_container: Color32,
-    pub secondary: Color32,
-    pub on_secondary: Color32,
-    pub secondary_container: Color32,
-    pub on_secondary_container: Color32,
-    pub tertiary: Color32,
-    pub on_tertiary: Color32,
-    pub tertiary_container: Color32,
-    pub on_tertiary_container: Color32,
-    pub error: Color32,
-    pub on_error: Color32,
-    pub error_container: Color32,
-    pub on_error_container: Color32,
-    pub background: Color32,
-    pub on_background: Color32,
-    pub surface: Color32,
-    pub on_surface: Color32,
-    pub surface_variant: Color32,
-    pub on_surface_variant: Color32,
-    pub outline: Color32,
-    pub outline_variant: Color32,
-    pub shadow: Color32,
-    pub scrim: Color32,
-    pub inverse_surface: Color32,
-    pub inverse_on_surface: Color32,
-    pub inverse_primary: Color32,
-    pub primary_fixed: Color32,
-    pub on_primary_fixed: Color32,
-    pub primary_fixed_dim: Color32,
-    pub on_primary_fixed_variant: Color32,
-    pub secondary_fixed: Color32,
-    pub on_secondary_fixed: Color32,
-    pub secondary_fixed_dim: Color32,
-    pub on_secondary_fixed_variant: Color32,
-    pub tertiary_fixed: Color32,
-    pub on_tertiary_fixed: Color32,
-    pub tertiary_fixed_dim: Color32,
-    pub on_tertiary_fixed_variant: Color32,
-    pub surface_dim: Color32,
-    pub surface_bright: Color32,
-    pub surface_container_lowest: Color32,
-    pub surface_container_low: Color32,
-    pub surface_container: Color32,
-    pub surface_container_high: Color32,
-    pub surface_container_highest: Color32,
-    pub shadow_15: Color32,
-    pub shadow_30: Color32,
-    pub background_modal: Color32,
-    pub state_layer_opacity_hover: f32,
-    pub state_layer_opacity_focus: f32,
-    pub state_layer_opacity_press: f32,
-    pub state_layer_opacity_disabled: f32,
-    pub state_layer_opacity_drag: f32,
-    pub disable_opacity: f32,
+pub struct MaterialTheme {
+    pub scheme: MaterialScheme,
+    pub elevation: MaterialElevationTokens,
+    pub overlay: MaterialOverlayTokens,
+    pub state_layer_opacities: MaterialStateLayerOpacityTokens,
 }
 
-impl MaterialPalette {
+// Compatibility alias for existing callers. A Material 3 palette is a tonal
+// palette; this type represents resolved scheme roles plus reusable UI tokens.
+pub type MaterialPalette = MaterialTheme;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MaterialElevationTokens {
+    pub shadow_15: Color32,
+    pub shadow_30: Color32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MaterialOverlayTokens {
+    pub background_modal: Color32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct MaterialStateLayerOpacityTokens {
+    pub hover: f32,
+    pub focus: f32,
+    pub press: f32,
+    pub disabled: f32,
+    pub drag: f32,
+    pub content_disabled: f32,
+}
+
+impl Default for MaterialElevationTokens {
+    fn default() -> Self {
+        Self {
+            shadow_15: rgba(0, 0, 0, 38),
+            shadow_30: rgba(0, 0, 0, 77),
+        }
+    }
+}
+
+impl Default for MaterialOverlayTokens {
+    fn default() -> Self {
+        Self {
+            background_modal: rgba(0, 0, 0, 128),
+        }
+    }
+}
+
+impl Default for MaterialStateLayerOpacityTokens {
+    fn default() -> Self {
+        Self {
+            hover: 0.08,
+            focus: 0.10,
+            press: 0.10,
+            disabled: 0.12,
+            drag: 0.16,
+            content_disabled: 0.38,
+        }
+    }
+}
+
+impl Deref for MaterialTheme {
+    type Target = MaterialScheme;
+
+    fn deref(&self) -> &Self::Target {
+        &self.scheme
+    }
+}
+
+impl DerefMut for MaterialTheme {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.scheme
+    }
+}
+
+impl MaterialTheme {
     #[must_use]
     pub fn light() -> Self {
         Self::from_scheme(MaterialSchemes::default().light)
@@ -120,37 +137,37 @@ impl MaterialPalette {
     }
 }
 
-impl Default for MaterialPalette {
+impl Default for MaterialTheme {
     fn default() -> Self {
         Self::light()
     }
 }
 
 #[must_use]
-pub fn material_palette(is_dark: bool) -> MaterialPalette {
-    MaterialPalette::from_dark_mode(is_dark)
+pub fn material_palette(is_dark: bool) -> MaterialTheme {
+    MaterialTheme::from_dark_mode(is_dark)
 }
 
 #[must_use]
-pub fn material_palette_for_theme_mode(theme_mode: ThemeMode) -> MaterialPalette {
-    MaterialPalette::from_theme_mode(theme_mode)
+pub fn material_palette_for_theme_mode(theme_mode: ThemeMode) -> MaterialTheme {
+    MaterialTheme::from_theme_mode(theme_mode)
 }
 
 #[must_use]
-pub fn material_palette_for_visuals(visuals: &Visuals) -> MaterialPalette {
-    CURRENT_MATERIAL_PALETTE.with(|current| {
+pub fn material_palette_for_visuals(visuals: &Visuals) -> MaterialTheme {
+    CURRENT_MATERIAL_THEME.with(|current| {
         current
             .borrow()
-            .unwrap_or_else(|| MaterialPalette::from_visuals(visuals))
+            .unwrap_or_else(|| MaterialTheme::from_visuals(visuals))
     })
 }
 
 #[must_use]
 pub fn material_is_dark_for_visuals(visuals: &Visuals) -> bool {
-    CURRENT_MATERIAL_PALETTE.with(|current| {
+    CURRENT_MATERIAL_THEME.with(|current| {
         current
             .borrow()
-            .map_or(visuals.dark_mode, MaterialPalette::is_dark)
+            .map_or(visuals.dark_mode, MaterialTheme::is_dark)
     })
 }
 
@@ -158,8 +175,8 @@ pub fn material_is_dark_for_visuals(visuals: &Visuals) -> bool {
 pub fn material_palette_for_theme(
     schemes: &MaterialSchemes,
     theme_mode: ThemeMode,
-) -> MaterialPalette {
-    MaterialPalette::from_schemes(schemes, matches!(theme_mode, ThemeMode::Dark))
+) -> MaterialTheme {
+    MaterialTheme::from_schemes(schemes, matches!(theme_mode, ThemeMode::Dark))
 }
 
 pub fn sync_material_theme(schemes: &MaterialSchemes, theme_mode: ThemeMode) {
@@ -168,7 +185,7 @@ pub fn sync_material_theme(schemes: &MaterialSchemes, theme_mode: ThemeMode) {
     sync_egui_material3_theme(palette, is_dark);
 }
 
-fn sync_egui_material3_theme(palette: MaterialPalette, is_dark: bool) {
+fn sync_egui_material3_theme(palette: MaterialTheme, is_dark: bool) {
     let global_theme = egui_material3::get_global_theme();
     let Ok(theme) = global_theme.lock() else {
         return;
@@ -181,72 +198,69 @@ fn sync_egui_material3_theme(palette: MaterialPalette, is_dark: bool) {
     } else {
         egui_material3::ThemeMode::Light
     };
-    next_theme.selected_colors = material_palette_selected_colors(palette);
+    next_theme.selected_colors = material_theme_selected_colors(palette);
     egui_material3::update_global_theme(next_theme);
 }
 
-fn material_palette_selected_colors(palette: MaterialPalette) -> HashMap<String, Color32> {
+fn material_theme_selected_colors(theme: MaterialTheme) -> HashMap<String, Color32> {
     [
-        ("primary", palette.primary),
-        ("surfaceTint", palette.surface_tint),
-        ("onPrimary", palette.on_primary),
-        ("primaryContainer", palette.primary_container),
-        ("onPrimaryContainer", palette.on_primary_container),
-        ("secondary", palette.secondary),
-        ("onSecondary", palette.on_secondary),
-        ("secondaryContainer", palette.secondary_container),
-        ("onSecondaryContainer", palette.on_secondary_container),
-        ("tertiary", palette.tertiary),
-        ("onTertiary", palette.on_tertiary),
-        ("tertiaryContainer", palette.tertiary_container),
-        ("onTertiaryContainer", palette.on_tertiary_container),
-        ("error", palette.error),
-        ("onError", palette.on_error),
-        ("errorContainer", palette.error_container),
-        ("onErrorContainer", palette.on_error_container),
-        ("background", palette.background),
-        ("onBackground", palette.on_background),
-        ("surface", palette.surface),
-        ("onSurface", palette.on_surface),
-        ("surfaceVariant", palette.surface_variant),
-        ("onSurfaceVariant", palette.on_surface_variant),
-        ("outline", palette.outline),
-        ("outlineVariant", palette.outline_variant),
-        ("shadow", palette.shadow),
-        ("scrim", palette.scrim),
-        ("inverseSurface", palette.inverse_surface),
-        ("inverseOnSurface", palette.inverse_on_surface),
-        ("inversePrimary", palette.inverse_primary),
-        ("primaryFixed", palette.primary_fixed),
-        ("onPrimaryFixed", palette.on_primary_fixed),
-        ("primaryFixedDim", palette.primary_fixed_dim),
-        ("onPrimaryFixedVariant", palette.on_primary_fixed_variant),
-        ("secondaryFixed", palette.secondary_fixed),
-        ("onSecondaryFixed", palette.on_secondary_fixed),
-        ("secondaryFixedDim", palette.secondary_fixed_dim),
-        (
-            "onSecondaryFixedVariant",
-            palette.on_secondary_fixed_variant,
-        ),
-        ("tertiaryFixed", palette.tertiary_fixed),
-        ("onTertiaryFixed", palette.on_tertiary_fixed),
-        ("tertiaryFixedDim", palette.tertiary_fixed_dim),
-        ("onTertiaryFixedVariant", palette.on_tertiary_fixed_variant),
-        ("surfaceDim", palette.surface_dim),
-        ("surfaceBright", palette.surface_bright),
-        ("surfaceContainerLowest", palette.surface_container_lowest),
-        ("surfaceContainerLow", palette.surface_container_low),
-        ("surfaceContainer", palette.surface_container),
-        ("surfaceContainerHigh", palette.surface_container_high),
-        ("surfaceContainerHighest", palette.surface_container_highest),
+        ("primary", theme.primary),
+        ("surfaceTint", theme.surface_tint),
+        ("onPrimary", theme.on_primary),
+        ("primaryContainer", theme.primary_container),
+        ("onPrimaryContainer", theme.on_primary_container),
+        ("secondary", theme.secondary),
+        ("onSecondary", theme.on_secondary),
+        ("secondaryContainer", theme.secondary_container),
+        ("onSecondaryContainer", theme.on_secondary_container),
+        ("tertiary", theme.tertiary),
+        ("onTertiary", theme.on_tertiary),
+        ("tertiaryContainer", theme.tertiary_container),
+        ("onTertiaryContainer", theme.on_tertiary_container),
+        ("error", theme.error),
+        ("onError", theme.on_error),
+        ("errorContainer", theme.error_container),
+        ("onErrorContainer", theme.on_error_container),
+        ("background", theme.background),
+        ("onBackground", theme.on_background),
+        ("surface", theme.surface),
+        ("onSurface", theme.on_surface),
+        ("surfaceVariant", theme.surface_variant),
+        ("onSurfaceVariant", theme.on_surface_variant),
+        ("outline", theme.outline),
+        ("outlineVariant", theme.outline_variant),
+        ("shadow", theme.shadow),
+        ("scrim", theme.scrim),
+        ("inverseSurface", theme.inverse_surface),
+        ("inverseOnSurface", theme.inverse_on_surface),
+        ("inversePrimary", theme.inverse_primary),
+        ("primaryFixed", theme.primary_fixed),
+        ("onPrimaryFixed", theme.on_primary_fixed),
+        ("primaryFixedDim", theme.primary_fixed_dim),
+        ("onPrimaryFixedVariant", theme.on_primary_fixed_variant),
+        ("secondaryFixed", theme.secondary_fixed),
+        ("onSecondaryFixed", theme.on_secondary_fixed),
+        ("secondaryFixedDim", theme.secondary_fixed_dim),
+        ("onSecondaryFixedVariant", theme.on_secondary_fixed_variant),
+        ("tertiaryFixed", theme.tertiary_fixed),
+        ("onTertiaryFixed", theme.on_tertiary_fixed),
+        ("tertiaryFixedDim", theme.tertiary_fixed_dim),
+        ("onTertiaryFixedVariant", theme.on_tertiary_fixed_variant),
+        ("surfaceDim", theme.surface_dim),
+        ("surfaceBright", theme.surface_bright),
+        ("surfaceContainerLowest", theme.surface_container_lowest),
+        ("surfaceContainerLow", theme.surface_container_low),
+        ("surfaceContainer", theme.surface_container),
+        ("surfaceContainerHigh", theme.surface_container_high),
+        ("surfaceContainerHighest", theme.surface_container_highest),
     ]
     .into_iter()
     .map(|(name, color)| (name.to_string(), color))
     .collect()
 }
 
-pub fn with_current_material_palette<R>(palette: MaterialPalette, draw: impl FnOnce() -> R) -> R {
-    CURRENT_MATERIAL_PALETTE.with(|current| {
+pub fn with_current_material_palette<R>(palette: MaterialTheme, draw: impl FnOnce() -> R) -> R {
+    CURRENT_MATERIAL_THEME.with(|current| {
         let previous = current.replace(Some(palette));
         let result = draw();
         current.replace(previous);
@@ -254,66 +268,12 @@ pub fn with_current_material_palette<R>(palette: MaterialPalette, draw: impl FnO
     })
 }
 
-fn from_scheme(scheme: MaterialScheme) -> MaterialPalette {
-    MaterialPalette {
-        primary: scheme.primary,
-        surface_tint: scheme.surface_tint,
-        on_primary: scheme.on_primary,
-        primary_container: scheme.primary_container,
-        on_primary_container: scheme.on_primary_container,
-        secondary: scheme.secondary,
-        on_secondary: scheme.on_secondary,
-        secondary_container: scheme.secondary_container,
-        on_secondary_container: scheme.on_secondary_container,
-        tertiary: scheme.tertiary,
-        on_tertiary: scheme.on_tertiary,
-        tertiary_container: scheme.tertiary_container,
-        on_tertiary_container: scheme.on_tertiary_container,
-        error: scheme.error,
-        on_error: scheme.on_error,
-        error_container: scheme.error_container,
-        on_error_container: scheme.on_error_container,
-        background: scheme.background,
-        on_background: scheme.on_background,
-        surface: scheme.surface,
-        on_surface: scheme.on_surface,
-        surface_variant: scheme.surface_variant,
-        on_surface_variant: scheme.on_surface_variant,
-        outline: scheme.outline,
-        outline_variant: scheme.outline_variant,
-        shadow: scheme.shadow,
-        scrim: scheme.scrim,
-        inverse_surface: scheme.inverse_surface,
-        inverse_on_surface: scheme.inverse_on_surface,
-        inverse_primary: scheme.inverse_primary,
-        primary_fixed: scheme.primary_fixed,
-        on_primary_fixed: scheme.on_primary_fixed,
-        primary_fixed_dim: scheme.primary_fixed_dim,
-        on_primary_fixed_variant: scheme.on_primary_fixed_variant,
-        secondary_fixed: scheme.secondary_fixed,
-        on_secondary_fixed: scheme.on_secondary_fixed,
-        secondary_fixed_dim: scheme.secondary_fixed_dim,
-        on_secondary_fixed_variant: scheme.on_secondary_fixed_variant,
-        tertiary_fixed: scheme.tertiary_fixed,
-        on_tertiary_fixed: scheme.on_tertiary_fixed,
-        tertiary_fixed_dim: scheme.tertiary_fixed_dim,
-        on_tertiary_fixed_variant: scheme.on_tertiary_fixed_variant,
-        surface_dim: scheme.surface_dim,
-        surface_bright: scheme.surface_bright,
-        surface_container_lowest: scheme.surface_container_lowest,
-        surface_container_low: scheme.surface_container_low,
-        surface_container: scheme.surface_container,
-        surface_container_high: scheme.surface_container_high,
-        surface_container_highest: scheme.surface_container_highest,
-        shadow_15: rgba(0, 0, 0, 38),
-        shadow_30: rgba(0, 0, 0, 77),
-        background_modal: rgba(0, 0, 0, 128),
-        state_layer_opacity_hover: 0.08,
-        state_layer_opacity_focus: 0.10,
-        state_layer_opacity_press: 0.10,
-        state_layer_opacity_disabled: 0.12,
-        state_layer_opacity_drag: 0.16,
-        disable_opacity: 0.38,
+fn from_scheme(scheme: MaterialScheme) -> MaterialTheme {
+    MaterialTheme {
+        scheme,
+        elevation: MaterialElevationTokens::default(),
+        overlay: MaterialOverlayTokens::default(),
+        state_layer_opacities: MaterialStateLayerOpacityTokens::default(),
     }
 }
 
@@ -344,7 +304,7 @@ mod tests {
             palette.surface_container_highest,
             default_schemes.light.surface_container_highest
         );
-        assert_eq!(palette.background_modal.a(), 128);
+        assert_eq!(palette.overlay.background_modal.a(), 128);
     }
 
     #[test]
@@ -377,22 +337,20 @@ mod tests {
     fn state_layer_and_shadow_opacities_match_slint_constants() {
         let palette = MaterialPalette::default();
 
-        assert_eq!(palette.state_layer_opacity_hover, 0.08);
-        assert_eq!(palette.state_layer_opacity_focus, 0.10);
-        assert_eq!(palette.state_layer_opacity_press, 0.10);
-        assert_eq!(palette.state_layer_opacity_disabled, 0.12);
-        assert_eq!(palette.state_layer_opacity_drag, 0.16);
-        assert_eq!(palette.disable_opacity, 0.38);
-        assert_eq!(palette.shadow_15.a(), 38);
-        assert_eq!(palette.shadow_30.a(), 77);
+        assert_eq!(palette.state_layer_opacities.hover, 0.08);
+        assert_eq!(palette.state_layer_opacities.focus, 0.10);
+        assert_eq!(palette.state_layer_opacities.press, 0.10);
+        assert_eq!(palette.state_layer_opacities.disabled, 0.12);
+        assert_eq!(palette.state_layer_opacities.drag, 0.16);
+        assert_eq!(palette.state_layer_opacities.content_disabled, 0.38);
+        assert_eq!(palette.elevation.shadow_15.a(), 38);
+        assert_eq!(palette.elevation.shadow_30.a(), 77);
     }
 
     #[test]
     fn frame_local_palette_overrides_visual_dark_mode_fallback() {
-        let custom_palette = MaterialPalette {
-            primary: egui::Color32::from_rgb(12, 34, 56),
-            ..MaterialPalette::light()
-        };
+        let mut custom_palette = MaterialPalette::light();
+        custom_palette.primary = egui::Color32::from_rgb(12, 34, 56);
 
         with_current_material_palette(custom_palette, || {
             let resolved = material_palette_for_visuals(&egui::Visuals::dark());
@@ -402,10 +360,8 @@ mod tests {
 
     #[test]
     fn current_palette_darkness_overrides_visual_dark_mode_fallback() {
-        let custom_palette = MaterialPalette {
-            background: egui::Color32::from_rgb(10, 10, 10),
-            ..MaterialPalette::light()
-        };
+        let mut custom_palette = MaterialPalette::light();
+        custom_palette.background = egui::Color32::from_rgb(10, 10, 10);
 
         with_current_material_palette(custom_palette, || {
             assert!(material_is_dark_for_visuals(&egui::Visuals::light()));

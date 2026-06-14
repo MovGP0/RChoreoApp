@@ -4,6 +4,7 @@ use material3::components::number_picker::ui::decrease_value;
 use material3::components::number_picker::ui::draw;
 use material3::components::number_picker::ui::increase_value;
 use material3::components::number_picker::ui::normalized_step;
+use material3::components::number_picker::ui::number_picker_layout_metrics;
 
 fn assert_no_errors(errors: Vec<String>) {
     assert!(errors.is_empty(), "{}", errors.join("\n"));
@@ -108,4 +109,30 @@ fn draw_stays_within_the_available_width() {
     });
 
     assert!(observed_width <= scoped_rect.width());
+}
+
+#[test]
+fn draw_uses_compact_control_height_for_value_and_stepper_buttons() {
+    let layout = number_picker_layout_metrics(326.0);
+    let mut errors = Vec::new();
+
+    macro_rules! check_eq {
+        ($errors:expr, $actual:expr, $expected:expr) => {{
+            let actual = $actual;
+            let expected = $expected;
+            if actual != expected {
+                $errors.push(format!(
+                    "assertion failed: left != right\n  left: `{:?}`\n right: `{:?}`",
+                    actual, expected
+                ));
+            }
+        }};
+    }
+
+    check_eq!(errors, layout.control_height, 40.0);
+    check_eq!(errors, layout.button_size, 40.0);
+    check_eq!(errors, layout.value_width, 72.0);
+    check_eq!(errors, layout.controls_width, 168.0);
+
+    assert_no_errors(errors);
 }

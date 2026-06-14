@@ -52,148 +52,146 @@ fn assert_no_errors(errors: Vec<String>) {
 
 #[test]
 fn non_ui_behavior_parity_spec() {
-    let suite =
-        rspec::describe("choreo_main non-ui behavior parity", (), |spec| {
-            spec.it(
-                "forwards open-audio requests to audio command sender",
-                |_| {
-                    let (open_audio_sender, open_audio_receiver) =
-                        bounded::<OpenAudioFileCommand>(8);
-                    let binding = MainPageBinding::new(MainPageDependencies {
-                        behavior_dependencies: ChoreoMainBehaviorDependencies {
-                            open_audio_sender: Some(open_audio_sender),
-                            ..ChoreoMainBehaviorDependencies::default()
-                        },
-                        ..MainPageDependencies::default()
-                    });
+    let suite = rspec::describe("choreo_main non-ui behavior parity", (), |spec| {
+        spec.it(
+            "forwards open-audio requests to audio command sender",
+            |_| {
+                let (open_audio_sender, open_audio_receiver) = bounded::<OpenAudioFileCommand>(8);
+                let binding = MainPageBinding::new(MainPageDependencies {
+                    behavior_dependencies: ChoreoMainBehaviorDependencies {
+                        open_audio_sender: Some(open_audio_sender),
+                        ..ChoreoMainBehaviorDependencies::default()
+                    },
+                    ..MainPageDependencies::default()
+                });
 
-                    binding.request_open_audio(OpenAudioRequested {
-                        file_path: "C:/song.mp3".to_string(),
-                        trace_context: None,
-                    });
+                binding.request_open_audio(OpenAudioRequested {
+                    file_path: "C:/song.mp3".to_string(),
+                    trace_context: None,
+                });
 
-                    let forwarded = open_audio_receiver
-                        .try_recv()
-                        .expect("open-audio command should be forwarded");
-                    assert_eq!(forwarded.file_path, "C:/song.mp3");
-                },
-            );
+                let forwarded = open_audio_receiver
+                    .try_recv()
+                    .expect("open-audio command should be forwarded");
+                assert_eq!(forwarded.file_path, "C:/song.mp3");
+            },
+        );
 
-            spec.it(
-                "applies open-image through open-svg behavior with global/preference/draw side effects",
-                |_| {
-                    let global_state_store = GlobalStateActor::new();
-                    let preferences: Rc<dyn Preferences> = Rc::new(InMemoryPreferences::new());
-                    let (draw_floor_sender, draw_floor_receiver) = sync_channel(8);
-                    let binding = MainPageBinding::new(MainPageDependencies {
-                        behavior_dependencies: ChoreoMainBehaviorDependencies {
-                            global_state_store: Some(Rc::clone(&global_state_store)),
-                            preferences: Some(Rc::clone(&preferences)),
-                            draw_floor_sender: Some(draw_floor_sender),
-                            ..ChoreoMainBehaviorDependencies::default()
-                        },
-                        ..MainPageDependencies::default()
-                    });
+        spec.it(
+            "applies open-image through open-svg behavior with global/preference/draw side effects",
+            |_| {
+                let global_state_store = GlobalStateActor::new();
+                let preferences: Rc<dyn Preferences> = Rc::new(InMemoryPreferences::new());
+                let (draw_floor_sender, draw_floor_receiver) = sync_channel(8);
+                let binding = MainPageBinding::new(MainPageDependencies {
+                    behavior_dependencies: ChoreoMainBehaviorDependencies {
+                        global_state_store: Some(Rc::clone(&global_state_store)),
+                        preferences: Some(Rc::clone(&preferences)),
+                        draw_floor_sender: Some(draw_floor_sender),
+                        ..ChoreoMainBehaviorDependencies::default()
+                    },
+                    ..MainPageDependencies::default()
+                });
 
-                    binding.request_open_image(OpenImageRequested {
-                        file_path: "C:/floor.svg".to_string(),
-                    });
+                binding.request_open_image(OpenImageRequested {
+                    file_path: "C:/floor.svg".to_string(),
+                });
 
-                    let state = binding.state();
-                    let mut errors = Vec::new();
+                let state = binding.state();
+                let mut errors = Vec::new();
 
-                    check_eq!(
-                        errors,
-                        state.borrow().svg_file_path.as_deref(),
-                        Some("C:/floor.svg")
-                    );
-                    global_state_store.drain();
-                    let global_svg = global_state_store
-                        .try_with_state(|state| state.svg_file_path.clone())
-                        .expect("global state should be readable");
-                    check_eq!(errors, global_svg.as_deref(), Some("C:/floor.svg"));
-                    check_eq!(
-                        errors,
-                        preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_SVG_FILE, ""),
-                        "C:/floor.svg"
-                    );
-                    check!(errors, draw_floor_receiver.try_recv().is_ok());
+                check_eq!(
+                    errors,
+                    state.borrow().svg_file_path.as_deref(),
+                    Some("C:/floor.svg")
+                );
+                global_state_store.drain();
+                let global_svg = global_state_store
+                    .try_with_state(|state| state.svg_file_path.clone())
+                    .expect("global state should be readable");
+                check_eq!(errors, global_svg.as_deref(), Some("C:/floor.svg"));
+                check_eq!(
+                    errors,
+                    preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_SVG_FILE, ""),
+                    "C:/floor.svg"
+                );
+                check!(errors, draw_floor_receiver.try_recv().is_ok());
 
-                    assert_no_errors(errors);
-                },
-            );
+                assert_no_errors(errors);
+            },
+        );
 
-            spec.it(
-                "applies direct open-svg actions through external side effects outside the reducer",
-                |_| {
-                    let global_state_store = GlobalStateActor::new();
-                    let preferences: Rc<dyn Preferences> = Rc::new(InMemoryPreferences::new());
-                    let (draw_floor_sender, draw_floor_receiver) = sync_channel(8);
-                    let binding = MainPageBinding::new(MainPageDependencies {
-                        behavior_dependencies: ChoreoMainBehaviorDependencies {
-                            global_state_store: Some(Rc::clone(&global_state_store)),
-                            preferences: Some(Rc::clone(&preferences)),
-                            draw_floor_sender: Some(draw_floor_sender),
-                            ..ChoreoMainBehaviorDependencies::default()
-                        },
-                        ..MainPageDependencies::default()
-                    });
+        spec.it(
+            "applies direct open-svg actions through external side effects outside the reducer",
+            |_| {
+                let global_state_store = GlobalStateActor::new();
+                let preferences: Rc<dyn Preferences> = Rc::new(InMemoryPreferences::new());
+                let (draw_floor_sender, draw_floor_receiver) = sync_channel(8);
+                let binding = MainPageBinding::new(MainPageDependencies {
+                    behavior_dependencies: ChoreoMainBehaviorDependencies {
+                        global_state_store: Some(Rc::clone(&global_state_store)),
+                        preferences: Some(Rc::clone(&preferences)),
+                        draw_floor_sender: Some(draw_floor_sender),
+                        ..ChoreoMainBehaviorDependencies::default()
+                    },
+                    ..MainPageDependencies::default()
+                });
 
-                    binding.dispatch(ChoreoMainAction::ApplyOpenSvgFile(OpenSvgFileCommand {
-                        file_path: "C:/direct-floor.svg".to_string(),
-                    }));
+                binding.dispatch(ChoreoMainAction::ApplyOpenSvgFile(OpenSvgFileCommand {
+                    file_path: "C:/direct-floor.svg".to_string(),
+                }));
 
-                    let state = binding.state();
-                    let mut errors = Vec::new();
+                let state = binding.state();
+                let mut errors = Vec::new();
 
-                    check_eq!(
-                        errors,
-                        state.borrow().svg_file_path.as_deref(),
-                        Some("C:/direct-floor.svg")
-                    );
-                    global_state_store.drain();
-                    let global_svg = global_state_store
-                        .try_with_state(|state| state.svg_file_path.clone())
-                        .expect("global state should be readable");
-                    check_eq!(errors, global_svg.as_deref(), Some("C:/direct-floor.svg"));
-                    check_eq!(
-                        errors,
-                        preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_SVG_FILE, ""),
-                        "C:/direct-floor.svg"
-                    );
-                    check!(errors, draw_floor_receiver.try_recv().is_ok());
+                check_eq!(
+                    errors,
+                    state.borrow().svg_file_path.as_deref(),
+                    Some("C:/direct-floor.svg")
+                );
+                global_state_store.drain();
+                let global_svg = global_state_store
+                    .try_with_state(|state| state.svg_file_path.clone())
+                    .expect("global state should be readable");
+                check_eq!(errors, global_svg.as_deref(), Some("C:/direct-floor.svg"));
+                check_eq!(
+                    errors,
+                    preferences.get_string(SettingsPreferenceKeys::LAST_OPENED_SVG_FILE, ""),
+                    "C:/direct-floor.svg"
+                );
+                check!(errors, draw_floor_receiver.try_recv().is_ok());
 
-                    assert_no_errors(errors);
-                },
-            );
+                assert_no_errors(errors);
+            },
+        );
 
-            spec.it(
-                "applies interaction mode transitions to the state machine",
-                |_| {
-                    let global_state_store = GlobalStateActor::new();
-                    let state_machine = Rc::new(RefCell::new(
-                        ApplicationStateMachine::with_default_transitions(Box::new(
-                            GlobalStateModel::default(),
-                        )),
-                    ));
-                    let binding = MainPageBinding::new(MainPageDependencies {
-                        behavior_dependencies: ChoreoMainBehaviorDependencies {
-                            global_state_store: Some(global_state_store),
-                            state_machine: Some(Rc::clone(&state_machine)),
-                            ..ChoreoMainBehaviorDependencies::default()
-                        },
-                        ..MainPageDependencies::default()
-                    });
+        spec.it(
+            "applies interaction mode transitions to the state machine",
+            |_| {
+                let global_state_store = GlobalStateActor::new();
+                let state_machine = Rc::new(RefCell::new(
+                    ApplicationStateMachine::with_default_transitions(Box::new(
+                        GlobalStateModel::default(),
+                    )),
+                ));
+                let binding = MainPageBinding::new(MainPageDependencies {
+                    behavior_dependencies: ChoreoMainBehaviorDependencies {
+                        global_state_store: Some(global_state_store),
+                        state_machine: Some(Rc::clone(&state_machine)),
+                        ..ChoreoMainBehaviorDependencies::default()
+                    },
+                    ..MainPageDependencies::default()
+                });
 
-                    binding.dispatch(ChoreoMainAction::SelectMode { index: 1 });
+                binding.dispatch(ChoreoMainAction::SelectMode { index: 1 });
 
-                    assert_eq!(
-                        state_machine.borrow().state().kind(),
-                        StateKind::MovePositionsState
-                    );
-                },
-            );
-        });
+                assert_eq!(
+                    state_machine.borrow().state().kind(),
+                    StateKind::MovePositionsState
+                );
+            },
+        );
+    });
 
     let report = crate::choreo_main::run_suite(&suite);
     assert!(report.is_success());

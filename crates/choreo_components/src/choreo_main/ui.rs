@@ -29,7 +29,7 @@ pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
             id_source: "choreo_main_dialog_host",
             is_open: state.is_dialog_open,
             close_on_click_away: true,
-            overlay_color: palette.background_modal,
+            overlay_color: palette.overlay.background_modal,
             dialog_background: palette.surface_container_low,
             dialog_text_color: palette.on_surface,
             dialog_padding: dialog_metrics.dialog_padding,

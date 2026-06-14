@@ -66,7 +66,11 @@ fn material_animation_durations_match_slint_contract() {
         MaterialAnimations::STANDARD_FAST_DURATION,
         Duration::from_millis(150)
     );
-    check_eq!(errors, MaterialAnimations::RIPPLE_DURATION, Duration::from_secs(2));
+    check_eq!(
+        errors,
+        MaterialAnimations::RIPPLE_DURATION,
+        Duration::from_secs(2)
+    );
     check_eq!(
         errors,
         MaterialAnimations::OPACITY_DURATION,
@@ -122,7 +126,11 @@ fn named_animation_specs_map_slint_motion_tokens() {
         emphasized.duration,
         MaterialAnimations::EMPHASIZED_DURATION
     );
-    check_eq!(errors, emphasized.easing, MaterialAnimations::EMPHASIZED_EASING);
+    check_eq!(
+        errors,
+        emphasized.easing,
+        MaterialAnimations::EMPHASIZED_EASING
+    );
 
     let emphasized_decelerate = MaterialAnimations::spec(MaterialAnimation::EmphasizedDecelerate);
     check_eq!(
@@ -178,14 +186,22 @@ fn named_animation_specs_map_slint_motion_tokens() {
         standard_fast.duration,
         MaterialAnimations::STANDARD_FAST_DURATION
     );
-    check_eq!(errors, standard_fast.easing, MaterialAnimations::STANDARD_EASING);
+    check_eq!(
+        errors,
+        standard_fast.easing,
+        MaterialAnimations::STANDARD_EASING
+    );
 
     let ripple = MaterialAnimations::spec(MaterialAnimation::Ripple);
     check_eq!(errors, ripple.duration, MaterialAnimations::RIPPLE_DURATION);
     check_eq!(errors, ripple.easing, MaterialAnimations::RIPPLE_EASING);
 
     let opacity = MaterialAnimations::spec(MaterialAnimation::Opacity);
-    check_eq!(errors, opacity.duration, MaterialAnimations::OPACITY_DURATION);
+    check_eq!(
+        errors,
+        opacity.duration,
+        MaterialAnimations::OPACITY_DURATION
+    );
     check_eq!(errors, opacity.easing, MaterialAnimations::OPACITY_EASING);
 
     assert!(

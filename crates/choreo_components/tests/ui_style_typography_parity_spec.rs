@@ -55,7 +55,7 @@ fn material_typography_roles_match_slint_scale() {
         TypographyRole::LabelMediumProminent,
         12.0,
         16.0,
-        900
+        900,
     );
     assert_style(&mut errors, TypographyRole::LabelSmall, 11.0, 16.0, 600);
     assert_style(&mut errors, TypographyRole::BodyLarge, 16.0, 24.0, 300);
@@ -84,8 +84,16 @@ fn typography_declares_platform_safe_fallback_chain() {
 fn typography_roles_are_assigned_for_primary_surfaces() {
     let mut errors = Vec::new();
 
-    check_eq!(errors, nav_ui::mode_label_role(), TypographyRole::LabelLarge);
-    check_eq!(errors, main_page_ui::mode_label_role(), TypographyRole::LabelLarge);
+    check_eq!(
+        errors,
+        nav_ui::mode_label_role(),
+        TypographyRole::LabelLarge
+    );
+    check_eq!(
+        errors,
+        main_page_ui::mode_label_role(),
+        TypographyRole::LabelLarge
+    );
     check_eq!(
         errors,
         settings_ui::page_title_role(),
@@ -96,13 +104,21 @@ fn typography_roles_are_assigned_for_primary_surfaces() {
         settings_ui::section_label_role(),
         TypographyRole::TitleSmall
     );
-    check_eq!(errors, audio_ui::speed_label_role(), TypographyRole::BodyMedium);
+    check_eq!(
+        errors,
+        audio_ui::speed_label_role(),
+        TypographyRole::BodyMedium
+    );
     check_eq!(
         errors,
         audio_ui::duration_label_role(),
         TypographyRole::BodyMedium
     );
-    check_eq!(errors, scenes_ui::scene_title_role(), TypographyRole::BodyMedium);
+    check_eq!(
+        errors,
+        scenes_ui::scene_title_role(),
+        TypographyRole::BodyMedium
+    );
     check_eq!(
         errors,
         scenes_ui::scene_timestamp_role(),

@@ -120,7 +120,11 @@ fn ui_style_tokens_spec() {
                 dialog_metrics.dialog_padding,
                 metrics.paddings.padding_24 as i8
             );
-            check_eq!(errors, dialog_metrics.dialog_margin, metrics.paddings.padding_24);
+            check_eq!(
+                errors,
+                dialog_metrics.dialog_margin,
+                metrics.paddings.padding_24
+            );
             check_eq!(
                 errors,
                 dialog_metrics.dialog_corner_radius,

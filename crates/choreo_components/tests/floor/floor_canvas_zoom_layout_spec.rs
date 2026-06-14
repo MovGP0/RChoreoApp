@@ -12,13 +12,7 @@ fn measure_at_zoom(state: &mut FloorState, zoom: f64, measure: impl Fn(&FloorSta
     measure(state)
 }
 
-fn check_close(
-    errors: &mut Vec<String>,
-    label: &str,
-    actual: f64,
-    expected: f64,
-    epsilon: f64,
-) {
+fn check_close(errors: &mut Vec<String>, label: &str, actual: f64, expected: f64, epsilon: f64) {
     if (actual - expected).abs() > epsilon {
         errors.push(format!(
             "{label}: expected {expected} +/- {epsilon}, got {actual}"
@@ -109,7 +103,13 @@ fn floor_canvas_zoom_layout_scales_layout_metrics_for_zoom_in_and_out() {
         |s| s.metrics.header_bottom,
         EPSILON,
     );
-    check_zoom_scaled_measurement(&mut errors, &mut state, "floor_top", |s| s.metrics.floor_top, EPSILON);
+    check_zoom_scaled_measurement(
+        &mut errors,
+        &mut state,
+        "floor_top",
+        |s| s.metrics.floor_top,
+        EPSILON,
+    );
     check_zoom_scaled_measurement(
         &mut errors,
         &mut state,
@@ -311,8 +311,12 @@ fn floor_canvas_zoom_layout_scales_layout_metrics_for_zoom_in_and_out() {
         EPSILON,
     );
 
-    let top_padding = measure_at_zoom(&mut state, ZOOM_OUT, |s| s.metrics.legend_content_padding_top);
-    let bottom_padding = measure_at_zoom(&mut state, ZOOM_OUT, |s| s.metrics.legend_content_padding_bottom);
+    let top_padding = measure_at_zoom(&mut state, ZOOM_OUT, |s| {
+        s.metrics.legend_content_padding_top
+    });
+    let bottom_padding = measure_at_zoom(&mut state, ZOOM_OUT, |s| {
+        s.metrics.legend_content_padding_bottom
+    });
     check_close(
         &mut errors,
         "top_padding_vs_bottom_padding",

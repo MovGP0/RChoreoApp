@@ -76,7 +76,9 @@ pub fn top_bar_icon_button_enabled(
 #[must_use]
 fn icon_tint(palette: MaterialPalette, checked: bool, enabled: bool) -> Color32 {
     if !enabled {
-        return palette.on_surface.gamma_multiply(palette.disable_opacity);
+        return palette
+            .on_surface
+            .gamma_multiply(palette.state_layer_opacities.content_disabled);
     }
 
     if checked {
@@ -97,7 +99,7 @@ mod tests {
         let mut palette = MaterialPalette::light();
         palette.on_surface = Color32::from_rgb(10, 20, 30);
         palette.on_secondary_container = Color32::from_rgb(40, 50, 60);
-        palette.disable_opacity = 0.38;
+        palette.state_layer_opacities.content_disabled = 0.38;
         palette
     }
 
@@ -118,11 +120,15 @@ mod tests {
 
         assert_eq!(
             icon_tint(palette, false, false),
-            palette.on_surface.gamma_multiply(palette.disable_opacity)
+            palette
+                .on_surface
+                .gamma_multiply(palette.state_layer_opacities.content_disabled)
         );
         assert_eq!(
             icon_tint(palette, true, false),
-            palette.on_surface.gamma_multiply(palette.disable_opacity)
+            palette
+                .on_surface
+                .gamma_multiply(palette.state_layer_opacities.content_disabled)
         );
     }
 }

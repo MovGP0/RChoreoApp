@@ -361,10 +361,10 @@ fn parse_argb_hex(value: &str) -> Option<u32> {
 }
 
 fn color32_from_argb(argb: u32) -> Color32 {
-    let alpha = ((argb >> 24) & 0xFF) as u8;
-    let red = ((argb >> 16) & 0xFF) as u8;
-    let green = ((argb >> 8) & 0xFF) as u8;
-    let blue = (argb & 0xFF) as u8;
+    let alpha = ((argb >> 24) & 0xFF_u32) as u8;
+    let red = ((argb >> 16) & 0xFF_u32) as u8;
+    let green = ((argb >> 8) & 0xFF_u32) as u8;
+    let blue = (argb & 0xFF_u32) as u8;
     Color32::from_rgba_unmultiplied(red, green, blue, alpha)
 }
 
@@ -373,7 +373,16 @@ mod tests {
     use super::MaterialScheme;
     use super::MaterialSchemes;
     use super::MaterialThemeVariant;
+    use super::color32_from_argb;
     use egui::Color32;
+
+    #[test]
+    fn color32_from_argb_extracts_channels_with_u32_masks() {
+        assert_eq!(
+            color32_from_argb(0x8044_3322_u32),
+            Color32::from_rgba_unmultiplied(0x44, 0x33, 0x22, 0x80)
+        );
+    }
 
     #[test]
     fn material_scheme_ports_the_full_slint_role_surface() {

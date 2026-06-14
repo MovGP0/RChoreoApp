@@ -18,8 +18,11 @@ impl Modal {
         let palette = material_palette_for_visuals(ui.visuals());
         let rect = ui.max_rect();
         let response = ui.interact(rect, ui.id().with("material_modal"), Sense::click());
-        ui.painter()
-            .rect_filled(rect, egui::CornerRadius::ZERO, palette.background_modal);
+        ui.painter().rect_filled(
+            rect,
+            egui::CornerRadius::ZERO,
+            palette.overlay.background_modal,
+        );
         let inner = ui
             .scope_builder(UiBuilder::new().max_rect(rect), add_contents)
             .inner;

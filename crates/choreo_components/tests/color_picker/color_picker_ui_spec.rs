@@ -126,14 +126,8 @@ fn vertical_slider_mapping_is_identity_for_left_dock() {
 
     let mut errors = Vec::new();
 
-    check!(
-        errors,
-        (slider_value - 0.25).abs() < f64::EPSILON
-    );
-    check!(
-        errors,
-        (mapped_back - brightness).abs() < f64::EPSILON
-    );
+    check!(errors, (slider_value - 0.25).abs() < f64::EPSILON);
+    check!(errors, (mapped_back - brightness).abs() < f64::EPSILON);
 
     assert_no_errors(errors);
 }
@@ -146,14 +140,8 @@ fn vertical_slider_mapping_is_inverted_for_right_dock() {
 
     let mut errors = Vec::new();
 
-    check!(
-        errors,
-        (slider_value - 0.75).abs() < f64::EPSILON
-    );
-    check!(
-        errors,
-        (mapped_back - brightness).abs() < f64::EPSILON
-    );
+    check!(errors, (slider_value - 0.75).abs() < f64::EPSILON);
+    check!(errors, (mapped_back - brightness).abs() < f64::EPSILON);
 
     assert_no_errors(errors);
 }

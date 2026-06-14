@@ -42,7 +42,11 @@ fn audio_backend_preferences_behavior_spec() {
 
             let mut errors = Vec::new();
 
-            check_eq!(errors, state.audio_player_backend, AudioPlayerBackend::Awedio);
+            check_eq!(
+                errors,
+                state.audio_player_backend,
+                AudioPlayerBackend::Awedio
+            );
             check_eq!(
                 errors,
                 state
@@ -70,7 +74,11 @@ fn audio_backend_preferences_behavior_spec() {
                 let mut errors = Vec::new();
 
                 if cfg!(target_arch = "wasm32") {
-                    check_eq!(errors, state.audio_player_backend, AudioPlayerBackend::Browser);
+                    check_eq!(
+                        errors,
+                        state.audio_player_backend,
+                        AudioPlayerBackend::Browser
+                    );
                     check_eq!(
                         errors,
                         state
@@ -80,7 +88,11 @@ fn audio_backend_preferences_behavior_spec() {
                         Some("browser")
                     );
                 } else {
-                    check_eq!(errors, state.audio_player_backend, AudioPlayerBackend::Rodio);
+                    check_eq!(
+                        errors,
+                        state.audio_player_backend,
+                        AudioPlayerBackend::Rodio
+                    );
                     check_eq!(
                         errors,
                         state

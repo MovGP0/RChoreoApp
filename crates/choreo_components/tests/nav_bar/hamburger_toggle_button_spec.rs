@@ -51,7 +51,11 @@ fn unchecked_geometry_keeps_three_parallel_bars() {
     check_eq!(errors, geometry.top_start.x, geometry.middle_start.x);
     check_eq!(errors, geometry.middle_start.x, geometry.bottom_start.x);
 
-    assert!(errors.is_empty(), "Assertion failures:\n{}", errors.join("\n"));
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]
@@ -94,7 +98,11 @@ fn checked_geometry_collapses_top_and_bottom_to_middle_with_rotations() {
     let middle_delta_y = geometry.middle_end.y - geometry.middle_start.y;
     check_eq!(errors, middle_delta_y, 0.0);
 
-    assert!(errors.is_empty(), "Assertion failures:\n{}", errors.join("\n"));
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]
@@ -121,7 +129,11 @@ fn partial_transition_geometry_interpolates_between_unchecked_and_checked() {
     check!(errors, halfway.top_end.y < unchecked.top_end.y);
     check!(errors, halfway.top_end.y > checked.top_end.y);
 
-    assert!(errors.is_empty(), "Assertion failures:\n{}", errors.join("\n"));
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]
@@ -147,7 +159,11 @@ fn desired_size_defaults_to_slint_minimum() {
     check_eq!(errors, size.x, minimum_button_size_token());
     check_eq!(errors, size.y, minimum_button_size_token());
 
-    assert!(errors.is_empty(), "Assertion failures:\n{}", errors.join("\n"));
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]
@@ -173,7 +189,11 @@ fn desired_size_clamps_to_slint_minimum_when_too_small() {
     check_eq!(errors, size.x, minimum_button_size_token());
     check_eq!(errors, size.y, minimum_button_size_token());
 
-    assert!(errors.is_empty(), "Assertion failures:\n{}", errors.join("\n"));
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]
@@ -199,7 +219,11 @@ fn hamburger_button_tokens_map_to_shared_material_metrics() {
     check_eq!(errors, minimum_button_size_token(), metrics.sizes.size_40);
     check_eq!(errors, content_padding_token(), metrics.paddings.padding_10);
 
-    assert!(errors.is_empty(), "Assertion failures:\n{}", errors.join("\n"));
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]
@@ -231,7 +255,11 @@ fn hamburger_button_uses_shared_material_animation_specs() {
         MaterialAnimations::spec(MaterialAnimation::Opacity)
     );
 
-    assert!(errors.is_empty(), "Assertion failures:\n{}", errors.join("\n"));
+    assert!(
+        errors.is_empty(),
+        "Assertion failures:\n{}",
+        errors.join("\n")
+    );
 }
 
 #[test]

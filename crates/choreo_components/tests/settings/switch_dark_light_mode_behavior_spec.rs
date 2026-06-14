@@ -42,7 +42,10 @@ fn switch_dark_light_mode_behavior_spec() {
             check!(errors, !state.use_system_theme);
             check_eq!(
                 errors,
-                state.preferences.get(USE_SYSTEM_THEME_KEY).map(String::as_str),
+                state
+                    .preferences
+                    .get(USE_SYSTEM_THEME_KEY)
+                    .map(String::as_str),
                 Some("false")
             );
 

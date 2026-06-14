@@ -104,7 +104,11 @@ fn ui_parity_spec() {
             |_| {
                 let mut errors = Vec::new();
 
-                check_eq!(errors, top_bar_nav_action(false), ChoreoMainAction::ToggleNav);
+                check_eq!(
+                    errors,
+                    top_bar_nav_action(false),
+                    ChoreoMainAction::ToggleNav
+                );
                 check_eq!(errors, top_bar_nav_action(true), ChoreoMainAction::CloseNav);
                 check_eq!(
                     errors,
@@ -311,7 +315,11 @@ fn ui_parity_spec() {
                 let mut errors = Vec::new();
 
                 check_eq!(errors, layout.left_panel_rect.left(), host_rect.left());
-                check_eq!(errors, layout.left_panel_rect.right(), host_rect.left() + 324.0);
+                check_eq!(
+                    errors,
+                    layout.left_panel_rect.right(),
+                    host_rect.left() + 324.0
+                );
                 check_eq!(errors, layout.right_panel_rect.right(), host_rect.right());
                 check_eq!(
                     errors,
@@ -551,7 +559,7 @@ fn ui_parity_spec() {
                 state.last_opened_choreo_file = Some(file_path.to_string_lossy().into_owned());
                 state.choreography_settings_state.choreography.name = "Demo".to_string();
 
-            let pane_state = scene_pane_state(&state);
+                let pane_state = scene_pane_state(&state);
 
                 let mut errors = Vec::new();
 

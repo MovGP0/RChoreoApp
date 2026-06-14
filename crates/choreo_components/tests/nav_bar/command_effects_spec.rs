@@ -32,7 +32,10 @@ fn nav_bar_emits_command_effects_for_open_and_reset_actions() {
 
     let mut errors = Vec::new();
 
-    check!(errors, reduce(&mut state, NavBarAction::Initialize).is_empty());
+    check!(
+        errors,
+        reduce(&mut state, NavBarAction::Initialize).is_empty()
+    );
     check_eq!(
         errors,
         reduce(&mut state, NavBarAction::OpenAudio),

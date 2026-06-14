@@ -72,10 +72,19 @@ fn nav_view_model_documents_which_actions_emit_click_feedback_for_parity() {
         errors,
         emits_click_feedback(&NavBarAction::CloseChoreographySettings)
     );
-    check!(errors, emits_click_feedback(&NavBarAction::ResetFloorViewport));
+    check!(
+        errors,
+        emits_click_feedback(&NavBarAction::ResetFloorViewport)
+    );
 
-    check!(errors, !emits_click_feedback(&NavBarAction::ToggleNavigation));
-    check!(errors, !emits_click_feedback(&NavBarAction::CloseNavigation));
+    check!(
+        errors,
+        !emits_click_feedback(&NavBarAction::ToggleNavigation)
+    );
+    check!(
+        errors,
+        !emits_click_feedback(&NavBarAction::CloseNavigation)
+    );
     check!(errors, !emits_click_feedback(&NavBarAction::Initialize));
     check!(
         errors,
@@ -83,9 +92,7 @@ fn nav_view_model_documents_which_actions_emit_click_feedback_for_parity() {
     );
     check!(
         errors,
-        !emits_click_feedback(&NavBarAction::SetAudioPlayerOpened {
-            is_open: true,
-        })
+        !emits_click_feedback(&NavBarAction::SetAudioPlayerOpened { is_open: true })
     );
     check!(
         errors,

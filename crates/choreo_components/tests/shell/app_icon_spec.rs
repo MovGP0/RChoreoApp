@@ -99,7 +99,10 @@ fn android_launcher_icons_match_expected_density_sizes() {
     let mut errors = Vec::new();
 
     for (png_bytes, expected_size) in android_icons {
-        check!(errors, png_bytes.starts_with(&[137, 80, 78, 71, 13, 10, 26, 10]));
+        check!(
+            errors,
+            png_bytes.starts_with(&[137, 80, 78, 71, 13, 10, 26, 10])
+        );
         check_eq!(errors, &png_bytes[12..16], b"IHDR");
         check_eq!(
             errors,

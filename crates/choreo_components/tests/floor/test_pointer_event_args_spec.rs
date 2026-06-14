@@ -270,7 +270,11 @@ fn pointer_wheel_context_stores_metadata_and_applies_pan() {
 
     check_eq!(errors, state.last_canvas_view, Some(canvas));
     check!(errors, !state.last_wheel_control_modifier);
-    check_eq!(errors, state.last_wheel_position, Some(Point::new(120.0, 132.0)));
+    check_eq!(
+        errors,
+        state.last_wheel_position,
+        Some(Point::new(120.0, 132.0))
+    );
     check_eq!(errors, state.transformation_matrix.trans_x, 12.0);
     check_eq!(errors, state.transformation_matrix.trans_y, -24.0);
 

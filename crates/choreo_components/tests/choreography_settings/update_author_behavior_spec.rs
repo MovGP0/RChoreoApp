@@ -43,7 +43,11 @@ fn update_author_trims_and_sets_optional_author() {
 
     let mut errors = Vec::new();
 
-    check_eq!(errors, state.choreography.author.as_deref(), Some("Jane Doe"));
+    check_eq!(
+        errors,
+        state.choreography.author.as_deref(),
+        Some("Jane Doe")
+    );
     check_eq!(errors, state.author, "Jane Doe");
     check!(errors, state.redraw_requested);
 

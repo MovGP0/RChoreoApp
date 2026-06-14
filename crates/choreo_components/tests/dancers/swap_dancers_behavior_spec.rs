@@ -64,7 +64,11 @@ fn swap_dancers_behavior_spec() {
                 );
 
                 check!(errors, state.is_dialog_open);
-                check_eq!(errors, state.dialog_content.as_deref(), Some("swap_dancers"));
+                check_eq!(
+                    errors,
+                    state.dialog_content.as_deref(),
+                    Some("swap_dancers")
+                );
 
                 dancers::reducer::reduce(
                     &mut state,

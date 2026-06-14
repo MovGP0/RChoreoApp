@@ -131,7 +131,10 @@ fn gesture_handling_applies_pan_zoom_and_reset_semantics() {
             device: TouchDeviceType::Touch,
         },
     );
-    check!(errors, state.transformation_matrix.scale_x > scale_before_pinch);
+    check!(
+        errors,
+        state.transformation_matrix.scale_x > scale_before_pinch
+    );
 
     reduce(
         &mut state,

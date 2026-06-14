@@ -2,6 +2,14 @@
 
 This project follows Material Design 3 color roles and keeps styling decisions in UI/theme modules. Business behaviors must not choose visual colors.
 
+## Terminology
+
+- In Material 3 naming, a palette is a list of colors that are constant in hue and chroma, but vary in tone.
+- A swatch is one color's tone ladder: tone `0` is pure black, tone `100` is pure white, and tone `50` is the baseline tone for the color. Common Material usage includes tone `90` for light-theme containers, tones `40` or `50` for main elements or on-color content, and tone `10` for deep dark-theme surfaces.
+- Material 3 typically generates five essential swatches from the core colors: primary for key components and prominent actions, secondary for less prominent components, tertiary for contrasting accents, neutral for backgrounds and surfaces, and neutral variant for unaccented borders and dividers.
+- A scheme is a named set of resolved Material color roles, for example `Primary`, `OnSurface`, or `SurfaceContainerHigh`.
+- A theme combines the active scheme with non-scheme UI tokens such as state-layer opacities, modal overlays, and elevation shadows.
+
 ## Scheme Generation
 
 Theme generation and role lookup live in:
@@ -57,6 +65,16 @@ Use semantic Material roles, not literal colors. If a widget needs a color, choo
 | Filled text field background | `SurfaceContainerLow` |
 
 ## Component-Specific Rules
+
+### State Layers and Ripple Effects
+
+- Hover, focus, pressed, dragged, and disabled feedback should use Material state-layer opacity tokens from the active Material theme, not ad hoc alpha values.
+- State-layer base colors must come from semantic roles such as `OnSurface`, `OnSurfaceVariant`, `Primary`, or the selected content role for the component state.
+- Light and dark themes must resolve state-layer colors through the active palette. A light theme should generally use a darker state color on light surfaces; a dark theme should use a lighter state color on dark surfaces.
+- Hover feedback may be a static shape that matches the control shape.
+- Press feedback may be a ripple only when it visibly animates. Do not draw a static full-size fill and call it a ripple.
+- Ripple geometry must match the component shape. Circular icon buttons need circular hover and pressed feedback; do not clip an expanding ripple with a square rect unless the component itself is rectangular.
+- Pressed and hover feedback must be visually distinct, typically by using the `press` state-layer opacity for pressed/ripple feedback and the `hover` state-layer opacity for hover feedback.
 
 ### Floor Canvas
 

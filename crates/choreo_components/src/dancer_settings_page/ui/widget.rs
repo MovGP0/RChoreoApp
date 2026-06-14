@@ -76,7 +76,7 @@ pub fn draw(ui: &mut Ui, state: &DancerSettingsPageState) -> Vec<DancerSettingsP
             id_source: "dancer_settings_page_dialog_host",
             is_open: state.is_dialog_open,
             close_on_click_away: true,
-            overlay_color: palette.background_modal,
+            overlay_color: palette.overlay.background_modal,
             dialog_background: palette.surface_container_low,
             dialog_text_color: palette.on_surface,
             dialog_padding: dialog_metrics.dialog_padding,
@@ -226,11 +226,8 @@ fn draw_main_content(
     locale: &str,
 ) {
     let palette = material_palette_for_visuals(ui.visuals());
-    let drawer_state = drawer_host_state(
-        state,
-        palette.background_modal,
-        palette.background,
-    );
+    let drawer_state =
+        drawer_host_state(state, palette.overlay.background_modal, palette.background);
 
     let mut content_actions: Vec<DancerSettingsPageAction> = Vec::new();
     let mut pane_actions: Vec<DancerSettingsPageAction> = Vec::new();
@@ -315,8 +312,11 @@ fn draw_content(
 ) {
     let palette = material_palette_for_visuals(ui.visuals());
     let surface_rect = main_content_rect(ui.max_rect());
-    ui.painter()
-        .rect_filled(surface_rect, CornerRadius::ZERO, palette.surface_container_low);
+    ui.painter().rect_filled(
+        surface_rect,
+        CornerRadius::ZERO,
+        palette.surface_container_low,
+    );
 
     let footer_rect = footer_rect(surface_rect);
     let scroll_rect = scroll_rect(surface_rect);

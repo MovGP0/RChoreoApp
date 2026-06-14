@@ -210,7 +210,11 @@ fn load_choreography_projects_floor_renderer_state_from_scene_models() {
 
     let mut errors = Vec::new();
 
-    check_eq!(errors, state.floor_state.choreography_name, "Viennese Waltz");
+    check_eq!(
+        errors,
+        state.floor_state.choreography_name,
+        "Viennese Waltz"
+    );
     check_eq!(errors, state.floor_state.scene_name, "Opening");
     check!(errors, state.floor_state.show_grid_lines);
     check!(errors, state.floor_state.positions_at_side);

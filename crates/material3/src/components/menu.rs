@@ -140,7 +140,9 @@ fn show_menu_item(ui: &mut Ui, item: &MenuItem, selected: bool, width: f32) -> R
                 let tint = if item.enabled {
                     palette.on_surface
                 } else {
-                    palette.on_surface.gamma_multiply(palette.disable_opacity)
+                    palette
+                        .on_surface
+                        .gamma_multiply(palette.state_layer_opacities.content_disabled)
                 };
                 let _ = ui.add(icon_with_style(
                     icon,
@@ -159,14 +161,16 @@ fn show_menu_item(ui: &mut Ui, item: &MenuItem, selected: bool, width: f32) -> R
             let text_color = if item.enabled {
                 palette.on_surface
             } else {
-                palette.on_surface.gamma_multiply(palette.disable_opacity)
+                palette
+                    .on_surface
+                    .gamma_multiply(palette.state_layer_opacities.content_disabled)
             };
             let trailing_color = if item.enabled {
                 palette.on_surface_variant
             } else {
                 palette
                     .on_surface_variant
-                    .gamma_multiply(palette.disable_opacity)
+                    .gamma_multiply(palette.state_layer_opacities.content_disabled)
             };
 
             let _ = material_text(ui, item.text.as_str())
