@@ -10,6 +10,26 @@ SettingsAudioBackendAwedioLabel = "Awedio"
 SettingsAudioBackendBrowserLabel = "Browser"
 SettingsNavigateBack = "Til baka"
 SettingsThemeLabel = "Þema"
+SettingsThemeVariantLabel = "Theme variant"
+MaterialThemeVariantContent = "Content"
+MaterialThemeVariantTonalSpot = "Tonal spot"
+MaterialThemeVariantVibrant = "Vibrant"
+MaterialThemeVariantExpressive = "Expressive"
+MaterialThemeVariantFidelity = "Fidelity"
+MaterialThemeVariantMonochrome = "Monochrome"
+MaterialThemeVariantNeutral = "Neutral"
+MaterialThemeVariantRainbow = "Rainbow"
+MaterialThemeVariantFruitSalad = "Fruit salad"
+
+
+
+
+
+
+
+
+
+
 SettingsColorsLabel = "Litir"
 SettingsColorArgbHint = "#AARRGGBB"
 LightModeLabel = "Ljóst þema"

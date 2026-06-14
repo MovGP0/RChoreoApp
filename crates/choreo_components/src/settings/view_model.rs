@@ -1,12 +1,14 @@
 use crate::audio_player::AudioPlayerBackend;
 use crate::behavior::Behavior;
 use crate::behavior::CompositeDisposable;
+use crate::material::styling::material_schemes::MaterialThemeVariant;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::rc::Weak;
 
 use super::messages::SwitchThemeModeCommand;
 use super::messages::UpdateAudioPlayerBackendCommand;
+use super::messages::UpdateMaterialThemeVariantCommand;
 use super::messages::UpdatePrimaryColorHexCommand;
 use super::messages::UpdateSecondaryColorHexCommand;
 use super::messages::UpdateTertiaryColorHexCommand;
@@ -34,6 +36,8 @@ pub struct SettingsViewModelActions {
     pub update_tertiary_color_hex: Option<SettingsStringHandler<UpdateTertiaryColorHexCommand>>,
     pub update_audio_player_backend:
         Option<SettingsBooleanHandler<UpdateAudioPlayerBackendCommand>>,
+    pub update_material_theme_variant:
+        Option<SettingsBooleanHandler<UpdateMaterialThemeVariantCommand>>,
 }
 
 pub struct SettingsViewModel {
@@ -150,6 +154,12 @@ impl SettingsViewModel {
     pub fn update_audio_player_backend(&mut self, backend: AudioPlayerBackend) {
         if let Some(handler) = self.actions.update_audio_player_backend.clone() {
             handler(self, UpdateAudioPlayerBackendCommand { backend });
+        }
+    }
+
+    pub fn update_material_theme_variant(&mut self, variant: MaterialThemeVariant) {
+        if let Some(handler) = self.actions.update_material_theme_variant.clone() {
+            handler(self, UpdateMaterialThemeVariantCommand { variant });
         }
     }
 }

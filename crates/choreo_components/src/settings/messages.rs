@@ -1,4 +1,5 @@
 use crate::audio_player::AudioPlayerBackend;
+use crate::material::styling::material_schemes::MaterialThemeVariant;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ReloadSettingsCommand;
@@ -49,4 +50,9 @@ pub struct UpdateTertiaryColorHexCommand {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UpdateAudioPlayerBackendCommand {
     pub backend: AudioPlayerBackend,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct UpdateMaterialThemeVariantCommand {
+    pub variant: MaterialThemeVariant,
 }

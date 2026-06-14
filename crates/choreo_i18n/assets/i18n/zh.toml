@@ -10,6 +10,26 @@ SettingsAudioBackendAwedioLabel = "Awedio"
 SettingsAudioBackendBrowserLabel = "Browser"
 SettingsNavigateBack = "返回"
 SettingsThemeLabel = "主题"
+SettingsThemeVariantLabel = "Theme variant"
+MaterialThemeVariantContent = "Content"
+MaterialThemeVariantTonalSpot = "Tonal spot"
+MaterialThemeVariantVibrant = "Vibrant"
+MaterialThemeVariantExpressive = "Expressive"
+MaterialThemeVariantFidelity = "Fidelity"
+MaterialThemeVariantMonochrome = "Monochrome"
+MaterialThemeVariantNeutral = "Neutral"
+MaterialThemeVariantRainbow = "Rainbow"
+MaterialThemeVariantFruitSalad = "Fruit salad"
+
+
+
+
+
+
+
+
+
+
 SettingsColorsLabel = "颜色"
 SettingsColorArgbHint = "#AARRGGBB"
 LightModeLabel = "浅色模式"

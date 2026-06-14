@@ -10,6 +10,26 @@ SettingsAudioBackendAwedioLabel = "Awedio"
 SettingsAudioBackendBrowserLabel = "Browser"
 SettingsNavigateBack = "Prapa"
 SettingsThemeLabel = "Tema"
+SettingsThemeVariantLabel = "Theme variant"
+MaterialThemeVariantContent = "Content"
+MaterialThemeVariantTonalSpot = "Tonal spot"
+MaterialThemeVariantVibrant = "Vibrant"
+MaterialThemeVariantExpressive = "Expressive"
+MaterialThemeVariantFidelity = "Fidelity"
+MaterialThemeVariantMonochrome = "Monochrome"
+MaterialThemeVariantNeutral = "Neutral"
+MaterialThemeVariantRainbow = "Rainbow"
+MaterialThemeVariantFruitSalad = "Fruit salad"
+
+
+
+
+
+
+
+
+
+
 SettingsColorsLabel = "Ngjyrat"
 SettingsColorArgbHint = "#AARRGGBB"
 LightModeLabel = "Modaliteti i çelët"

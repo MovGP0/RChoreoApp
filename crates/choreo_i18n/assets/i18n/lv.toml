@@ -10,6 +10,26 @@ SettingsAudioBackendAwedioLabel = "Awedio"
 SettingsAudioBackendBrowserLabel = "Browser"
 SettingsNavigateBack = "Atpakaļ"
 SettingsThemeLabel = "Tēma"
+SettingsThemeVariantLabel = "Theme variant"
+MaterialThemeVariantContent = "Content"
+MaterialThemeVariantTonalSpot = "Tonal spot"
+MaterialThemeVariantVibrant = "Vibrant"
+MaterialThemeVariantExpressive = "Expressive"
+MaterialThemeVariantFidelity = "Fidelity"
+MaterialThemeVariantMonochrome = "Monochrome"
+MaterialThemeVariantNeutral = "Neutral"
+MaterialThemeVariantRainbow = "Rainbow"
+MaterialThemeVariantFruitSalad = "Fruit salad"
+
+
+
+
+
+
+
+
+
+
 SettingsColorsLabel = "Krāsas"
 SettingsColorArgbHint = "#AARRGGBB"
 LightModeLabel = "Gaišais režīms"

@@ -9,6 +9,7 @@ pub use choreo_components::settings::actions;
 pub use choreo_components::settings::provider;
 pub use choreo_components::settings::reducer;
 pub use choreo_components::settings::state;
+pub use choreo_components::settings::system_theme;
 pub use choreo_components::settings::translations;
 pub use choreo_components::settings::ui;
 

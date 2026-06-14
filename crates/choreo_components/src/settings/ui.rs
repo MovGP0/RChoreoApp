@@ -26,6 +26,7 @@ use super::state::AudioPlayerBackend;
 use super::state::SettingsState;
 use super::state::ThemeMode;
 use super::translations::settings_translations;
+use crate::material::styling::material_schemes::MaterialThemeVariant;
 
 const DEFAULT_LOCALE: &str = "en";
 
@@ -230,6 +231,7 @@ pub fn visible_settings_card_headers(
 ) -> Vec<String> {
     let mut headers = vec![
         strings.theme.clone(),
+        strings.theme_variant.clone(),
         strings.primary_color.clone(),
         strings.secondary_color.clone(),
         strings.tertiary_color.clone(),
@@ -268,6 +270,24 @@ pub fn selected_theme_mode_dropdown_index(state: &SettingsState) -> usize {
     }
 }
 
+#[must_use]
+pub fn material_theme_variant_dropdown_labels(
+    strings: &super::translations::SettingsTranslations,
+) -> Vec<String> {
+    MaterialThemeVariant::ALL
+        .iter()
+        .map(|variant| material_theme_variant_label(*variant, strings).to_string())
+        .collect()
+}
+
+#[must_use]
+pub fn selected_material_theme_variant_dropdown_index(state: &SettingsState) -> usize {
+    MaterialThemeVariant::ALL
+        .iter()
+        .position(|variant| *variant == state.material_theme_variant)
+        .unwrap_or(0)
+}
+
 fn update_use_system_theme_action(enabled: bool) -> SettingsAction {
     SettingsAction::UpdateUseSystemTheme { enabled }
 }
@@ -298,6 +318,10 @@ fn update_use_tertiary_color_action(enabled: bool) -> SettingsAction {
 
 fn update_tertiary_color_hex_action(value: String) -> SettingsAction {
     SettingsAction::UpdateTertiaryColorHex { value }
+}
+
+fn update_material_theme_variant_action(variant: MaterialThemeVariant) -> SettingsAction {
+    SettingsAction::UpdateMaterialThemeVariant { variant }
 }
 
 fn draw_header(
@@ -364,6 +388,8 @@ fn draw_theme_card(
         draw_card_header(ui, strings.theme.as_str());
         ui.add_space(row_spacing_token());
         draw_theme_mode_dropdown(ui, state, strings, actions);
+        ui.add_space(row_spacing_token());
+        draw_material_theme_variant_dropdown(ui, state, strings, actions);
     });
 }
 
@@ -502,6 +528,35 @@ fn draw_theme_mode_dropdown(
     }
 }
 
+fn draw_material_theme_variant_dropdown(
+    ui: &mut Ui,
+    state: &SettingsState,
+    strings: &super::translations::SettingsTranslations,
+    actions: &mut Vec<SettingsAction>,
+) {
+    draw_card_header(ui, strings.theme_variant.as_str());
+
+    let labels = material_theme_variant_dropdown_labels(strings);
+    let label_refs = labels.iter().map(String::as_str).collect::<Vec<_>>();
+    let selected_index = selected_material_theme_variant_dropdown_index(state);
+    let response = components::mode_dropdown(
+        ui,
+        egui::Id::new("settings_material_theme_variant_dropdown"),
+        Some(selected_index),
+        label_refs.as_slice(),
+        true,
+        ui.available_width(),
+        dropdown_height_token(),
+    );
+
+    if let Some(next_index) = response
+        && next_index != selected_index
+        && let Some(variant) = MaterialThemeVariant::ALL.get(next_index)
+    {
+        actions.push(update_material_theme_variant_action(*variant));
+    }
+}
+
 fn draw_color_picker_row(
     ui: &mut Ui,
     color_hex: &str,
@@ -615,6 +670,24 @@ pub fn audio_backend_label(
         AudioPlayerBackend::Rodio => strings.backend_rodio.as_str(),
         AudioPlayerBackend::Awedio => strings.backend_awedio.as_str(),
         AudioPlayerBackend::Browser => strings.backend_browser.as_str(),
+    }
+}
+
+#[must_use]
+pub fn material_theme_variant_label(
+    variant: MaterialThemeVariant,
+    strings: &super::translations::SettingsTranslations,
+) -> &str {
+    match variant {
+        MaterialThemeVariant::Content => strings.theme_variant_content.as_str(),
+        MaterialThemeVariant::TonalSpot => strings.theme_variant_tonal_spot.as_str(),
+        MaterialThemeVariant::Vibrant => strings.theme_variant_vibrant.as_str(),
+        MaterialThemeVariant::Expressive => strings.theme_variant_expressive.as_str(),
+        MaterialThemeVariant::Fidelity => strings.theme_variant_fidelity.as_str(),
+        MaterialThemeVariant::Monochrome => strings.theme_variant_monochrome.as_str(),
+        MaterialThemeVariant::Neutral => strings.theme_variant_neutral.as_str(),
+        MaterialThemeVariant::Rainbow => strings.theme_variant_rainbow.as_str(),
+        MaterialThemeVariant::FruitSalad => strings.theme_variant_fruit_salad.as_str(),
     }
 }
 

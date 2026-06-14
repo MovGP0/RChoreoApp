@@ -6,6 +6,65 @@ use material_color_utilities::hct::Hct;
 
 const DEFAULT_SOURCE_ARGB: u32 = 0xFF1976D2;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum MaterialThemeVariant {
+    Monochrome,
+    Neutral,
+    TonalSpot,
+    Vibrant,
+    Expressive,
+    Fidelity,
+    #[default]
+    Content,
+    Rainbow,
+    FruitSalad,
+}
+
+impl MaterialThemeVariant {
+    pub const ALL: [Self; 9] = [
+        Self::Content,
+        Self::TonalSpot,
+        Self::Vibrant,
+        Self::Expressive,
+        Self::Fidelity,
+        Self::Monochrome,
+        Self::Neutral,
+        Self::Rainbow,
+        Self::FruitSalad,
+    ];
+
+    #[must_use]
+    pub const fn as_preference(self) -> &'static str {
+        match self {
+            Self::Monochrome => "Monochrome",
+            Self::Neutral => "Neutral",
+            Self::TonalSpot => "TonalSpot",
+            Self::Vibrant => "Vibrant",
+            Self::Expressive => "Expressive",
+            Self::Fidelity => "Fidelity",
+            Self::Content => "Content",
+            Self::Rainbow => "Rainbow",
+            Self::FruitSalad => "FruitSalad",
+        }
+    }
+
+    #[must_use]
+    pub fn from_preference(value: &str) -> Self {
+        match value {
+            "Monochrome" => Self::Monochrome,
+            "Neutral" => Self::Neutral,
+            "TonalSpot" => Self::TonalSpot,
+            "Vibrant" => Self::Vibrant,
+            "Expressive" => Self::Expressive,
+            "Fidelity" => Self::Fidelity,
+            "Content" => Self::Content,
+            "Rainbow" => Self::Rainbow,
+            "FruitSalad" => Self::FruitSalad,
+            _ => Self::default(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MaterialScheme {
     pub primary: Color32,
@@ -143,6 +202,21 @@ impl MaterialSchemes {
         secondary_hex: Option<&str>,
         tertiary_hex: Option<&str>,
     ) -> Self {
+        Self::from_seed_colors_with_variant(
+            primary_hex,
+            secondary_hex,
+            tertiary_hex,
+            MaterialThemeVariant::default(),
+        )
+    }
+
+    #[must_use]
+    pub fn from_seed_colors_with_variant(
+        primary_hex: Option<&str>,
+        secondary_hex: Option<&str>,
+        tertiary_hex: Option<&str>,
+        variant: MaterialThemeVariant,
+    ) -> Self {
         let primary = primary_hex
             .and_then(hct_from_argb_hex)
             .unwrap_or_else(|| Hct::from_int(DEFAULT_SOURCE_ARGB));
@@ -150,8 +224,20 @@ impl MaterialSchemes {
         let tertiary = tertiary_hex.and_then(hct_from_argb_hex);
 
         Self {
-            light: build_scheme(&primary, secondary.as_ref(), tertiary.as_ref(), false),
-            dark: build_scheme(&primary, secondary.as_ref(), tertiary.as_ref(), true),
+            light: build_scheme(
+                &primary,
+                secondary.as_ref(),
+                tertiary.as_ref(),
+                variant,
+                false,
+            ),
+            dark: build_scheme(
+                &primary,
+                secondary.as_ref(),
+                tertiary.as_ref(),
+                variant,
+                true,
+            ),
         }
     }
 
@@ -171,11 +257,12 @@ fn build_scheme(
     primary: &Hct,
     secondary: Option<&Hct>,
     tertiary: Option<&Hct>,
+    variant: MaterialThemeVariant,
     is_dark: bool,
 ) -> MaterialScheme {
     let mut builder = DynamicSchemeBuilder::default()
         .source_color_hct(primary.clone())
-        .variant(Variant::Content)
+        .variant(map_material_theme_variant(variant))
         .is_dark(is_dark)
         .platform(Platform::Phone)
         .contrast_level(0.5)
@@ -190,6 +277,20 @@ fn build_scheme(
     }
 
     map_scheme(&builder.build())
+}
+
+fn map_material_theme_variant(variant: MaterialThemeVariant) -> Variant {
+    match variant {
+        MaterialThemeVariant::Monochrome => Variant::Monochrome,
+        MaterialThemeVariant::Neutral => Variant::Neutral,
+        MaterialThemeVariant::TonalSpot => Variant::TonalSpot,
+        MaterialThemeVariant::Vibrant => Variant::Vibrant,
+        MaterialThemeVariant::Expressive => Variant::Expressive,
+        MaterialThemeVariant::Fidelity => Variant::Fidelity,
+        MaterialThemeVariant::Content => Variant::Content,
+        MaterialThemeVariant::Rainbow => Variant::Rainbow,
+        MaterialThemeVariant::FruitSalad => Variant::FruitSalad,
+    }
 }
 
 fn map_scheme(scheme: &DynamicScheme) -> MaterialScheme {
@@ -271,6 +372,7 @@ fn color32_from_argb(argb: u32) -> Color32 {
 mod tests {
     use super::MaterialScheme;
     use super::MaterialSchemes;
+    use super::MaterialThemeVariant;
     use egui::Color32;
 
     #[test]
@@ -425,5 +527,23 @@ mod tests {
             schemes.dark.tertiary_container,
             MaterialSchemes::default().dark.tertiary_container
         );
+    }
+
+    #[test]
+    fn material_theme_variant_changes_generated_roles() {
+        let content = MaterialSchemes::from_seed_colors_with_variant(
+            Some("#FF336699"),
+            None,
+            None,
+            MaterialThemeVariant::Content,
+        );
+        let vibrant = MaterialSchemes::from_seed_colors_with_variant(
+            Some("#FF336699"),
+            None,
+            None,
+            MaterialThemeVariant::Vibrant,
+        );
+
+        assert_ne!(content.light.primary, vibrant.light.primary);
     }
 }

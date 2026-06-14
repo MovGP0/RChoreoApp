@@ -8,13 +8,14 @@ use crate::choreo_main::state::ChoreoMainState;
 use crate::material::styling::material_palette::MaterialPalette;
 use crate::material::styling::material_palette::material_palette_for_theme;
 use crate::material::styling::material_palette::with_current_material_palette;
+use crate::settings::system_theme::effective_theme_mode;
 
 use super::state::AppShellState;
 
 pub fn draw_splash(context: &Context, state: &AppShellState, main_page_state: &ChoreoMainState) {
     let palette = material_palette_for_theme(
         &main_page_state.settings_state.material_scheme,
-        main_page_state.settings_state.theme_mode,
+        effective_theme_mode(&main_page_state.settings_state),
     );
     egui::CentralPanel::default()
         .frame(root_panel_frame(palette))
@@ -30,7 +31,7 @@ pub fn draw_main_page(
     let mut actions = Vec::new();
     let palette = material_palette_for_theme(
         &main_page_state.settings_state.material_scheme,
-        main_page_state.settings_state.theme_mode,
+        effective_theme_mode(&main_page_state.settings_state),
     );
 
     egui::CentralPanel::default()

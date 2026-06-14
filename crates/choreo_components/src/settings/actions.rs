@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::audio_player::AudioPlayerBackend;
+use crate::material::styling::material_schemes::MaterialThemeVariant;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SettingsAction {
@@ -16,5 +17,6 @@ pub enum SettingsAction {
     UpdatePrimaryColorHex { value: String },
     UpdateSecondaryColorHex { value: String },
     UpdateTertiaryColorHex { value: String },
+    UpdateMaterialThemeVariant { variant: MaterialThemeVariant },
     UpdateAudioPlayerBackend { backend: AudioPlayerBackend },
 }

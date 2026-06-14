@@ -8,6 +8,7 @@ use crate::choreo_main::state::ChoreoMainState;
 use crate::material::ThemeMode;
 use crate::material::styling::material_palette::sync_material_theme;
 use crate::material::styling::material_typography as typography;
+use crate::settings::system_theme::effective_theme_mode;
 
 use super::effects::AppShellEffect;
 
@@ -45,12 +46,9 @@ impl AppShellRuntime {
     }
 
     pub fn apply_main_page_theme(&self, context: &Context, main_page_state: &ChoreoMainState) {
-        sync_material_theme(
-            &main_page_state.settings_state.material_scheme,
-            main_page_state.settings_state.theme_mode,
-        );
-        context.set_visuals(if matches!(main_page_state.settings_state.theme_mode, ThemeMode::Dark)
-        {
+        let theme_mode = effective_theme_mode(&main_page_state.settings_state);
+        sync_material_theme(&main_page_state.settings_state.material_scheme, theme_mode);
+        context.set_visuals(if matches!(theme_mode, ThemeMode::Dark) {
             Visuals::dark()
         } else {
             Visuals::light()

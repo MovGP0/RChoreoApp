@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::material::styling::material_schemes::MaterialSchemes;
+use crate::material::styling::material_schemes::MaterialThemeVariant;
 pub use material3::ThemeMode;
 
 pub use crate::audio_player::AudioPlayerBackend;
@@ -14,6 +15,7 @@ pub const PRIMARY_COLOR_KEY: &str = "primary_color";
 pub const SECONDARY_COLOR_KEY: &str = "secondary_color";
 pub const TERTIARY_COLOR_KEY: &str = "tertiary_color";
 pub const AUDIO_PLAYER_BACKEND_KEY: &str = "audio_player_backend";
+pub const MATERIAL_THEME_VARIANT_KEY: &str = "material_theme_variant";
 
 pub const DEFAULT_PRIMARY_COLOR_HEX: &str = "#FF1976D2";
 pub const DEFAULT_SECONDARY_COLOR_HEX: &str = "#FF675A84";
@@ -32,6 +34,7 @@ pub struct SettingsState {
     pub primary_color_hex: String,
     pub secondary_color_hex: String,
     pub tertiary_color_hex: String,
+    pub material_theme_variant: MaterialThemeVariant,
     pub audio_player_backend: AudioPlayerBackend,
     pub preferences: BTreeMap<String, String>,
     pub material_scheme: MaterialSchemeState,
@@ -50,6 +53,7 @@ impl Default for SettingsState {
             primary_color_hex: DEFAULT_PRIMARY_COLOR_HEX.to_string(),
             secondary_color_hex: DEFAULT_SECONDARY_COLOR_HEX.to_string(),
             tertiary_color_hex: DEFAULT_TERTIARY_COLOR_HEX.to_string(),
+            material_theme_variant: MaterialThemeVariant::default(),
             audio_player_backend: AudioPlayerBackend::from_preference(
                 AudioPlayerBackend::RODIO_KEY,
             ),

@@ -4,6 +4,7 @@ use std::rc::Rc;
 use super::actions::SettingsAction;
 use super::messages::SwitchThemeModeCommand;
 use super::messages::UpdateAudioPlayerBackendCommand;
+use super::messages::UpdateMaterialThemeVariantCommand;
 use super::messages::UpdatePrimaryColorHexCommand;
 use super::messages::UpdateSecondaryColorHexCommand;
 use super::messages::UpdateTertiaryColorHexCommand;
@@ -124,6 +125,16 @@ impl SettingsProvider {
                         &mut view_model.state,
                         SettingsAction::UpdateAudioPlayerBackend {
                             backend: command.backend,
+                        },
+                    );
+                },
+            )),
+            update_material_theme_variant: Some(Rc::new(
+                |view_model, command: UpdateMaterialThemeVariantCommand| {
+                    reduce(
+                        &mut view_model.state,
+                        SettingsAction::UpdateMaterialThemeVariant {
+                            variant: command.variant,
                         },
                     );
                 },

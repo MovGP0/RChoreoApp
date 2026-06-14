@@ -4,6 +4,7 @@ use super::state::AudioPlayerBackend;
 use super::state::DEFAULT_PRIMARY_COLOR_HEX;
 use super::state::DEFAULT_SECONDARY_COLOR_HEX;
 use super::state::DEFAULT_TERTIARY_COLOR_HEX;
+use super::state::MATERIAL_THEME_VARIANT_KEY;
 use super::state::PRIMARY_COLOR_KEY;
 use super::state::SECONDARY_COLOR_KEY;
 use super::state::SettingsState;
@@ -17,6 +18,7 @@ use super::state::USE_TERTIARY_COLOR_KEY;
 use super::system_theme::detect_system_theme_mode;
 use super::system_theme::supports_system_theme_toggle;
 use crate::material::styling::material_schemes::MaterialSchemes;
+use crate::material::styling::material_schemes::MaterialThemeVariant;
 
 pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
     match action {
@@ -144,6 +146,14 @@ pub fn reduce(state: &mut SettingsState, action: SettingsAction) {
                 refresh_material_theme(state);
             }
         }
+        SettingsAction::UpdateMaterialThemeVariant { variant } => {
+            state.material_theme_variant = variant;
+            state.preferences.insert(
+                MATERIAL_THEME_VARIANT_KEY.to_string(),
+                variant.as_preference().to_string(),
+            );
+            refresh_material_theme(state);
+        }
         SettingsAction::UpdateAudioPlayerBackend { backend } => {
             let backend = backend.normalize_for_current_target();
             state.audio_player_backend = backend;
@@ -189,6 +199,12 @@ fn apply_preferences(state: &mut SettingsState) {
         .filter(|value| is_argb_hex(value))
         .cloned()
         .unwrap_or_else(|| DEFAULT_TERTIARY_COLOR_HEX.to_string());
+    state.material_theme_variant = state
+        .preferences
+        .get(MATERIAL_THEME_VARIANT_KEY)
+        .map(String::as_str)
+        .map(MaterialThemeVariant::from_preference)
+        .unwrap_or_default();
     state.audio_player_backend = AudioPlayerBackend::from_preference(
         state
             .preferences
@@ -241,7 +257,11 @@ fn refresh_material_theme(state: &mut SettingsState) {
         (state.use_primary_color && state.use_secondary_color && state.use_tertiary_color)
             .then_some(state.tertiary_color_hex.as_str());
 
-    state.material_scheme =
-        MaterialSchemes::from_seed_colors(primary_hex, secondary_hex, tertiary_hex);
+    state.material_scheme = MaterialSchemes::from_seed_colors_with_variant(
+        primary_hex,
+        secondary_hex,
+        tertiary_hex,
+        state.material_theme_variant,
+    );
     state.material_update_count += 1;
 }

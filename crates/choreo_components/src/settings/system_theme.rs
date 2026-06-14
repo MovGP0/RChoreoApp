@@ -1,3 +1,4 @@
+use super::state::SettingsState;
 use super::state::ThemeMode;
 use std::sync::Mutex;
 use std::sync::OnceLock;
@@ -36,6 +37,23 @@ pub fn detect_system_theme_mode() -> Option<ThemeMode> {
         mode,
     });
     mode
+}
+
+#[must_use]
+pub fn effective_theme_mode(state: &SettingsState) -> ThemeMode {
+    resolve_effective_theme_mode(state, detect_system_theme_mode())
+}
+
+#[must_use]
+pub fn resolve_effective_theme_mode(
+    state: &SettingsState,
+    system_mode: Option<ThemeMode>,
+) -> ThemeMode {
+    if state.can_use_system_theme && state.use_system_theme {
+        system_mode.unwrap_or(state.theme_mode)
+    } else {
+        state.theme_mode
+    }
 }
 
 fn detect_system_theme_mode_uncached() -> Option<ThemeMode> {

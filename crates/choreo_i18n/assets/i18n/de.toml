@@ -10,6 +10,26 @@ SettingsAudioBackendAwedioLabel = "Awedio"
 SettingsAudioBackendBrowserLabel = "Browser"
 SettingsNavigateBack = "Zurück"
 SettingsThemeLabel = "Thema"
+SettingsThemeVariantLabel = "Designvariante"
+MaterialThemeVariantContent = "Inhalt"
+MaterialThemeVariantTonalSpot = "Tonaler Akzent"
+MaterialThemeVariantVibrant = "Lebendig"
+MaterialThemeVariantExpressive = "Ausdrucksstark"
+MaterialThemeVariantFidelity = "Farbtreu"
+MaterialThemeVariantMonochrome = "Monochrom"
+MaterialThemeVariantNeutral = "Neutral"
+MaterialThemeVariantRainbow = "Regenbogen"
+MaterialThemeVariantFruitSalad = "Obstsalat"
+
+
+
+
+
+
+
+
+
+
 SettingsColorsLabel = "Farben"
 SettingsColorArgbHint = "#AARRGGBB"
 LightModeLabel = "Hellmodus"

@@ -14,13 +14,16 @@ use crate::settings::ui::content_max_width_token;
 use crate::settings::ui::content_spacing_token;
 use crate::settings::ui::dropdown_height_token;
 use crate::settings::ui::format_argb_hex;
+use crate::settings::ui::material_theme_variant_dropdown_labels;
 use crate::settings::ui::navigate_back_icon_name;
 use crate::settings::ui::navigate_back_icon_svg;
 use crate::settings::ui::parse_argb_hex;
+use crate::settings::ui::selected_material_theme_variant_dropdown_index;
 use crate::settings::ui::selected_theme_mode_dropdown_index;
 use crate::settings::ui::shows_audio_backend_card;
 use crate::settings::ui::theme_mode_dropdown_labels;
 use crate::settings::ui::visible_settings_card_headers;
+use choreo_components::material::styling::material_schemes::MaterialThemeVariant;
 use choreo_components::material::styling::material_style_metrics::material_style_metrics;
 
 macro_rules! check_eq {
@@ -114,11 +117,7 @@ fn settings_translations_bind_slint_catalog_values() {
     let mut errors = Vec::new();
 
     check_eq!(errors, strings.title, "Einstellungen");
-    check_eq!(
-        errors,
-        strings.use_system_theme,
-        "Systemdesign verwenden"
-    );
+    check_eq!(errors, strings.use_system_theme, "Systemdesign verwenden");
 
     assert_no_errors(errors);
 }
@@ -157,11 +156,49 @@ fn theme_mode_dropdown_labels_follow_requested_selection_order() {
 }
 
 #[test]
+fn material_theme_variant_dropdown_labels_follow_material_variant_order() {
+    let strings = settings_translations("en");
+    let mut state = SettingsState::default();
+    let mut errors = Vec::new();
+
+    check_eq!(
+        errors,
+        material_theme_variant_dropdown_labels(&strings),
+        vec![
+            "Content".to_string(),
+            "Tonal spot".to_string(),
+            "Vibrant".to_string(),
+            "Expressive".to_string(),
+            "Fidelity".to_string(),
+            "Monochrome".to_string(),
+            "Neutral".to_string(),
+            "Rainbow".to_string(),
+            "Fruit salad".to_string(),
+        ]
+    );
+    check_eq!(
+        errors,
+        selected_material_theme_variant_dropdown_index(&state),
+        0
+    );
+
+    state.material_theme_variant = MaterialThemeVariant::Vibrant;
+    check_eq!(
+        errors,
+        selected_material_theme_variant_dropdown_index(&state),
+        2
+    );
+
+    assert_no_errors(errors);
+}
+
+#[test]
 fn settings_card_headers_follow_requested_order() {
     let state = SettingsState::default();
     let strings = settings_translations("en");
     let mut expected = vec![
         "Theme".to_string(),
+        "Theme variant".to_string(),
         "Primary color".to_string(),
         "Secondary color".to_string(),
         "Tertiary color".to_string(),
