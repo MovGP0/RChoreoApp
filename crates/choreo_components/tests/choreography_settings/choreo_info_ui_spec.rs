@@ -21,20 +21,6 @@ macro_rules! check_eq {
     };
 }
 
-macro_rules! check_ne {
-    ($errors:expr, $left:expr, $right:expr) => {
-        if $left == $right {
-            $errors.push(format!(
-                "{} == {} (left = {:?}, right = {:?})",
-                stringify!($left),
-                stringify!($right),
-                $left,
-                $right
-            ));
-        }
-    };
-}
-
 macro_rules! check {
     ($errors:expr, $condition:expr) => {
         if !$condition {

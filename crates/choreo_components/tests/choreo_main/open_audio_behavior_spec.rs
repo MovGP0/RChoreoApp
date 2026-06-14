@@ -43,8 +43,9 @@ fn open_audio_behavior_spec() {
                 );
 
                 let mut errors = Vec::new();
+                let expected_requests = vec![request];
 
-                check_eq!(errors, state.outgoing_audio_requests, vec![request]);
+                check_eq!(errors, state.outgoing_audio_requests, expected_requests);
 
                 assert_no_errors(errors);
             },

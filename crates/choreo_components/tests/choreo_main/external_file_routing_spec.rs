@@ -11,6 +11,7 @@ use choreo_components::choreo_main::MainPageBinding;
 use choreo_components::choreo_main::MainPageDependencies;
 use choreo_components::choreo_main::OpenAudioRequested;
 use choreo_components::choreo_main::actions::OpenChoreoRequested;
+use choreo_components::observability::TraceContext;
 
 macro_rules! check_eq {
     ($errors:expr, $left:expr, $right:expr) => {

@@ -88,7 +88,12 @@ fn binding_forwards_open_audio_request_with_typed_trace_context() {
 
     check_eq!(errors, routed_requests.len(), 1);
     check_eq!(errors, routed_requests[0].file_path, "C:/track.mp3");
-    check_eq!(errors, routed_requests[0].trace_context, Some(trace_context));
+    let expected_trace_context = Some(trace_context);
+    check_eq!(
+        errors,
+        routed_requests[0].trace_context,
+        expected_trace_context
+    );
 
     assert_no_errors(errors);
 }
@@ -185,7 +190,11 @@ fn binding_uses_pick_choreo_handler_to_load_selected_file() {
     check_eq!(errors, state.scenes[0].name, "Intro");
     check_eq!(errors, state.selected_scene_index, Some(0));
     check_eq!(errors, state.floor_scene_name.as_deref(), Some("Intro"));
-    check_eq!(errors, state.choreography_settings_state.name, "Loaded choreo");
+    check_eq!(
+        errors,
+        state.choreography_settings_state.name,
+        "Loaded choreo"
+    );
 
     assert_no_errors(errors);
 }
@@ -378,7 +387,11 @@ fn binding_tick_clears_pending_seek_only_after_runtime_acknowledges_position() {
         let state = state.borrow();
         let mut errors = Vec::new();
 
-        check_eq!(errors, state.audio_player_state.pending_seek_position, Some(0.25));
+        check_eq!(
+            errors,
+            state.audio_player_state.pending_seek_position,
+            Some(0.25)
+        );
 
         assert_no_errors(errors);
     }
@@ -402,7 +415,10 @@ fn binding_tick_clears_pending_seek_only_after_runtime_acknowledges_position() {
     let mut errors = Vec::new();
 
     check!(errors, acknowledged);
-    check!(errors, state.audio_player_state.pending_seek_position.is_none());
+    check!(
+        errors,
+        state.audio_player_state.pending_seek_position.is_none()
+    );
     check_eq!(errors, state.audio_player_state.position, 0.25);
 
     assert_no_errors(errors);

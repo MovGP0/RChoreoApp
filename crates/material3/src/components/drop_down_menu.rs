@@ -1,7 +1,8 @@
 use egui::Color32;
 use egui::CornerRadius;
 use egui::Id;
-use egui::PopupCloseBehavior;
+use egui::Order;
+use egui::Pos2;
 use egui::Rect;
 use egui::RichText;
 use egui::Sense;
@@ -46,49 +47,103 @@ pub fn mode_dropdown(
     paint_dropdown_field(ui, rect, selected_text, enabled, is_open, is_open);
 
     let mut selected = None;
-    let _ = egui::Popup::from_response(&response)
-        .id(popup_id)
-        .open_memory(None)
-        .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
-        .align(egui::RectAlign::TOP_START)
-        .width(width)
-        .show(|ui| {
-            ui.set_min_width(width);
+    if is_open {
+        egui::Popup::open_id(ui.ctx(), popup_id);
+        let menu_height = dropdown_menu_height(labels.len(), item_height);
+        let popup_pos = dropdown_menu_position(rect, menu_height, ui.ctx().screen_rect());
+        let popup_response = egui::Area::new(popup_id)
+            .order(dropdown_menu_layer_order())
+            .fixed_pos(popup_pos)
+            .show(ui.ctx(), |ui| {
+                ui.set_min_width(width);
 
-            let menu_fill = ui.visuals().widgets.noninteractive.bg_fill;
-            let menu_stroke = ui.visuals().widgets.noninteractive.bg_stroke;
-            egui::Frame::new()
-                .fill(menu_fill)
-                .stroke(menu_stroke)
-                .corner_radius(CornerRadius::same(FIELD_CORNER_RADIUS))
-                .show(ui, |ui| {
-                    ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+                let menu_fill = ui.visuals().widgets.noninteractive.bg_fill;
+                let menu_stroke = ui.visuals().widgets.noninteractive.bg_stroke;
+                egui::Frame::new()
+                    .fill(menu_fill)
+                    .stroke(menu_stroke)
+                    .corner_radius(CornerRadius::same(FIELD_CORNER_RADIUS))
+                    .show(ui, |ui| {
+                        ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
 
-                    MaterialScrollArea::vertical()
-                        .max_height(item_height * MENU_MAX_VISIBLE_ITEMS as f32)
-                        .show(ui, |ui| {
-                            ui.set_min_width(width);
-                            ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
-                            for (index, label) in labels.iter().enumerate() {
-                                let is_selected = selected_index == Some(index);
-                                let response = ui.add_sized(
-                                    vec2(width, item_height),
-                                    egui::Button::selectable(
-                                        is_selected,
-                                        RichText::new(*label).text_style(TextStyle::Body),
-                                    )
-                                    .corner_radius(0.0),
-                                );
-                                if response.clicked() {
-                                    selected = Some(index);
-                                    egui::Popup::close_id(ui.ctx(), popup_id);
+                        MaterialScrollArea::vertical()
+                            .max_height(menu_height)
+                            .show(ui, |ui| {
+                                ui.set_min_width(width);
+                                ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+                                for (index, label) in labels.iter().enumerate() {
+                                    let is_selected = selected_index == Some(index);
+                                    let response = ui.add_sized(
+                                        vec2(width, item_height),
+                                        egui::Button::selectable(
+                                            is_selected,
+                                            RichText::new(*label).text_style(TextStyle::Body),
+                                        )
+                                        .corner_radius(0.0),
+                                    );
+                                    if response.clicked() {
+                                        selected = Some(index);
+                                        egui::Popup::close_id(ui.ctx(), popup_id);
+                                    }
                                 }
-                            }
-                        });
-                });
-        });
+                            });
+                    });
+            });
+
+        if should_close_dropdown_popup(ui, &response, &popup_response.response) {
+            egui::Popup::close_id(ui.ctx(), popup_id);
+        }
+    }
 
     selected
+}
+
+#[must_use]
+pub const fn dropdown_menu_layer_order() -> Order {
+    Order::Foreground
+}
+
+fn should_close_dropdown_popup(
+    ui: &Ui,
+    field_response: &egui::Response,
+    popup_response: &egui::Response,
+) -> bool {
+    let pointer_clicked = ui.ctx().input(|input| input.pointer.any_click());
+    let escape_pressed = ui.ctx().input(|input| input.key_pressed(egui::Key::Escape));
+
+    should_close_dropdown_popup_for_input(
+        pointer_clicked,
+        field_response.hovered(),
+        popup_response.hovered(),
+        escape_pressed,
+    )
+}
+
+fn should_close_dropdown_popup_for_input(
+    pointer_clicked: bool,
+    field_hovered: bool,
+    popup_hovered: bool,
+    escape_pressed: bool,
+) -> bool {
+    let clicked_outside = pointer_clicked && !field_hovered && !popup_hovered;
+
+    clicked_outside || escape_pressed
+}
+
+fn dropdown_menu_height(label_count: usize, item_height: f32) -> f32 {
+    item_height * label_count.min(MENU_MAX_VISIBLE_ITEMS) as f32
+}
+
+fn dropdown_menu_position(field_rect: Rect, menu_height: f32, screen_rect: Rect) -> Pos2 {
+    if field_rect.bottom() + menu_height <= screen_rect.bottom() {
+        return field_rect.left_bottom();
+    }
+
+    if field_rect.top() - menu_height >= screen_rect.top() {
+        return pos2(field_rect.left(), field_rect.top() - menu_height);
+    }
+
+    field_rect.left_bottom()
 }
 
 fn paint_dropdown_field(
@@ -163,4 +218,69 @@ fn paint_dropdown_arrow(ui: &Ui, center: egui::Pos2, color: Color32, arrow_up: b
     };
     ui.painter()
         .add(Shape::convex_polygon(points, color, Stroke::NONE));
+}
+
+#[cfg(test)]
+mod tests {
+    use egui::pos2;
+
+    use super::dropdown_menu_layer_order;
+    use super::dropdown_menu_position;
+    use super::should_close_dropdown_popup_for_input;
+
+    #[test]
+    fn dropdown_menu_uses_normal_app_overlay_layer_below_tooltips() {
+        assert_eq!(dropdown_menu_layer_order(), egui::Order::Foreground);
+        assert!(dropdown_menu_layer_order() < egui::Order::Tooltip);
+    }
+
+    #[test]
+    fn dropdown_menu_position_opens_below_when_space_is_available() {
+        let field_rect = egui::Rect::from_min_size(pos2(10.0, 20.0), egui::vec2(100.0, 40.0));
+        let screen_rect = egui::Rect::from_min_size(pos2(0.0, 0.0), egui::vec2(400.0, 400.0));
+
+        assert_eq!(
+            dropdown_menu_position(field_rect, 120.0, screen_rect),
+            pos2(10.0, 60.0)
+        );
+    }
+
+    #[test]
+    fn dropdown_menu_position_opens_above_when_bottom_space_is_unavailable() {
+        let field_rect = egui::Rect::from_min_size(pos2(10.0, 320.0), egui::vec2(100.0, 40.0));
+        let screen_rect = egui::Rect::from_min_size(pos2(0.0, 0.0), egui::vec2(400.0, 400.0));
+
+        assert_eq!(
+            dropdown_menu_position(field_rect, 120.0, screen_rect),
+            pos2(10.0, 200.0)
+        );
+    }
+
+    #[test]
+    fn dropdown_menu_closes_when_pointer_clicks_another_control() {
+        assert!(should_close_dropdown_popup_for_input(
+            true, false, false, false
+        ));
+    }
+
+    #[test]
+    fn dropdown_menu_stays_open_when_pointer_clicks_the_field() {
+        assert!(!should_close_dropdown_popup_for_input(
+            true, true, false, false
+        ));
+    }
+
+    #[test]
+    fn dropdown_menu_stays_open_when_pointer_clicks_the_menu() {
+        assert!(!should_close_dropdown_popup_for_input(
+            true, false, true, false
+        ));
+    }
+
+    #[test]
+    fn dropdown_menu_closes_when_escape_is_pressed() {
+        assert!(should_close_dropdown_popup_for_input(
+            false, true, true, true
+        ));
+    }
 }

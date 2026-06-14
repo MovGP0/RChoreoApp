@@ -3,7 +3,7 @@ use super::create_state;
 use super::reducer::reduce;
 
 macro_rules! check_eq {
-    ($errors:expr, $left:expr, $right:expr) => {
+    ($errors:expr, $left:expr, $right:expr $(,)?) => {
         if $left != $right {
             $errors.push(format!(
                 "{} != {} (left = {:?}, right = {:?})",
@@ -17,7 +17,7 @@ macro_rules! check_eq {
 }
 
 macro_rules! check {
-    ($errors:expr, $condition:expr) => {
+    ($errors:expr, $condition:expr $(,)?) => {
         if !$condition {
             $errors.push(format!("condition failed: {}", stringify!($condition)));
         }

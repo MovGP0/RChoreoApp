@@ -3,7 +3,7 @@ use super::create_state;
 use super::reducer::reduce;
 
 macro_rules! check_eq {
-    ($errors:expr, $left:expr, $right:expr) => {
+    ($errors:expr, $left:expr, $right:expr $(,)?) => {
         if $left != $right {
             $errors.push(format!(
                 "{} != {} (left = {:?}, right = {:?})",
@@ -17,7 +17,7 @@ macro_rules! check_eq {
 }
 
 macro_rules! check {
-    ($errors:expr, $condition:expr) => {
+    ($errors:expr, $condition:expr $(,)?) => {
         if !$condition {
             $errors.push(format!("condition failed: {}", stringify!($condition)));
         }
@@ -61,10 +61,8 @@ fn update_show_timestamps_initializes_updates_state_and_emits_event() {
     );
 
     state.set_scene_timestamp_parts(1, 2, 39);
-    check!(
-        errors,
-        (state.scene_timestamp_seconds - 62.03).abs() < 0.0001
-    );
+    let scene_timestamp_matches = (state.scene_timestamp_seconds - 62.03).abs() < 0.0001;
+    check!(errors, scene_timestamp_matches);
 
     reduce(
         &mut state,

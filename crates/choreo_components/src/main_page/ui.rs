@@ -62,12 +62,12 @@ const PANEL_DEBUG_CONTENT_PADDING_PX: f32 = 4.0;
 
 #[must_use]
 pub const fn top_bar_layer_order() -> egui::Order {
-    egui::Order::Debug
+    egui::Order::Foreground
 }
 
 #[must_use]
 pub const fn audio_panel_layer_order() -> egui::Order {
-    egui::Order::Tooltip
+    egui::Order::Foreground
 }
 
 pub fn draw(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainAction> {
@@ -194,12 +194,11 @@ fn draw_floor_host_content(
     let host_rect = floor_content_rect(ui.max_rect(), is_right_drawer_open);
     ui.set_clip_rect(host_rect);
     ui.set_min_size(host_rect.size());
-    ui.painter()
-        .rect_filled(
-            host_rect,
-            0.0,
-            material_palette_for_visuals(ui.visuals()).surface_container_low,
-        );
+    ui.painter().rect_filled(
+        host_rect,
+        0.0,
+        material_palette_for_visuals(ui.visuals()).surface_container_low,
+    );
     if cfg!(debug_assertions) {
         ui.painter().rect_stroke(
             host_rect,
@@ -224,12 +223,11 @@ fn draw_settings_drawer(ui: &mut Ui, state: &ChoreoMainState) -> Vec<ChoreoMainA
     ui.set_min_size(panel_rect.size());
     ui.set_width(panel_width);
     ui.set_min_width(panel_width);
-    ui.painter()
-        .rect_filled(
-            panel_rect,
-            0.0,
-            material_palette_for_visuals(ui.visuals()).surface_container,
-        );
+    ui.painter().rect_filled(
+        panel_rect,
+        0.0,
+        material_palette_for_visuals(ui.visuals()).surface_container,
+    );
     if cfg!(debug_assertions) {
         ui.painter().rect_stroke(
             panel_rect,

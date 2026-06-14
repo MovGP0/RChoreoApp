@@ -9,7 +9,6 @@ use egui::Order;
 use egui::Stroke;
 use egui::Ui;
 use egui::vec2;
-use egui_material3::MaterialSelect;
 use egui_material3::MaterialSwitch;
 
 use crate::choreo_info::messages::ChoreoInfoAction;
@@ -19,6 +18,7 @@ use crate::choreo_info::ui::ChoreoInfoLabels;
 use crate::material::components::MaterialScrollArea;
 use crate::material::components::color_picker::state::ColorPickerState;
 use crate::material::components::color_picker::ui as color_picker_ui;
+use crate::material::components::mode_dropdown;
 use crate::material::components::number_picker;
 use crate::material::components::number_picker::NumberPickerUiState;
 use crate::material::styling::material_palette::material_palette_for_visuals;
@@ -33,6 +33,7 @@ use super::state::ChoreographySettingsState;
 use super::translations::ChoreographySettingsTranslations;
 
 const DEFAULT_LOCALE: &str = "en";
+pub const GRID_RESOLUTION_DROPDOWN_ID: &str = "choreography_settings_grid_resolution_dropdown";
 
 #[must_use]
 pub fn choreo_date_text(year: i32, month: u8, day: u8) -> String {
@@ -207,14 +208,28 @@ fn draw_floor_section(
         .grid_size_options
         .iter()
         .position(|option| option.value == state.selected_grid_size_option.value);
-    let mut grid_resolution_select = MaterialSelect::new(&mut selected_grid_index)
-        .label(ChoreographySettingsTranslations::grid_resolution(locale));
-    for (index, option) in state.grid_size_options.iter().enumerate() {
-        grid_resolution_select = grid_resolution_select.option(index, option.display.as_str());
-    }
-    let grid_resolution_response =
-        ui.add(grid_resolution_select.enabled(!state.grid_size_options.is_empty()));
-    if grid_resolution_response.changed()
+    ui.label(ChoreographySettingsTranslations::grid_resolution(locale));
+    let grid_resolution_labels = state
+        .grid_size_options
+        .iter()
+        .map(|option| option.display.as_str())
+        .collect::<Vec<_>>();
+    let grid_resolution_dropdown_width = ui.available_width();
+    selected_grid_index = mode_dropdown(
+        ui,
+        Id::new(GRID_RESOLUTION_DROPDOWN_ID),
+        selected_grid_index,
+        grid_resolution_labels.as_slice(),
+        !state.grid_size_options.is_empty(),
+        grid_resolution_dropdown_width,
+        grid_resolution_dropdown_height_token(),
+    )
+    .or(selected_grid_index);
+    if selected_grid_index
+        != state
+            .grid_size_options
+            .iter()
+            .position(|option| option.value == state.selected_grid_size_option.value)
         && let Some(index) = selected_grid_index
         && let Some(option) = state.grid_size_options.get(index)
     {
@@ -487,6 +502,11 @@ pub fn settings_card_content_width(outer_width: f32) -> f32 {
     let horizontal_padding = metrics.paddings.padding_12 * 2.0;
     let horizontal_stroke = metrics.strokes.outline * 2.0;
     (outer_width - horizontal_padding - horizontal_stroke).max(0.0)
+}
+
+#[must_use]
+pub fn grid_resolution_dropdown_height_token() -> f32 {
+    material_style_metrics().sizes.size_56
 }
 
 #[must_use]
