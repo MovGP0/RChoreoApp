@@ -3,7 +3,9 @@ use egui_material3::MaterialSlider;
 
 use crate::material::components::DatePickerStrings;
 use crate::material::components::DatePickerValue;
+use crate::material::components::TextField;
 use crate::material::components::date_picker;
+use crate::material::styling::material_style_metrics::material_style_metrics;
 
 use super::messages::ChoreoInfoAction;
 use super::state::ChoreoDate;
@@ -59,23 +61,35 @@ pub fn draw(
 ) -> Vec<ChoreoInfoAction> {
     let mut actions = Vec::new();
 
-    ui.label(&labels.comment);
     let mut comment = state.choreo_comment.clone();
-    if ui.text_edit_singleline(&mut comment).changed() {
+    if TextField::new("choreo_info_comment", &mut comment)
+        .label(labels.comment.as_str())
+        .show(ui)
+        .text_changed
+    {
         actions.push(ChoreoInfoAction::UpdateComment(comment));
     }
+    add_field_spacing(ui);
 
-    ui.label(&labels.name);
     let mut name = state.choreo_name.clone();
-    if ui.text_edit_singleline(&mut name).changed() {
+    if TextField::new("choreo_info_name", &mut name)
+        .label(labels.name.as_str())
+        .show(ui)
+        .text_changed
+    {
         actions.push(ChoreoInfoAction::UpdateName(name));
     }
+    add_field_spacing(ui);
 
-    ui.label(&labels.subtitle);
     let mut subtitle = state.choreo_subtitle.clone();
-    if ui.text_edit_singleline(&mut subtitle).changed() {
+    if TextField::new("choreo_info_subtitle", &mut subtitle)
+        .label(labels.subtitle.as_str())
+        .show(ui)
+        .text_changed
+    {
         actions.push(ChoreoInfoAction::UpdateSubtitle(subtitle));
     }
+    add_field_spacing(ui);
 
     ui.label(&labels.date);
     if let Some(selected_date) = date_picker(
@@ -95,25 +109,40 @@ pub fn draw(
         });
     }
 
-    ui.label(&labels.variation);
     let mut variation = state.choreo_variation.clone();
-    if ui.text_edit_singleline(&mut variation).changed() {
+    if TextField::new("choreo_info_variation", &mut variation)
+        .label(labels.variation.as_str())
+        .show(ui)
+        .text_changed
+    {
         actions.push(ChoreoInfoAction::UpdateVariation(variation));
     }
+    add_field_spacing(ui);
 
-    ui.label(&labels.author);
     let mut author = state.choreo_author.clone();
-    if ui.text_edit_singleline(&mut author).changed() {
+    if TextField::new("choreo_info_author", &mut author)
+        .label(labels.author.as_str())
+        .show(ui)
+        .text_changed
+    {
         actions.push(ChoreoInfoAction::UpdateAuthor(author));
     }
+    add_field_spacing(ui);
 
-    ui.label(&labels.description);
     let mut description = state.choreo_description.clone();
-    if ui.text_edit_singleline(&mut description).changed() {
+    if TextField::new("choreo_info_description", &mut description)
+        .label(labels.description.as_str())
+        .show(ui)
+        .text_changed
+    {
         actions.push(ChoreoInfoAction::UpdateDescription(description));
     }
 
     actions
+}
+
+fn add_field_spacing(ui: &mut Ui) {
+    ui.add_space(material_style_metrics().spacings.spacing_8);
 }
 
 pub fn draw_transparency(ui: &mut Ui, transparency: f64, label: &str) -> Option<ChoreoInfoAction> {

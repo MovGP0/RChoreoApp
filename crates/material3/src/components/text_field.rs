@@ -8,6 +8,7 @@ use egui::Rect;
 use egui::Response;
 use egui::Sense;
 use egui::TextEdit;
+use egui::TextStyle;
 use egui::Ui;
 use egui::UiBuilder;
 use egui::vec2;
@@ -18,7 +19,16 @@ use crate::styling::material_palette::material_palette_for_visuals;
 use crate::styling::material_style_metrics::material_style_metrics;
 use crate::styling::material_typography::MATERIAL_TYPOGRAPHY;
 
-const FIELD_CORNER_RADIUS: u8 = 4;
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TextFieldLayoutMetrics {
+    pub field_height: f32,
+    pub corner_radius: f32,
+    pub horizontal_padding: f32,
+    pub vertical_padding: f32,
+    pub text_content_height: f32,
+    pub floating_label_height: f32,
+    pub supporting_spacing: f32,
+}
 
 pub struct TextFieldResponse {
     pub response: Response,
@@ -41,6 +51,21 @@ pub struct TextField<'a> {
     pub read_only: bool,
     pub has_error: bool,
     pub width: Option<f32>,
+}
+
+#[must_use]
+pub fn text_field_layout_metrics() -> TextFieldLayoutMetrics {
+    let metrics = material_style_metrics();
+
+    TextFieldLayoutMetrics {
+        field_height: metrics.sizes.size_56,
+        corner_radius: metrics.corner_radii.border_radius_8,
+        horizontal_padding: metrics.paddings.padding_16,
+        vertical_padding: metrics.paddings.padding_8,
+        text_content_height: metrics.sizes.size_40,
+        floating_label_height: MATERIAL_TYPOGRAPHY.body_small.font_size_px,
+        supporting_spacing: metrics.spacings.spacing_4,
+    }
 }
 
 impl<'a> TextField<'a> {
@@ -118,6 +143,7 @@ impl<'a> TextField<'a> {
     pub fn show(self, ui: &mut Ui) -> TextFieldResponse {
         let palette = material_palette_for_visuals(ui.visuals());
         let metrics = material_style_metrics();
+        let layout_metrics = text_field_layout_metrics();
         let label = self.label.clone();
         let placeholder_text = self.placeholder_text.clone();
         let supporting_text = self.supporting_text.clone();
@@ -128,17 +154,19 @@ impl<'a> TextField<'a> {
         let supporting_height = if self.supporting_text.is_empty() {
             0.0
         } else {
-            metrics.spacings.spacing_4 + MATERIAL_TYPOGRAPHY.body_small.font_size_px
+            layout_metrics.supporting_spacing + MATERIAL_TYPOGRAPHY.body_small.font_size_px
         };
         let field_width = self.width.unwrap_or_else(|| ui.available_width().max(0.0));
-        let total_size = vec2(field_width, metrics.sizes.size_56 + supporting_height);
+        let total_size = vec2(field_width, layout_metrics.field_height + supporting_height);
         let (outer_rect, outer_response) = ui.allocate_exact_size(total_size, Sense::hover());
-        let field_rect =
-            Rect::from_min_size(outer_rect.min, vec2(total_size.x, metrics.sizes.size_56));
+        let field_rect = Rect::from_min_size(
+            outer_rect.min,
+            vec2(total_size.x, layout_metrics.field_height),
+        );
         let supporting_rect = Rect::from_min_max(
             egui::pos2(
-                outer_rect.min.x + metrics.paddings.padding_16,
-                field_rect.max.y + metrics.spacings.spacing_4,
+                outer_rect.min.x + layout_metrics.horizontal_padding,
+                field_rect.max.y + layout_metrics.supporting_spacing,
             ),
             outer_rect.max,
         );
@@ -152,7 +180,7 @@ impl<'a> TextField<'a> {
 
         ui.painter().rect_filled(
             field_rect,
-            CornerRadius::same(FIELD_CORNER_RADIUS),
+            CornerRadius::same(layout_metrics.corner_radius as u8),
             filled_text_field_container_color(palette, self.enabled),
         );
 
@@ -170,16 +198,16 @@ impl<'a> TextField<'a> {
             let left_padding = if has_leading {
                 metrics.paddings.padding_4
             } else {
-                metrics.paddings.padding_16
+                layout_metrics.horizontal_padding
             };
             let right_padding = if has_trailing {
                 metrics.paddings.padding_4
             } else {
-                metrics.paddings.padding_16
+                layout_metrics.horizontal_padding
             };
             let inner_rect = Rect::from_min_max(
-                field_rect.min + vec2(left_padding, metrics.paddings.padding_4),
-                field_rect.max - vec2(right_padding, metrics.paddings.padding_4),
+                field_rect.min + vec2(left_padding, layout_metrics.vertical_padding),
+                field_rect.max - vec2(right_padding, layout_metrics.vertical_padding),
             );
             ui.scope_builder(UiBuilder::new().max_rect(inner_rect), |ui| {
                 ui.spacing_mut().item_spacing.x = metrics.spacings.spacing_2;
@@ -195,46 +223,58 @@ impl<'a> TextField<'a> {
                         response = response.union(icon_response.response);
                     }
 
-                    ui.vertical(|ui| {
-                        ui.set_width(
-                            (field_rect.width()
-                                - left_padding
-                                - right_padding
-                                - if has_leading {
-                                    metrics.icon_sizes.icon_size_18 + metrics.spacings.spacing_2
-                                } else {
-                                    0.0
-                                }
-                                - if has_trailing {
-                                    metrics.icon_sizes.icon_size_18 + metrics.spacings.spacing_2
-                                } else {
-                                    0.0
-                                })
-                            .max(0.0),
-                        );
-
-                        if show_floating_label {
-                            let _ = material_text(ui, label.clone())
-                                .text_style(MATERIAL_TYPOGRAPHY.body_small)
-                                .color(initial_highlight)
-                                .show(ui);
+                    let text_width = (field_rect.width()
+                        - left_padding
+                        - right_padding
+                        - if has_leading {
+                            metrics.icon_sizes.icon_size_18 + metrics.spacings.spacing_2
                         } else {
-                            ui.add_space(metrics.paddings.padding_6);
+                            0.0
                         }
+                        - if has_trailing {
+                            metrics.icon_sizes.icon_size_18 + metrics.spacings.spacing_2
+                        } else {
+                            0.0
+                        })
+                    .max(0.0);
 
+                    let label_rect = Rect::from_min_size(
+                        inner_rect.min,
+                        vec2(text_width, layout_metrics.floating_label_height),
+                    );
+                    let text_rect = if show_floating_label {
+                        Rect::from_min_max(
+                            egui::pos2(inner_rect.min.x, label_rect.max.y),
+                            inner_rect.max,
+                        )
+                    } else {
+                        inner_rect
+                    };
+
+                    if show_floating_label {
+                        ui.painter().text(
+                            label_rect.left_top(),
+                            egui::Align2::LEFT_TOP,
+                            label.clone(),
+                            TextStyle::Small.resolve(ui.style()),
+                            initial_highlight,
+                        );
+                    }
+
+                    ui.scope_builder(UiBuilder::new().max_rect(text_rect), |ui| {
                         let mut text_edit = TextEdit::singleline(self.text)
                             .id(self.id)
                             .frame(false)
-                            .desired_width(f32::INFINITY)
+                            .desired_width(text_width)
                             .hint_text(if show_floating_label {
                                 placeholder_text.as_ref()
                             } else {
                                 label.as_ref()
                             });
-                        if self.read_only {
+                        if self.read_only || !self.enabled {
                             text_edit = text_edit.interactive(false);
                         }
-                        let text_response = ui.add_enabled(self.enabled, text_edit);
+                        let text_response = ui.add_sized(text_rect.size(), text_edit);
                         text_changed = text_response.changed();
                         has_focus = text_response.has_focus();
                         accepted = text_response.lost_focus()
@@ -345,6 +385,9 @@ mod tests {
     use super::field_highlight;
     use super::filled_text_field_container_color;
     use super::should_float_label;
+    use super::text_field_layout_metrics;
+    use crate::styling::material_style_metrics::material_style_metrics;
+    use crate::styling::material_typography::MATERIAL_TYPOGRAPHY;
 
     #[test]
     fn floating_label_matches_text_and_focus_state() {
@@ -376,6 +419,22 @@ mod tests {
                 .surface_container_low
                 .gamma_multiply(palette.state_layer_opacities.content_disabled)
         );
+    }
+
+    #[test]
+    fn text_field_layout_uses_material_shape_and_padding_metrics() {
+        let metrics = material_style_metrics();
+        let layout = text_field_layout_metrics();
+
+        assert_eq!(layout.field_height, metrics.sizes.size_56);
+        assert_eq!(layout.corner_radius, metrics.corner_radii.border_radius_8);
+        assert_eq!(layout.vertical_padding, metrics.paddings.padding_8);
+        assert_eq!(layout.text_content_height, metrics.sizes.size_40);
+        assert_eq!(
+            layout.floating_label_height,
+            MATERIAL_TYPOGRAPHY.body_small.font_size_px
+        );
+        assert_eq!(layout.horizontal_padding, metrics.paddings.padding_16);
     }
 
     #[test]

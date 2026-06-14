@@ -16,6 +16,7 @@ use crate::choreo_info::state::ChoreoDate;
 use crate::choreo_info::state::ChoreoInfoState;
 use crate::choreo_info::ui::ChoreoInfoLabels;
 use crate::material::components::MaterialScrollArea;
+use crate::material::components::TextField;
 use crate::material::components::color_picker::state::ColorPickerState;
 use crate::material::components::color_picker::ui as color_picker_ui;
 use crate::material::components::mode_dropdown;
@@ -319,21 +320,29 @@ fn draw_selected_scene_section(
     actions: &mut Vec<ChoreographySettingsAction>,
 ) {
     ui.add_enabled_ui(selected_scene_controls_enabled(state), |ui| {
-        ui.label(ChoreographySettingsTranslations::scene_name(locale));
         let mut scene_name = state.scene_name.clone();
-        if ui.text_edit_singleline(&mut scene_name).changed() {
+        if TextField::new("choreography_settings_scene_name", &mut scene_name)
+            .label(ChoreographySettingsTranslations::scene_name(locale))
+            .show(ui)
+            .text_changed
+        {
             actions.push(ChoreographySettingsAction::UpdateSelectedScene(
                 UpdateSelectedSceneAction::SceneName(scene_name),
             ));
         }
+        ui.add_space(material_style_metrics().spacings.spacing_8);
 
-        ui.label(ChoreographySettingsTranslations::scene_text(locale));
         let mut scene_text = state.scene_text.clone();
-        if ui.text_edit_singleline(&mut scene_text).changed() {
+        if TextField::new("choreography_settings_scene_text", &mut scene_text)
+            .label(ChoreographySettingsTranslations::scene_text(locale))
+            .show(ui)
+            .text_changed
+        {
             actions.push(ChoreographySettingsAction::UpdateSelectedScene(
                 UpdateSelectedSceneAction::SceneText(scene_text),
             ));
         }
+        ui.add_space(material_style_metrics().spacings.spacing_8);
 
         let mut scene_fixed_positions = state.scene_fixed_positions;
         let fixed_positions_response =

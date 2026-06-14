@@ -396,31 +396,30 @@ fn draw_dancer_card(
             .as_ref()
             .map(|dancer| dancer.name.clone())
             .unwrap_or_default();
-        if ui
-            .add_enabled(
-                state.has_selected_dancer,
-                egui::TextEdit::singleline(&mut name).hint_text(t(locale, "DancerNameLabel")),
-            )
-            .changed()
+        if components::TextField::new("dancer_settings_name", &mut name)
+            .label(t(locale, "DancerNameLabel"))
+            .enabled(state.has_selected_dancer)
+            .show(ui)
+            .text_changed
         {
             actions.push(DancerSettingsPageAction::UpdateDancerName { value: name });
         }
+        ui.add_space(material_style_metrics().spacings.spacing_8);
 
         let mut shortcut = state
             .selected_dancer
             .as_ref()
             .map(|dancer| dancer.shortcut.clone())
             .unwrap_or_default();
-        if ui
-            .add_enabled(
-                state.has_selected_dancer,
-                egui::TextEdit::singleline(&mut shortcut)
-                    .hint_text(t(locale, "DancerShortcutLabel")),
-            )
-            .changed()
+        if components::TextField::new("dancer_settings_shortcut", &mut shortcut)
+            .label(t(locale, "DancerShortcutLabel"))
+            .enabled(state.has_selected_dancer)
+            .show(ui)
+            .text_changed
         {
             actions.push(DancerSettingsPageAction::UpdateDancerShortcut { value: shortcut });
         }
+        ui.add_space(material_style_metrics().spacings.spacing_8);
 
         ui.label(t(locale, "DancerIconLabel"));
         let mut selected_icon = selected_icon_index(state).unwrap_or(0);
