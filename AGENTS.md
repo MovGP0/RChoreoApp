@@ -58,6 +58,8 @@ Rules:
 
 ## UI Colors and Styling
 
+See `docs/Styling.md` for Material Design theming rules and component color role mappings.
+
 - Apply colors and typography through egui/egui-material3 theming.
 - Keep styling in dedicated egui theme modules; behaviors are reserved for business logic.
 - Do not add behavior classes for styling-only concerns.
@@ -189,44 +191,7 @@ cargo run -p rchoreo_desktop --bin rchoreo_desktop --features debug-otel
 
 # Issue Tracking
 
-This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
-
-## Quick Reference
-
-```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --status in_progress  # Claim work
-bd close <id>         # Complete work
-bd sync               # Sync with git
-```
-
-## Landing the Plane (Session Completion)
-
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
-
-**MANDATORY WORKFLOW:**
-
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
-   ```bash
-   git pull --rebase
-   bd sync
-   git push
-   git status  # MUST show "up to date with origin"
-   ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
-
-**CRITICAL RULES:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
-- If `bd sync` fails with a stale `.git/rebase-merge` marker and `REBASE_HEAD` is absent, preserve any referenced `autostash`, remove `.git/rebase-merge`, and retry the sync/push flow.
+See `docs/IssueTracking.md` for the current Beads workflow, JSONL export/import guidance, hook maintenance, and session completion checklist.
 
 # Lessons Learned
 

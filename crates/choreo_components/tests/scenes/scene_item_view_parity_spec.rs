@@ -122,21 +122,17 @@ fn scene_item_view_parity_spec() {
 
                 let mut errors = Vec::new();
 
-                check_eq!(errors, selected.background, palette.surface_container_high);
-                check_eq!(errors, selected.border, palette.secondary);
-                check_eq!(errors, selected.title, palette.on_surface);
-                check_eq!(errors, selected.timestamp, palette.on_surface_variant);
-                check_eq!(errors, selected.accent, palette.secondary);
-                check_eq!(errors, unselected.background, palette.surface_container_low);
+                check_eq!(errors, selected.background, palette.primary_container);
+                check_eq!(errors, selected.border, palette.primary);
+                check_eq!(errors, selected.title, palette.on_primary_container);
+                check_eq!(errors, selected.timestamp, palette.on_primary_container);
+                check_eq!(errors, selected.accent, palette.primary);
+                check_eq!(errors, unselected.background, palette.surface);
                 check_eq!(errors, unselected.border, palette.outline_variant);
                 check_eq!(errors, unselected.title, palette.on_surface);
                 check_eq!(errors, unselected.timestamp, palette.on_surface_variant);
                 check_eq!(errors, selected.border_width, material_style_metrics().strokes.focus);
-                check_eq!(
-                    errors,
-                    unselected.border_width,
-                    material_style_metrics().strokes.outline
-                );
+                check_eq!(errors, unselected.border_width, material_style_metrics().strokes.outline);
                 check_ne!(errors, selected.background, Color32::TRANSPARENT);
 
                 assert_no_errors(errors);

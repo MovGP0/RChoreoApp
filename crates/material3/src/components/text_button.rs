@@ -5,6 +5,7 @@ use egui::Response;
 use egui::Ui;
 
 use crate::components::BaseButton;
+use crate::styling::material_palette::MaterialPalette;
 use crate::styling::material_palette::material_palette_for_visuals;
 use crate::styling::material_style_metrics::material_style_metrics;
 
@@ -35,15 +36,11 @@ impl<'a> TextButton<'a> {
             text: self.text,
             tooltip: self.tooltip,
             enabled: self.enabled,
-            color: Some(if self.enabled {
-                if self.inverse {
-                    palette.inverse_primary
-                } else {
-                    palette.primary
-                }
-            } else {
-                palette.on_surface
-            }),
+            color: Some(text_button_content_color(
+                palette,
+                self.enabled,
+                self.inverse,
+            )),
             border_radius: Some(material_style_metrics().sizes.size_40 * 0.5),
             display_background: false,
             ..BaseButton::new()
@@ -59,11 +56,29 @@ impl Default for TextButton<'_> {
     }
 }
 
+#[must_use]
+pub fn text_button_content_color(
+    palette: MaterialPalette,
+    enabled: bool,
+    inverse: bool,
+) -> egui::Color32 {
+    if !enabled {
+        return palette.on_surface_variant;
+    }
+
+    if inverse {
+        palette.inverse_primary
+    } else {
+        palette.primary
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use egui::Context;
 
     use super::TextButton;
+    use super::text_button_content_color;
 
     #[test]
     fn text_button_renders_without_panicking() {
@@ -76,5 +91,23 @@ mod tests {
             });
         });
         assert!(min_height >= 40.0);
+    }
+
+    #[test]
+    fn text_button_colors_match_material_action_tokens() {
+        let palette = crate::styling::material_palette::MaterialPalette::dark();
+
+        assert_eq!(
+            text_button_content_color(palette, true, false),
+            palette.primary
+        );
+        assert_eq!(
+            text_button_content_color(palette, true, true),
+            palette.inverse_primary
+        );
+        assert_eq!(
+            text_button_content_color(palette, false, false),
+            palette.on_surface_variant
+        );
     }
 }

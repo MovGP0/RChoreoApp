@@ -174,7 +174,7 @@ fn unchecked_bar_color(palette: MaterialPalette) -> Color32 {
 
 #[must_use]
 fn checked_bar_color(palette: MaterialPalette) -> Color32 {
-    palette.secondary
+    palette.primary
 }
 
 #[must_use]
@@ -189,7 +189,7 @@ fn state_layer_fill(
     state: StateLayerVisualState,
 ) -> Color32 {
     if checked {
-        palette.secondary_container
+        palette.surface_variant
     } else if !state.interactive {
         palette.surface_container_low
     } else if state.pressed || state.focused || state.hovered {
@@ -235,9 +235,11 @@ mod tests {
 
     fn palette_fixture() -> MaterialPalette {
         let mut palette = MaterialPalette::light();
+        palette.primary = Color32::from_rgb(1, 2, 3);
         palette.secondary = Color32::from_rgb(12, 34, 56);
         palette.on_surface = Color32::from_rgb(78, 90, 12);
         palette.on_surface_variant = Color32::from_rgb(120, 121, 122);
+        palette.surface_variant = Color32::from_rgb(160, 170, 180);
         palette
     }
 
@@ -258,7 +260,7 @@ mod tests {
                     focused: false,
                 },
             ),
-            palette.secondary_container
+            palette.surface_variant
         );
     }
 
@@ -268,7 +270,7 @@ mod tests {
         let theme_mode = ThemeMode::Dark;
         let palette = palette_fixture();
 
-        assert_eq!(checked_bar_color(palette), palette.secondary);
+        assert_eq!(checked_bar_color(palette), palette.primary);
         assert_eq!(
             state_layer_fill(
                 material_palette_for_theme(&schemes, theme_mode),

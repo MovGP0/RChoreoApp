@@ -44,16 +44,16 @@ pub fn colors_for_selection(palette: MaterialPalette, is_selected: bool) -> Scen
     let metrics = material_style_metrics();
     if is_selected {
         SceneListItemColors {
-            background: palette.surface_container_high,
-            border: palette.secondary,
-            title: palette.on_surface,
-            timestamp: palette.on_surface_variant,
-            accent: palette.secondary,
+            background: palette.primary_container,
+            border: palette.primary,
+            title: palette.on_primary_container,
+            timestamp: palette.on_primary_container,
+            accent: palette.primary,
             border_width: metrics.strokes.focus,
         }
     } else {
         SceneListItemColors {
-            background: palette.surface_container_low,
+            background: palette.surface,
             border: palette.outline_variant,
             title: palette.on_surface,
             timestamp: palette.on_surface_variant,

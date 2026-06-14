@@ -7,6 +7,7 @@ use crate::floor::floor_component::state::Point;
 use crate::floor::floor_component::state::SceneRenderPosition;
 use crate::floor::floor_component::state::TouchAction;
 use crate::floor::floor_component::state::TouchDeviceType;
+use crate::floor::floor_component::ui::floor_canvas_color_roles;
 
 macro_rules! check_eq {
     ($errors:expr, $left:expr, $right:expr) => {
@@ -36,6 +37,19 @@ fn assert_no_errors(errors: Vec<String>) {
         "Assertion failures:\n{}",
         errors.join("\n")
     );
+}
+
+#[test]
+fn floor_canvas_material_roles_match_original_choreoapp() {
+    let palette = crate::material::styling::material_palette::MaterialPalette::dark();
+    let roles = floor_canvas_color_roles(palette);
+    let mut errors = Vec::new();
+
+    check_eq!(errors, roles.canvas_background, palette.surface);
+    check_eq!(errors, roles.grid, palette.secondary);
+    check_eq!(errors, roles.floor_border, palette.primary);
+
+    assert_no_errors(errors);
 }
 
 #[test]
@@ -278,7 +292,11 @@ fn draw_floor_projects_scene_render_positions_into_labels_legend_and_paths() {
     check_eq!(errors, state.position_labels[0].text, "L");
     check!(errors, state.axis_labels.len() >= 4);
     check_eq!(errors, state.legend_entries[0].shortcut, "F");
-    check_eq!(errors, state.legend_entries[0].position_text, "(1.00, -1.00)");
+    check_eq!(
+        errors,
+        state.legend_entries[0].position_text,
+        "(1.00, -1.00)"
+    );
     check!(errors, !state.path_segments.is_empty());
 
     assert_no_errors(errors);

@@ -13,6 +13,7 @@ use egui::vec2;
 use crate::components::BaseButton;
 use crate::components::ElevationSpec;
 use crate::components::paint_elevation;
+use crate::styling::material_palette::MaterialPalette;
 use crate::styling::material_palette::material_palette_for_visuals;
 use crate::styling::material_style_metrics::material_style_metrics;
 use crate::styling::material_typography::MATERIAL_TYPOGRAPHY;
@@ -42,11 +43,7 @@ impl<'a> FilledButton<'a> {
             text: self.text,
             tooltip: self.tooltip,
             enabled: self.enabled,
-            color: Some(if self.enabled {
-                palette.on_primary
-            } else {
-                palette.on_surface
-            }),
+            color: Some(filled_button_content_color(palette, self.enabled)),
             border_radius: Some(material_style_metrics().sizes.size_40 * 0.5),
             display_background: false,
             ..BaseButton::new()
@@ -54,26 +51,25 @@ impl<'a> FilledButton<'a> {
         let desired_size = desired_size(ui, &base);
         let border_radius = desired_size.y * 0.5;
         let (rect, shell_response) = ui.allocate_exact_size(desired_size, Sense::hover());
-        if self.enabled {
-            if shell_response.hovered() {
-                paint_elevation(
-                    ui.painter(),
-                    rect,
-                    ElevationSpec {
-                        background: palette.primary,
-                        border_radius,
-                        level: 1,
-                        dark_mode: ui.visuals().dark_mode,
-                    },
-                    palette,
-                );
-            } else {
-                ui.painter().rect_filled(
-                    rect,
-                    CornerRadius::same(border_radius.round() as u8),
-                    palette.primary,
-                );
-            }
+        let background = filled_button_background_color(palette, self.enabled);
+        if self.enabled && shell_response.hovered() {
+            paint_elevation(
+                ui.painter(),
+                rect,
+                ElevationSpec {
+                    background,
+                    border_radius,
+                    level: 1,
+                    dark_mode: ui.visuals().dark_mode,
+                },
+                palette,
+            );
+        } else {
+            ui.painter().rect_filled(
+                rect,
+                CornerRadius::same(border_radius.round() as u8),
+                background,
+            );
         }
         ui.scope_builder(UiBuilder::new().max_rect(rect), |ui| {
             BaseButton {
@@ -90,6 +86,24 @@ impl<'a> FilledButton<'a> {
 impl Default for FilledButton<'_> {
     fn default() -> Self {
         Self::new("")
+    }
+}
+
+#[must_use]
+pub fn filled_button_content_color(palette: MaterialPalette, enabled: bool) -> Color32 {
+    if enabled {
+        palette.on_primary
+    } else {
+        palette.on_surface_variant
+    }
+}
+
+#[must_use]
+pub fn filled_button_background_color(palette: MaterialPalette, enabled: bool) -> Color32 {
+    if enabled {
+        palette.primary
+    } else {
+        palette.surface_variant
     }
 }
 
@@ -155,6 +169,8 @@ mod tests {
     use egui::Context;
 
     use super::FilledButton;
+    use super::filled_button_background_color;
+    use super::filled_button_content_color;
 
     #[test]
     fn filled_button_renders_without_panicking() {
@@ -167,5 +183,27 @@ mod tests {
             });
         });
         assert!(min_height >= 40.0);
+    }
+
+    #[test]
+    fn filled_button_colors_match_maui_default_button_tokens() {
+        let palette = crate::styling::material_palette::MaterialPalette::dark();
+
+        assert_eq!(
+            filled_button_content_color(palette, true),
+            palette.on_primary
+        );
+        assert_eq!(
+            filled_button_background_color(palette, true),
+            palette.primary
+        );
+        assert_eq!(
+            filled_button_content_color(palette, false),
+            palette.on_surface_variant
+        );
+        assert_eq!(
+            filled_button_background_color(palette, false),
+            palette.surface_variant
+        );
     }
 }

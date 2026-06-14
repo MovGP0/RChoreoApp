@@ -4,6 +4,7 @@ use egui::TouchPhase;
 use egui::Ui;
 use egui::epaint::PathShape;
 
+use crate::material::styling::material_palette::MaterialPalette;
 use crate::material::styling::material_palette::material_palette_for_visuals;
 
 use super::actions::FloorAction;
@@ -40,7 +41,8 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
             egui::vec2(width as f32, height as f32),
         )
     };
-    let floor_stroke = egui::Stroke::new(2.0, palette.secondary);
+    let color_roles = floor_canvas_color_roles(palette);
+    let floor_stroke = egui::Stroke::new(2.0, color_roles.floor_border);
     let floor_fill = color32_from_rgba(state.floor_color);
     let radius = floor_position_radius(state).max(6.0);
 
@@ -51,7 +53,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
             background.width,
             background.height,
         );
-        painter.rect_filled(fill_rect, 0.0, palette.surface_container_highest);
+        painter.rect_filled(fill_rect, 0.0, color_roles.canvas_background);
     }
     let floor_rect = to_screen_rect(
         state.floor_x,
@@ -64,7 +66,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
     for segment in &state.grid_lines {
         painter.line_segment(
             [to_screen_point(segment.from), to_screen_point(segment.to)],
-            egui::Stroke::new(1.0, palette.outline_variant),
+            egui::Stroke::new(1.0, color_roles.grid),
         );
     }
     for segment in &state.center_mark_segments {
@@ -104,11 +106,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
 
     if state.rendered_positions.is_empty() {
         for point in &state.position_circles {
-            painter.circle_filled(
-                to_screen_point(*point),
-                6.0,
-                palette.primary_container,
-            );
+            painter.circle_filled(to_screen_point(*point), 6.0, palette.primary_container);
         }
 
         for label in &state.position_labels {
@@ -198,11 +196,7 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
             legend_panel_rect.width,
             legend_panel_rect.height,
         );
-        painter.rect_filled(
-            legend_rect,
-            6.0,
-            palette.surface_container,
-        );
+        painter.rect_filled(legend_rect, 6.0, palette.surface_container);
         painter.rect_stroke(
             legend_rect,
             6.0,
@@ -280,6 +274,22 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
 
 fn color32_from_rgba(color: [u8; 4]) -> egui::Color32 {
     egui::Color32::from_rgba_unmultiplied(color[0], color[1], color[2], color[3])
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct FloorCanvasColorRoles {
+    pub canvas_background: egui::Color32,
+    pub grid: egui::Color32,
+    pub floor_border: egui::Color32,
+}
+
+#[must_use]
+pub fn floor_canvas_color_roles(palette: MaterialPalette) -> FloorCanvasColorRoles {
+    FloorCanvasColorRoles {
+        canvas_background: palette.surface,
+        grid: palette.secondary,
+        floor_border: palette.primary,
+    }
 }
 
 fn floor_position_radius(state: &FloorState) -> f32 {

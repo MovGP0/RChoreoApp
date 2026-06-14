@@ -153,13 +153,7 @@ impl<'a> TextField<'a> {
         ui.painter().rect_filled(
             field_rect,
             CornerRadius::same(FIELD_CORNER_RADIUS),
-            if self.enabled {
-                palette.surface_container_highest
-            } else {
-                palette
-                    .surface_container_highest
-                    .gamma_multiply(palette.disable_opacity)
-            },
+            filled_text_field_container_color(palette, self.enabled),
         );
 
         let show_floating_label = should_float_label(self.text, has_focus);
@@ -317,6 +311,20 @@ pub fn field_highlight(
 }
 
 #[must_use]
+pub fn filled_text_field_container_color(
+    palette: crate::styling::material_palette::MaterialPalette,
+    enabled: bool,
+) -> Color32 {
+    if enabled {
+        palette.surface_container_low
+    } else {
+        palette
+            .surface_container_low
+            .gamma_multiply(palette.disable_opacity)
+    }
+}
+
+#[must_use]
 pub fn should_float_label(text: &str, has_focus: bool) -> bool {
     has_focus || !text.is_empty()
 }
@@ -335,6 +343,7 @@ mod tests {
     use super::TextField;
     use super::active_indicator_height;
     use super::field_highlight;
+    use super::filled_text_field_container_color;
     use super::should_float_label;
 
     #[test]
@@ -351,6 +360,22 @@ mod tests {
         assert_eq!(highlight, Color32::RED);
         assert_eq!(active_indicator_height(true), 3.0);
         assert_eq!(active_indicator_height(false), 1.0);
+    }
+
+    #[test]
+    fn filled_text_field_container_uses_maui_filled_field_surface() {
+        let palette = crate::styling::material_palette::MaterialPalette::light();
+
+        assert_eq!(
+            filled_text_field_container_color(palette, true),
+            palette.surface_container_low
+        );
+        assert_eq!(
+            filled_text_field_container_color(palette, false),
+            palette
+                .surface_container_low
+                .gamma_multiply(palette.disable_opacity)
+        );
     }
 
     #[test]
