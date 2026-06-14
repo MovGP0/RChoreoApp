@@ -157,7 +157,7 @@ pub struct TraceContext {
 
 - `cargo build -p rchoreo_desktop --features debug-otel`
 - `cargo clippy -p rchoreo_desktop --all-targets --all-features -- -D warnings`
-- `cargo test -p rchoreo_desktop`
+- `cargo nextest run -p rchoreo_desktop`
 
 ## 2. Local End-to-End
 

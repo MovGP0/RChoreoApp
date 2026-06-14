@@ -1,5 +1,14 @@
 # Unit Testing
 
+## Test Runner
+Prefer `cargo-nextest` for Rust test execution because it is faster and provides better output for large workspaces.
+
+```sh
+cargo nextest run -p PROJECTNAME
+```
+
+Use `cargo test -p PROJECTNAME` only when `cargo-nextest` is unavailable or when a specific test harness depends on Cargo's built-in test runner behavior.
+
 ## Assertions
 When multiple asserts in a unit tests are required, the errors need to be collected and reported together.
 This ensures that all failures are visible in a single test run, rather than stopping at the first failure.
