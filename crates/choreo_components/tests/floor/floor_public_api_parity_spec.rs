@@ -2,8 +2,8 @@ use std::sync::mpsc::sync_channel;
 
 use crate::floor::floor_component::CanvasViewHandle;
 use crate::floor::floor_component::DrawFloorCommand;
-use crate::floor::floor_component::FloorCanvasViewModel;
 use crate::floor::floor_component::FloorPointerEventSenders;
+use crate::floor::floor_component::FloorRuntime;
 use crate::floor::floor_component::Matrix;
 use crate::floor::floor_component::Point;
 use crate::floor::floor_component::PointerButton;
@@ -33,10 +33,10 @@ fn assert_no_errors(errors: Vec<String>) {
 }
 
 #[test]
-fn floor_view_model_public_api_matches_non_ui_pipeline_contract() {
+fn floor_runtime_public_api_matches_non_ui_pipeline_contract() {
     let (draw_sender, _draw_receiver) = sync_channel::<DrawFloorCommand>(8);
     let (pressed_sender, pressed_receiver) = sync_channel::<PointerPressedCommand>(8);
-    let mut view_model = FloorCanvasViewModel::new(
+    let mut runtime = FloorRuntime::new(
         draw_sender,
         FloorPointerEventSenders {
             pointer_pressed_senders: vec![pressed_sender],
@@ -47,8 +47,8 @@ fn floor_view_model_public_api_matches_non_ui_pipeline_contract() {
         },
     );
 
-    view_model.set_transformation_matrix(Matrix::translation(24.0, 36.0));
-    let _ = view_model.pointer_pressed(PointerPressedCommand {
+    runtime.set_transformation_matrix(Matrix::translation(24.0, 36.0));
+    let _ = runtime.pointer_pressed(PointerPressedCommand {
         canvas_view: CanvasViewHandle { id: 7 },
         event_args: PointerEventArgs {
             position: Point::new(120.0, 144.0),

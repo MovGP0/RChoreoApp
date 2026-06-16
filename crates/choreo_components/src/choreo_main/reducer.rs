@@ -549,13 +549,13 @@ pub(crate) fn refresh_floor_projection(state: &mut ChoreoMainState) {
         .map(|scene| scene.name.clone())
         .unwrap_or_default();
     state.floor_state.source_positions = current_scene
-        .map(|scene| map_scene_render_positions(scene, state.floor_state.transparency))
+        .map(map_scene_render_positions)
         .unwrap_or_default();
     state.floor_state.previous_source_positions = previous_scene
-        .map(|scene| map_scene_render_positions(scene, state.floor_state.transparency))
+        .map(map_scene_render_positions)
         .unwrap_or_default();
     state.floor_state.next_source_positions = next_scene
-        .map(|scene| map_scene_render_positions(scene, state.floor_state.transparency))
+        .map(map_scene_render_positions)
         .unwrap_or_default();
     state.floor_state.positions = state
         .floor_state
@@ -698,7 +698,7 @@ fn update_scene_model_dancers(scene: &mut SceneModel, dancers: &HashMap<i32, Rc<
     }
 }
 
-fn map_scene_render_positions(scene: &SceneModel, transparency: f64) -> Vec<SceneRenderPosition> {
+fn map_scene_render_positions(scene: &SceneModel) -> Vec<SceneRenderPosition> {
     scene
         .positions
         .iter()
@@ -712,10 +712,8 @@ fn map_scene_render_positions(scene: &SceneModel, transparency: f64) -> Vec<Scen
                 text_color,
                 has_dancer,
             ) = if let Some(dancer) = position.dancer.as_ref() {
-                let fill_color =
-                    apply_transparency_rgba(color_to_rgba(&dancer.color), transparency);
-                let border_color =
-                    apply_transparency_rgba(color_to_rgba(&dancer.role.color), transparency);
+                let fill_color = color_to_rgba(&dancer.color);
+                let border_color = color_to_rgba(&dancer.role.color);
                 (
                     dancer_key(dancer),
                     dancer.name.clone(),
@@ -726,13 +724,13 @@ fn map_scene_render_positions(scene: &SceneModel, transparency: f64) -> Vec<Scen
                     true,
                 )
             } else {
-                let fill_color = apply_transparency_rgba([224, 224, 224, 255], transparency);
+                let fill_color = [224, 224, 224, 255];
                 (
                     None,
                     String::new(),
                     String::new(),
                     fill_color,
-                    apply_transparency_rgba([120, 120, 120, 255], transparency),
+                    [120, 120, 120, 255],
                     [0, 0, 0, 255],
                     false,
                 )
@@ -892,16 +890,6 @@ fn cubic_bezier(p0: f64, p1: f64, p2: f64, p3: f64, progress: f64) -> f64 {
 
 fn color_to_rgba(color: &Color) -> [u8; 4] {
     [color.r, color.g, color.b, color.a]
-}
-
-fn apply_transparency_rgba(color: [u8; 4], transparency: f64) -> [u8; 4] {
-    let opacity = (1.0 - transparency.clamp(0.0, 1.0)).clamp(0.0, 1.0);
-    [
-        color[0],
-        color[1],
-        color[2],
-        (f64::from(color[3]) * opacity).round() as u8,
-    ]
 }
 
 fn pick_black_or_white(color: [u8; 4]) -> [u8; 4] {

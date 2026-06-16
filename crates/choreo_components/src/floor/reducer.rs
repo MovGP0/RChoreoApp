@@ -767,11 +767,19 @@ fn build_rendered_positions(state: &FloorState) -> Vec<RenderedFloorPosition> {
                         x: position.x,
                         y: position.y,
                     });
+            let fill_color = visible_fill_color(
+                position.fill_color,
+                apply_transparency(position.fill_color, state.transparency),
+            );
+            let border_color = visible_border_color(
+                position.border_color,
+                apply_transparency(position.border_color, state.transparency),
+            );
             RenderedFloorPosition {
                 point: map_floor_coordinate_to_canvas(state, active.x, active.y),
-                fill_color: apply_transparency(position.fill_color, state.transparency),
-                border_color: apply_transparency(position.border_color, state.transparency),
-                text_color: position.text_color,
+                fill_color,
+                border_color,
+                text_color: pick_black_or_white(fill_color),
                 shortcut: position.shortcut.clone(),
                 is_selected: state.selected_positions.contains(&index),
                 has_dancer: position.has_dancer,
@@ -1012,6 +1020,48 @@ fn apply_transparency(color: [u8; 4], transparency: f64) -> [u8; 4] {
         color[2],
         (f64::from(color[3]) * opacity).round() as u8,
     ]
+}
+
+fn visible_fill_color(source_color: [u8; 4], rendered_color: [u8; 4]) -> [u8; 4] {
+    if source_color[3] > 0 {
+        return rendered_color;
+    }
+
+    [224, 224, 224, 255]
+}
+
+fn visible_border_color(source_color: [u8; 4], rendered_color: [u8; 4]) -> [u8; 4] {
+    if source_color[3] > 0 {
+        return rendered_color;
+    }
+
+    [120, 120, 120, 255]
+}
+
+fn pick_black_or_white(color: [u8; 4]) -> [u8; 4] {
+    let luminance = relative_luminance(color[0], color[1], color[2]);
+    let contrast_black = (luminance + 0.05) / 0.05;
+    let contrast_white = 1.05 / (luminance + 0.05);
+    if contrast_white > contrast_black {
+        [255, 255, 255, 255]
+    } else {
+        [0, 0, 0, 255]
+    }
+}
+
+fn relative_luminance(red: u8, green: u8, blue: u8) -> f64 {
+    let red = linearize_channel(f64::from(red) / 255.0);
+    let green = linearize_channel(f64::from(green) / 255.0);
+    let blue = linearize_channel(f64::from(blue) / 255.0);
+    0.2126 * red + 0.7152 * green + 0.0722 * blue
+}
+
+fn linearize_channel(channel: f64) -> f64 {
+    if channel <= 0.04045 {
+        channel / 12.92
+    } else {
+        ((channel + 0.055) / 1.055).powf(2.4)
+    }
 }
 
 fn format_position_value(value: f64) -> String {

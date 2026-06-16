@@ -6,6 +6,7 @@ use crate::floor::floor_component::FloorProvider;
 use crate::floor::floor_component::FloorProviderDependencies;
 use crate::floor::floor_component::FloorRenderGate;
 use crate::floor::floor_component::FloorRenderGateImpl;
+use crate::floor::floor_component::FloorRuntime;
 use crate::floor::floor_component::state::FloorPosition;
 use crate::floor::floor_component::state::FloorState;
 use std::sync::Arc;
@@ -67,7 +68,7 @@ fn adapter_maps_scene_overlay_and_audio_interpolation_into_state() {
     let adapter = FloorAdapter::new();
     let mut state = FloorState::default();
     let (draw_sender, _draw_receiver) = std::sync::mpsc::sync_channel(4);
-    let mut view_model = crate::floor::floor_component::FloorCanvasViewModel::new(
+    let mut runtime = FloorRuntime::new(
         draw_sender,
         FloorPointerEventSenders {
             pointer_pressed_senders: Vec::new(),
@@ -80,7 +81,7 @@ fn adapter_maps_scene_overlay_and_audio_interpolation_into_state() {
 
     adapter.apply(
         &mut state,
-        &mut view_model,
+        &mut runtime,
         FloorAdapterInput {
             scene_positions: vec![FloorPosition::new(0.0, 0.0), FloorPosition::new(24.0, 36.0)],
             axis_x_label: "X Axis".to_string(),
@@ -112,8 +113,8 @@ fn adapter_maps_scene_overlay_and_audio_interpolation_into_state() {
         errors,
         (state.interpolated_positions[0].x - 6.0).abs() < 0.001
     );
-    check!(errors, view_model.has_floor_bounds());
-    check_eq!(errors, view_model.canvas_size().width, 1200.0);
+    check!(errors, runtime.has_floor_bounds());
+    check_eq!(errors, runtime.canvas_size().width, 1200.0);
     check!(errors, !state.path_commands.is_empty());
     check!(errors, !state.dashed_path_commands.is_empty());
 
@@ -127,7 +128,7 @@ fn provider_orchestrates_draw_and_redraw_with_render_gate() {
         state: FloorState::default(),
         floor_adapter: FloorAdapter::new(),
         floor_render_gate: render_gate,
-        view_model_behaviors: Vec::new(),
+        runtime_behaviors: Vec::new(),
         floor_event_senders: FloorPointerEventSenders {
             pointer_pressed_senders: Vec::new(),
             pointer_moved_senders: Vec::new(),
@@ -138,13 +139,13 @@ fn provider_orchestrates_draw_and_redraw_with_render_gate() {
     });
 
     provider.activate();
-    provider.floor_view_model().borrow_mut().draw_floor();
+    provider.floor_runtime().borrow_mut().draw_floor();
     provider.tick();
     let mut errors = Vec::new();
 
     check!(errors, provider.floor_render_gate().is_rendered());
     check!(errors, provider.state().draw_count >= 2);
-    provider.floor_view_model().borrow().request_redraw();
+    provider.floor_runtime().borrow().request_redraw();
     check!(errors, provider.state().draw_count >= 2);
     provider.tick();
     check!(errors, provider.state().draw_count >= 2);
@@ -161,7 +162,7 @@ fn provider_request_redraw_does_not_mark_render_gate_before_draw_floor_command()
         state: FloorState::default(),
         floor_adapter: FloorAdapter::new(),
         floor_render_gate: render_gate.clone(),
-        view_model_behaviors: Vec::new(),
+        runtime_behaviors: Vec::new(),
         floor_event_senders: FloorPointerEventSenders {
             pointer_pressed_senders: Vec::new(),
             pointer_moved_senders: Vec::new(),
@@ -172,14 +173,14 @@ fn provider_request_redraw_does_not_mark_render_gate_before_draw_floor_command()
     });
 
     provider.activate();
-    provider.floor_view_model().borrow().request_redraw();
+    provider.floor_runtime().borrow().request_redraw();
     let mut errors = Vec::new();
 
     check!(errors, !render_gate.is_rendered());
     check_eq!(errors, render_gate.marks.load(Ordering::SeqCst), 0);
     check_eq!(errors, provider.state().draw_count, 1);
 
-    provider.floor_view_model().borrow_mut().draw_floor();
+    provider.floor_runtime().borrow_mut().draw_floor();
     provider.tick();
 
     check!(errors, render_gate.is_rendered());

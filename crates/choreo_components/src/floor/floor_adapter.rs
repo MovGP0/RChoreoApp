@@ -1,6 +1,6 @@
 use super::actions::FloorAction;
-use super::floor_view_model::FloorCanvasViewModel;
 use super::reducer::reduce;
+use super::runtime::FloorRuntime;
 use super::state::FloorPosition;
 use super::state::FloorState;
 use super::types::Rect;
@@ -37,7 +37,7 @@ impl FloorAdapter {
     pub fn apply(
         &self,
         state: &mut FloorState,
-        view_model: &mut FloorCanvasViewModel,
+        runtime: &mut FloorRuntime,
         input: FloorAdapterInput,
     ) {
         if let Some((width_px, height_px)) = input.layout_size {
@@ -92,23 +92,23 @@ impl FloorAdapter {
             );
         }
 
-        self.sync_floor_metrics(state, view_model);
+        self.sync_floor_metrics(state, runtime);
         self.sync_path_commands(state);
     }
 
-    pub fn sync_floor_metrics(&self, state: &FloorState, view_model: &mut FloorCanvasViewModel) {
+    pub fn sync_floor_metrics(&self, state: &FloorState, runtime: &mut FloorRuntime) {
         let floor_bounds = Rect::new(
             state.floor_x as f32,
             state.floor_y as f32,
             (state.floor_x + state.floor_width) as f32,
             (state.floor_y + state.floor_height) as f32,
         );
-        view_model.set_floor_bounds(floor_bounds);
-        view_model.set_canvas_size(Size::new(
+        runtime.set_floor_bounds(floor_bounds);
+        runtime.set_canvas_size(Size::new(
             state.layout_width_px as f32,
             state.layout_height_px as f32,
         ));
-        view_model.set_transformation_matrix(state.transformation_matrix);
+        runtime.set_transformation_matrix(state.transformation_matrix);
     }
 
     pub fn sync_path_commands(&self, state: &mut FloorState) {

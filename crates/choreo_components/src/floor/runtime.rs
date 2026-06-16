@@ -18,7 +18,7 @@ use super::types::Matrix;
 use super::types::Rect;
 use super::types::Size;
 
-pub struct FloorCanvasViewModel {
+pub struct FloorRuntime {
     draw_floor_command_sender: SyncSender<DrawFloorCommand>,
     disposables: CompositeDisposable,
     pointer_pressed_senders: Vec<SyncSender<PointerPressedCommand>>,
@@ -27,7 +27,7 @@ pub struct FloorCanvasViewModel {
     pointer_wheel_changed_senders: Vec<SyncSender<PointerWheelChangedCommand>>,
     touch_senders: Vec<SyncSender<TouchCommand>>,
     on_redraw: Option<Rc<dyn Fn()>>,
-    self_handle: Option<Weak<RefCell<FloorCanvasViewModel>>>,
+    self_handle: Option<Weak<RefCell<FloorRuntime>>>,
     pub canvas_view: Option<CanvasViewHandle>,
     pub transformation_matrix: Matrix,
     has_floor_bounds: bool,
@@ -35,7 +35,7 @@ pub struct FloorCanvasViewModel {
     canvas_size: Size,
 }
 
-impl FloorCanvasViewModel {
+impl FloorRuntime {
     pub const MAX_ZOOM_FACTOR: f32 = 5.0;
     pub const MIN_ZOOM_FACTOR: f32 = 0.2;
     pub const PAN_MARGIN: f32 = 20.0;
@@ -63,15 +63,12 @@ impl FloorCanvasViewModel {
         }
     }
 
-    pub fn activate(
-        view_model: &mut FloorCanvasViewModel,
-        behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>>,
-    ) {
+    pub fn activate(runtime: &mut FloorRuntime, behaviors: Vec<Box<dyn Behavior<FloorRuntime>>>) {
         let mut disposables = CompositeDisposable::new();
         for behavior in &behaviors {
-            behavior.activate(view_model, &mut disposables);
+            behavior.activate(runtime, &mut disposables);
         }
-        view_model.disposables = disposables;
+        runtime.disposables = disposables;
     }
 
     pub fn draw_floor(&mut self) {
@@ -96,12 +93,12 @@ impl FloorCanvasViewModel {
         self.on_redraw = handler;
     }
 
-    pub fn set_self_handle(&mut self, handle: Weak<RefCell<FloorCanvasViewModel>>) {
+    pub fn set_self_handle(&mut self, handle: Weak<RefCell<FloorRuntime>>) {
         self.self_handle = Some(handle);
     }
 
     #[must_use]
-    pub fn self_handle(&self) -> Option<Weak<RefCell<FloorCanvasViewModel>>> {
+    pub fn self_handle(&self) -> Option<Weak<RefCell<FloorRuntime>>> {
         self.self_handle.clone()
     }
 
@@ -178,11 +175,13 @@ impl FloorCanvasViewModel {
     }
 }
 
-impl Drop for FloorCanvasViewModel {
+impl Drop for FloorRuntime {
     fn drop(&mut self) {
         self.disposables.dispose_all();
     }
 }
+
+pub type FloorCanvasViewModel = FloorRuntime;
 
 pub struct FloorPointerEventSenders {
     pub pointer_pressed_senders: Vec<SyncSender<PointerPressedCommand>>,

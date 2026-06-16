@@ -12,10 +12,11 @@ use crate::behavior::Behavior;
 use super::actions::FloorAction;
 use super::floor_adapter::FloorAdapter;
 use super::floor_adapter::FloorAdapterInput;
-use super::floor_view_model::FloorCanvasViewModel;
-use super::floor_view_model::FloorPointerEventSenders;
 use super::messages::DrawFloorCommand;
 use super::reducer::reduce;
+use super::runtime::FloorCanvasViewModel;
+use super::runtime::FloorPointerEventSenders;
+use super::runtime::FloorRuntime;
 use super::state::FloorState;
 use super::types::FloorRenderGate;
 use super::types::FloorRenderGateImpl;
@@ -24,7 +25,7 @@ pub struct FloorProviderDependencies {
     pub state: FloorState,
     pub floor_adapter: FloorAdapter,
     pub floor_render_gate: Arc<dyn FloorRenderGate>,
-    pub view_model_behaviors: Vec<Box<dyn Behavior<FloorCanvasViewModel>>>,
+    pub runtime_behaviors: Vec<Box<dyn Behavior<FloorRuntime>>>,
     pub floor_event_senders: FloorPointerEventSenders,
 }
 
@@ -34,7 +35,7 @@ impl Default for FloorProviderDependencies {
             state: FloorState::default(),
             floor_adapter: FloorAdapter::new(),
             floor_render_gate: Arc::new(FloorRenderGateImpl::new()),
-            view_model_behaviors: Vec::new(),
+            runtime_behaviors: Vec::new(),
             floor_event_senders: FloorPointerEventSenders {
                 pointer_pressed_senders: Vec::new(),
                 pointer_moved_senders: Vec::new(),
@@ -48,12 +49,12 @@ impl Default for FloorProviderDependencies {
 
 pub struct FloorProvider {
     state: Rc<RefCell<FloorState>>,
-    floor_view_model: Rc<RefCell<FloorCanvasViewModel>>,
+    floor_runtime: Rc<RefCell<FloorRuntime>>,
     floor_adapter: Rc<RefCell<FloorAdapter>>,
     draw_floor_sender: SyncSender<DrawFloorCommand>,
     draw_floor_receiver: Receiver<DrawFloorCommand>,
     floor_render_gate: Arc<dyn FloorRenderGate>,
-    view_model_behaviors: Option<Vec<Box<dyn Behavior<FloorCanvasViewModel>>>>,
+    runtime_behaviors: Option<Vec<Box<dyn Behavior<FloorRuntime>>>>,
     activated: bool,
 }
 
@@ -61,22 +62,22 @@ impl FloorProvider {
     #[must_use]
     pub fn new(dependencies: FloorProviderDependencies) -> Self {
         let (draw_floor_sender, draw_floor_receiver) = sync_channel(1);
-        let floor_view_model = Rc::new(RefCell::new(FloorCanvasViewModel::new(
+        let floor_runtime = Rc::new(RefCell::new(FloorRuntime::new(
             draw_floor_sender.clone(),
             dependencies.floor_event_senders,
         )));
-        floor_view_model
+        floor_runtime
             .borrow_mut()
-            .set_self_handle(Rc::downgrade(&floor_view_model));
+            .set_self_handle(Rc::downgrade(&floor_runtime));
 
         Self {
             state: Rc::new(RefCell::new(dependencies.state)),
-            floor_view_model,
+            floor_runtime,
             floor_adapter: Rc::new(RefCell::new(dependencies.floor_adapter)),
             draw_floor_sender,
             draw_floor_receiver,
             floor_render_gate: dependencies.floor_render_gate,
-            view_model_behaviors: Some(dependencies.view_model_behaviors),
+            runtime_behaviors: Some(dependencies.runtime_behaviors),
             activated: false,
         }
     }
@@ -86,13 +87,13 @@ impl FloorProvider {
             return;
         }
 
-        if let Some(behaviors) = self.view_model_behaviors.take() {
-            FloorCanvasViewModel::activate(&mut self.floor_view_model.borrow_mut(), behaviors);
+        if let Some(behaviors) = self.runtime_behaviors.take() {
+            FloorRuntime::activate(&mut self.floor_runtime.borrow_mut(), behaviors);
         }
 
         {
             let state = Rc::clone(&self.state);
-            self.floor_view_model
+            self.floor_runtime
                 .borrow_mut()
                 .set_on_redraw(Some(Rc::new(move || {
                     reduce(&mut state.borrow_mut(), FloorAction::RedrawFloor);
@@ -105,10 +106,10 @@ impl FloorProvider {
 
     pub fn apply_adapter_input(&self, input: FloorAdapterInput) {
         let mut state = self.state.borrow_mut();
-        let mut floor_view_model = self.floor_view_model.borrow_mut();
+        let mut floor_runtime = self.floor_runtime.borrow_mut();
         self.floor_adapter
             .borrow()
-            .apply(&mut state, &mut floor_view_model, input);
+            .apply(&mut state, &mut floor_runtime, input);
     }
 
     pub fn tick(&self) {
@@ -119,13 +120,18 @@ impl FloorProvider {
     }
 
     pub fn deactivate(&mut self) {
-        self.floor_view_model.borrow_mut().set_on_redraw(None);
+        self.floor_runtime.borrow_mut().set_on_redraw(None);
         self.activated = false;
     }
 
     #[must_use]
+    pub fn floor_runtime(&self) -> Rc<RefCell<FloorRuntime>> {
+        Rc::clone(&self.floor_runtime)
+    }
+
+    #[must_use]
     pub fn floor_view_model(&self) -> Rc<RefCell<FloorCanvasViewModel>> {
-        Rc::clone(&self.floor_view_model)
+        Rc::clone(&self.floor_runtime)
     }
 
     #[must_use]

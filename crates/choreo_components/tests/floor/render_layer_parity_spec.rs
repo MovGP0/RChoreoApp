@@ -303,6 +303,79 @@ fn draw_floor_projects_scene_render_positions_into_labels_legend_and_paths() {
 }
 
 #[test]
+fn draw_floor_renders_dancer_fills_and_contrast_text_colors() {
+    let mut state = FloorState {
+        source_positions: vec![
+            SceneRenderPosition {
+                dancer_key: Some("light".to_string()),
+                dancer_name: "Light".to_string(),
+                shortcut: "L".to_string(),
+                x: -1.0,
+                y: 0.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [250, 250, 250, 255],
+                border_color: [20, 20, 20, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+            SceneRenderPosition {
+                dancer_key: Some("dark".to_string()),
+                dancer_name: "Dark".to_string(),
+                shortcut: "D".to_string(),
+                x: 0.0,
+                y: 0.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [16, 24, 32, 255],
+                border_color: [240, 240, 240, 255],
+                text_color: [0, 0, 0, 255],
+                has_dancer: true,
+            },
+            SceneRenderPosition {
+                dancer_key: Some("transparent".to_string()),
+                dancer_name: "Transparent".to_string(),
+                shortcut: "T".to_string(),
+                x: 1.0,
+                y: 0.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [255, 0, 0, 0],
+                border_color: [120, 0, 0, 255],
+                text_color: [0, 0, 0, 255],
+                has_dancer: true,
+            },
+        ],
+        ..FloorState::default()
+    };
+
+    reduce(&mut state, FloorAction::DrawFloor);
+
+    let mut errors = Vec::new();
+
+    check_eq!(errors, state.rendered_positions.len(), 3);
+    check_eq!(
+        errors,
+        state.rendered_positions[0].text_color,
+        [0, 0, 0, 255]
+    );
+    check_eq!(
+        errors,
+        state.rendered_positions[1].text_color,
+        [255, 255, 255, 255]
+    );
+    check!(errors, state.rendered_positions[2].fill_color[3] > 0);
+
+    assert_no_errors(errors);
+}
+
+#[test]
 fn touch_cancelled_clears_active_gesture_state() {
     let mut state = FloorState::default();
 

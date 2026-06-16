@@ -222,6 +222,26 @@ fn load_choreography_projects_floor_renderer_state_from_scene_models() {
     check_eq!(errors, state.floor_state.floor_color, [240, 230, 200, 255]);
     check_eq!(errors, state.floor_state.source_positions.len(), 2);
     check_eq!(errors, state.floor_state.source_positions[0].shortcut, "L");
+    check_eq!(
+        errors,
+        state.floor_state.source_positions[0].fill_color,
+        [220, 40, 40, 255]
+    );
+    check_eq!(
+        errors,
+        state.floor_state.source_positions[0].border_color,
+        [120, 0, 0, 255]
+    );
+    check_eq!(
+        errors,
+        state.floor_state.source_positions[1].fill_color,
+        [40, 120, 220, 255]
+    );
+    check_eq!(
+        errors,
+        state.floor_state.source_positions[1].border_color,
+        [0, 60, 120, 255]
+    );
     check_eq!(errors, state.floor_state.previous_source_positions.len(), 0);
     check_eq!(errors, state.floor_state.next_source_positions.len(), 2);
     check_eq!(errors, state.floor_state.legend_entries.len(), 2);
