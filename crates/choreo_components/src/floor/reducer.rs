@@ -16,6 +16,9 @@ use super::state::SceneRenderPosition;
 use super::state::TouchAction;
 use super::state::TouchDeviceType;
 
+const REFERENCE_LAYOUT_WIDTH_PX: f64 = 960.0;
+const REFERENCE_LAYOUT_HEIGHT_PX: f64 = 720.0;
+
 pub fn reduce(state: &mut FloorState, action: FloorAction) {
     match action {
         FloorAction::Initialize => {
@@ -502,8 +505,10 @@ fn recompute_layout(state: &mut FloorState) {
     let user_scale = state.transformation_matrix.scale_x.max(0.1);
     let user_translate_x = state.transformation_matrix.trans_x;
     let user_translate_y = state.transformation_matrix.trans_y;
+    let reference_meters_to_px = reference_meters_to_px(state, horizontal_meters, vertical_meters);
 
-    state.header_height_px = header_height * user_scale;
+    state.layout_scale = meters_to_px / reference_meters_to_px;
+    state.header_height_px = header_height * state.layout_scale * user_scale;
     state.content_height_px = content_height;
     state.floor_x = base_floor_x * user_scale + user_translate_x;
     state.floor_y = base_floor_y * user_scale + user_translate_y;
@@ -513,9 +518,21 @@ fn recompute_layout(state: &mut FloorState) {
     state.center_y = state.floor_y + (state.floor_height / 2.0);
 }
 
+fn reference_meters_to_px(state: &FloorState, horizontal_meters: f64, vertical_meters: f64) -> f64 {
+    let header_height = (60.0 * state.zoom).max(12.0);
+    let content_height = (REFERENCE_LAYOUT_HEIGHT_PX - header_height).max(12.0);
+    let padding = (46.0 * state.zoom).max(12.0);
+    let scale_x =
+        ((REFERENCE_LAYOUT_WIDTH_PX - (padding * 2.0)).max(12.0) / horizontal_meters).max(0.1);
+    let scale_y = ((content_height - (padding * 2.0)).max(12.0) / vertical_meters).max(0.1);
+
+    scale_x.min(scale_y)
+}
+
 fn recompute_geometry(state: &mut FloorState) {
-    let transform_scale = floor_transform_scale(state);
-    let top_side_label_reserved_height = top_side_label_reserved_height(state, transform_scale);
+    let layout_transform_scale = floor_layout_transform_scale(state);
+    let top_side_label_reserved_height =
+        top_side_label_reserved_height(state, layout_transform_scale);
     refresh_svg_overlay_source(state);
     state.background_rect = Some(RectPrimitive::from_xywh(
         state.floor_x,
@@ -532,9 +549,9 @@ fn recompute_geometry(state: &mut FloorState) {
     state.legend_panel_rect = if !state.show_legend || !has_legend_entries(state) {
         None
     } else {
-        let legend_margin = 48.0 * state.zoom * transform_scale;
-        let legend_width = state.metrics.legend_panel_width * transform_scale;
-        let legend_height = legend_panel_height(state, transform_scale);
+        let legend_margin = 48.0 * state.zoom * layout_transform_scale;
+        let legend_width = state.metrics.legend_panel_width * layout_transform_scale;
+        let legend_height = legend_panel_height(state, layout_transform_scale);
         let legend_x = state.floor_x + state.floor_width + legend_margin;
         let legend_y = state.floor_y;
         Some(RectPrimitive::from_xywh(
@@ -547,7 +564,7 @@ fn recompute_geometry(state: &mut FloorState) {
     state.svg_overlay_bounds = state
         .svg_path
         .as_ref()
-        .map(|_| svg_overlay_bounds(state, transform_scale));
+        .map(|_| svg_overlay_bounds(state, layout_transform_scale));
 
     state.grid_lines.clear();
     if state.show_grid_lines {
@@ -805,7 +822,7 @@ fn build_side_axis_labels(state: &FloorState) -> Vec<AxisLabel> {
     y_values.dedup_by(|left, right| (*left - *right).abs() < 0.001);
 
     let mut labels = Vec::new();
-    let transform_scale = floor_transform_scale(state);
+    let transform_scale = floor_layout_transform_scale(state);
     let top_label_vertical_gap = state.metrics.top_label_vertical_gap * transform_scale;
     let bottom_label_vertical_gap = state.metrics.bottom_label_vertical_gap * transform_scale;
     let side_label_left_gap = state.metrics.side_label_left_gap * transform_scale;
@@ -1045,6 +1062,10 @@ fn floor_transform_scale(state: &FloorState) -> f64 {
     state.transformation_matrix.scale_x.max(0.1)
 }
 
+fn floor_layout_transform_scale(state: &FloorState) -> f64 {
+    state.layout_scale * floor_transform_scale(state)
+}
+
 fn refresh_svg_overlay_source(state: &mut FloorState) {
     let requested_path = state
         .svg_path
@@ -1074,8 +1095,9 @@ fn read_svg_overlay_bytes(_path: &str) -> Option<Vec<u8>> {
 }
 
 fn svg_overlay_bounds(state: &FloorState, transform_scale: f64) -> RectPrimitive {
-    let max_width = state.layout_width_px * state.zoom * transform_scale;
-    let max_height = state.content_height_px * state.zoom * transform_scale;
+    let max_width = REFERENCE_LAYOUT_WIDTH_PX * state.zoom * transform_scale;
+    let max_height =
+        (REFERENCE_LAYOUT_HEIGHT_PX - (60.0 * state.zoom).max(12.0)) * state.zoom * transform_scale;
     let (width, height) = fit_svg_size(state.svg_source_size, max_width, max_height);
     RectPrimitive::from_xywh(
         state.center_x - (width / 2.0),
@@ -1255,7 +1277,7 @@ fn format_position_text(x: f64, y: f64) -> String {
 }
 
 fn refresh_axis_label_positions(state: &mut FloorState) {
-    let axis_offset = 24.0 * state.zoom * state.transformation_matrix.scale_x.max(0.1);
+    let axis_offset = 24.0 * state.zoom * floor_layout_transform_scale(state);
     let x_text = state
         .axis_labels
         .first()

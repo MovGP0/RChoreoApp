@@ -18,7 +18,7 @@ pub(super) fn draw_header(
     };
 
     let overlay = geometry::primitive_to_screen_rect(canvas_rect, header_rect);
-    let visual_scale = floor_visual_scale(state);
+    let visual_scale = geometry::floor_visual_scale(state);
     let title_font =
         egui::FontId::proportional(egui::TextStyle::Heading.resolve(style).size * visual_scale);
     let scene_font =
@@ -48,8 +48,4 @@ pub(super) fn draw_header(
             palette.on_surface_variant,
         );
     }
-}
-
-fn floor_visual_scale(state: &FloorState) -> f32 {
-    (state.zoom * state.transformation_matrix.scale_x.max(0.1)) as f32
 }

@@ -47,3 +47,13 @@ pub(super) fn floor_position_radius(state: &FloorState) -> f32 {
 pub(super) fn clamped_floor_position_radius(state: &FloorState) -> f32 {
     floor_position_radius(state).max(MIN_DANCER_RADIUS)
 }
+
+#[must_use]
+pub(super) fn floor_layout_transform_scale(state: &FloorState) -> f32 {
+    (state.layout_scale * state.transformation_matrix.scale_x.max(0.1)) as f32
+}
+
+#[must_use]
+pub(super) fn floor_visual_scale(state: &FloorState) -> f32 {
+    state.zoom as f32 * floor_layout_transform_scale(state)
+}

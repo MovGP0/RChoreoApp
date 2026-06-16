@@ -18,7 +18,8 @@ pub(super) fn draw_legend(
     };
 
     let legend_rect = geometry::primitive_to_screen_rect(canvas_rect, legend_panel_rect);
-    let scale = legend_visual_scale(state);
+    let scale = geometry::floor_visual_scale(state);
+    let layout_transform_scale = geometry::floor_layout_transform_scale(state);
     let stroke_width = tokens::GRID_LINE_WIDTH * scale;
     let corner_radius = tokens::LEGEND_SWATCH_RADIUS * scale;
     painter.rect_filled(legend_rect, corner_radius, palette.surface_container);
@@ -29,12 +30,9 @@ pub(super) fn draw_legend(
         egui::StrokeKind::Middle,
     );
 
-    let padding_left = (state.metrics.legend_content_padding_left
-        * state.transformation_matrix.scale_x.max(0.1)) as f32;
-    let padding_top = (state.metrics.legend_content_padding_top
-        * state.transformation_matrix.scale_x.max(0.1)) as f32;
-    let padding_right = (state.metrics.legend_content_padding_right
-        * state.transformation_matrix.scale_x.max(0.1)) as f32;
+    let padding_left = state.metrics.legend_content_padding_left as f32 * layout_transform_scale;
+    let padding_top = state.metrics.legend_content_padding_top as f32 * layout_transform_scale;
+    let padding_right = state.metrics.legend_content_padding_right as f32 * layout_transform_scale;
     let row_height = tokens::LEGEND_ROW_HEIGHT * scale;
     let swatch_radius = tokens::LEGEND_SWATCH_RADIUS * scale;
     let shortcut_offset = tokens::LEGEND_SHORTCUT_OFFSET_X * scale;
@@ -82,8 +80,4 @@ pub(super) fn draw_legend(
             );
         }
     }
-}
-
-fn legend_visual_scale(state: &FloorState) -> f32 {
-    (state.zoom * state.transformation_matrix.scale_x.max(0.1)) as f32
 }

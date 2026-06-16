@@ -268,11 +268,11 @@ fn legend_panel_uses_layout_metrics_and_sits_right_of_floor() {
     check!(errors, legend.x >= state.floor_x + state.floor_width);
     check!(
         errors,
-        (legend.width - state.metrics.legend_panel_width).abs() < 0.001
+        (legend.width - (state.metrics.legend_panel_width * state.layout_scale)).abs() < 0.001
     );
     check!(
         errors,
-        (legend.height - state.metrics.legend_panel_height).abs() < 0.001
+        (legend.height - (state.metrics.legend_panel_height * state.layout_scale)).abs() < 0.001
     );
 
     assert_no_errors(errors);
@@ -310,7 +310,8 @@ fn legend_panel_pans_and_scales_with_floor_transform() {
         .expect("legend panel rect should be built after transform");
 
     let mut errors = Vec::new();
-    let expected_margin = 48.0 * state.zoom * state.transformation_matrix.scale_x;
+    let expected_margin =
+        48.0 * state.zoom * state.layout_scale * state.transformation_matrix.scale_x;
 
     check_close(
         &mut errors,
@@ -479,6 +480,87 @@ fn side_position_labels_scale_with_floor_transform() {
 }
 
 #[test]
+fn overlays_scale_with_available_layout_size_like_floor() {
+    let svg_path = unique_temp_svg_path();
+    fs::write(
+        &svg_path,
+        r##"<svg viewBox="0 0 100 50"><path d="M 0 0 L 100 50" stroke="#ff0000" /></svg>"##,
+    )
+    .expect("test svg should be written");
+
+    let mut large = resize_overlay_state(svg_path.to_string_lossy().as_ref());
+    reduce(
+        &mut large,
+        FloorAction::SetLayout {
+            width_px: 1200.0,
+            height_px: 900.0,
+        },
+    );
+    reduce(&mut large, FloorAction::DrawFloor);
+
+    let mut small = resize_overlay_state(svg_path.to_string_lossy().as_ref());
+    reduce(
+        &mut small,
+        FloorAction::SetLayout {
+            width_px: 600.0,
+            height_px: 450.0,
+        },
+    );
+    reduce(&mut small, FloorAction::DrawFloor);
+
+    let large_legend = large
+        .legend_panel_rect
+        .expect("large legend should be built");
+    let small_legend = small
+        .legend_panel_rect
+        .expect("small legend should be built");
+    let large_svg = large
+        .svg_overlay_bounds
+        .expect("large svg bounds should be built");
+    let small_svg = small
+        .svg_overlay_bounds
+        .expect("small svg bounds should be built");
+    let floor_scale_ratio = small.floor_width / large.floor_width;
+    let large_top_gap = top_side_label_gap(&large);
+    let small_top_gap = top_side_label_gap(&small);
+
+    let mut errors = Vec::new();
+    check_close(
+        &mut errors,
+        "legend_width_ratio",
+        small_legend.width / large_legend.width,
+        floor_scale_ratio,
+    );
+    check_close(
+        &mut errors,
+        "legend_height_ratio",
+        small_legend.height / large_legend.height,
+        floor_scale_ratio,
+    );
+    check_close(
+        &mut errors,
+        "svg_width_ratio",
+        small_svg.width / large_svg.width,
+        floor_scale_ratio,
+    );
+    check_close(
+        &mut errors,
+        "header_height_ratio",
+        small.header_height_px / large.header_height_px,
+        floor_scale_ratio,
+    );
+    check_close(
+        &mut errors,
+        "top_side_label_gap_ratio",
+        small_top_gap / large_top_gap,
+        floor_scale_ratio,
+    );
+
+    let _ = fs::remove_file(svg_path);
+    assert_no_errors(errors);
+}
+
+#[test]
 fn header_overlay_scales_with_floor_transform() {
     let mut state = FloorState {
         choreography_name: "Viennese Waltz".to_string(),
@@ -521,6 +603,59 @@ fn header_overlay_scales_with_floor_transform() {
     check_close(&mut errors, "header_x", transformed.x, state.floor_x);
 
     assert_no_errors(errors);
+}
+
+fn resize_overlay_state(svg_path: &str) -> FloorState {
+    FloorState {
+        choreography_name: "Viennese Waltz".to_string(),
+        scene_name: "Opening".to_string(),
+        positions_at_side: true,
+        show_legend: true,
+        svg_path: Some(svg_path.to_string()),
+        source_positions: vec![
+            SceneRenderPosition {
+                dancer_key: Some("id:1".to_string()),
+                dancer_name: "Lead".to_string(),
+                shortcut: "L".to_string(),
+                x: -1.0,
+                y: 1.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [220, 20, 60, 255],
+                border_color: [128, 0, 0, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+            SceneRenderPosition {
+                dancer_key: Some("id:2".to_string()),
+                dancer_name: "Follow".to_string(),
+                shortcut: "F".to_string(),
+                x: 1.0,
+                y: -1.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [30, 144, 255, 255],
+                border_color: [0, 64, 128, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+        ],
+        ..FloorState::default()
+    }
+}
+
+fn top_side_label_gap(state: &FloorState) -> f64 {
+    state.floor_y
+        - state
+            .axis_labels
+            .iter()
+            .filter(|label| label.position.y < state.floor_y)
+            .map(|label| label.position.y)
+            .fold(f64::INFINITY, f64::min)
 }
 
 #[test]
