@@ -623,6 +623,38 @@ fn draw_floor_projects_scene_render_positions_into_labels_legend_and_paths() {
                 has_dancer: true,
             },
         ],
+        previous_source_positions: vec![
+            SceneRenderPosition {
+                dancer_key: Some("id:1".to_string()),
+                dancer_name: "Lead".to_string(),
+                shortcut: "L".to_string(),
+                x: -2.0,
+                y: 0.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [220, 20, 60, 255],
+                border_color: [128, 0, 0, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+            SceneRenderPosition {
+                dancer_key: Some("id:2".to_string()),
+                dancer_name: "Follow".to_string(),
+                shortcut: "F".to_string(),
+                x: 0.0,
+                y: -2.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [30, 144, 255, 255],
+                border_color: [0, 64, 128, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+        ],
         next_source_positions: vec![
             SceneRenderPosition {
                 dancer_key: Some("id:1".to_string()),
@@ -679,6 +711,36 @@ fn draw_floor_projects_scene_render_positions_into_labels_legend_and_paths() {
         "(1.00, -1.00)"
     );
     check!(errors, !state.path_segments.is_empty());
+    check!(errors, !state.colored_path_segments.is_empty());
+    check!(errors, !state.colored_dashed_path_segments.is_empty());
+    check!(
+        errors,
+        state
+            .colored_path_segments
+            .iter()
+            .any(|segment| segment.color == [220, 20, 60, 255])
+    );
+    check!(
+        errors,
+        state
+            .colored_path_segments
+            .iter()
+            .any(|segment| segment.color == [30, 144, 255, 255])
+    );
+    check!(
+        errors,
+        state
+            .colored_dashed_path_segments
+            .iter()
+            .any(|segment| segment.color == [220, 20, 60, 255])
+    );
+    check!(
+        errors,
+        state
+            .colored_dashed_path_segments
+            .iter()
+            .any(|segment| segment.color == [30, 144, 255, 255])
+    );
 
     assert_no_errors(errors);
 }

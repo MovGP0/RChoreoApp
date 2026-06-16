@@ -1,5 +1,6 @@
 use super::actions::FloorAction;
 use super::state::AxisLabel;
+use super::state::ColoredLineSegment;
 use super::state::FloorLayer;
 use super::state::FloorLayoutMetrics;
 use super::state::FloorPosition;
@@ -604,6 +605,8 @@ fn recompute_geometry(state: &mut FloorState) {
 
     state.path_segments.clear();
     state.dashed_path_segments.clear();
+    state.colored_path_segments.clear();
+    state.colored_dashed_path_segments.clear();
     state.rendered_positions.clear();
     if state.source_positions.is_empty() {
         let active_positions = if state.interpolated_positions.is_empty() {
@@ -660,20 +663,22 @@ fn recompute_geometry(state: &mut FloorState) {
             })
             .collect();
         if state.draw_path_to {
-            state.path_segments = build_scene_path_segments(
+            state.colored_path_segments = build_scene_path_segments(
                 &state.source_positions,
                 &state.next_source_positions,
                 false,
                 state,
             );
+            state.path_segments = plain_line_segments(&state.colored_path_segments);
         }
         if state.draw_path_from {
-            state.dashed_path_segments = build_scene_path_segments(
+            state.colored_dashed_path_segments = build_scene_path_segments(
                 &state.previous_source_positions,
                 &state.source_positions,
                 true,
                 state,
             );
+            state.dashed_path_segments = plain_line_segments(&state.colored_dashed_path_segments);
         }
         if state.positions_at_side {
             state.axis_labels = build_side_axis_labels(state);
@@ -894,7 +899,7 @@ fn build_scene_path_segments(
     to_positions: &[SceneRenderPosition],
     use_darker_color: bool,
     state: &FloorState,
-) -> Vec<LineSegment> {
+) -> Vec<ColoredLineSegment> {
     let mut segments = Vec::new();
     for to_position in to_positions {
         let Some(dancer_key) = to_position.dancer_key.as_deref() else {
@@ -908,22 +913,37 @@ fn build_scene_path_segments(
         };
 
         let curve_points = build_curve_points(from_position, to_position, 32);
+        let color = visible_fill_color(
+            to_position.fill_color,
+            apply_transparency(to_position.fill_color, state.transparency),
+        );
         let mapped_points: Vec<Point> = curve_points
             .into_iter()
             .map(|point| map_floor_coordinate_to_canvas(state, point.x, point.y))
             .collect();
         if use_darker_color {
-            segments.extend(build_dashed_segments_from_points(&mapped_points));
+            segments.extend(build_dashed_segments_from_points(&mapped_points, color));
         } else {
             for window in mapped_points.windows(2) {
-                segments.push(LineSegment {
+                segments.push(ColoredLineSegment {
                     from: window[0],
                     to: window[1],
+                    color,
                 });
             }
         }
     }
     segments
+}
+
+fn plain_line_segments(segments: &[ColoredLineSegment]) -> Vec<LineSegment> {
+    segments
+        .iter()
+        .map(|segment| LineSegment {
+            from: segment.from,
+            to: segment.to,
+        })
+        .collect()
 }
 
 fn build_curve_points(
@@ -992,7 +1012,7 @@ fn sample_cubic_curve(
         .collect()
 }
 
-fn build_dashed_segments_from_points(points: &[Point]) -> Vec<LineSegment> {
+fn build_dashed_segments_from_points(points: &[Point], color: [u8; 4]) -> Vec<ColoredLineSegment> {
     let mut segments = Vec::new();
     for window in points.windows(2) {
         let partial = build_dashed_segments(
@@ -1002,7 +1022,11 @@ fn build_dashed_segments_from_points(points: &[Point]) -> Vec<LineSegment> {
             }],
             12.0,
         );
-        segments.extend(partial);
+        segments.extend(partial.into_iter().map(|segment| ColoredLineSegment {
+            from: segment.from,
+            to: segment.to,
+            color,
+        }));
     }
     segments
 }

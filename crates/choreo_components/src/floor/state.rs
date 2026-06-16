@@ -151,6 +151,13 @@ pub struct LineSegment {
     pub to: Point,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ColoredLineSegment {
+    pub from: Point,
+    pub to: Point,
+    pub color: [u8; 4],
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct LabeledPoint {
     pub text: String,
@@ -324,6 +331,8 @@ pub struct FloorState {
     pub center_mark_segments: Vec<LineSegment>,
     pub path_segments: Vec<LineSegment>,
     pub dashed_path_segments: Vec<LineSegment>,
+    pub colored_path_segments: Vec<ColoredLineSegment>,
+    pub colored_dashed_path_segments: Vec<ColoredLineSegment>,
     pub path_commands: Vec<String>,
     pub dashed_path_commands: Vec<String>,
     pub selection_segments: Vec<LineSegment>,
@@ -406,6 +415,8 @@ impl Default for FloorState {
             center_mark_segments: Vec::new(),
             path_segments: Vec::new(),
             dashed_path_segments: Vec::new(),
+            colored_path_segments: Vec::new(),
+            colored_dashed_path_segments: Vec::new(),
             path_commands: Vec::new(),
             dashed_path_commands: Vec::new(),
             selection_segments: Vec::new(),
