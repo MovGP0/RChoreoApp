@@ -168,6 +168,20 @@ fn route_open_svg_command(
     handlers: &MainPageActionHandlers,
     behaviors: &ChoreoMainBehaviors,
 ) {
+    if command.file_path.trim().is_empty() {
+        if let Some(request_open_image) = handlers.request_open_image.as_ref() {
+            request_open_image(command.file_path);
+            return;
+        }
+
+        if let Some(pick_image_path) = handlers.pick_image_path.as_ref()
+            && let Some(file_path) = pick_image_path()
+        {
+            route_open_svg_command(OpenSvgFileCommand { file_path }, state, handlers, behaviors);
+        }
+        return;
+    }
+
     let action = ChoreoMainAction::ApplyOpenSvgFile(command.clone());
     reduce_with_behaviors(state, action.clone());
     apply_action_behaviors(state, &action, behaviors);

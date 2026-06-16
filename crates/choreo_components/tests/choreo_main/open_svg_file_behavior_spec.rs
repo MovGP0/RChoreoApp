@@ -64,6 +64,30 @@ fn open_svg_file_behavior_spec() {
             },
         );
 
+        spec.it("reset floor viewport clears the floor transform", |_| {
+            let mut state = ChoreoMainState::default();
+            state
+                .floor_state
+                .transformation_matrix
+                .set_uniform_scale(2.0);
+            state
+                .floor_state
+                .transformation_matrix
+                .translate(84.0, -36.0);
+
+            reduce(&mut state, ChoreoMainAction::ResetFloorViewport);
+
+            let mut errors = Vec::new();
+
+            check_eq!(errors, state.floor_state.transformation_matrix.scale_x, 1.0);
+            check_eq!(errors, state.floor_state.transformation_matrix.scale_y, 1.0);
+            check_eq!(errors, state.floor_state.transformation_matrix.trans_x, 0.0);
+            check_eq!(errors, state.floor_state.transformation_matrix.trans_y, 0.0);
+            check_eq!(errors, state.draw_floor_request_count, 1);
+
+            assert_no_errors(errors);
+        });
+
         spec.it(
             "restores existing svg path and clears queued outgoing commands",
             |_| {

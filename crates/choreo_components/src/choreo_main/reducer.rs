@@ -66,6 +66,10 @@ pub fn reduce_with_behaviors(state: &mut ChoreoMainState, action: ChoreoMainActi
             }
         }
         ChoreoMainAction::ResetFloorViewport => {
+            crate::floor::reducer::reduce(
+                &mut state.floor_state,
+                crate::floor::actions::FloorAction::ResetViewport,
+            );
             state.draw_floor_request_count += 1;
         }
         ChoreoMainAction::NavigateToSettings => {

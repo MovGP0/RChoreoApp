@@ -122,6 +122,39 @@ fn non_ui_behavior_parity_spec() {
         );
 
         spec.it(
+            "uses the image picker result for empty open-image requests",
+            |_| {
+                let binding = MainPageBinding::new(MainPageDependencies {
+                    action_handlers: choreo_components::choreo_main::MainPageActionHandlers {
+                        pick_image_path: Some(Rc::new(|| Some("C:/picked-floor.svg".to_string()))),
+                        ..choreo_components::choreo_main::MainPageActionHandlers::default()
+                    },
+                    ..MainPageDependencies::default()
+                });
+
+                binding.request_open_image(OpenImageRequested {
+                    file_path: String::new(),
+                });
+
+                let state = binding.state();
+                let mut errors = Vec::new();
+
+                check_eq!(
+                    errors,
+                    state.borrow().svg_file_path.as_deref(),
+                    Some("C:/picked-floor.svg")
+                );
+                check_eq!(
+                    errors,
+                    state.borrow().floor_state.svg_path.as_deref(),
+                    Some("C:/picked-floor.svg")
+                );
+
+                assert_no_errors(errors);
+            },
+        );
+
+        spec.it(
             "applies direct open-svg actions through external side effects outside the reducer",
             |_| {
                 let global_state_store = GlobalStateActor::new();

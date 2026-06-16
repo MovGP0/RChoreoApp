@@ -8,6 +8,10 @@ use crate::floor::floor_component::state::SceneRenderPosition;
 use crate::floor::floor_component::state::TouchAction;
 use crate::floor::floor_component::state::TouchDeviceType;
 use crate::floor::floor_component::ui::floor_canvas_color_roles;
+use std::fs;
+use std::path::PathBuf;
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 macro_rules! check_eq {
     ($errors:expr, $left:expr, $right:expr) => {
@@ -145,6 +149,58 @@ fn draw_floor_builds_expected_layer_order_and_primitives() {
 }
 
 #[test]
+fn draw_floor_reads_svg_file_for_egui_overlay_image() {
+    let path = unique_temp_svg_path();
+    fs::write(
+        &path,
+        r##"<svg viewBox="0 0 100 50">
+  <line x1="0" y1="0" x2="100" y2="50" stroke="#ff0000" stroke-width="2" />
+  <polyline points="0,50 50,0 100,50" stroke="#0000ff" fill="none" />
+</svg>"##,
+    )
+    .expect("test svg should be written");
+
+    let mut state = FloorState::default();
+    reduce(
+        &mut state,
+        FloorAction::SetSvgOverlay {
+            svg_path: Some(path.to_string_lossy().into_owned()),
+        },
+    );
+    reduce(&mut state, FloorAction::DrawFloor);
+
+    let mut errors = Vec::new();
+
+    let expected_bytes = fs::read(&path).expect("test svg should still exist");
+    check_eq!(
+        errors,
+        state.svg_source_path.as_deref(),
+        Some(path.to_string_lossy().as_ref())
+    );
+    check_eq!(
+        errors,
+        state.svg_source_bytes.as_deref(),
+        Some(expected_bytes.as_slice())
+    );
+    check_eq!(errors, state.svg_source_size, Some((100.0, 50.0)));
+    check_eq!(
+        errors,
+        state.svg_overlay_bounds,
+        Some(
+            crate::floor::floor_component::state::RectPrimitive::from_xywh(
+                state.center_x - (state.layout_width_px / 2.0),
+                state.center_y - (state.layout_width_px / 4.0),
+                state.layout_width_px,
+                state.layout_width_px / 2.0
+            )
+        )
+    );
+
+    let _ = fs::remove_file(path);
+    assert_no_errors(errors);
+}
+
+#[test]
 fn layout_reserves_header_and_binds_overlay_to_floor_coordinates() {
     let mut state = FloorState::default();
 
@@ -170,6 +226,16 @@ fn layout_reserves_header_and_binds_overlay_to_floor_coordinates() {
     );
 
     assert_no_errors(errors);
+}
+
+fn unique_temp_svg_path() -> PathBuf {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system time should be after unix epoch")
+        .as_nanos();
+    let mut path = std::env::temp_dir();
+    path.push(format!("rchoreo_floor_overlay_{nanos}.svg"));
+    path
 }
 
 #[test]

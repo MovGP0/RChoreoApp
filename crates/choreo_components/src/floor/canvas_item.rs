@@ -85,17 +85,27 @@ pub(super) fn draw_grid(
 }
 
 pub(super) fn draw_svg_overlay_bounds(
-    painter: &egui::Painter,
+    ui: &egui::Ui,
     canvas_rect: Rect,
     state: &FloorState,
-    palette: MaterialPalette,
+    _palette: MaterialPalette,
 ) {
-    if let Some(bounds) = state.svg_overlay_bounds {
-        painter.rect_stroke(
-            geometry::primitive_to_screen_rect(canvas_rect, bounds),
-            0.0,
-            egui::Stroke::new(tokens::GRID_LINE_WIDTH, palette.primary),
-            egui::StrokeKind::Middle,
-        );
-    }
+    let Some(bounds) = state.svg_overlay_bounds else {
+        return;
+    };
+    let Some(bytes) = state.svg_source_bytes.as_ref() else {
+        return;
+    };
+    let Some(path) = state.svg_source_path.as_ref() else {
+        return;
+    };
+
+    let image_rect = geometry::primitive_to_screen_rect(canvas_rect, bounds);
+    egui::Image::from_bytes(svg_image_uri(path), bytes.clone())
+        .alt_text("Floor SVG overlay")
+        .paint_at(ui, image_rect);
+}
+
+fn svg_image_uri(path: &str) -> String {
+    format!("bytes://floor_overlay/{}", path.replace('\\', "/"))
 }

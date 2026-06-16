@@ -43,9 +43,17 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
     let palette = material_palette_for_visuals(ui.visuals());
     let color_roles = floor_canvas_color_roles(palette);
     let style = ui.style();
+    let draw_context = LayerDrawContext {
+        ui,
+        painter: &painter,
+        rect,
+        style,
+        palette,
+        color_roles,
+    };
 
     for layer in &state.layer_order {
-        draw_layer(*layer, &painter, rect, state, style, palette, color_roles);
+        draw_layer(*layer, state, &draw_context);
     }
 
     legend_item::draw_legend(&painter, rect, state, style, palette);
@@ -54,42 +62,78 @@ pub fn draw(ui: &mut Ui, state: &FloorState) -> Vec<FloorAction> {
     actions
 }
 
-fn draw_layer(
-    layer: FloorLayer,
-    painter: &egui::Painter,
-    rect: Rect,
-    state: &FloorState,
-    style: &egui::Style,
-    palette: MaterialPalette,
-    color_roles: FloorCanvasColorRoles,
-) {
+fn draw_layer(layer: FloorLayer, state: &FloorState, context: &LayerDrawContext<'_>) {
     match layer {
         FloorLayer::Background => {
-            canvas_item::draw_background(painter, rect, state, color_roles);
+            canvas_item::draw_background(context.painter, context.rect, state, context.color_roles);
         }
         FloorLayer::GridLines => {
-            canvas_item::draw_grid(painter, rect, state, palette, color_roles);
+            canvas_item::draw_grid(
+                context.painter,
+                context.rect,
+                state,
+                context.palette,
+                context.color_roles,
+            );
         }
         FloorLayer::FloorSvg => {
-            canvas_item::draw_svg_overlay_bounds(painter, rect, state, palette);
+            canvas_item::draw_svg_overlay_bounds(context.ui, context.rect, state, context.palette);
         }
         FloorLayer::PathSegments => {
-            path_item::draw_paths(painter, rect, state, palette, color_roles);
+            path_item::draw_paths(
+                context.painter,
+                context.rect,
+                state,
+                context.palette,
+                context.color_roles,
+            );
         }
         FloorLayer::PositionCircles => {
-            dancer_item::draw_position_circles(painter, rect, state, palette);
+            dancer_item::draw_position_circles(
+                context.painter,
+                context.rect,
+                state,
+                context.palette,
+            );
         }
         FloorLayer::PositionNumbers => {
-            dancer_item::draw_position_numbers(painter, rect, state, style, palette);
+            dancer_item::draw_position_numbers(
+                context.painter,
+                context.rect,
+                state,
+                context.style,
+                context.palette,
+            );
         }
         FloorLayer::SelectionSegments => {
-            selection_item::draw_selection(painter, rect, state, palette);
+            selection_item::draw_selection(context.painter, context.rect, state, context.palette);
         }
         FloorLayer::HeaderOverlay => {
-            axis_label_item::draw_axis_labels(painter, rect, state, style, palette);
-            header_item::draw_header(painter, rect, state, style, palette);
+            axis_label_item::draw_axis_labels(
+                context.painter,
+                context.rect,
+                state,
+                context.style,
+                context.palette,
+            );
+            header_item::draw_header(
+                context.painter,
+                context.rect,
+                state,
+                context.style,
+                context.palette,
+            );
         }
     }
+}
+
+struct LayerDrawContext<'a> {
+    ui: &'a Ui,
+    painter: &'a egui::Painter,
+    rect: Rect,
+    style: &'a egui::Style,
+    palette: MaterialPalette,
+    color_roles: FloorCanvasColorRoles,
 }
 
 fn collect_interactions(ui: &Ui, rect: Rect, is_hovered: bool, actions: &mut Vec<FloorAction>) {

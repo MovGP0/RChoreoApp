@@ -354,6 +354,7 @@ pub fn reduce(state: &mut FloorState, action: FloorAction) {
         }
         FloorAction::SetSvgOverlay { svg_path } => {
             state.svg_path = svg_path;
+            state.svg_source_path = None;
             recompute_geometry(state);
         }
         FloorAction::ResetViewport => {
@@ -514,6 +515,7 @@ fn recompute_layout(state: &mut FloorState) {
 fn recompute_geometry(state: &mut FloorState) {
     let transform_scale = floor_transform_scale(state);
     let top_side_label_reserved_height = top_side_label_reserved_height(state, transform_scale);
+    refresh_svg_overlay_source(state);
     state.background_rect = Some(RectPrimitive::from_xywh(
         state.floor_x,
         state.floor_y,
@@ -541,14 +543,10 @@ fn recompute_geometry(state: &mut FloorState) {
             legend_height,
         ))
     };
-    state.svg_overlay_bounds = state.svg_path.as_ref().map(|_| {
-        RectPrimitive::from_xywh(
-            state.center_x - (state.floor_width / 2.0),
-            state.center_y - (state.floor_height / 2.0),
-            state.floor_width,
-            state.floor_height,
-        )
-    });
+    state.svg_overlay_bounds = state
+        .svg_path
+        .as_ref()
+        .map(|_| svg_overlay_bounds(state, transform_scale));
 
     state.grid_lines.clear();
     if state.show_grid_lines {
@@ -1021,6 +1019,134 @@ fn apply_transparency(color: [u8; 4], transparency: f64) -> [u8; 4] {
 
 fn floor_transform_scale(state: &FloorState) -> f64 {
     state.transformation_matrix.scale_x.max(0.1)
+}
+
+fn refresh_svg_overlay_source(state: &mut FloorState) {
+    let requested_path = state
+        .svg_path
+        .as_ref()
+        .map(|path| path.trim().to_string())
+        .filter(|path| !path.is_empty());
+    if state.svg_source_path == requested_path {
+        return;
+    }
+
+    state.svg_source_path = requested_path.clone();
+    state.svg_source_bytes = requested_path.and_then(|path| read_svg_overlay_bytes(path.as_str()));
+    state.svg_source_size = state
+        .svg_source_bytes
+        .as_deref()
+        .and_then(svg_source_size_from_bytes);
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn read_svg_overlay_bytes(path: &str) -> Option<Vec<u8>> {
+    std::fs::read(path).ok()
+}
+
+#[cfg(target_arch = "wasm32")]
+fn read_svg_overlay_bytes(_path: &str) -> Option<Vec<u8>> {
+    None
+}
+
+fn svg_overlay_bounds(state: &FloorState, transform_scale: f64) -> RectPrimitive {
+    let max_width = state.layout_width_px * state.zoom * transform_scale;
+    let max_height = state.content_height_px * state.zoom * transform_scale;
+    let (width, height) = fit_svg_size(state.svg_source_size, max_width, max_height);
+    RectPrimitive::from_xywh(
+        state.center_x - (width / 2.0),
+        state.center_y - (height / 2.0),
+        width,
+        height,
+    )
+}
+
+fn fit_svg_size(source_size: Option<(f64, f64)>, max_width: f64, max_height: f64) -> (f64, f64) {
+    let Some((source_width, source_height)) = source_size else {
+        return (max_width, max_height);
+    };
+    if source_width <= 0.0 || source_height <= 0.0 {
+        return (max_width, max_height);
+    }
+
+    let scale = (max_width / source_width).min(max_height / source_height);
+    (source_width * scale, source_height * scale)
+}
+
+fn svg_source_size_from_bytes(bytes: &[u8]) -> Option<(f64, f64)> {
+    let text = std::str::from_utf8(bytes).ok()?;
+    if let Some(view_box) = svg_attribute(text, "viewBox") {
+        let values = parse_svg_number_list(view_box.as_str());
+        if values.len() >= 4 && values[2] > 0.0 && values[3] > 0.0 {
+            return Some((values[2], values[3]));
+        }
+    }
+
+    let width = svg_attribute(text, "width").and_then(|value| parse_svg_number(value.as_str()))?;
+    let height =
+        svg_attribute(text, "height").and_then(|value| parse_svg_number(value.as_str()))?;
+    if width > 0.0 && height > 0.0 {
+        return Some((width, height));
+    }
+
+    None
+}
+
+fn svg_attribute(text: &str, name: &str) -> Option<String> {
+    let svg_start = text.find("<svg")?;
+    let tag_end = text[svg_start..].find('>')? + svg_start;
+    let tag = &text[svg_start..tag_end];
+    let pattern = format!("{name}=");
+    let attribute_start = tag.find(pattern.as_str())? + pattern.len();
+    let quote = tag.as_bytes().get(attribute_start).copied()?;
+    if quote != b'"' && quote != b'\'' {
+        return None;
+    }
+    let value_start = attribute_start + 1;
+    let value_end = tag[value_start..].find(quote as char)? + value_start;
+    Some(tag[value_start..value_end].to_string())
+}
+
+fn parse_svg_number_list(value: &str) -> Vec<f64> {
+    let mut numbers = Vec::new();
+    let mut current = String::new();
+    for character in value.chars() {
+        if character == '-'
+            && !current.is_empty()
+            && !current.ends_with('e')
+            && !current.ends_with('E')
+        {
+            if let Ok(value) = current.parse::<f64>() {
+                numbers.push(value);
+            }
+            current.clear();
+        }
+        if character.is_ascii_digit() || matches!(character, '.' | '-' | '+' | 'e' | 'E') {
+            current.push(character);
+        } else if !current.is_empty() {
+            if let Ok(value) = current.parse::<f64>() {
+                numbers.push(value);
+            }
+            current.clear();
+        }
+    }
+    if !current.is_empty()
+        && let Ok(value) = current.parse::<f64>()
+    {
+        numbers.push(value);
+    }
+    numbers
+}
+
+fn parse_svg_number(value: &str) -> Option<f64> {
+    let numeric = value
+        .trim()
+        .chars()
+        .take_while(|character| {
+            character.is_ascii_digit() || matches!(character, '.' | '-' | '+' | 'e' | 'E')
+        })
+        .collect::<String>();
+    numeric.parse::<f64>().ok()
 }
 
 fn top_side_label_reserved_height(state: &FloorState, transform_scale: f64) -> f64 {
