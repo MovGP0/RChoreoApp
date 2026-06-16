@@ -4,6 +4,7 @@ mod canvas_item;
 mod dancer_item;
 mod floor_adapter;
 mod floor_provider;
+mod floor_svg_item;
 mod geometry;
 mod header_item;
 mod legend_item;

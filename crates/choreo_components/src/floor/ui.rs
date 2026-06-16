@@ -10,6 +10,7 @@ use super::actions::FloorAction;
 use super::axis_label_item;
 use super::canvas_item;
 use super::dancer_item;
+use super::floor_svg_item;
 use super::header_item;
 use super::legend_item;
 use super::path_item;
@@ -77,7 +78,7 @@ fn draw_layer(layer: FloorLayer, state: &FloorState, context: &LayerDrawContext<
             );
         }
         FloorLayer::FloorSvg => {
-            canvas_item::draw_svg_overlay_bounds(context.ui, context.rect, state, context.palette);
+            floor_svg_item::draw_svg_overlay(context.ui, context.rect, state);
         }
         FloorLayer::PathSegments => {
             path_item::draw_paths(
