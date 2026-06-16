@@ -31,6 +31,15 @@ macro_rules! check {
     };
 }
 
+fn check_close(errors: &mut Vec<String>, label: &str, actual: f64, expected: f64) {
+    let epsilon = 0.001;
+    if (actual - expected).abs() > epsilon {
+        errors.push(format!(
+            "{label}: expected {expected} +/- {epsilon}, got {actual}"
+        ));
+    }
+}
+
 fn assert_no_errors(errors: Vec<String>) {
     assert!(
         errors.is_empty(),
@@ -198,6 +207,206 @@ fn legend_panel_uses_layout_metrics_and_sits_right_of_floor() {
     check!(
         errors,
         (legend.height - state.metrics.legend_panel_height).abs() < 0.001
+    );
+
+    assert_no_errors(errors);
+}
+
+#[test]
+fn legend_panel_pans_and_scales_with_floor_transform() {
+    let mut state = FloorState {
+        show_legend: true,
+        ..FloorState::default()
+    };
+    reduce(
+        &mut state,
+        FloorAction::SetLayout {
+            width_px: 4000.0,
+            height_px: 2000.0,
+        },
+    );
+    reduce(
+        &mut state,
+        FloorAction::SetLegendEntries {
+            entries: vec![("Couple A".to_string(), [255, 0, 0, 255])],
+        },
+    );
+    reduce(&mut state, FloorAction::DrawFloor);
+    let baseline = state
+        .legend_panel_rect
+        .expect("legend panel rect should be built before transform");
+
+    state.transformation_matrix.set_uniform_scale(1.5);
+    state.transformation_matrix.translate(84.0, 60.0);
+    reduce(&mut state, FloorAction::DrawFloor);
+    let transformed = state
+        .legend_panel_rect
+        .expect("legend panel rect should be built after transform");
+
+    let mut errors = Vec::new();
+    let expected_margin = 48.0 * state.zoom * state.transformation_matrix.scale_x;
+
+    check_close(
+        &mut errors,
+        "legend_width",
+        transformed.width,
+        baseline.width * 1.5,
+    );
+    check_close(
+        &mut errors,
+        "legend_x_margin",
+        transformed.x - (state.floor_x + state.floor_width),
+        expected_margin,
+    );
+    check_close(&mut errors, "legend_y", transformed.y, state.floor_y);
+
+    assert_no_errors(errors);
+}
+
+#[test]
+fn legend_panel_height_fits_all_rows() {
+    let mut state = FloorState {
+        show_legend: true,
+        ..FloorState::default()
+    };
+    let entries: Vec<(String, [u8; 4])> = (1..=20)
+        .map(|index| (format!("Couple {index}"), [255, 0, 0, 255]))
+        .collect();
+
+    reduce(
+        &mut state,
+        FloorAction::SetLayout {
+            width_px: 4000.0,
+            height_px: 2000.0,
+        },
+    );
+    reduce(&mut state, FloorAction::SetLegendEntries { entries });
+    reduce(&mut state, FloorAction::DrawFloor);
+
+    let legend = state
+        .legend_panel_rect
+        .expect("legend panel rect should be built when entries are present");
+    let expected_minimum_height = state.metrics.legend_content_padding_top
+        + (state.legend_entries.len() as f64 * 24.0 * state.zoom)
+        + state.metrics.legend_content_padding_bottom;
+
+    let mut errors = Vec::new();
+    check!(errors, legend.height >= expected_minimum_height);
+
+    assert_no_errors(errors);
+}
+
+#[test]
+fn legend_panel_height_fits_scene_derived_rows() {
+    let mut state = FloorState {
+        show_legend: true,
+        source_positions: (1..=20)
+            .map(|index| SceneRenderPosition {
+                dancer_key: Some(format!("id:{index}")),
+                dancer_name: format!("Dancer {index}"),
+                shortcut: index.to_string(),
+                x: f64::from(index),
+                y: 0.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [30, 144, 255, 255],
+                border_color: [0, 64, 128, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            })
+            .collect(),
+        ..FloorState::default()
+    };
+
+    reduce(
+        &mut state,
+        FloorAction::SetLayout {
+            width_px: 4000.0,
+            height_px: 2000.0,
+        },
+    );
+    reduce(&mut state, FloorAction::DrawFloor);
+
+    let legend = state
+        .legend_panel_rect
+        .expect("legend panel rect should be built when derived entries are present");
+    let expected_minimum_height = state.metrics.legend_content_padding_top
+        + (state.legend_entries.len() as f64 * 24.0 * state.zoom)
+        + state.metrics.legend_content_padding_bottom;
+
+    let mut errors = Vec::new();
+    check!(errors, legend.height >= expected_minimum_height);
+    check_eq!(errors, state.legend_entries.len(), 20);
+
+    assert_no_errors(errors);
+}
+
+#[test]
+fn side_position_labels_scale_with_floor_transform() {
+    let mut state = FloorState {
+        positions_at_side: true,
+        source_positions: vec![
+            SceneRenderPosition {
+                dancer_key: Some("id:1".to_string()),
+                dancer_name: "Lead".to_string(),
+                shortcut: "L".to_string(),
+                x: -1.0,
+                y: 1.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [220, 20, 60, 255],
+                border_color: [128, 0, 0, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+            SceneRenderPosition {
+                dancer_key: Some("id:2".to_string()),
+                dancer_name: "Follow".to_string(),
+                shortcut: "F".to_string(),
+                x: 1.0,
+                y: -1.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [30, 144, 255, 255],
+                border_color: [0, 64, 128, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+        ],
+        ..FloorState::default()
+    };
+
+    reduce(&mut state, FloorAction::DrawFloor);
+    let baseline_top_gap = state.floor_y
+        - state
+            .axis_labels
+            .iter()
+            .filter(|label| label.position.y < state.floor_y)
+            .map(|label| label.position.y)
+            .fold(f64::INFINITY, f64::min);
+
+    state.transformation_matrix.set_uniform_scale(1.5);
+    reduce(&mut state, FloorAction::DrawFloor);
+    let transformed_top_gap = state.floor_y
+        - state
+            .axis_labels
+            .iter()
+            .filter(|label| label.position.y < state.floor_y)
+            .map(|label| label.position.y)
+            .fold(f64::INFINITY, f64::min);
+
+    let mut errors = Vec::new();
+    check_close(
+        &mut errors,
+        "side_position_top_gap",
+        transformed_top_gap,
+        baseline_top_gap * 1.5,
     );
 
     assert_no_errors(errors);

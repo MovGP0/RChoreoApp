@@ -39,7 +39,6 @@ pub(super) const POSITION_LABEL_OFFSET_X: f64 = 12.0;
 pub(super) const POSITION_LABEL_OFFSET_Y: f64 = -12.0;
 pub(super) const HEADER_TITLE_OFFSET_Y: f32 = 12.0;
 pub(super) const HEADER_SCENE_OFFSET_Y: f32 = 36.0;
-pub(super) const LEGEND_PADDING: f32 = 12.0;
 pub(super) const LEGEND_ROW_HEIGHT: f32 = 24.0;
 pub(super) const LEGEND_SHORTCUT_OFFSET_X: f32 = 24.0;
 pub(super) const LEGEND_NAME_OFFSET_X: f32 = 72.0;

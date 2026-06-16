@@ -12,13 +12,20 @@ pub(super) fn draw_axis_labels(
     style: &egui::Style,
     palette: MaterialPalette,
 ) {
+    let font = egui::FontId::proportional(
+        egui::TextStyle::Button.resolve(style).size * floor_visual_scale(state),
+    );
     for axis in &state.axis_labels {
         painter.text(
             geometry::to_screen_point(canvas_rect, axis.position),
             egui::Align2::CENTER_CENTER,
             &axis.text,
-            egui::TextStyle::Button.resolve(style),
+            font.clone(),
             palette.on_surface_variant,
         );
     }
+}
+
+fn floor_visual_scale(state: &FloorState) -> f32 {
+    (state.zoom * state.transformation_matrix.scale_x.max(0.1)) as f32
 }

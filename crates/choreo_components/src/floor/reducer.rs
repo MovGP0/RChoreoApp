@@ -527,16 +527,12 @@ fn recompute_geometry(state: &mut FloorState) {
     state.legend_panel_rect = if !state.show_legend || !has_legend_entries(state) {
         None
     } else {
-        let legend_margin = 48.0 * state.zoom;
-        let legend_width = state.metrics.legend_panel_width;
-        let legend_height = state.metrics.legend_panel_height;
-        let legend_x = (state.floor_x + state.floor_width + legend_margin)
-            .min((state.layout_width_px - legend_width).max(12.0))
-            .max(12.0);
-        let legend_y = state
-            .floor_y
-            .min((state.layout_height_px - legend_height).max(12.0))
-            .max(12.0);
+        let transform_scale = floor_transform_scale(state);
+        let legend_margin = 48.0 * state.zoom * transform_scale;
+        let legend_width = state.metrics.legend_panel_width * transform_scale;
+        let legend_height = legend_panel_height(state, transform_scale);
+        let legend_x = state.floor_x + state.floor_width + legend_margin;
+        let legend_y = state.floor_y;
         Some(RectPrimitive::from_xywh(
             legend_x,
             legend_y,
@@ -805,22 +801,25 @@ fn build_side_axis_labels(state: &FloorState) -> Vec<AxisLabel> {
     y_values.dedup_by(|left, right| (*left - *right).abs() < 0.001);
 
     let mut labels = Vec::new();
+    let transform_scale = floor_transform_scale(state);
+    let top_label_vertical_gap = state.metrics.top_label_vertical_gap * transform_scale;
+    let bottom_label_vertical_gap = state.metrics.bottom_label_vertical_gap * transform_scale;
+    let side_label_left_gap = state.metrics.side_label_left_gap * transform_scale;
+    let side_label_right_gap = state.metrics.side_label_right_gap * transform_scale;
+
     for value in x_values {
         let top_point = map_floor_coordinate_to_canvas(state, value, f64::from(state.floor_front));
         let bottom_point =
             map_floor_coordinate_to_canvas(state, value, -f64::from(state.floor_back));
         labels.push(AxisLabel {
             text: format_position_value(value),
-            position: Point::new(
-                top_point.x,
-                state.floor_y - state.metrics.top_label_vertical_gap,
-            ),
+            position: Point::new(top_point.x, state.floor_y - top_label_vertical_gap),
         });
         labels.push(AxisLabel {
             text: format_position_value(value),
             position: Point::new(
                 bottom_point.x,
-                state.floor_y + state.floor_height + state.metrics.bottom_label_vertical_gap,
+                state.floor_y + state.floor_height + bottom_label_vertical_gap,
             ),
         });
     }
@@ -830,15 +829,12 @@ fn build_side_axis_labels(state: &FloorState) -> Vec<AxisLabel> {
             map_floor_coordinate_to_canvas(state, f64::from(state.floor_right), value);
         labels.push(AxisLabel {
             text: format_position_value(value),
-            position: Point::new(
-                state.floor_x - state.metrics.side_label_left_gap,
-                left_point.y,
-            ),
+            position: Point::new(state.floor_x - side_label_left_gap, left_point.y),
         });
         labels.push(AxisLabel {
             text: format_position_value(value),
             position: Point::new(
-                state.floor_x + state.floor_width + state.metrics.side_label_right_gap,
+                state.floor_x + state.floor_width + side_label_right_gap,
                 right_point.y,
             ),
         });
@@ -1020,6 +1016,22 @@ fn apply_transparency(color: [u8; 4], transparency: f64) -> [u8; 4] {
         color[2],
         (f64::from(color[3]) * opacity).round() as u8,
     ]
+}
+
+fn floor_transform_scale(state: &FloorState) -> f64 {
+    state.transformation_matrix.scale_x.max(0.1)
+}
+
+fn legend_panel_height(state: &FloorState, transform_scale: f64) -> f64 {
+    let row_height = legend_row_height(state, transform_scale);
+    let content_height = (state.metrics.legend_content_padding_top * transform_scale)
+        + (state.legend_entries.len() as f64 * row_height)
+        + (state.metrics.legend_content_padding_bottom * transform_scale);
+    (state.metrics.legend_panel_height * transform_scale).max(content_height)
+}
+
+fn legend_row_height(state: &FloorState, transform_scale: f64) -> f64 {
+    24.0 * state.zoom * transform_scale
 }
 
 fn visible_fill_color(source_color: [u8; 4], rendered_color: [u8; 4]) -> [u8; 4] {
