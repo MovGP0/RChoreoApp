@@ -501,7 +501,7 @@ fn recompute_layout(state: &mut FloorState) {
     let user_translate_x = state.transformation_matrix.trans_x;
     let user_translate_y = state.transformation_matrix.trans_y;
 
-    state.header_height_px = header_height;
+    state.header_height_px = header_height * user_scale;
     state.content_height_px = content_height;
     state.floor_x = base_floor_x * user_scale + user_translate_x;
     state.floor_y = base_floor_y * user_scale + user_translate_y;
@@ -512,6 +512,8 @@ fn recompute_layout(state: &mut FloorState) {
 }
 
 fn recompute_geometry(state: &mut FloorState) {
+    let transform_scale = floor_transform_scale(state);
+    let top_side_label_reserved_height = top_side_label_reserved_height(state, transform_scale);
     state.background_rect = Some(RectPrimitive::from_xywh(
         state.floor_x,
         state.floor_y,
@@ -520,14 +522,13 @@ fn recompute_geometry(state: &mut FloorState) {
     ));
     state.header_overlay_rect = Some(RectPrimitive::from_xywh(
         state.floor_x,
-        state.floor_y - state.header_height_px,
+        state.floor_y - top_side_label_reserved_height - state.header_height_px,
         state.floor_width,
         state.header_height_px,
     ));
     state.legend_panel_rect = if !state.show_legend || !has_legend_entries(state) {
         None
     } else {
-        let transform_scale = floor_transform_scale(state);
         let legend_margin = 48.0 * state.zoom * transform_scale;
         let legend_width = state.metrics.legend_panel_width * transform_scale;
         let legend_height = legend_panel_height(state, transform_scale);
@@ -1020,6 +1021,14 @@ fn apply_transparency(color: [u8; 4], transparency: f64) -> [u8; 4] {
 
 fn floor_transform_scale(state: &FloorState) -> f64 {
     state.transformation_matrix.scale_x.max(0.1)
+}
+
+fn top_side_label_reserved_height(state: &FloorState, transform_scale: f64) -> f64 {
+    if state.positions_at_side && !state.source_positions.is_empty() {
+        return state.metrics.top_label_vertical_gap * transform_scale * 2.0;
+    }
+
+    0.0
 }
 
 fn legend_panel_height(state: &FloorState, transform_scale: f64) -> f64 {

@@ -413,6 +413,112 @@ fn side_position_labels_scale_with_floor_transform() {
 }
 
 #[test]
+fn header_overlay_scales_with_floor_transform() {
+    let mut state = FloorState {
+        choreography_name: "Viennese Waltz".to_string(),
+        scene_name: "Opening".to_string(),
+        ..FloorState::default()
+    };
+
+    reduce(
+        &mut state,
+        FloorAction::SetLayout {
+            width_px: 1200.0,
+            height_px: 900.0,
+        },
+    );
+    reduce(&mut state, FloorAction::DrawFloor);
+    let baseline = state
+        .header_overlay_rect
+        .expect("header overlay should be built before transform");
+
+    state.transformation_matrix.set_uniform_scale(1.5);
+    reduce(&mut state, FloorAction::DrawFloor);
+    let transformed = state
+        .header_overlay_rect
+        .expect("header overlay should be built after transform");
+
+    let mut errors = Vec::new();
+
+    check_close(
+        &mut errors,
+        "header_width",
+        transformed.width,
+        baseline.width * 1.5,
+    );
+    check_close(
+        &mut errors,
+        "header_height",
+        transformed.height,
+        baseline.height * 1.5,
+    );
+    check_close(&mut errors, "header_x", transformed.x, state.floor_x);
+
+    assert_no_errors(errors);
+}
+
+#[test]
+fn header_overlay_sits_above_top_side_position_labels() {
+    let mut state = FloorState {
+        choreography_name: "Viennese Waltz".to_string(),
+        scene_name: "Opening".to_string(),
+        positions_at_side: true,
+        source_positions: vec![
+            SceneRenderPosition {
+                dancer_key: Some("id:1".to_string()),
+                dancer_name: "Lead".to_string(),
+                shortcut: "L".to_string(),
+                x: -1.0,
+                y: 1.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [220, 20, 60, 255],
+                border_color: [128, 0, 0, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+            SceneRenderPosition {
+                dancer_key: Some("id:2".to_string()),
+                dancer_name: "Follow".to_string(),
+                shortcut: "F".to_string(),
+                x: 1.0,
+                y: -1.0,
+                curve1_x: None,
+                curve1_y: None,
+                curve2_x: None,
+                curve2_y: None,
+                fill_color: [30, 144, 255, 255],
+                border_color: [0, 64, 128, 255],
+                text_color: [255, 255, 255, 255],
+                has_dancer: true,
+            },
+        ],
+        ..FloorState::default()
+    };
+
+    reduce(&mut state, FloorAction::DrawFloor);
+
+    let header = state
+        .header_overlay_rect
+        .expect("header overlay should be built");
+    let top_label_y = state
+        .axis_labels
+        .iter()
+        .filter(|label| label.position.y < state.floor_y)
+        .map(|label| label.position.y)
+        .fold(f64::INFINITY, f64::min);
+
+    let mut errors = Vec::new();
+
+    check!(errors, top_label_y.is_finite());
+    check!(errors, header.y + header.height <= top_label_y);
+
+    assert_no_errors(errors);
+}
+
+#[test]
 fn draw_floor_projects_scene_render_positions_into_labels_legend_and_paths() {
     let mut state = FloorState {
         choreography_name: "Viennese Waltz".to_string(),

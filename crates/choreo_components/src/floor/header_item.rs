@@ -18,16 +18,21 @@ pub(super) fn draw_header(
     };
 
     let overlay = geometry::primitive_to_screen_rect(canvas_rect, header_rect);
+    let visual_scale = floor_visual_scale(state);
+    let title_font =
+        egui::FontId::proportional(egui::TextStyle::Heading.resolve(style).size * visual_scale);
+    let scene_font =
+        egui::FontId::proportional(egui::TextStyle::Body.resolve(style).size * visual_scale);
     painter.rect_filled(overlay, 0.0, palette.surface_container_low);
     if !state.choreography_name.trim().is_empty() {
         painter.text(
             egui::pos2(
                 overlay.center().x,
-                overlay.top() + tokens::HEADER_TITLE_OFFSET_Y,
+                overlay.top() + (tokens::HEADER_TITLE_OFFSET_Y * visual_scale),
             ),
             egui::Align2::CENTER_TOP,
             &state.choreography_name,
-            egui::TextStyle::Heading.resolve(style),
+            title_font,
             palette.on_surface,
         );
     }
@@ -35,12 +40,16 @@ pub(super) fn draw_header(
         painter.text(
             egui::pos2(
                 overlay.center().x,
-                overlay.top() + tokens::HEADER_SCENE_OFFSET_Y,
+                overlay.top() + (tokens::HEADER_SCENE_OFFSET_Y * visual_scale),
             ),
             egui::Align2::CENTER_TOP,
             &state.scene_name,
-            egui::TextStyle::Body.resolve(style),
+            scene_font,
             palette.on_surface_variant,
         );
     }
+}
+
+fn floor_visual_scale(state: &FloorState) -> f32 {
+    (state.zoom * state.transformation_matrix.scale_x.max(0.1)) as f32
 }
